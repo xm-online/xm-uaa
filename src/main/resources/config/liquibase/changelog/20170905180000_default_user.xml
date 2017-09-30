@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <property name="now" value="now()" dbms="h2"/>
+    <property name="now" value="current_timestamp" dbms="postgresql"/>
+
+    <changeSet id="20170905130000" author="agorobey">
+        <delete tableName="user_login">
+            <where>user_key IN ('user_key1', 'user_key2', 'user_key3', 'user_key4')</where>
+        </delete>
+        <delete tableName="jhi_user_authority">
+            <where>user_id IN (1, 2, 3, 4)</where>
+        </delete>
+        <delete tableName="jhi_user">
+            <where>id IN (1, 2, 3, 4)</where>
+        </delete>
+
+        <insert tableName="jhi_user">
+            <column name="id" valueNumeric="1"/>
+            <column name="password_hash" value="$2a$10$RRabLUp1rfnexFoMBZ7OjuESTjoMsZkTqCr6AaFQAkkQtDBU3OBsW"/>
+            <column name="first_name" value="Administrator"/>
+            <column name="activated" valueBoolean="true"/>
+            <column name="lang_key" value="${tenant.defaultLang}"/>
+            <column name="created_by" value="system"/>
+            <column name="created_date" valueDate="${now}"/>
+            <column name="user_key" valueComputed="lower('${database.defaultSchemaName}')" />
+        </insert>
+        <insert tableName="jhi_user_authority">
+            <column name="user_id" valueNumeric="1"/>
+            <column name="authority_name" value="ROLE_ADMIN"/>
+        </insert>
+        <insert tableName="user_login">
+            <column name="id" valueNumeric="1"/>
+            <column name="type_key" value="LOGIN.EMAIL"/>
+            <column name="login" valueComputed="lower('${database.defaultSchemaName}@xm-online.com.ua')"/>
+            <column name="removed" valueBoolean="false"/>
+            <column name="user_key" valueComputed="lower('${database.defaultSchemaName}')"/>
+        </insert>
+        <insert tableName="user_login">
+            <column name="id" valueNumeric="2"/>
+            <column name="type_key" value="LOGIN.NICKNAME"/>
+            <column name="login" valueComputed="lower('${database.defaultSchemaName}')"/>
+            <column name="removed" valueBoolean="false"/>
+            <column name="user_key" valueComputed="lower('${database.defaultSchemaName}')"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

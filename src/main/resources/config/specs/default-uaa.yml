@@ -1,0 +1,5 @@
+---
+security:
+    accessTokenValiditySeconds:
+    refreshTokenValiditySeconds:
+registrationCaptchaPeriodSeconds: 21600

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="20170818133100" author="ekashina">
+        <dropColumn columnName="login"
+                    tableName="jhi_user"/>
+
+        <dropColumn columnName="email"
+                    tableName="jhi_user"/>
+
+        <addColumn tableName="jhi_user">
+            <column name="user_key" type="varchar(255)" defaultValueComputed="random()">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="jhi_social_user_connection">
+            <column name="user_key" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addUniqueConstraint tableName="jhi_social_user_connection" columnNames="user_key"/>
+
+        <addUniqueConstraint tableName="jhi_user" columnNames="user_key"/>
+
+        <addForeignKeyConstraint baseColumnNames="user_key"
+                                 baseTableName="jhi_social_user_connection"
+                                 constraintName="fk_social_user_connection"
+                                 referencedColumnNames="user_key"
+                                 referencedTableName="jhi_user"/>
+
+
+        <createIndex indexName="idx_user_key"
+                     tableName="jhi_user"
+                     unique="true">
+            <column name="user_key" type="varchar(255)"/>
+        </createIndex>
+
+        <createTable tableName="user_login">
+            <column name="id" type="bigint" autoIncrement="${autoIncrement}">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="type_key" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="state_key" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="login" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="removed" type="boolean" valueBoolean="false">
+                <constraints nullable="false" />
+            </column>
+            <column name="user_key" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseColumnNames="user_key"
+                                 baseTableName="user_login"
+                                 constraintName="fk_user_login"
+                                 referencedColumnNames="user_key"
+                                 referencedTableName="jhi_user"/>
+    </changeSet>
+
+    <changeSet id="20170818133100_1" author="ekashina">
+        <addUniqueConstraint tableName="user_login" columnNames="login"/>
+
+        <createIndex indexName="idx_user_login"
+                     tableName="user_login"
+                     unique="true">
+            <column name="login" type="varchar(255)"/>
+        </createIndex>
+
+    </changeSet>
+
+    <changeSet id="20170818133100_1_1" author="ekashina">
+        <dropNotNullConstraint columnName="state_key"
+                               tableName="user_login"
+                               columnDataType="varchar(50)"
+        />
+
+    </changeSet>
+
+    <changeSet id="20170818133100_1_2" author="ekashina">
+        <dropForeignKeyConstraint baseTableName="jhi_social_user_connection"
+                                  constraintName="fk_social_user_connection"/>
+        <dropColumn columnName="user_key" tableName="jhi_social_user_connection"/>
+    </changeSet>
+
+    <changeSet id="20170818133100_1_3" author="bonertale">
+        <loadUpdateData encoding="UTF-8"
+                        file="config/liquibase/users_1.csv"
+                        primaryKey="id"
+                        separator=";"
+                        tableName="jhi_user">
+        </loadUpdateData>
+        <loadData encoding="UTF-8"
+                  file="config/liquibase/user_login.csv"
+                  separator=";"
+                  tableName="user_login">
+        </loadData>
+    </changeSet>
+</databaseChangeLog>

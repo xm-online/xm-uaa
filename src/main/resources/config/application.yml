@@ -1,0 +1,159 @@
+# ===================================================================
+# Spring Boot configuration.
+#
+# This configuration will be overridden by the Spring profile you use,
+# for example application-dev.yml if you use the "dev" profile.
+#
+# More information on profiles: https://jhipster.github.io/profiles/
+# More information on configuration properties: https://jhipster.github.io/common-application-properties/
+# ===================================================================
+
+# ===================================================================
+# Standard Spring Boot properties.
+# Full reference is available at:
+# http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
+# ===================================================================
+
+management:
+    security:
+        roles: ADMIN
+    context-path: /management
+    health:
+        mail:
+            enabled: false # When using the MailService, configure an SMTP server and set this to true
+spring:
+    application:
+        name: uaa
+    cloud:
+        consul:
+            discovery:
+                healthCheckPath: /management/health
+                instanceId: ${spring.application.name}:${spring.application.instance-id:${random.value}}
+    jackson:
+        serialization.write_dates_as_timestamps: false
+    jpa:
+        open-in-view: false
+        hibernate:
+            ddl-auto: none
+            naming:
+                physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+                implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
+    messages:
+        basename: i18n/messages
+    mvc:
+        favicon:
+            enabled: false
+    thymeleaf:
+        mode: XHTML
+    mail:
+        host: localhost
+        port: 25
+        protocol: smtp
+    kafka:
+        consumer:
+            group-id: uaa
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        listener:
+            concurrency: 16
+        producer:
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+security:
+    basic:
+        enabled: false
+    oauth2:
+        resource:
+            filter-order: 3
+liquibase:
+    default-schema: XM
+server:
+    session:
+        cookie:
+            http-only: true
+
+
+# ===================================================================
+# JHipster specific properties
+#
+# Full reference is available at: https://jhipster.github.io/common-application-properties/
+# ===================================================================
+
+jhipster:
+    async:
+        core-pool-size: 2
+        max-pool-size: 50
+        queue-capacity: 10000
+    # By default CORS is disabled. Uncomment to enable.
+    #cors:
+        #allowed-origins: "*"
+        #allowed-methods: GET, PUT, POST, DELETE, OPTIONS
+        #allowed-headers: "*"
+        #exposed-headers:
+        #allow-credentials: true
+        #max-age: 1800
+    mail:
+        from: uaa@localhost
+    swagger:
+        default-include-pattern: /api/.*
+        title: uaa API
+        description: uaa API documentation
+        version: 0.0.1
+        terms-of-service-url:
+        contact-name:
+        contact-url:
+        contact-email:
+        license:
+        license-url:
+    social:
+        redirect-after-sign-in: "/"
+    ribbon:
+        display-on-active-profiles: dev
+
+xm-config:
+    enabled: true
+    xm-config-url: http://config
+    hazelcast:
+        hazelcast-config-url: classpath:./config/hazelcast-consul.xml
+        interfaces:
+        consul-host: ${spring.cloud.consul.host}
+        consul-port: ${spring.cloud.consul.port}
+        consul-service-name: xm-tenant-config-hazelcast-cluster
+        consul-healthy-only: true
+        consul-service-tags: 'hazelcast'
+        consul-discovery-delay-ms: 10000
+        group-name: xm-tenant-config-hazelcast-cluster
+        group-pass:
+
+aspects:
+    rest-call-logging: true
+
+# ===================================================================
+# Application specific properties
+# Add your own application properties here, see the ApplicationProperties class
+# to have type-safe configuration, like in the JHipsterProperties above
+#
+# More documentation is available at:
+# https://jhipster.github.io/common-application-properties/
+# ===================================================================
+
+application:
+    tenant-properties-path-pattern: /config/tenants/{tenantName}/uaa/${application.tenant-properties-name}
+    tenant-properties-name: uaa.yml
+    tenant-login-properties-path-pattern: /config/tenants/{tenantName}/uaa/${application.tenant-login-properties-name}
+    tenant-login-properties-name: logins.yml
+    tenant-list: XM, DEMO
+    tenant-ignored-path-list: /v2/api-docs, /swagger-resources/configuration/ui, /management/health, /oauth/token_key
+    kafka-system-topic: system_topic
+    kafka-system-queue: system_queue
+    kafka-enabled: true
+    retry:
+        max-attempts: 3
+        delay: 1000 #in milliseconds
+        multiplier: 2
+    reCaptcha:
+        url:
+        secretKey: -
+        publicKey:
+        registration-captcha-period-seconds:
