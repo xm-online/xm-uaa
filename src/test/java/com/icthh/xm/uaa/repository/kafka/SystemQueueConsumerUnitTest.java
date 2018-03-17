@@ -2,18 +2,26 @@ package com.icthh.xm.uaa.repository.kafka;
 
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.icthh.xm.uaa.config.tenant.TenantContext;
+import com.icthh.xm.lep.api.LepManager;
+import com.icthh.xm.commons.security.XmAuthenticationContext;
+import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
+import com.icthh.xm.commons.tenant.PrivilegedTenantContext;
+import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.util.Optional;
 
 @Slf4j
 public class SystemQueueConsumerUnitTest {
@@ -50,21 +58,46 @@ public class SystemQueueConsumerUnitTest {
         "   }\n" +
         "}";
 
-    private UserService userService;
 
     private SystemQueueConsumer consumer;
 
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private TenantContextHolder tenantContextHolder;
+
+    @Mock
+    private XmAuthenticationContextHolder authContextHolder;
+
+    @Mock
+    private XmAuthenticationContext authContext;
+
+    @Mock
+    private PrivilegedTenantContext privilegedTenantContext;
+
+    @Mock
+    private LepManager lepManager;
+
     @Before
     public void init() {
-        userService = mock(UserService.class);
-        consumer = new SystemQueueConsumer(userService);
-        TenantContext.setCurrent("TEST");
+        MockitoAnnotations.initMocks(this);
+        when(authContextHolder.getContext()).thenReturn(authContext);
+        when(tenantContextHolder.getPrivilegedContext()).thenReturn(privilegedTenantContext);
+
+        consumer = new SystemQueueConsumer(tenantContextHolder, authContextHolder, lepManager, userService);
+    }
+
+    @After
+    public void destroy() {
     }
 
     @Test
     public void updateProfile() {
+        when(authContext.getLogin()).thenReturn(Optional.empty());
         when(userService.getUser(USER_KEY)).thenReturn(new User());
         doNothing().when(userService).saveUser(anyObject());
+
         consumer.consumeEvent(new ConsumerRecord<>("test", 0, 0, "", UPDATE_ACCOUNT_EVENT));
 
         verify(userService).getUser(USER_KEY);
@@ -73,6 +106,7 @@ public class SystemQueueConsumerUnitTest {
 
     @Test
     public void updateNotExistsProfile() {
+        when(authContext.getLogin()).thenReturn(Optional.empty());
         when(userService.getUser(USER_KEY)).thenReturn(null);
         doNothing().when(userService).saveUser(anyObject());
         consumer.consumeEvent(new ConsumerRecord<>("test", 0, 0, "", UPDATE_ACCOUNT_EVENT));

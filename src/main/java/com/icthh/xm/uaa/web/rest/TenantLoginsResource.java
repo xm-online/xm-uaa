@@ -17,6 +17,8 @@ import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,6 +44,7 @@ public class TenantLoginsResource {
         @ApiResponse(code = 200, message = "Uaa properties update result", response = ResponseEntity.class),
         @ApiResponse(code = 500, message = "Internal server error")})
     @Timed
+    @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'TENANT.LOGIN.GET_LIST')")
     public ResponseEntity<TenantLogins> getLogins() {
         return ResponseEntity.ok(tenantLoginsService.getLogins());
     }
@@ -58,6 +61,7 @@ public class TenantLoginsResource {
         @ApiResponse(code = 500, message = "Internal server error")})
     @SneakyThrows
     @Timed
+    @PreAuthorize("hasPermission(null, 'TENANT.LOGIN.VALIDATE')")
     public UaaValidationVM validate(@RequestBody String loginsYml) {
         try {
             mapper.readValue(loginsYml, TenantLogins.class);
@@ -79,6 +83,7 @@ public class TenantLoginsResource {
         @ApiResponse(code = 500, message = "Internal server error")})
     @SneakyThrows
     @Timed
+    @PreAuthorize("hasPermission({'loginsYml': #loginsYml}, 'TENANT.LOGIN.UPDATE')")
     public ResponseEntity<Void> updateLogins(@RequestBody String loginsYml) {
         tenantLoginsService.updateLogins(loginsYml);
         return ResponseEntity.ok().build();

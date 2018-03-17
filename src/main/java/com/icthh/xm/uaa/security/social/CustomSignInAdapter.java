@@ -1,8 +1,8 @@
 package com.icthh.xm.uaa.security.social;
 
 import com.google.common.collect.Sets;
-import com.icthh.xm.uaa.config.tenant.TenantUtil;
-import javax.servlet.http.Cookie;
+import com.icthh.xm.uaa.commons.UaaUtils;
+import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,15 +17,22 @@ import org.springframework.social.connect.web.SignInAdapter;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.context.request.ServletWebRequest;
 
+import javax.servlet.http.Cookie;
+
 public class CustomSignInAdapter implements SignInAdapter {
 
     private final UserDetailsService userDetailsService;
 
     private final AuthorizationServerTokenServices tokenServices;
 
-    public CustomSignInAdapter(UserDetailsService userDetailsService, AuthorizationServerTokenServices tokenServices) {
+    private final XmRequestContextHolder xmRequestContextHolder;
+
+    public CustomSignInAdapter(UserDetailsService userDetailsService,
+                               AuthorizationServerTokenServices tokenServices,
+                               XmRequestContextHolder xmRequestContextHolder) {
         this.userDetailsService = userDetailsService;
         this.tokenServices = tokenServices;
+        this.xmRequestContextHolder = xmRequestContextHolder;
     }
 
     @Override
@@ -40,7 +47,7 @@ public class CustomSignInAdapter implements SignInAdapter {
         String jwt = createToken(userAuth);
         ((ServletWebRequest) request).getResponse().addCookie(getSocialAuthenticationCookie(jwt));
 
-        return TenantUtil.getApplicationUrl() + "/social-auth";
+        return UaaUtils.getApplicationUrl(xmRequestContextHolder.getContext()) + "/social-auth";
     }
 
     private String createToken(Authentication userAuth) {

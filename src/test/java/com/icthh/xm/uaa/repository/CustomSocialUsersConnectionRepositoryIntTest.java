@@ -1,22 +1,17 @@
 package com.icthh.xm.uaa.repository;
 
+import static com.icthh.xm.commons.tenant.TenantContextUtils.buildTenant;
+import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.UaaApp;
-import com.icthh.xm.uaa.config.tenant.TenantContext;
-import com.icthh.xm.uaa.config.tenant.TenantInfo;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.SocialUserConnection;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,12 +38,22 @@ import org.springframework.social.oauth2.OAuth2Operations;
 import org.springframework.social.oauth2.OAuth2Parameters;
 import org.springframework.social.oauth2.OAuth2ServiceProvider;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.transaction.AfterTransaction;
+import org.springframework.test.context.transaction.BeforeTransaction;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {UaaApp.class, XmOverrideConfiguration.class})
+@SpringBootTest(classes = {
+    UaaApp.class,
+    XmOverrideConfiguration.class
+})
 @Transactional
 public class CustomSocialUsersConnectionRepositoryIntTest {
 
@@ -63,25 +68,29 @@ public class CustomSocialUsersConnectionRepositoryIntTest {
     @Autowired
     private SocialUserConnectionRepository socialUserConnectionRepository;
 
-    @BeforeClass
-    public static void init() {
-        TenantContext.setCurrent(new TenantInfo("XM", "", "1", "", "", "", ""));
-    }
+    @Autowired
+    private TenantContextHolder tenantContextHolder;
 
-    @AfterClass
-    public static void tearDown() {
-        TenantContext.clear();
+    @BeforeTransaction
+    public void beforeTransaction() {
+        // TenantContext.setCurrent(new TenantInfo("XM", "", "1", "", "", "", ""));
+        tenantContextHolder.getPrivilegedContext().setTenant(buildTenant(DEFAULT_TENANT_KEY_VALUE));
     }
 
     @Before
     public void setUp() {
-		socialUserConnectionRepository.deleteAll();
+        socialUserConnectionRepository.deleteAll();
 
         connectionFactoryRegistry = new ConnectionFactoryRegistry();
         connectionFactory = new TestFacebookConnectionFactory();
         connectionFactoryRegistry.addConnectionFactory(connectionFactory);
         usersConnectionRepository = new CustomSocialUsersConnectionRepository(socialUserConnectionRepository, connectionFactoryRegistry);
         connectionRepository = usersConnectionRepository.createConnectionRepository("1");
+    }
+
+    @AfterTransaction
+    public void afterTransaction() {
+        tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
     }
 
     @Test
@@ -200,8 +209,8 @@ public class CustomSocialUsersConnectionRepositoryIntTest {
         providerUsers.add("twitter", "1");
         MultiValueMap<String, Connection<?>> connectionsForUsers = connectionRepository.findConnectionsToUsers(providerUsers);
         assertEquals(2, connectionsForUsers.size());
-        String providerId=connectionsForUsers.getFirst("facebook").getKey().getProviderUserId();
-        assertTrue("10".equals(providerId) || "9".equals(providerId) );
+        String providerId = connectionsForUsers.getFirst("facebook").getKey().getProviderUserId();
+        assertTrue("10".equals(providerId) || "9".equals(providerId));
         assertFacebookConnection((Connection<TestFacebookApi>) connectionRepository.getConnection(new ConnectionKey("facebook", "9")));
         assertTwitterConnection((Connection<TestTwitterApi>) connectionsForUsers.getFirst("twitter"));
     }

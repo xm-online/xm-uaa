@@ -6,4 +6,5 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication;
 public interface AuthenticationRefreshProvider {
 
     Authentication refresh(OAuth2Authentication authentication);
+
 }

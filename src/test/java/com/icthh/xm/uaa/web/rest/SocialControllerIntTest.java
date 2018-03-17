@@ -1,5 +1,10 @@
 package com.icthh.xm.uaa.web.rest;
 
+import static com.icthh.xm.commons.tenant.TenantContextUtils.buildTenant;
+import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_DOMAIN;
+import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_PORT;
+import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_PROTOCOL;
+import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_WEB_APP;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -13,17 +18,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.icthh.xm.commons.errors.ExceptionTranslator;
+import com.icthh.xm.commons.exceptions.spring.web.ExceptionTranslator;
+import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.UaaApp;
+import com.icthh.xm.uaa.commons.XmPrivilegedRequestContext;
+import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.config.SocialBeanOverrideConfiguration;
-import com.icthh.xm.uaa.config.tenant.TenantContext;
-import com.icthh.xm.uaa.config.tenant.TenantInfo;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.SocialConfig;
 import com.icthh.xm.uaa.domain.SocialUserConnection;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.repository.SocialConfigRepository;
-import com.icthh.xm.uaa.service.MailService;
+import com.icthh.xm.uaa.service.mail.MailService;
 import com.icthh.xm.uaa.service.SocialService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.social.connect.web.ConnectSupport;
@@ -32,9 +39,8 @@ import com.icthh.xm.uaa.social.connect.web.ProviderSignInUtils;
 import com.icthh.xm.uaa.social.connect.web.SessionStrategy;
 import com.icthh.xm.uaa.social.twitter.api.TwitterProfile;
 import lombok.SneakyThrows;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -53,6 +59,7 @@ import org.springframework.social.connect.support.OAuth1ConnectionFactory;
 import org.springframework.social.connect.support.OAuth2ConnectionFactory;
 import org.springframework.social.connect.web.SignInAdapter;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.transaction.BeforeTransaction;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,7 +71,11 @@ import org.springframework.web.context.request.RequestAttributes;
  * @see SocialController
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {UaaApp.class, SocialBeanOverrideConfiguration.class, XmOverrideConfiguration.class})
+@SpringBootTest(classes = {
+    UaaApp.class,
+    SocialBeanOverrideConfiguration.class,
+    XmOverrideConfiguration.class
+})
 public class SocialControllerIntTest {
 
     private static final String DEFAULT_SCHEME = "my";
@@ -72,6 +83,12 @@ public class SocialControllerIntTest {
     private static final String DEFAULT_PORT = "777";
     private static final String DEFAULT_TENANT = "XM";
     private static final String DEFAULT_LOGIN = "admin";
+
+    @Autowired
+    private TenantContextHolder tenantContextHolder;
+
+    @Autowired
+    private XmRequestContextHolder xmRequestContextHolder;
 
     @Autowired
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
@@ -117,30 +134,45 @@ public class SocialControllerIntTest {
 
     private MockMvc restUserMockMvc;
 
-    @BeforeClass
-    public static void init() {
-        TenantContext.setCurrent(new TenantInfo( DEFAULT_TENANT, DEFAULT_LOGIN, "", DEFAULT_SCHEME, DEFAULT_DOMAIN, DEFAULT_PORT,""));
-    }
+    private static final String ROLE_USER = "ROLE_USER";
 
-    @AfterClass
-    public static void tearDown() {
-        TenantContext.clear();
+    @BeforeTransaction
+    public void beforeTransaction() {
+        TenantContextUtils.setTenant(tenantContextHolder, DEFAULT_TENANT);
+        XmPrivilegedRequestContext requestContext = xmRequestContextHolder.getPrivilegedContext();
+        requestContext.putValue(REQUEST_CTX_PROTOCOL, DEFAULT_SCHEME);
+        requestContext.putValue(REQUEST_CTX_DOMAIN, DEFAULT_DOMAIN);
+        requestContext.putValue(REQUEST_CTX_PORT, DEFAULT_PORT);
+        requestContext.putValue(REQUEST_CTX_WEB_APP, "");
+
     }
 
     @Before
     @SneakyThrows
     public void setup() {
         TenantProperties properties = new TenantProperties();
+        TenantProperties.Security security = new TenantProperties.Security();
+
+        security.setDefaultUserRole(ROLE_USER);
+        properties.setRegistrationCaptchaPeriodSeconds(null);
+        properties.setSecurity(security);
         properties.setSocial(asList(
             new TenantProperties.Social("twitter", "xxx", "yyy", DEFAULT_DOMAIN),
             new TenantProperties.Social("facebook", "xxx", "yyy", DEFAULT_DOMAIN)
         ));
-        tenantPropertiesService.onRefresh("/config/tenants/"+ DEFAULT_TENANT + "/uaa/uaa.yml",
-            new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
+        tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT + "/uaa/uaa.yml",
+                                          new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
 
         MockitoAnnotations.initMocks(this);
-        SocialController socialController = new SocialController(socialService, providerSignInUtils,
-            connectionFactoryLocator, usersConnectionRepository, signInAdapter, connectSupport, sessionStrategy, socialConfigRepository);
+        SocialController socialController = new SocialController(socialService,
+                                                                 providerSignInUtils,
+                                                                 connectionFactoryLocator,
+                                                                 usersConnectionRepository,
+                                                                 signInAdapter,
+                                                                 connectSupport,
+                                                                 sessionStrategy,
+                                                                 socialConfigRepository,
+                                                                 xmRequestContextHolder);
         this.restUserMockMvc = MockMvcBuilders.standaloneSetup(socialController)
             .setControllerAdvice(exceptionTranslator)
             .setMessageConverters(jacksonMessageConverter)
@@ -151,13 +183,19 @@ public class SocialControllerIntTest {
             .thenReturn(new UserProfile("id", "name", "fname", "lname", "email", "username"));
         when(connection.createData()).thenReturn(
             new ConnectionData("twitter", "providerUserId", "displayName", "profileUrl", "imageUrl", "", "secret",
-                "refreshToken", 1000L));
+                               "refreshToken", 1000L));
         Mockito.<Connection<?>>when(connectSupport.completeConnection(any(OAuth1ConnectionFactory.class), any()))
             .thenReturn(connection);
         Mockito.<Connection<?>>when(connectSupport.completeConnection(any(OAuth2ConnectionFactory.class), any()))
             .thenReturn(connection);
         when(connectSupport.buildOAuthUrl(any(), any(), any())).thenReturn("SomeCallbackUrl");
         Mockito.<Connection<?>>when(providerSignInAttempt.getConnection(any())).thenReturn(connection);
+    }
+
+    @After
+    @Override
+    public void finalize() {
+        tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
     }
 
     @Test
@@ -167,7 +205,7 @@ public class SocialControllerIntTest {
         restUserMockMvc.perform(get("/social/signup"))
             .andExpect(status().isFound())
             .andExpect(header().string("Location",
-                "my://xm.localhost:777/social-register/testProvider?success=true"));
+                                       "my://xm.localhost:777/social-register/testProvider?success=true"));
     }
 
     @Test
@@ -176,7 +214,7 @@ public class SocialControllerIntTest {
         restUserMockMvc.perform(post("/social/signin/badprovider"))
             .andExpect(status().isFound())
             .andExpect(header().string("Location",
-                containsString("my://xm.localhost:777/social-register/badprovider?success=false")));
+                                       containsString("my://xm.localhost:777/social-register/badprovider?success=false")));
     }
 
     @Test
@@ -192,7 +230,7 @@ public class SocialControllerIntTest {
     public void testOauth1Callback() throws Exception {
         when(connection.getKey()).thenReturn(new ConnectionKey("twitter", "providerUserId"));
         restUserMockMvc.perform(get("/social/signin/twitter")
-            .param("oauth_token", "token"))
+                                    .param("oauth_token", "token"))
             .andExpect(status().isFound())
             .andExpect(header().string("Location", "my://xm.localhost:777/uaa/social/signup"));
     }
@@ -202,7 +240,7 @@ public class SocialControllerIntTest {
     public void testOauth2Callback() throws Exception {
         when(connection.getKey()).thenReturn(new ConnectionKey("facebook", "providerUserId"));
         restUserMockMvc.perform(get("/social/signin/facebook")
-            .param("code", "code"))
+                                    .param("code", "code"))
             .andExpect(status().isFound())
             .andExpect(header().string("Location", "my://xm.localhost:777/uaa/social/signup"));
 

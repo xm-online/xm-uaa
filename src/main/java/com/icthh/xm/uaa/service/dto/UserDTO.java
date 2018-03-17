@@ -1,30 +1,30 @@
 package com.icthh.xm.uaa.service.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.icthh.xm.uaa.domain.Authority;
+import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
+import com.icthh.xm.uaa.util.OtpUtils;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.validator.constraints.NotEmpty;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Size;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import javax.validation.Valid;
+import javax.validation.constraints.Size;
 
 /**
  * A DTO representing a user, with his authorities.
  */
 @AllArgsConstructor
-@ToString
+@ToString(exclude = {"permissions"})
 @Getter
 @Setter
 public class UserDTO {
@@ -42,6 +42,21 @@ public class UserDTO {
 
     private boolean activated = false;
 
+    /**
+     * Flag is TFA enabled for user. Use as read only!.
+     */
+    private boolean tfaEnabled = false;
+
+    /**
+     * User OTP channel type. Can be null. Use as read only!
+     */
+    private OtpChannelType tfaOtpChannelType;
+
+    /**
+     *  Current user TFA channel. Can be null. Use as read only!
+     */
+    private TfaOtpChannelSpec tfaOtpChannelSpec;
+
     @Size(min = 2, max = 5)
     private String langKey;
 
@@ -53,19 +68,27 @@ public class UserDTO {
 
     private Instant lastModifiedDate;
 
-    private Set<String> authorities;
-
     private String userKey;
+
+    private String roleKey;
 
     private Integer accessTokenValiditySeconds;
 
     private Integer refreshTokenValiditySeconds;
+
+    private Integer tfaAccessTokenValiditySeconds;
 
     private Map<String, Object> data = new HashMap<>();
 
     @NotEmpty
     @Valid
     private List<UserLogin> logins;
+
+    private List<AccPermissionDTO> permissions;
+
+    private boolean autoLogoutEnabled = false;
+
+    private Integer autoLogoutTimeoutSeconds;
 
     @SuppressWarnings("unused")
     public UserDTO() {
@@ -78,15 +101,34 @@ public class UserDTO {
      * @param user user
      */
     public UserDTO(User user) {
-        this(user.getId(), user.getFirstName(), user.getLastName(),
-            user.getImageUrl(), user.isActivated(), user.getLangKey(),
-            user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
-            user.getAuthorities().stream().map(Authority::getName)
-                .collect(Collectors.toSet()), user.getUserKey(), user.getAccessTokenValiditySeconds(),
-            user.getRefreshTokenValiditySeconds(), user.getData(), user.getLogins());
+        this(user.getId(),
+             user.getFirstName(),
+             user.getLastName(),
+             user.getImageUrl(),
+             user.isActivated(),
+             user.isTfaEnabled(),
+             user.getTfaOtpChannelType(),
+             null,
+             user.getLangKey(),
+             user.getCreatedBy(),
+             user.getCreatedDate(),
+             user.getLastModifiedBy(),
+             user.getLastModifiedDate(),
+             user.getUserKey(),
+             user.getRoleKey(),
+             user.getAccessTokenValiditySeconds(),
+             user.getRefreshTokenValiditySeconds(),
+             user.getTfaAccessTokenValiditySeconds(),
+             user.getData(),
+             user.getLogins(),
+             new ArrayList<>(),
+             user.isAutoLogoutEnabled(),
+             user.getAutoLogoutTimeoutSeconds()
+        );
+        OtpUtils.enrichTfaOtpChannelSpec(this);
     }
 
-    //TODO refactor, put EMAIL type to configuration
+    // TODO refactor, put EMAIL type to configuration
     @JsonIgnore
     public String getEmail() {
         return getLogins().stream().filter(userLogin -> UserLoginType.EMAIL.getValue().equals(userLogin.getTypeKey()))

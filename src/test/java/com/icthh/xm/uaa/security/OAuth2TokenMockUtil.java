@@ -1,5 +1,7 @@
 package com.icthh.xm.uaa.security;
 
+import static org.mockito.BDDMockito.given;
+
 import org.mockito.Spy;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,8 +21,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.mockito.BDDMockito.given;
-
 /**
  * A bean providing simple mocking of OAuth2 access tokens for security integration tests.
  */
@@ -35,7 +35,12 @@ public class OAuth2TokenMockUtil {
             .map(SimpleGrantedAuthority::new)
             .collect(Collectors.toList());
 
-        DomainUserDetails principal = new DomainUserDetails(username, "test", authorities, "XM", "test");
+        DomainUserDetails principal = new DomainUserDetails(username, "test", authorities, "XM",
+                                                            "test",
+                                                            false,
+                                                            null,
+                                                            null,
+                                                            false, null);
         Authentication authentication = new UsernamePasswordAuthenticationToken(principal, principal.getPassword(),
             principal.getAuthorities());
 

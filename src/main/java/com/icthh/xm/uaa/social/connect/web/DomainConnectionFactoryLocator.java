@@ -1,22 +1,21 @@
 package com.icthh.xm.uaa.social.connect.web;
 
-import com.icthh.xm.uaa.config.tenant.TenantContext;
+import com.icthh.xm.uaa.commons.UaaUtils;
+import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.domain.SocialConfig;
 import com.icthh.xm.uaa.repository.SocialConfigRepository;
 import com.icthh.xm.uaa.social.twitter.connect.TwitterConnectionFactory;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import javax.servlet.http.HttpServletRequest;
 import org.springframework.social.connect.ConnectionFactory;
 import org.springframework.social.connect.ConnectionFactoryLocator;
 import org.springframework.social.facebook.connect.FacebookConnectionFactory;
 import org.springframework.social.google.connect.GoogleConnectionFactory;
 import org.springframework.social.linkedin.connect.LinkedInConnectionFactory;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Social api registry.
@@ -24,11 +23,14 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 public class DomainConnectionFactoryLocator implements ConnectionFactoryLocator {
 
     private final SocialConfigRepository socialConfigRepository;
+    private final XmRequestContextHolder xmRequestContextHolder;
 
     private final Map<Class<?>, String> apiTypeIndex = new HashMap<>();
 
-    public DomainConnectionFactoryLocator(SocialConfigRepository socialConfigRepository) {
+    public DomainConnectionFactoryLocator(SocialConfigRepository socialConfigRepository,
+                                          XmRequestContextHolder xmRequestContextHolder) {
         this.socialConfigRepository = socialConfigRepository;
+        this.xmRequestContextHolder = xmRequestContextHolder;
         initializeApis();
     }
 
@@ -41,9 +43,7 @@ public class DomainConnectionFactoryLocator implements ConnectionFactoryLocator 
 
     @Override
     public ConnectionFactory<?> getConnectionFactory(String providerId) {
-        HttpServletRequest req = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
-            .getRequest();
-        String domain = TenantContext.getCurrent().getDomain();
+        String domain = UaaUtils.getRequestDomain(xmRequestContextHolder);
         Optional<SocialConfig> config = socialConfigRepository.findOneByProviderIdAndDomain(providerId, domain);
         if (config.isPresent()) {
             SocialConfig sc = config.get();
@@ -60,6 +60,7 @@ public class DomainConnectionFactoryLocator implements ConnectionFactoryLocator 
                     break;
             }
         }
+
         throw new IllegalArgumentException("No provider config found for " + providerId);
     }
 

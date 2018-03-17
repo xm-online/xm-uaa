@@ -1,18 +1,23 @@
 package com.icthh.xm.uaa.repository;
 
+import com.icthh.xm.commons.permission.access.repository.ResourceRepository;
 import com.icthh.xm.uaa.domain.User;
+
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 /**
  * Spring Data JPA repository for the User entity.
  */
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, Long>, ResourceRepository {
 
     Optional<User> findOneByUserKey(String userKey);
 
@@ -20,17 +25,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findOneByResetKey(String resetKey);
 
-    @EntityGraph(attributePaths = "authorities")
-    User findOneWithAuthoritiesById(Long id);
-
     @EntityGraph(attributePaths = "logins")
     Optional<User> findOneWithLoginsByUserKey(String userKey);
 
-    @EntityGraph(attributePaths = {"logins", "authorities"})
-    Optional<User> findOneWithAuthoritiesAndLoginsByUserKey(String userKey);
-
     @Override
-    @EntityGraph(attributePaths = {"logins", "authorities"})
+    @EntityGraph(attributePaths = "logins")
     Page<User> findAll(Pageable pageable);
 
+    List<User> findByRoleKey(String roleKey);
+
+    @Override
+    @Query("SELECT u FROM User u WHERE u.userKey = :id")
+    User findById(@Param("id") Object id);
 }

@@ -1,10 +1,14 @@
 package com.icthh.xm.uaa.web.rest;
 
+import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
+import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
+import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasItem;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -13,35 +17,29 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.icthh.xm.commons.errors.ExceptionTranslator;
+import com.icthh.xm.commons.exceptions.spring.web.ExceptionTranslator;
+import com.icthh.xm.commons.permission.constants.RoleConstant;
+import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
+import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.commons.tenant.TenantContextUtils;
+import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.uaa.UaaApp;
-import com.icthh.xm.uaa.config.tenant.TenantContext;
+import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
-import com.icthh.xm.uaa.domain.Authority;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
-import com.icthh.xm.uaa.security.AuthoritiesConstants;
-import com.icthh.xm.uaa.service.MailService;
+import com.icthh.xm.uaa.service.UserMailService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.mapper.UserMapper;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
-import java.time.Instant;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import javax.persistence.EntityManager;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -51,10 +49,22 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.transaction.BeforeTransaction;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.persistence.EntityManager;
 
 /**
  * Test class for the UserResource REST controller.
@@ -62,7 +72,11 @@ import org.springframework.transaction.annotation.Transactional;
  * @see UserResource
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {UaaApp.class, XmOverrideConfiguration.class})
+@SpringBootTest(classes = {
+    UaaApp.class,
+    XmOverrideConfiguration.class
+})
+@WithMockUser(authorities = {"SUPER-ADMIN"})
 public class UserResourceIntTest {
 
     private static final Long DEFAULT_ID = 1L;
@@ -84,14 +98,16 @@ public class UserResourceIntTest {
     private static final String DEFAULT_LANGKEY = "en";
     private static final String UPDATED_LANGKEY = "fr";
 
+    private static final String ROLE_USER = "ROLE_USER";
+
     @Autowired
     private UserLoginRepository userLoginRepository;
 
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private MailService mailService;
+    @Mock
+    private UserMailService mailService;
 
     @Autowired
     private UserService userService;
@@ -111,6 +127,12 @@ public class UserResourceIntTest {
     @Autowired
     private EntityManager em;
 
+    @Autowired
+    private TenantContextHolder tenantContextHolder;
+
+    @Autowired
+    private XmRequestContextHolder xmRequestContextHolder;
+
     @Mock
     private ProfileEventProducer profileEventProducer;
 
@@ -118,21 +140,32 @@ public class UserResourceIntTest {
 
     private User user;
 
-    @BeforeClass
-    public static void init() {
-        TenantContext.setDefault();
-    }
+    @Autowired
+    private LepManager lepManager;
 
-    @AfterClass
-    public static void tearDown() {
-        TenantContext.clear();
+    @Autowired
+    private XmAuthenticationContextHolder xmAuthenticationContextHolder;
+
+    @BeforeTransaction
+    public void beforeTransaction() {
+        TenantContextUtils.setTenant(tenantContextHolder, DEFAULT_TENANT_KEY_VALUE);
+        lepManager.beginThreadContext(scopedContext -> {
+            scopedContext.setValue(THREAD_CONTEXT_KEY_TENANT_CONTEXT, tenantContextHolder.getContext());
+            scopedContext.setValue(BINDING_KEY_AUTH_CONTEXT, xmAuthenticationContextHolder.getContext());
+        });
+
     }
 
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
+        TenantContextUtils.setTenant(tenantContextHolder, DEFAULT_TENANT_KEY_VALUE);
+
         doNothing().when(profileEventProducer).send(any());
-        UserResource userResource = new UserResource(userLoginRepository, mailService, userService, profileEventProducer);
+        UserResource userResource = new UserResource(userLoginRepository,
+                                                     mailService,
+                                                     userService,
+                                                     profileEventProducer);
         this.restUserMockMvc = MockMvcBuilders.standaloneSetup(userResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)
@@ -142,9 +175,16 @@ public class UserResourceIntTest {
         user = createEntity(em);
     }
 
+    @After
+    @Override
+    public void finalize() {
+        tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
+        lepManager.endThreadContext();
+    }
+
     /**
      * Create a User.
-     *
+     * <p>
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which has a required relationship to the User entity.
      */
@@ -157,6 +197,7 @@ public class UserResourceIntTest {
         user.setImageUrl(DEFAULT_IMAGEURL);
         user.setLangKey(DEFAULT_LANGKEY);
         user.setUserKey("testUserKey");
+        user.setRoleKey(ROLE_USER);
 
         UserLogin userLogin = new UserLogin();
         userLogin.setUser(user);
@@ -177,8 +218,6 @@ public class UserResourceIntTest {
         int databaseSizeBeforeCreate = userRepository.findAll().size();
 
         // Create the User
-        Set<String> authorities = new HashSet<>();
-        authorities.add("ROLE_USER");
         UserLogin userLogin = new UserLogin();
         userLogin.setLogin("test");
         userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
@@ -188,17 +227,20 @@ public class UserResourceIntTest {
             DEFAULT_FIRSTNAME,
             DEFAULT_LASTNAME,
             true,
+            false,
+            null,
+            null,
             DEFAULT_IMAGEURL,
             DEFAULT_LANGKEY,
             null,
             null,
             null,
             null,
-            authorities, "test", null, null, null, Collections.singletonList(userLogin));
+            ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLogin), false, null);
 
         restUserMockMvc.perform(post("/api/users")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
+                                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                                    .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
             .andExpect(status().isCreated());
 
         // Validate the User in the database
@@ -216,8 +258,6 @@ public class UserResourceIntTest {
     public void createUserWithExistingId() throws Exception {
         int databaseSizeBeforeCreate = userRepository.findAll().size();
 
-        Set<String> authorities = new HashSet<>();
-        authorities.add("ROLE_USER");
         UserLogin userLogin = new UserLogin();
         userLogin.setLogin("test");
         userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
@@ -227,18 +267,21 @@ public class UserResourceIntTest {
             DEFAULT_FIRSTNAME,
             DEFAULT_LASTNAME,
             true,
+            false,
+            null,
+            null,
             DEFAULT_IMAGEURL,
             DEFAULT_LANGKEY,
             null,
             null,
             null,
             null,
-            authorities, "test", null, null, null, null);
+            ROLE_USER, "test", null, null, null, null, null, false, null);
 
         // An entity with an existing ID cannot be created, so this API call must fail
         restUserMockMvc.perform(post("/api/users")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
+                                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                                    .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
             .andExpect(status().isBadRequest());
 
         // Validate the User in the database
@@ -253,8 +296,6 @@ public class UserResourceIntTest {
         userRepository.saveAndFlush(user);
         int databaseSizeBeforeCreate = userRepository.findAll().size();
 
-        Set<String> authorities = new HashSet<>();
-        authorities.add("ROLE_USER");
         UserLogin userLogin = new UserLogin();
         userLogin.setLogin("test");
         userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
@@ -264,18 +305,21 @@ public class UserResourceIntTest {
             DEFAULT_FIRSTNAME,
             DEFAULT_LASTNAME,
             true,
+            false,
+            null,
+            null,
             DEFAULT_IMAGEURL,
             DEFAULT_LANGKEY,
             null,
             null,
             null,
             null,
-            authorities, "test", null, null, null, Collections.singletonList(userLogin));
+            ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLogin), false, null);
 
         // Create the User
         restUserMockMvc.perform(post("/api/users")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
+                                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                                    .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
             .andExpect(status().isBadRequest());
 
         // Validate the User in the database
@@ -291,7 +335,7 @@ public class UserResourceIntTest {
 
         // Get all the users
         restUserMockMvc.perform(get("/api/users?sort=id,desc")
-            .accept(MediaType.APPLICATION_JSON))
+                                    .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].userKey").value(hasItem("testUserKey")))
@@ -337,8 +381,6 @@ public class UserResourceIntTest {
         // Update the user
         User updatedUser = userRepository.findOne(user.getId());
 
-        Set<String> authorities = new HashSet<>();
-        authorities.add("ROLE_USER");
         UserLogin userLogin = new UserLogin();
         userLogin.setLogin("test");
         userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
@@ -348,17 +390,20 @@ public class UserResourceIntTest {
             UPDATED_FIRSTNAME,
             UPDATED_LASTNAME,
             updatedUser.isActivated(),
+            updatedUser.isTfaEnabled(),
+            updatedUser.getTfaOtpChannelType(),
+            null,
             UPDATED_IMAGEURL,
             UPDATED_LANGKEY,
             updatedUser.getCreatedBy(),
             updatedUser.getCreatedDate(),
             updatedUser.getLastModifiedBy(),
             updatedUser.getLastModifiedDate(),
-            authorities, "testUserKey", null, null, null, Collections.singletonList(userLogin));
+            ROLE_USER, "testUserKey", null, null, null, null, Collections.singletonList(userLogin), false, null);
 
         restUserMockMvc.perform(put("/api/users")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
+                                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                                    .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
             .andExpect(status().isOk());
 
         // Validate the User in the database
@@ -381,8 +426,6 @@ public class UserResourceIntTest {
         // Update the user
         User updatedUser = userRepository.findOne(user.getId());
 
-        Set<String> authorities = new HashSet<>();
-        authorities.add("ROLE_USER");
         UserLogin userLoginNew = new UserLogin();
         userLoginNew.setLogin("testMail3");
         userLoginNew.setTypeKey(UserLoginType.EMAIL.getValue());
@@ -392,17 +435,20 @@ public class UserResourceIntTest {
             UPDATED_FIRSTNAME,
             UPDATED_LASTNAME,
             updatedUser.isActivated(),
+            updatedUser.isTfaEnabled(),
+            updatedUser.getTfaOtpChannelType(),
+            null,
             UPDATED_IMAGEURL,
             UPDATED_LANGKEY,
             updatedUser.getCreatedBy(),
             updatedUser.getCreatedDate(),
             updatedUser.getLastModifiedBy(),
             updatedUser.getLastModifiedDate(),
-            authorities, "test", null, null, null, Collections.singletonList(userLoginNew));
+            ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLoginNew), false, null);
 
         restUserMockMvc.perform(put("/api/users")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
+                                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                                    .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
             .andExpect(status().isOk());
 
         // Validate the User in the database
@@ -437,13 +483,12 @@ public class UserResourceIntTest {
         userLogin.setLogin("testMail");
         userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
         anotherUser.getLogins().add(userLogin);
+        anotherUser.setRoleKey(ROLE_USER);
         userRepository.saveAndFlush(anotherUser);
 
         // Update the user
         User updatedUser = userRepository.findOne(user.getId());
 
-        Set<String> authorities = new HashSet<>();
-        authorities.add("ROLE_USER");
         UserLogin userLoginNew = new UserLogin();
         userLoginNew.setLogin("testMail");
         userLoginNew.setTypeKey(UserLoginType.EMAIL.getValue());
@@ -453,17 +498,20 @@ public class UserResourceIntTest {
             updatedUser.getFirstName(),
             updatedUser.getLastName(),
             updatedUser.isActivated(),
+            updatedUser.isTfaEnabled(),
+            updatedUser.getTfaOtpChannelType(),
+            null,
             updatedUser.getImageUrl(),
             updatedUser.getLangKey(),
             updatedUser.getCreatedBy(),
             updatedUser.getCreatedDate(),
             updatedUser.getLastModifiedBy(),
             updatedUser.getLastModifiedDate(),
-            authorities, "testNew", null, null, null, Collections.singletonList(userLoginNew));
+            ROLE_USER, "testNew", null, null, null, null, Collections.singletonList(userLoginNew), false, null);
 
         restUserMockMvc.perform(put("/api/users/logins")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
+                                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                                    .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
             .andExpect(status().isBadRequest());
     }
 
@@ -477,8 +525,6 @@ public class UserResourceIntTest {
         // Update the user
         User updatedUser = userRepository.findOne(user.getId());
 
-        Set<String> authorities = new HashSet<>();
-        authorities.add("ROLE_USER");
         UserLogin userLoginNew = new UserLogin();
         userLoginNew.setLogin("testMail3");
         userLoginNew.setTypeKey(UserLoginType.EMAIL.getValue());
@@ -488,17 +534,20 @@ public class UserResourceIntTest {
             "newFirstName",
             "newLastName",
             updatedUser.isActivated(),
+            updatedUser.isTfaEnabled(),
+            updatedUser.getTfaOtpChannelType(),
+            null,
             "newImageUrl",
             "fr",
             updatedUser.getCreatedBy(),
             updatedUser.getCreatedDate(),
             updatedUser.getLastModifiedBy(),
             updatedUser.getLastModifiedDate(),
-            authorities, "testUserKey", null, null, null, Collections.singletonList(userLoginNew));
+            "testUserKey", RoleConstant.SUPER_ADMIN, null, null, null, null, Collections.singletonList(userLoginNew), false, null);
 
         restUserMockMvc.perform(put("/api/users/logins")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
+                                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                                    .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
             .andExpect(status().isOk());
 
         // Validate the User in the database
@@ -515,13 +564,15 @@ public class UserResourceIntTest {
     @Test
     @Transactional
     public void deleteUser() throws Exception {
+        initSecurityContextWithUserKey("test");
+
         // Initialize the database
         userRepository.saveAndFlush(user);
         int databaseSizeBeforeDelete = userRepository.findAll().size();
 
         // Delete the user
         restUserMockMvc.perform(delete("/api/users/{userKey}", user.getUserKey())
-            .accept(TestUtil.APPLICATION_JSON_UTF8))
+                                    .accept(TestUtil.APPLICATION_JSON_UTF8))
             .andExpect(status().isOk());
 
         // Validate the database is empty
@@ -531,14 +582,21 @@ public class UserResourceIntTest {
 
     @Test
     @Transactional
-    public void getAllAuthorities() throws Exception {
-        restUserMockMvc.perform(get("/api/users/authorities")
-            .accept(TestUtil.APPLICATION_JSON_UTF8)
-            .contentType(TestUtil.APPLICATION_JSON_UTF8))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$").isArray())
-            .andExpect(jsonPath("$").value(containsInAnyOrder("ROLE_USER", "ROLE_ADMIN")));
+    public void forbidDeleteHimself() throws Exception {
+        initSecurityContextWithUserKey(user.getUserKey());
+
+        // Initialize the database
+        userRepository.saveAndFlush(user);
+        int databaseSizeBeforeDelete = userRepository.findAll().size();
+
+        // Delete the user
+        restUserMockMvc.perform(delete("/api/users/{userKey}", user.getUserKey())
+                                    .accept(TestUtil.APPLICATION_JSON_UTF8))
+            .andExpect(status().isBadRequest());
+
+        // Validate the database is empty
+        List<User> userList = userRepository.findAll();
+        assertThat(userList).hasSize(databaseSizeBeforeDelete);
     }
 
     @Test
@@ -564,12 +622,15 @@ public class UserResourceIntTest {
             DEFAULT_LASTNAME,
             DEFAULT_IMAGEURL,
             true,
+            false,
+            null,
+            null,
             DEFAULT_LANGKEY,
             DEFAULT_LOGIN,
             null,
             DEFAULT_LOGIN,
             null,
-            Stream.of(AuthoritiesConstants.USER).collect(Collectors.toSet()), "test", null, null, null, null);
+            "test", "testRoleKey", null, null, null, null, null, null, false, null);
         User user = userMapper.userDTOToUser(userDTO);
         assertThat(user.getId()).isEqualTo(DEFAULT_ID);
         assertThat(user.getFirstName()).isEqualTo(DEFAULT_FIRSTNAME);
@@ -581,7 +642,7 @@ public class UserResourceIntTest {
         assertThat(user.getCreatedDate()).isNotNull();
         assertThat(user.getLastModifiedBy()).isNull();
         assertThat(user.getLastModifiedDate()).isNotNull();
-        assertThat(user.getAuthorities()).extracting("name").containsExactly(AuthoritiesConstants.USER);
+        assertThat(user.getRoleKey()).isEqualTo("testRoleKey");
     }
 
     @Test
@@ -591,12 +652,7 @@ public class UserResourceIntTest {
         user.setCreatedDate(Instant.now());
         user.setLastModifiedBy(DEFAULT_LOGIN);
         user.setLastModifiedDate(Instant.now());
-
-        Set<Authority> authorities = new HashSet<>();
-        Authority authority = new Authority();
-        authority.setName(AuthoritiesConstants.USER);
-        authorities.add(authority);
-        user.setAuthorities(authorities);
+        user.setRoleKey(ROLE_USER);
 
         UserDTO userDTO = userMapper.userToUserDTO(user);
 
@@ -610,31 +666,18 @@ public class UserResourceIntTest {
         assertThat(userDTO.getCreatedDate()).isEqualTo(user.getCreatedDate());
         assertThat(userDTO.getLastModifiedBy()).isEqualTo(DEFAULT_LOGIN);
         assertThat(userDTO.getLastModifiedDate()).isEqualTo(user.getLastModifiedDate());
-        assertThat(userDTO.getAuthorities()).containsExactly(AuthoritiesConstants.USER);
+        assertThat(userDTO.getRoleKey()).isEqualTo(ROLE_USER);
         assertThat(userDTO.toString()).isNotNull();
     }
 
-    @Test
-    public void testAuthorityEquals() throws Exception {
-        Authority authorityA = new Authority();
-        assertThat(authorityA).isEqualTo(authorityA);
-        assertThat(authorityA).isNotEqualTo(null);
-        assertThat(authorityA).isNotEqualTo(new Object());
-        assertThat(authorityA.hashCode()).isEqualTo(0);
-        assertThat(authorityA.toString()).isNotNull();
+    private void initSecurityContextWithUserKey(String userKey) {
+        Map<String, String> detailsMap = new HashMap<>();
+        detailsMap.put("user_key", userKey);
 
-        Authority authorityB = new Authority();
-        assertThat(authorityA).isEqualTo(authorityB);
-
-        authorityB.setName(AuthoritiesConstants.ADMIN);
-        assertThat(authorityA).isNotEqualTo(authorityB);
-
-        authorityA.setName(AuthoritiesConstants.USER);
-        assertThat(authorityA).isNotEqualTo(authorityB);
-
-        authorityB.setName(AuthoritiesConstants.USER);
-        assertThat(authorityA).isEqualTo(authorityB);
-        assertThat(authorityA.hashCode()).isEqualTo(authorityB.hashCode());
+        OAuth2AuthenticationDetails details = mock(OAuth2AuthenticationDetails.class);
+        when(details.getDecodedDetails()).thenReturn(detailsMap);
+        OAuth2Authentication authentication = mock(OAuth2Authentication.class);
+        when(authentication.getDetails()).thenReturn(details);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
-
 }

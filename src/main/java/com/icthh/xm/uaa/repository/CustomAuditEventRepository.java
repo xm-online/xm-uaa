@@ -3,7 +3,6 @@ package com.icthh.xm.uaa.repository;
 import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.config.audit.AuditEventConverter;
 import com.icthh.xm.uaa.domain.PersistentAuditEvent;
-
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.stereotype.Repository;
@@ -26,7 +25,7 @@ public class CustomAuditEventRepository implements AuditEventRepository {
     private final AuditEventConverter auditEventConverter;
 
     public CustomAuditEventRepository(PersistenceAuditEventRepository persistenceAuditEventRepository,
-            AuditEventConverter auditEventConverter) {
+                                      AuditEventConverter auditEventConverter) {
 
         this.persistenceAuditEventRepository = persistenceAuditEventRepository;
         this.auditEventConverter = auditEventConverter;
@@ -60,11 +59,11 @@ public class CustomAuditEventRepository implements AuditEventRepository {
         return auditEventConverter.convertToAuditEvent(persistentAuditEvents);
     }
 
-    @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Override
     public void add(AuditEvent event) {
-        if (!AUTHORIZATION_FAILURE.equals(event.getType()) &&
-            !Constants.ANONYMOUS_USER.equals(event.getPrincipal())) {
+        if (!AUTHORIZATION_FAILURE.equals(event.getType())
+            && !Constants.ANONYMOUS_USER.equals(event.getPrincipal())) {
 
             PersistentAuditEvent persistentAuditEvent = new PersistentAuditEvent();
             persistentAuditEvent.setPrincipal(event.getPrincipal());

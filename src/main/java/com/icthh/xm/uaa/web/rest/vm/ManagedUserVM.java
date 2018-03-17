@@ -1,15 +1,17 @@
 package com.icthh.xm.uaa.web.rest.vm;
 
+import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.UserLogin;
+import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.validator.constraints.NotBlank;
 
-import javax.validation.constraints.Size;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import javax.validation.constraints.Size;
 
 /**
  * View Model extending the UserDTO, which is meant to be used in the user management UI.
@@ -22,6 +24,8 @@ public class ManagedUserVM extends UserDTO {
 
     @Size(min = PASSWORD_MIN_LENGTH, max = PASSWORD_MAX_LENGTH)
     @NotBlank
+    @Getter
+    @Setter
     private String password;
 
     @Getter
@@ -35,35 +39,78 @@ public class ManagedUserVM extends UserDTO {
     /**
      * Constructor.
      *
-     * @param id id
-     * @param password password
-     * @param firstName first name
-     * @param lastName last name
-     * @param activated activated
-     * @param imageUrl image url
-     * @param langKey langKey
-     * @param createdBy createdBy
-     * @param createdDate createdDate
-     * @param lastModifiedBy lastModifiedBy
-     * @param lastModifiedDate lastModifiedDate
-     * @param authorities authorities
-     * @param userKey user key
-     * @param logins logins
+     * @param id
+     * @param password
+     * @param firstName
+     * @param lastName
+     * @param activated
+     * @param tfaEnabled
+     * @param tfaOtpChannelType
+     * @param tfaOtpChannelSpec
+     * @param imageUrl
+     * @param langKey
+     * @param createdBy
+     * @param createdDate
+     * @param lastModifiedBy
+     * @param lastModifiedDate
+     * @param userKey
+     * @param roleKey
+     * @param accessTokenValiditySeconds
+     * @param refreshTokenValiditySeconds
+     * @param tfaAccessTokenValiditySeconds
+     * @param data
+     * @param logins
+     * @param autoLogoutEnabled
+     * @param autoLogoutTimeoutSeconds
      */
-    public ManagedUserVM(Long id, String password, String firstName, String lastName,
-                         boolean activated, String imageUrl, String langKey,
-                         String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate,
-                         Set<String> authorities, String userKey, Integer accessTokenValiditySeconds,
-                         Integer refreshTokenValiditySeconds, Map<String, Object> data, List<UserLogin> logins) {
+    public ManagedUserVM(Long id,
+                         String password,
+                         String firstName,
+                         String lastName,
+                         boolean activated,
+                         boolean tfaEnabled,
+                         OtpChannelType tfaOtpChannelType,
+                         TfaOtpChannelSpec tfaOtpChannelSpec,
+                         String imageUrl,
+                         String langKey,
+                         String createdBy,
+                         Instant createdDate,
+                         String lastModifiedBy,
+                         Instant lastModifiedDate,
+                         String userKey,
+                         String roleKey,
+                         Integer accessTokenValiditySeconds,
+                         Integer refreshTokenValiditySeconds,
+                         Integer tfaAccessTokenValiditySeconds,
+                         Map<String, Object> data,
+                         List<UserLogin> logins,
+                         boolean autoLogoutEnabled,
+                         Integer autoLogoutTimeoutSeconds) {
 
-        super(id, firstName, lastName, imageUrl, activated, langKey,
-            createdBy, createdDate, lastModifiedBy, lastModifiedDate, authorities, userKey, accessTokenValiditySeconds,
-            refreshTokenValiditySeconds, data, logins);
+        super(id,
+              firstName,
+              lastName,
+              imageUrl,
+              activated,
+              tfaEnabled,
+              tfaOtpChannelType,
+              tfaOtpChannelSpec,
+              langKey,
+              createdBy,
+              createdDate,
+              lastModifiedBy,
+              lastModifiedDate,
+              userKey,
+              roleKey,
+              accessTokenValiditySeconds,
+              refreshTokenValiditySeconds,
+              tfaAccessTokenValiditySeconds,
+              data,
+              logins,
+              null,
+              autoLogoutEnabled,
+              autoLogoutTimeoutSeconds);
         this.password = password;
-    }
-
-    public String getPassword() {
-        return password;
     }
 
     @Override
@@ -71,4 +118,5 @@ public class ManagedUserVM extends UserDTO {
         return "ManagedUserVM{"
             + "} " + super.toString();
     }
+
 }

@@ -5,7 +5,9 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import com.icthh.xm.commons.errors.exception.BusinessException;
+import com.icthh.xm.commons.exceptions.BusinessException;
+import com.icthh.xm.commons.lep.LogicExtensionPoint;
+import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.RegistrationLog;
 import com.icthh.xm.uaa.repository.RegistrationLogRepository;
@@ -21,6 +23,7 @@ import java.util.Optional;
 @Slf4j
 @RequiredArgsConstructor
 @Service
+@LepService(group = "service.captcha")
 public class CaptchaService {
     private static final int DEFAULT_CAPTCHA_PERIOD = 3600;
     private final ApplicationProperties applicationProperties;
@@ -47,6 +50,7 @@ public class CaptchaService {
         }
     }
 
+    @LogicExtensionPoint("IsCaptchaNeed")
     public boolean isCaptchaNeed(String ipAddress) {
         long captchaPeriod = getRegistrationCaptchaPeriodSeconds();
         Optional<RegistrationLog> registration = registrationLogRepository.findOneByIpAddress(ipAddress);

@@ -1,12 +1,16 @@
 package com.icthh.xm.uaa.repository.util;
 
-import com.icthh.xm.uaa.config.Constants;
+import static com.icthh.xm.uaa.config.Constants.SYSTEM_EVENT_PROP_IMAGE_URL;
+import static com.icthh.xm.uaa.config.Constants.SYSTEM_EVENT_PROP_LAST_MODIFIED_DATE;
+import static com.icthh.xm.uaa.config.Constants.SYSTEM_EVENT_PROP_ROLE_KEY;
+
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.kafka.SystemEvent;
-import java.time.Instant;
-import java.util.Map;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
+
+import java.time.Instant;
+import java.util.Map;
 
 @UtilityClass
 public class SystemEventMapper {
@@ -17,30 +21,21 @@ public class SystemEventMapper {
      * @param user the user.
      */
     public static void toUser(SystemEvent event, User user) {
-        Map<String, Object> data = event.getData();
+        Map<String, Object> data = event.getDataMap();
 
-        user.setFirstName("");
-        user.setLastName("");
-        String name = String.valueOf(data.get(Constants.NAME));
-        if (StringUtils.isNotBlank(name)) {
-            String[] nameArr = org.apache.commons.lang3.StringUtils.split(name, " ", 2);
+        user.setImageUrl(String.valueOf(data.get(SYSTEM_EVENT_PROP_IMAGE_URL)));
 
-            user.setFirstName(nameArr[0]);
+        String updateDateStr = String.valueOf(data.get(SYSTEM_EVENT_PROP_LAST_MODIFIED_DATE));
+        Instant updateDate = StringUtils.isNotBlank(updateDateStr) ? Instant.parse(updateDateStr) : Instant.now();
 
-            if (nameArr.length == 2) {
-                user.setLastName(nameArr[1]);
-            }
+        Object roleKey = data.get(SYSTEM_EVENT_PROP_ROLE_KEY);
+        if (roleKey != null && StringUtils.isNotBlank(roleKey.toString())) {
+            user.setRoleKey(roleKey.toString());
         }
 
-        user.setImageUrl(String.valueOf(data.get(Constants.IMAGE_URL)));
+        user.setLastModifiedDate(updateDate);
 
-        String updateDate = String.valueOf(data.get(Constants.LAST_MODIFIED_DATE));
-        if (StringUtils.isNotBlank(updateDate)) {
-            user.setLastModifiedDate(Instant.parse(updateDate));
-        } else {
-            user.setLastModifiedDate(Instant.now());
-        }
-        user.setLastModifiedBy(event.getTenantInfo().getUserLogin());
-
+        user.setLastModifiedBy(event.getUserLogin());
     }
+
 }

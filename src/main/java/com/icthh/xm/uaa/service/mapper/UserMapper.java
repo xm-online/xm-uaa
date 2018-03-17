@@ -1,10 +1,7 @@
 package com.icthh.xm.uaa.service.mapper;
 
-import com.icthh.xm.uaa.domain.Authority;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.service.dto.UserDTO;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 /**
@@ -35,19 +32,8 @@ public class UserMapper {
             user.setImageUrl(userDTO.getImageUrl());
             user.setActivated(userDTO.isActivated());
             user.setLangKey(userDTO.getLangKey());
-            Set<Authority> authorities = this.authoritiesFromStrings(userDTO.getAuthorities());
-            if (authorities != null) {
-                user.setAuthorities(authorities);
-            }
+            user.setRoleKey(userDTO.getRoleKey());
             return user;
         }
-    }
-
-    private Set<Authority> authoritiesFromStrings(Set<String> strings) {
-        return strings.stream().map(string -> {
-            Authority auth = new Authority();
-            auth.setName(string);
-            return auth;
-        }).collect(Collectors.toSet());
     }
 }

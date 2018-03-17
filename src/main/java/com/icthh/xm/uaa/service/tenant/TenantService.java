@@ -2,12 +2,17 @@ package com.icthh.xm.uaa.service.tenant;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
 import com.icthh.xm.commons.config.client.repository.TenantListRepository;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
+import com.icthh.xm.commons.permission.config.PermissionProperties;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.config.Constants;
 import java.io.InputStream;
+import java.util.HashMap;
+
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -22,10 +27,14 @@ import org.springframework.stereotype.Service;
 @IgnoreLogginAspect
 public class TenantService {
 
+    private static final String API = "/api";
+
     private final TenantDatabaseService databaseService;
     private final TenantListRepository tenantListRepository;
     private final TenantConfigRepository tenantConfigRepository;
     private final ApplicationProperties applicationProperties;
+    private final PermissionProperties permissionProperties;
+    private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
     /**
      * Create tenant.
@@ -41,6 +50,8 @@ public class TenantService {
             databaseService.migrate(tenant);
             addUaaSpecification(tenant);
             addLoginsSpecification(tenant);
+            addRoleSpecification(tenant);
+            addPermissionSpecification(tenant);
             log.info("STOP  - SETUP:CreateTenant: tenantKey: {}, result: OK, time = {} ms",
                 tenant, stopWatch.getTime());
         } catch (Exception e) {
@@ -66,7 +77,10 @@ public class TenantService {
                 "/" + applicationProperties.getTenantPropertiesName());
             tenantConfigRepository.deleteConfig(tenant.toUpperCase(),
                 "/" + applicationProperties.getTenantLoginPropertiesName());
-
+            tenantConfigRepository.deleteConfigFullPath(tenant.toUpperCase(),
+                API + permissionProperties.getRolesSpecPath());
+            tenantConfigRepository.deleteConfigFullPath(tenant.toUpperCase(),
+                API + permissionProperties.getPermissionsSpecPath());
 
             log.info("STOP  - SETUP:DeleteTenant: tenantKey: {}, result: OK, time = {} ms",
                 tenant, stopWatch.getTime());
@@ -99,6 +113,23 @@ public class TenantService {
         InputStream in = new ClassPathResource(Constants.DEFAULT_CONFIG_PATH).getInputStream();
         String specification = IOUtils.toString(in, UTF_8);
         tenantConfigRepository.updateConfig(tenantName, "/" + specificationName, specification);
+    }
+
+    @SneakyThrows
+    private void addRoleSpecification(String tenantName) {
+        String rolesYml = mapper.writeValueAsString(new HashMap<>());
+
+        tenantConfigRepository.updateConfigFullPath(tenantName,
+            API + permissionProperties.getRolesSpecPath(), rolesYml);
+    }
+
+    @SneakyThrows
+    private void addPermissionSpecification(String tenantName) {
+
+        String permissionsYml = mapper.writeValueAsString(new HashMap<>());
+
+        tenantConfigRepository.updateConfigFullPath(tenantName, API + permissionProperties.getPermissionsSpecPath(),
+            permissionsYml);
     }
 
     @SneakyThrows

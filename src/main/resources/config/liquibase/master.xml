@@ -11,7 +11,15 @@
     <include file="classpath:config/liquibase/changelog/20170913150000_account_tokens.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20170927090500_drop_social_config_table.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20170927141000_recaptcha.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20170929103056_added_entity_Client.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20171002000000_improve_authority.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20170929165500_add_data_field.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20171010113400_add_activation_data_key.xml" relativeToChangelogFile="false"/>
+
+    <include file="classpath:config/liquibase/changelog/20171005151800_client_tokens.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20180110150000_modify_imageurl_and_token_size.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20180130010000_add_jhi_user_tfa_otp_fields.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20180208010000_add_jhi_user_auto_logout_fields.xml" relativeToChangelogFile="false"/>
     <!-- jhipster-needle-liquibase-add-changelog - JHipster will add liquibase changelogs here -->
     <!-- jhipster-needle-liquibase-add-constraints-changelog - JHipster will add liquibase constraints changelogs here -->
 </databaseChangeLog>

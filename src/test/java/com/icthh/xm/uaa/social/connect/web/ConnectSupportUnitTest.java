@@ -1,13 +1,16 @@
 package com.icthh.xm.uaa.social.connect.web;
 
+import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_DOMAIN;
+import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_PORT;
+import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_PROTOCOL;
+import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_WEB_APP;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
-import com.icthh.xm.uaa.config.tenant.TenantContext;
-import com.icthh.xm.uaa.config.tenant.TenantInfo;
-import javax.servlet.http.HttpServletRequest;
+import com.icthh.xm.uaa.commons.XmRequestContext;
+import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -28,6 +31,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.context.request.NativeWebRequest;
 
+import javax.servlet.http.HttpServletRequest;
+
 public class ConnectSupportUnitTest {
 
     @InjectMocks
@@ -35,6 +40,11 @@ public class ConnectSupportUnitTest {
 
     @Mock
     private SessionStrategy sessionStrategy;
+
+    @Mock
+    private XmRequestContextHolder xmRequestContextHolder;
+    @Mock
+    private XmRequestContext xmRequestContext;
 
     @Mock
     private ConnectionFactory connectionFactory;
@@ -69,7 +79,13 @@ public class ConnectSupportUnitTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        TenantContext.setCurrent(new TenantInfo("tenant", "userLogin", "", "protocol", "domain", "port", ""));
+
+        when(xmRequestContextHolder.getContext()).thenReturn(xmRequestContext);
+        when(xmRequestContext.getValue(eq(REQUEST_CTX_WEB_APP), eq(String.class))).thenReturn("");
+        when(xmRequestContext.getValue(eq(REQUEST_CTX_PROTOCOL), eq(String.class))).thenReturn("protocol");
+        when(xmRequestContext.getValue(eq(REQUEST_CTX_DOMAIN), eq(String.class))).thenReturn("domain");
+        when(xmRequestContext.getValue(eq(REQUEST_CTX_PORT), eq(String.class))).thenReturn("port");
+
         when(request.getNativeRequest(eq(HttpServletRequest.class))).thenReturn(httpRequest);
         when(oauth1ConnectionFactory.getOAuthOperations()).thenReturn(oauth1Operations);
         when(oauth2ConnectionFactory.getOAuthOperations()).thenReturn(oauth2Operations);
@@ -77,7 +93,7 @@ public class ConnectSupportUnitTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testBuildOuathUrlFactoryNotSupported() {
-        String result = target.buildOAuthUrl(connectionFactory, request, new LinkedMultiValueMap<>());
+        target.buildOAuthUrl(connectionFactory, request, new LinkedMultiValueMap<>());
     }
 
     @Test
@@ -116,7 +132,7 @@ public class ConnectSupportUnitTest {
         when(oauth2ConnectionFactory.supportsStateParameter()).thenReturn(true);
         Mockito.<Connection<?>>when(oauth2ConnectionFactory.createConnection(eq(accessGrant))).thenReturn(connection);
 
-        Connection<?> result = target.completeConnection(oauth2ConnectionFactory, request);
+        target.completeConnection(oauth2ConnectionFactory, request);
     }
 
     @Test(expected = HttpClientErrorException.class)
@@ -127,7 +143,7 @@ public class ConnectSupportUnitTest {
         when(request.getParameter(eq("state"))).thenReturn("testState");
         when(sessionStrategy.getAttribute(eq(request), eq("oauth2State"))).thenReturn("testState");
 
-        Connection<?> result = target.completeConnection(oauth2ConnectionFactory, request);
+        target.completeConnection(oauth2ConnectionFactory, request);
     }
 
     @Test
@@ -139,7 +155,6 @@ public class ConnectSupportUnitTest {
         Mockito.<Connection<?>>when(oauth2ConnectionFactory.createConnection(eq(accessGrant))).thenReturn(connection);
 
         Connection<?> result = target.completeConnection(oauth2ConnectionFactory, request);
-
         assertEquals(connection, result);
     }
 }

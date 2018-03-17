@@ -17,6 +17,7 @@ import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,9 +40,10 @@ public class TenantPropertiesResource {
         @ApiResponse(code = 500, message = "Internal server error")})
     @SneakyThrows
     @Timed
-    public UaaValidationVM validate(@RequestBody String timelineYml) {
+    @PreAuthorize("hasPermission(null, 'UAA.TENANT.PROPERTIES.VALIDATE')")
+    public UaaValidationVM validate(@RequestBody String uaaYml) {
         try {
-            mapper.readValue(timelineYml, TenantProperties.class);
+            mapper.readValue(uaaYml, TenantProperties.class);
             return UaaValidationVM.builder().isValid(true).build();
         } catch (JsonParseException | JsonMappingException e) {
             return UaaValidationVM.builder().isValid(false).errorMessage(e.getLocalizedMessage()).build();
@@ -55,8 +57,9 @@ public class TenantPropertiesResource {
         @ApiResponse(code = 500, message = "Internal server error")})
     @SneakyThrows
     @Timed
-    public ResponseEntity<Void> updateTenantProperties(@RequestBody String timelineYml) {
-        tenantPropertiesService.updateTenantProps(timelineYml);
+    @PreAuthorize("hasPermission({'uaaYml': #uaaYml}, 'UAA.TENANT.PROPERTIES.UPDATE')")
+    public ResponseEntity<Void> updateTenantProperties(@RequestBody String uaaYml) {
+        tenantPropertiesService.updateTenantProps(uaaYml);
         return ResponseEntity.ok().build();
     }
 
