@@ -49,6 +49,12 @@ spring:
         host: localhost
         port: 25
         protocol: smtp
+        properties:
+            mail:
+                smtp:
+                    starttls.enable: false
+                    auth: false
+                    starttls.required: false
     kafka:
         consumer:
             group-id: uaa
