@@ -18,6 +18,8 @@
         The initial schema has the '00000000000001' id, so that it is over-written if we re-generate it.
     -->
     <changeSet id="00000000000001" author="jhipster">
+        <validCheckSum>7:baf11f5e81cee6b1ddc259d7bc444415</validCheckSum>
+        <validCheckSum>7:bc2802b76d606c6a089b80a7996e38b2</validCheckSum>
 
         <createTable tableName="social_config">
             <column name="id" type="bigint" autoIncrement="${autoIncrement}">
