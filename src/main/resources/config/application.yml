@@ -49,6 +49,12 @@ spring:
         host: localhost
         port: 25
         protocol: smtp
+        properties:
+            mail:
+                smtp:
+                    starttls.enable: false
+                    auth: false
+                    starttls.required: false
     kafka:
         consumer:
             group-id: uaa
@@ -116,7 +122,7 @@ xm-config:
     xm-config-url: http://config
     hazelcast:
         hazelcast-config-url: classpath:./config/hazelcast-consul.xml
-        interfaces:
+        interfaces: 192.168.1.*,10.0.0.*
         consul-host: ${spring.cloud.consul.host}
         consul-port: ${spring.cloud.consul.port}
         consul-service-name: xm-tenant-config-hazelcast-cluster
@@ -124,7 +130,7 @@ xm-config:
         consul-service-tags: 'hazelcast'
         consul-discovery-delay-ms: 10000
         group-name: xm-tenant-config-hazelcast-cluster
-        group-pass:
+        group-pass: password
 
 aspects:
     rest-call-logging: true
@@ -143,8 +149,8 @@ application:
     tenant-properties-name: uaa.yml
     tenant-login-properties-path-pattern: /config/tenants/{tenantName}/uaa/${application.tenant-login-properties-name}
     tenant-login-properties-name: logins.yml
-    tenant-list: XM, DEMO
-    tenant-ignored-path-list: /v2/api-docs, /swagger-resources/configuration/ui, /management/health, /oauth/token_key
+    email-path-pattern: /config/tenants/{tenantName}/uaa/emails/{langKey}/{fileName}.ftl
+    tenant-ignored-path-list: /v2/api-docs, /swagger-resources/configuration/ui, /management/health, /oauth/token_key, /h2-console
     kafka-system-topic: system_topic
     kafka-system-queue: system_queue
     kafka-enabled: true
@@ -153,7 +159,13 @@ application:
         delay: 1000 #in milliseconds
         multiplier: 2
     reCaptcha:
-        url:
-        secretKey: -
+        url: https://www.google.com/recaptcha/api/siteverify
+        secretKey:
         publicKey:
-        registration-captcha-period-seconds:
+        registration-captcha-period-seconds: 21600
+    client-grant-types: client_credentials, refresh_token, password, tfa_otp_token
+    client-scope: openid
+    default-client-id:
+    default-client-secret:
+    lep:
+        tenant-script-storage: XM_MS_CONFIG

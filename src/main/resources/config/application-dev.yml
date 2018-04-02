@@ -12,7 +12,6 @@
 # Full reference is available at:
 # http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
 # ===================================================================
-
 spring:
     profiles:
         active: dev
@@ -37,7 +36,7 @@ spring:
         password:
     h2:
         console:
-            enabled: false
+            enabled: true
     jpa:
         database-platform: io.github.jhipster.domain.util.FixedH2Dialect
         database: H2
@@ -47,7 +46,7 @@ spring:
             hibernate.cache.use_second_level_cache: true
             hibernate.cache.use_query_cache: false
             hibernate.generate_statistics: true
-            hibernate.cache.region.factory_class: com.hazelcast.hibernate.HazelcastCacheRegionFactory
+            hibernate.cache.region.factory_class: com.hazelcast.hibernate.HazelcastLocalCacheRegionFactory
             hibernate.cache.hazelcast.instance_name: uaa
             hibernate.cache.use_minimal_puts: true
             hibernate.cache.hazelcast.use_lite_member: true
@@ -119,8 +118,8 @@ jhipster:
         max-age: 1800
     security:
         client-authorization:
-            client-id: internal
-            client-secret: internal
+            client-id:
+            client-secret:
     mail: # specific JHipster mail property, for standard properties see MailProperties
         from: <tenantname>@xm-online.com
         base-url: http://127.0.0.1:9999
@@ -155,4 +154,9 @@ jhipster:
 
 application:
 
-
+## ==================================================================
+##   uncomment to read LEPs from flocal file storage
+##   filestorage can be created as link to xm-sm-config-repository forlder using command:
+##   'ln -s <xm-sm-config-repository> ~/xm-online'
+#    lep:
+#        tenant-script-storage: FILE

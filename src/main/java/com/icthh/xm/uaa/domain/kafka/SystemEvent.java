@@ -2,23 +2,24 @@ package com.icthh.xm.uaa.domain.kafka;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.icthh.xm.uaa.config.tenant.TenantInfo;
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
+
+import java.time.Instant;
+import java.util.Collections;
+import java.util.Map;
 
 @Data
 public class SystemEvent {
 
     private String eventId;
     private String messageSource;
-    private TenantInfo tenantInfo;
+    private String tenantKey;
+    private String userLogin;
     private String eventType;
     @JsonIgnore
     private Instant startDate = Instant.now();
-    private Map<String, Object> data = new HashMap<>();
+    private Object data;
 
     @JsonProperty("startDate")
     public String getStartDate() {
@@ -31,4 +32,16 @@ public class SystemEvent {
         }
     }
 
+    /**
+     * Get data as Map.
+     * @return map with data
+     */
+    @JsonIgnore
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getDataMap() {
+        if (data instanceof Map) {
+            return (Map<String, Object>) data;
+        }
+        return Collections.emptyMap();
+    }
 }

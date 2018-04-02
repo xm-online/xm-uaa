@@ -4,6 +4,7 @@ import static org.mockito.Mockito.*;
 
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
 import com.icthh.xm.commons.config.client.repository.TenantListRepository;
+import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -35,5 +36,8 @@ public class TenantConfigMockConfiguration {
         return  tenantConfigRepository;
     }
 
-
+    @Bean
+    public TenantConfigService tenantContigService() {
+        return mock(TenantConfigService.class);
+    }
 }

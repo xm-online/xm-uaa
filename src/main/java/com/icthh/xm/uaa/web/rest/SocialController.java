@@ -2,8 +2,8 @@ package com.icthh.xm.uaa.web.rest;
 
 import static java.util.stream.Collectors.toList;
 
-import com.icthh.xm.uaa.config.tenant.TenantContext;
-import com.icthh.xm.uaa.config.tenant.TenantUtil;
+import com.icthh.xm.uaa.commons.UaaUtils;
+import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.domain.SocialConfig;
 import com.icthh.xm.uaa.repository.SocialConfigRepository;
 import com.icthh.xm.uaa.service.SocialService;
@@ -11,10 +11,10 @@ import com.icthh.xm.uaa.social.connect.web.ConnectSupport;
 import com.icthh.xm.uaa.social.connect.web.ProviderSignInAttempt;
 import com.icthh.xm.uaa.social.connect.web.ProviderSignInUtils;
 import com.icthh.xm.uaa.social.connect.web.SessionStrategy;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.social.connect.Connection;
 import org.springframework.social.connect.ConnectionFactory;
 import org.springframework.social.connect.ConnectionFactoryLocator;
@@ -35,6 +35,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.view.RedirectView;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/social")
@@ -60,10 +62,17 @@ public class SocialController {
 
     private final SocialConfigRepository socialConfigRepository;
 
-    public SocialController(SocialService socialService, ProviderSignInUtils providerSignInUtils,
-                            ConnectionFactoryLocator connectionFactoryLocator, UsersConnectionRepository usersConnectionRepository,
-                            SignInAdapter signInAdapter, ConnectSupport connectSupport, SessionStrategy sessionStrategy,
-                            SocialConfigRepository socialConfigRepository) {
+    private final XmRequestContextHolder xmRequestContextHolder;
+
+    public SocialController(SocialService socialService,
+                            ProviderSignInUtils providerSignInUtils,
+                            ConnectionFactoryLocator connectionFactoryLocator,
+                            UsersConnectionRepository usersConnectionRepository,
+                            SignInAdapter signInAdapter,
+                            ConnectSupport connectSupport,
+                            SessionStrategy sessionStrategy,
+                            SocialConfigRepository socialConfigRepository,
+                            XmRequestContextHolder xmRequestContextHolder) {
         this.socialService = socialService;
         this.providerSignInUtils = providerSignInUtils;
         this.connectionFactoryLocator = connectionFactoryLocator;
@@ -72,20 +81,22 @@ public class SocialController {
         this.connectSupport = connectSupport;
         this.sessionStrategy = sessionStrategy;
         this.socialConfigRepository = socialConfigRepository;
+        this.xmRequestContextHolder = xmRequestContextHolder;
     }
 
     @GetMapping("/signup")
+    @PreAuthorize("hasPermission(null, 'SOCIAL.SIGN_UP')")
     public RedirectView signUp(WebRequest webRequest,
-        @CookieValue(name = "NG_TRANSLATE_LANG_KEY", required = false, defaultValue = "\"en\"") String langKey) {
+                               @CookieValue(name = "NG_TRANSLATE_LANG_KEY", required = false, defaultValue = "\"en\"") String langKey) {
         String providerId = null;
         try {
             Connection<?> connection = providerSignInUtils.getConnectionFromSession(webRequest);
             providerId = connection.getKey().getProviderId();
             socialService.createSocialUser(connection, langKey.replace("\"", ""));
             return redirect(URIBuilder
-                            .fromUri(TenantUtil.getApplicationUrl() + "/social-register/"
-                                            + connection.getKey().getProviderId())
-                            .queryParam("success", "true").build().toString());
+                                .fromUri(UaaUtils.getApplicationUrl(xmRequestContextHolder) + "/social-register/"
+                                             + connection.getKey().getProviderId())
+                                .queryParam("success", "true").build().toString());
         } catch (Exception e) {
             log.error("Exception creating social user: ", e);
             return redirectOnError(providerId);
@@ -93,6 +104,7 @@ public class SocialController {
     }
 
     @PostMapping(value = "/signin/{providerId}")
+    @PreAuthorize("hasPermission(null, 'SOCIAL.SIGN_IN')")
     public RedirectView signIn(@PathVariable String providerId, NativeWebRequest request) {
         try {
             ConnectionFactory<?> connectionFactory = connectionFactoryLocator.getConnectionFactory(providerId);
@@ -119,7 +131,7 @@ public class SocialController {
 
     @GetMapping(value = "/signin/{providerId}", params = "code")
     public RedirectView oauth2Callback(@PathVariable String providerId, @RequestParam("code") String code,
-        NativeWebRequest request) {
+                                       NativeWebRequest request) {
         try {
             OAuth2ConnectionFactory<?> connectionFactory = (OAuth2ConnectionFactory<?>) connectionFactoryLocator
                 .getConnectionFactory(providerId);
@@ -132,8 +144,9 @@ public class SocialController {
     }
 
     @GetMapping("/providers")
+    @PreAuthorize("hasPermission(null, 'SOCIAL.PROVIDERS.GET_LIST')")
     public ResponseEntity<List<String>> providers() {
-        String domain = TenantContext.getCurrent().getDomain();
+        String domain = UaaUtils.getRequestDomain(xmRequestContextHolder);
         return ResponseEntity.ok(
             socialConfigRepository.findByDomain(domain)
                 .stream()
@@ -143,7 +156,7 @@ public class SocialController {
     }
 
     private RedirectView handleSignIn(Connection<?> connection, ConnectionFactory<?> connectionFactory,
-        NativeWebRequest request) {
+                                      NativeWebRequest request) {
         List<String> userIds = usersConnectionRepository.findUserIdsWithConnection(connection);
         if (userIds.isEmpty()) {
             ProviderSignInAttempt signInAttempt = new ProviderSignInAttempt(connection);
@@ -168,11 +181,12 @@ public class SocialController {
     }
 
     private String getSignUpUrl() {
-        return TenantUtil.getApplicationUrl() + "/uaa/social/signup";
+        return UaaUtils.getApplicationUrl(xmRequestContextHolder) + "/uaa/social/signup";
     }
 
     private RedirectView redirectOnError(String providerId) {
-        return redirect(URIBuilder.fromUri(TenantUtil.getApplicationUrl() + "/social-register/" + providerId)
-            .queryParam("success", "false").build().toString());
+        return redirect(URIBuilder.fromUri(UaaUtils.getApplicationUrl(xmRequestContextHolder) + "/social-register/" + providerId)
+                            .queryParam("success", "false").build().toString());
     }
+
 }

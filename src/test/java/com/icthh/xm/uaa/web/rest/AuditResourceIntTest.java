@@ -1,15 +1,23 @@
 package com.icthh.xm.uaa.web.rest;
 
+import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
+import static org.hamcrest.Matchers.hasItem;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.audit.AuditEventConverter;
-import com.icthh.xm.uaa.config.tenant.TenantContext;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.PersistentAuditEvent;
+import com.icthh.xm.uaa.repository.AuditEventPermittedRepository;
 import com.icthh.xm.uaa.repository.PersistenceAuditEventRepository;
 import com.icthh.xm.uaa.service.AuditEventService;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
@@ -19,16 +27,15 @@ import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.format.support.FormattingConversionService;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.transaction.AfterTransaction;
+import org.springframework.test.context.transaction.BeforeTransaction;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-
-import static org.hamcrest.Matchers.hasItem;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * Test class for the AuditResource REST controller.
@@ -38,12 +45,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {UaaApp.class, XmOverrideConfiguration.class})
 @Transactional
+@WithMockUser(authorities = {"SUPER-ADMIN"})
 public class AuditResourceIntTest {
 
     private static final String SAMPLE_PRINCIPAL = "SAMPLE_PRINCIPAL";
     private static final String SAMPLE_TYPE = "SAMPLE_TYPE";
     private static final Instant SAMPLE_TIMESTAMP = Instant.parse("2015-08-04T10:11:30Z");
-    private static final long SECONDS_PER_DAY = 60*60*24;
+    private static final long SECONDS_PER_DAY = 60 * 60 * 24;
 
     @Autowired
     private PersistenceAuditEventRepository auditEventRepository;
@@ -60,26 +68,35 @@ public class AuditResourceIntTest {
     @Autowired
     private PageableHandlerMethodArgumentResolver pageableArgumentResolver;
 
+    @Autowired
+    private TenantContextHolder tenantContextHolder;
+
+    @Autowired
+    private AuditEventPermittedRepository auditEventPermittedRepository;
+
     private PersistentAuditEvent auditEvent;
 
     private MockMvc restAuditMockMvc;
 
-    @BeforeClass
-    public static void init() {
-        TenantContext.setDefault();
+    @BeforeTransaction
+    public void beforeTransaction() {
+        tenantContextHolder.getPrivilegedContext().setTenant(TenantContextUtils.buildTenant(DEFAULT_TENANT_KEY_VALUE));
     }
 
-    @AfterClass
-    public static void tearDown() {
-        TenantContext.clear();
+    @AfterTransaction
+    public void afterTransaction() {
+        tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
     }
 
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
+
         AuditEventService auditEventService =
-            new AuditEventService(auditEventRepository, auditEventConverter);
+            new AuditEventService(auditEventRepository, auditEventConverter, auditEventPermittedRepository);
+
         AuditResource auditResource = new AuditResource(auditEventService);
+
         this.restAuditMockMvc = MockMvcBuilders.standaloneSetup(auditResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setConversionService(formattingConversionService)
@@ -125,11 +142,11 @@ public class AuditResourceIntTest {
         auditEventRepository.save(auditEvent);
 
         // Generate dates for selecting audits by date, making sure the period will contain the audit
-        String fromDate  = SAMPLE_TIMESTAMP.minusSeconds(SECONDS_PER_DAY).toString().substring(0,10);
-        String toDate = SAMPLE_TIMESTAMP.plusSeconds(SECONDS_PER_DAY).toString().substring(0,10);
+        String fromDate = SAMPLE_TIMESTAMP.minusSeconds(SECONDS_PER_DAY).toString().substring(0, 10);
+        String toDate = SAMPLE_TIMESTAMP.plusSeconds(SECONDS_PER_DAY).toString().substring(0, 10);
 
         // Get the audit
-        restAuditMockMvc.perform(get("/management/audits?fromDate="+fromDate+"&toDate="+toDate))
+        restAuditMockMvc.perform(get("/management/audits?fromDate=" + fromDate + "&toDate=" + toDate))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].principal").value(hasItem(SAMPLE_PRINCIPAL)));
@@ -141,8 +158,8 @@ public class AuditResourceIntTest {
         auditEventRepository.save(auditEvent);
 
         // Generate dates for selecting audits by date, making sure the period will not contain the sample audit
-        String fromDate  = SAMPLE_TIMESTAMP.minusSeconds(2*SECONDS_PER_DAY).toString().substring(0,10);
-        String toDate = SAMPLE_TIMESTAMP.minusSeconds(SECONDS_PER_DAY).toString().substring(0,10);
+        String fromDate = SAMPLE_TIMESTAMP.minusSeconds(2 * SECONDS_PER_DAY).toString().substring(0, 10);
+        String toDate = SAMPLE_TIMESTAMP.minusSeconds(SECONDS_PER_DAY).toString().substring(0, 10);
 
         // Query audits but expect no results
         restAuditMockMvc.perform(get("/management/audits?fromDate=" + fromDate + "&toDate=" + toDate))

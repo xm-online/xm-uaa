@@ -4,16 +4,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.config.client.api.RefreshableConfiguration;
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
+import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.config.ApplicationProperties;
-import com.icthh.xm.uaa.config.tenant.TenantContext;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -24,7 +26,7 @@ public class TenantPropertiesService implements RefreshableConfiguration {
 
     private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
-    private ConcurrentHashMap<String, TenantProperties> tenantProps = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, TenantProperties> tenantProps = new ConcurrentHashMap<>();
 
     private final AntPathMatcher matcher = new AntPathMatcher();
 
@@ -32,23 +34,28 @@ public class TenantPropertiesService implements RefreshableConfiguration {
 
     private final TenantConfigRepository tenantConfigRepository;
 
+    private final TenantContextHolder tenantContextHolder;
+
     public TenantProperties getTenantProps() {
-        String tenant = TenantContext.getCurrent().getTenant();
-        if (!tenantProps.containsKey(tenant)) {
-            throw new IllegalArgumentException("Tenant configuration not found");
+        String tenantKey = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder);
+        String cfgTenantKey = tenantKey.toUpperCase();
+        if (!tenantProps.containsKey(cfgTenantKey)) {
+            throw new IllegalArgumentException("Tenant '" + cfgTenantKey + "' - configuration is empty");
         }
-        return tenantProps.get(tenant);
+        return tenantProps.get(cfgTenantKey);
     }
 
     @SneakyThrows
     public void updateTenantProps(String timelineYml) {
-        String tenant = TenantContext.getCurrent().getTenant();
+        String tenantKey = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder);
+        String cfgTenantKey = tenantKey.toUpperCase();
+
         String configName = applicationProperties.getTenantPropertiesName();
 
         // Simple validation correct structure
         mapper.readValue(timelineYml, TenantProperties.class);
 
-        tenantConfigRepository.updateConfig(tenant, "/" + configName, timelineYml);
+        tenantConfigRepository.updateConfig(cfgTenantKey, "/" + configName, timelineYml);
     }
 
     @Override
@@ -56,6 +63,7 @@ public class TenantPropertiesService implements RefreshableConfiguration {
     public void onRefresh(String updatedKey, String config) {
         String specificationPathPattern = applicationProperties.getTenantPropertiesPathPattern();
         try {
+            // tenant key in upper case
             String tenant = matcher.extractUriTemplateVariables(specificationPathPattern, updatedKey).get(TENANT_NAME);
             if (StringUtils.isBlank(config)) {
                 tenantProps.remove(tenant);
@@ -82,4 +90,5 @@ public class TenantPropertiesService implements RefreshableConfiguration {
             onRefresh(key, config);
         }
     }
+
 }

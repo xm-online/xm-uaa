@@ -1,7 +1,6 @@
 package com.icthh.xm.uaa.service;
 
 import com.icthh.xm.uaa.domain.User;
-import com.icthh.xm.uaa.repository.AuthorityRepository;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import org.junit.Before;
@@ -32,8 +31,6 @@ public class UserServiceUnitTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private SocialService socialService;
-    @Mock
-    private AuthorityRepository authorityRepository;
 
     @Before
     public void setUp() throws Exception {

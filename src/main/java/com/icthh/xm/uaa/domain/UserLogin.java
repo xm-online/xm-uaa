@@ -15,7 +15,7 @@ import javax.validation.constraints.NotNull;
 @Entity
 @Table(name = "user_login")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-@ToString
+@ToString(exclude = {"user"})
 @Getter
 @Setter
 @EqualsAndHashCode

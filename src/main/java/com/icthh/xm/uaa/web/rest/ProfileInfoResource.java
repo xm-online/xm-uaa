@@ -5,6 +5,7 @@ import com.icthh.xm.uaa.config.DefaultProfileUtil;
 import io.github.jhipster.config.JHipsterProperties;
 
 import org.springframework.core.env.Environment;
+import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ public class ProfileInfoResource {
     }
 
     @GetMapping("/profile-info")
+    @PostAuthorize("hasPermission({'returnObject': returnObject}, 'UAA.PROFILE.GET_LIST.ITEM')")
     public ProfileInfoVM getActiveProfiles() {
         String[] activeProfiles = DefaultProfileUtil.getActiveProfiles(env);
         return new ProfileInfoVM(activeProfiles, getRibbonEnv(activeProfiles));

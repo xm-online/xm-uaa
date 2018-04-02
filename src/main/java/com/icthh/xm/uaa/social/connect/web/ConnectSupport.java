@@ -2,10 +2,8 @@ package com.icthh.xm.uaa.social.connect.web;
 
 import static java.util.Arrays.asList;
 
-import com.icthh.xm.uaa.config.tenant.TenantUtil;
-import java.util.List;
-import java.util.Map.Entry;
-import javax.servlet.http.HttpServletRequest;
+import com.icthh.xm.uaa.commons.UaaUtils;
+import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.social.connect.Connection;
 import org.springframework.social.connect.ConnectionFactory;
@@ -25,6 +23,10 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.context.request.WebRequest;
 
+import java.util.List;
+import java.util.Map.Entry;
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * Provides common connect support and utilities for Java web/servlet environments.
  */
@@ -36,9 +38,12 @@ public class ConnectSupport {
     private static final String OAUTH2_STATE_ATTRIBUTE = "oauth2State";
 
     private final SessionStrategy sessionStrategy;
+    private final XmRequestContextHolder xmRequestContextHolder;
 
-    public ConnectSupport(SessionStrategy sessionStrategy) {
+    public ConnectSupport(SessionStrategy sessionStrategy,
+                          XmRequestContextHolder xmRequestContextHolder) {
         this.sessionStrategy = sessionStrategy;
+        this.xmRequestContextHolder = xmRequestContextHolder;
     }
 
     /**
@@ -109,7 +114,7 @@ public class ConnectSupport {
 
     protected String callbackUrl(NativeWebRequest request) {
         HttpServletRequest nativeRequest = request.getNativeRequest(HttpServletRequest.class);
-        return TenantUtil.getApplicationUrl() + "/uaa" + connectPath(nativeRequest);
+        return UaaUtils.getApplicationUrl(xmRequestContextHolder) + "/uaa" + connectPath(nativeRequest);
     }
 
     private String buildOAuth1Url(OAuth1ConnectionFactory<?> connectionFactory, NativeWebRequest request,

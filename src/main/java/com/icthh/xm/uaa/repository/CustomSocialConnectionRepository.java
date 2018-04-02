@@ -1,15 +1,28 @@
 package com.icthh.xm.uaa.repository;
 
 import com.icthh.xm.uaa.domain.SocialUserConnection;
-
-import java.util.*;
-import java.util.stream.Collectors;
-
-import org.springframework.social.connect.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.social.connect.Connection;
+import org.springframework.social.connect.ConnectionData;
+import org.springframework.social.connect.ConnectionFactory;
+import org.springframework.social.connect.ConnectionFactoryLocator;
+import org.springframework.social.connect.ConnectionKey;
+import org.springframework.social.connect.ConnectionRepository;
+import org.springframework.social.connect.NoSuchConnectionException;
+import org.springframework.social.connect.NotConnectedException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Slf4j
 public class CustomSocialConnectionRepository implements ConnectionRepository {
 
     private String userId;
@@ -116,6 +129,7 @@ public class CustomSocialConnectionRepository implements ConnectionRepository {
     public void addConnection(Connection<?> connection) {
         Long rank = getNewMaxRank(connection.getKey().getProviderId()).longValue();
         SocialUserConnection socialUserConnectionToSave = connectionToUserSocialConnection(connection, rank);
+        log.info("Created connection: {}", socialUserConnectionToSave);
         socialUserConnectionRepository.save(socialUserConnectionToSave);
     }
 
@@ -129,6 +143,7 @@ public class CustomSocialConnectionRepository implements ConnectionRepository {
             SocialUserConnection socialUserConnectionToUpdate = connectionToUserSocialConnection(
                             connection, socialUserConnection.getRank());
             socialUserConnectionToUpdate.setId(socialUserConnection.getId());
+            log.info("Created connection: {}", socialUserConnectionToUpdate);
             socialUserConnectionRepository.save(socialUserConnectionToUpdate);
         }
     }

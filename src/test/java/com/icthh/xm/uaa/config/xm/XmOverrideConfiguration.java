@@ -1,7 +1,6 @@
 package com.icthh.xm.uaa.config.xm;
 
 import lombok.extern.slf4j.Slf4j;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.cloud.client.loadbalancer.RestTemplateCustomizer;
 import org.springframework.context.annotation.Bean;
@@ -42,7 +41,10 @@ public class XmOverrideConfiguration {
     public RestTemplate loadBalancedRestTemplate(RestTemplateCustomizer customizer) {
         RestTemplate template = Mockito.mock(RestTemplate.class);
         Mockito.when(template.exchange(Mockito.anyString(),
-            Mockito.anyObject(), Mockito.anyObject(), Mockito.eq(String.class))).thenReturn(new ResponseEntity<String>(BODY, HttpStatus.OK));
+                                       Mockito.anyObject(),
+                                       Mockito.anyObject(),
+                                       Mockito.eq(String.class)))
+            .thenReturn(new ResponseEntity<>(BODY, HttpStatus.OK));
         return template;
     }
 

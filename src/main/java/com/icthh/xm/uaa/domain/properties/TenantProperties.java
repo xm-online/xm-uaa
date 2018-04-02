@@ -1,25 +1,51 @@
 package com.icthh.xm.uaa.domain.properties;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import com.icthh.xm.uaa.domain.OtpChannelType;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({"security"})
-@Data
+@JsonPropertyOrder( {"security"})
+@Getter
+@Setter
+@ToString
 public class TenantProperties {
 
     @JsonProperty("security")
     private Security security;
 
-    @Data
+    @Getter
+    @Setter
+    @ToString
     public static class Security {
+
+        @JsonProperty("defaultUserRole")
+        private String defaultUserRole;
+
+        @JsonProperty("tfaEnabled")
+        private boolean tfaEnabled = false;
+
+        @JsonProperty("tfaDefaultOtpChannelType")
+        private String tfaDefaultOtpChannelType;
+
+        @JsonProperty("tfaEnabledOtpChannelTypes")
+        private Set<OtpChannelType> tfaEnabledOtpChannelTypes = new LinkedHashSet<>();
+
+        @JsonProperty("tfaAccessTokenValiditySeconds")
+        private Integer tfaAccessTokenValiditySeconds;
 
         @JsonProperty("accessTokenValiditySeconds")
         private Integer accessTokenValiditySeconds;
@@ -53,9 +79,10 @@ public class TenantProperties {
     @JsonProperty("social")
     private List<Social> social;
 
-    @Data
+    @Getter
     @NoArgsConstructor
     @AllArgsConstructor
+    @ToString(of = {"providerId", "domain"})
     public static class Social {
 
         private String providerId;
@@ -68,4 +95,9 @@ public class TenantProperties {
     @JsonProperty("registrationCaptchaPeriodSeconds")
     private Long registrationCaptchaPeriodSeconds;
 
+    @JsonProperty("activationKeyLifeTime")
+    private Long activationKeyLifeTime;
+
+    @JsonProperty("resetKeyLifeTime")
+    private Long resetKeyLifeTime;
 }

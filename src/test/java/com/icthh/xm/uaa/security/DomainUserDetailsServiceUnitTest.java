@@ -1,7 +1,14 @@
 package com.icthh.xm.uaa.security;
 
-import com.icthh.xm.uaa.config.tenant.TenantContext;
-import com.icthh.xm.uaa.config.tenant.TenantInfo;
+import com.icthh.xm.commons.permission.constants.RoleConstant;
+import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.when;
+
+import com.icthh.xm.commons.tenant.TenantContext;
+import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
@@ -13,19 +20,16 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.when;
-
 public class DomainUserDetailsServiceUnitTest {
-
-    private static final String DEFAULT_TENANT = "XM";
 
     @Mock
     private UserLoginRepository userLoginRepository;
 
     @Mock
-    private TenantInfo tenantInfo;
+    private TenantContextHolder tenantContextHolder;
+
+    @Mock
+    private TenantContext tenantContext;
 
     private DomainUserDetailsService userDetailsService;
 
@@ -35,8 +39,9 @@ public class DomainUserDetailsServiceUnitTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        TenantContext.setCurrent(tenantInfo);
-        userDetailsService = new DomainUserDetailsService(userLoginRepository);
+        when(tenantContextHolder.getContext()).thenReturn(tenantContext);
+
+        userDetailsService = new DomainUserDetailsService(userLoginRepository, tenantContextHolder);
 
         userLogin = new UserLogin();
         userLogin.setLogin("admin");
@@ -44,12 +49,13 @@ public class DomainUserDetailsServiceUnitTest {
         user.setActivated(true);
         user.setUserKey("test");
         user.setPassword("password");
+        user.setRoleKey(RoleConstant.SUPER_ADMIN);
         userLogin.setUser(user);
     }
 
     @Test
     public void testLoginSuccess() {
-        when(tenantInfo.getTenant()).thenReturn(DEFAULT_TENANT);
+        when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf("XM")));
         when(userLoginRepository.findOneByLogin(eq("admin")))
             .thenReturn(Optional.of(userLogin));
 
@@ -61,26 +67,18 @@ public class DomainUserDetailsServiceUnitTest {
     }
 
     @Test(expected = TenantNotProvidedException.class)
-    public void testLoginNoHeader() {
+    public void testLoginNoTenant() {
+        when(tenantContext.getTenantKey()).thenReturn(Optional.empty());
         when(userLoginRepository.findOneByLogin(eq("admin")))
             .thenReturn(Optional.of(userLogin));
 
-        DomainUserDetails result = userDetailsService.loadUserByUsername("admin");
-    }
-
-    @Test(expected = TenantNotProvidedException.class)
-    public void testLoginEmptyHeader() {
-        when(tenantInfo.getTenant()).thenReturn(" ");
-        when(userLoginRepository.findOneByLogin(eq("admin")))
-            .thenReturn(Optional.of(userLogin));
-
-        DomainUserDetails result = userDetailsService.loadUserByUsername("admin");
+        userDetailsService.loadUserByUsername("admin");
     }
 
     @Test(expected = UserNotActivatedException.class)
     public void testLoginUserNotActivated() {
         user.setActivated(false);
-        when(tenantInfo.getTenant()).thenReturn(DEFAULT_TENANT);
+        when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(DEFAULT_TENANT_KEY_VALUE)));
         when(userLoginRepository.findOneByLogin(eq("admin")))
             .thenReturn(Optional.of(userLogin));
 
@@ -89,10 +87,11 @@ public class DomainUserDetailsServiceUnitTest {
 
     @Test(expected = UsernameNotFoundException.class)
     public void testLoginUserNotFound() {
-        when(tenantInfo.getTenant()).thenReturn(DEFAULT_TENANT);
+        when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(DEFAULT_TENANT_KEY_VALUE)));
         when(userLoginRepository.findOneByLogin(eq("admin")))
             .thenReturn(Optional.empty());
 
         DomainUserDetails result = userDetailsService.loadUserByUsername("admin");
     }
+
 }

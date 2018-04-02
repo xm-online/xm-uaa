@@ -1,14 +1,16 @@
 package com.icthh.xm.uaa.service;
 
-import com.icthh.xm.commons.logging.util.MDCUtil;
-import com.icthh.xm.uaa.config.tenant.TenantContext;
-import com.icthh.xm.uaa.domain.Authority;
+import com.icthh.xm.commons.logging.util.MdcUtils;
+import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.commons.tenant.TenantContextUtils;
+import com.icthh.xm.uaa.commons.UaaUtils;
+import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
-import com.icthh.xm.uaa.repository.AuthorityRepository;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
+import com.icthh.xm.uaa.service.mail.MailService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -31,8 +33,6 @@ import java.util.UUID;
 public class SocialService {
     private final UsersConnectionRepository usersConnectionRepository;
 
-    private final AuthorityRepository authorityRepository;
-
     private final PasswordEncoder passwordEncoder;
 
     private final UserRepository userRepository;
@@ -41,23 +41,35 @@ public class SocialService {
 
     private final UserLoginRepository userLoginRepository;
 
+    private final TenantContextHolder tenantContextHolder;
+
+    private final XmRequestContextHolder requestContextHolder;
+
+    private final TenantPropertiesService tenantPropertiesService;
+
     /**
      * Create new user.
+     *
      * @param connection connection
-     * @param langKey lang key
+     * @param langKey    lang key
      */
     public void createSocialUser(Connection<?> connection, String langKey) {
         if (connection == null) {
             log.error("Cannot create social user because connection is null");
             throw new IllegalArgumentException("Connection cannot be null");
         }
+
         UserProfile userProfile = connection.fetchUserProfile();
         String providerId = connection.getKey().getProviderId();
         String imageUrl = connection.getImageUrl();
         User user = createUserIfNotExist(userProfile, langKey, imageUrl);
         createSocialConnection(user.getUserKey(), connection);
-        mailService.sendSocialRegistrationValidationEmail(user, userProfile.getEmail(), providerId,
-            TenantContext.getCurrent().getTenant(), MDCUtil.getRid());
+        mailService.sendSocialRegistrationValidationEmail(user,
+                                                          userProfile.getEmail(),
+                                                          providerId,
+                                                          UaaUtils.getApplicationUrl(requestContextHolder),
+                                                          TenantContextUtils.getRequiredTenantKey(tenantContextHolder),
+                                                          MdcUtils.getRid());
     }
 
     private User createUserIfNotExist(UserProfile userProfile, String langKey, String imageUrl) {
@@ -73,8 +85,6 @@ public class SocialService {
             }
         }
         String encryptedPassword = passwordEncoder.encode(RandomStringUtils.random(10));
-        Set<Authority> authorities = new HashSet<>(1);
-        authorities.add(authorityRepository.findOne("ROLE_USER"));
 
         User newUser = new User();
         newUser.setUserKey(UUID.randomUUID().toString());
@@ -82,7 +92,7 @@ public class SocialService {
         newUser.setFirstName(userProfile.getFirstName());
         newUser.setLastName(userProfile.getLastName());
         newUser.setActivated(true);
-        newUser.setAuthorities(authorities);
+        newUser.setRoleKey(tenantPropertiesService.getTenantProps().getSecurity().getDefaultUserRole());
         newUser.setLangKey(langKey);
         newUser.setImageUrl(imageUrl);
 
@@ -108,4 +118,5 @@ public class SocialService {
                 log.debug("Delete user social connection providerId: {}", providerId);
             });
     }
+
 }

@@ -1,16 +1,11 @@
 package com.icthh.xm.uaa.security;
 
-import static com.icthh.xm.uaa.config.Constants.AUTH_TENANT_KEY;
-import static com.icthh.xm.uaa.config.Constants.AUTH_USER_KEY;
-
-import com.icthh.xm.uaa.config.ApplicationProperties;
-import com.icthh.xm.uaa.config.tenant.TenantContext;
+import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.uaa.security.oauth2.otp.OtpGenerator;
+import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
+import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
+import com.icthh.xm.uaa.service.OnlineUsersService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
@@ -36,19 +31,17 @@ import org.springframework.security.web.authentication.preauth.PreAuthenticatedA
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
+import java.util.Date;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
 /**
  * Overrides standard class to pass user tenant.
  */
 public class DomainTokenServices implements AuthorizationServerTokenServices, ResourceServerTokenServices,
     ConsumerTokenServices, InitializingBean {
-
-    private int refreshTokenValiditySeconds = 60 * 60 * 24 * 30; // default 30 days.
-
-    private int accessTokenValiditySeconds = 60 * 60 * 12; // default 12 hours.
-
-    private boolean supportRefreshToken = false;
-
-    private boolean reuseRefreshToken = true;
 
     private TokenStore tokenStore;
 
@@ -60,7 +53,15 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
 
     private TenantPropertiesService tenantPropertiesService;
 
-    private ApplicationProperties applicationProperties;
+    private TenantContextHolder tenantContextHolder;
+
+    private OnlineUsersService onlineUsersService;
+
+    private OtpGenerator otpGenerator;
+    private OtpSendStrategy otpSendStrategy;
+    private OtpStore otpStore;
+
+    private TokenConstraintsService tokenConstraints;
 
     /**
      * Initialize these token services. If no random generator is set, one will be created.
@@ -68,11 +69,36 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
     @Override
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(tokenStore, "tokenStore must be set");
+        Assert.notNull(otpGenerator, "otpGenerator must be set");
+        Assert.notNull(otpSendStrategy, "otpSendStrategy must be set");
+        Assert.notNull(otpStore, "otpStore must be set");
+    }
+
+    private boolean isTfaEnabled(OAuth2Authentication authentication) {
+        if (!authentication.isAuthenticated() || !"password".equals(authentication.getOAuth2Request().getGrantType())) {
+            return false;
+        }
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof DomainUserDetails)) {
+            return false;
+        }
+
+        boolean tenantTfaEnabled = tenantPropertiesService.getTenantProps().getSecurity().isTfaEnabled();
+        return tenantTfaEnabled && DomainUserDetails.class.cast(principal).isTfaEnabled();
     }
 
     @Override
     public OAuth2AccessToken createAccessToken(OAuth2Authentication authentication) {
-        setCustomDetails(authentication);
+        if (isTfaEnabled(authentication)) {
+            // 2FA flow
+            return createTfaAccessToken(authentication);
+        } else {
+            // general OAuth2 flow
+            return getOrCreateAccessToken(authentication);
+        }
+    }
+
+    private OAuth2AccessToken getOrCreateAccessToken(OAuth2Authentication authentication) {
         OAuth2AccessToken existingAccessToken = tokenStore.getAccessToken(authentication);
         OAuth2RefreshToken refreshToken = null;
         if (existingAccessToken != null) {
@@ -114,14 +140,43 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
             tokenStore.storeRefreshToken(refreshToken, authentication);
         }
         return accessToken;
+    }
 
+    private OAuth2AccessToken createTfaAccessToken(OAuth2Authentication authentication) {
+        DefaultOAuth2AccessToken tfaToken = new DefaultOAuth2AccessToken(UUID.randomUUID().toString());
+
+        int validitySeconds = tokenConstraints.getTfaAccessTokenValiditySeconds(authentication);
+        if (validitySeconds > 0) {
+            long timestamp = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(validitySeconds);
+            tfaToken.setExpiration(new Date(timestamp));
+        }
+        tfaToken.setScope(authentication.getOAuth2Request().getScope());
+
+        // generate OTP, send it, and store hashed value in UserDetails
+        generateOTP(authentication);
+
+        return (accessTokenEnhancer != null) ? accessTokenEnhancer.enhance(tfaToken, authentication) : tfaToken;
+    }
+
+    private void generateOTP(OAuth2Authentication authentication) {
+        Object principal = authentication.getPrincipal();
+        if (!authentication.isAuthenticated() || !(principal instanceof DomainUserDetails)) {
+            // should't happen but check for sure
+            return;
+        }
+
+        DomainUserDetails userDetails = DomainUserDetails.class.cast(principal);
+
+        String otp = otpGenerator.generate(authentication);
+        otpStore.storeOtp(otp, authentication);
+        otpSendStrategy.send(otp, userDetails);
     }
 
     @Transactional(noRollbackFor = {InvalidTokenException.class, InvalidGrantException.class})
     public OAuth2AccessToken refreshAccessToken(String refreshTokenValue, TokenRequest tokenRequest)
         throws AuthenticationException {
 
-        if (!supportRefreshToken) {
+        if (!tokenConstraints.isSupportRefreshToken()) {
             throw new InvalidGrantException("Invalid refresh token: " + refreshTokenValue);
         }
 
@@ -136,7 +191,7 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
             // The client has already been authenticated, but the user authentication might be old now, so give it a
             // chance to re-authenticate.
             Authentication user = new PreAuthenticatedAuthenticationToken(authentication.getUserAuthentication(), "",
-                authentication.getAuthorities());
+                                                                          authentication.getAuthorities());
             user = authenticationManager.authenticate(user);
             Object details = authentication.getDetails();
             authentication = new OAuth2Authentication(authentication.getOAuth2Request(), user);
@@ -162,16 +217,15 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
             Authentication user = authenticationRefreshProvider.refresh(authentication);
             authentication = new OAuth2Authentication(authentication.getOAuth2Request(), user);
         }
-        setCustomDetails(authentication);
 
-        if (!reuseRefreshToken) {
+        if (!tokenConstraints.isReuseRefreshToken()) {
             tokenStore.removeRefreshToken(refreshToken);
             refreshToken = createRefreshToken(authentication);
         }
 
         OAuth2AccessToken accessToken = createAccessToken(authentication, refreshToken);
         tokenStore.storeAccessToken(accessToken, authentication);
-        if (!reuseRefreshToken) {
+        if (!tokenConstraints.isReuseRefreshToken()) {
             tokenStore.storeRefreshToken(accessToken.getRefreshToken(), authentication);
         }
         return accessToken;
@@ -182,28 +236,16 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         return tokenStore.getAccessToken(authentication);
     }
 
-    private void setCustomDetails(OAuth2Authentication authentication) {
-        final Map<String, Object> details = new HashMap<>();
-        final Object principal = authentication.getPrincipal();
-        details.put(AUTH_TENANT_KEY, TenantContext.getCurrent().getTenant());
-        if (principal instanceof DomainUserDetails) {
-            final DomainUserDetails userDetails = (DomainUserDetails) principal;
-            details.put(AUTH_TENANT_KEY, userDetails.getTenant());
-            details.put(AUTH_USER_KEY, userDetails.getUserKey());
-        }
-        authentication.setDetails(details);
-    }
-
     /**
      * Create a refreshed authentication.
      *
      * @param authentication The authentication.
-     * @param request The scope for the refreshed token.
+     * @param request        The scope for the refreshed token.
      * @return The refreshed authentication.
      * @throws InvalidScopeException If the scope requested is invalid or wider than the original scope.
      */
-    private OAuth2Authentication createRefreshedAuthentication(OAuth2Authentication authentication,
-        TokenRequest request) {
+    private static OAuth2Authentication createRefreshedAuthentication(OAuth2Authentication authentication,
+                                                                      TokenRequest request) {
         OAuth2Authentication narrowed = authentication;
         Set<String> scope = request.getScope();
         OAuth2Request clientAuth = authentication.getOAuth2Request().refresh(request);
@@ -211,7 +253,7 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
             Set<String> originalScope = clientAuth.getScope();
             if (originalScope == null || !originalScope.containsAll(scope)) {
                 throw new InvalidScopeException("Unable to narrow the scope of the client authentication to " + scope
-                    + ".", originalScope);
+                                                    + ".", originalScope);
             } else {
                 clientAuth = clientAuth.narrowScope(scope);
             }
@@ -222,7 +264,24 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         return narrowed;
     }
 
-    protected boolean isExpired(OAuth2RefreshToken refreshToken) {
+    private void registerThatUserIsOnline(Authentication authentication, String value, int timeToLive) {
+        if (authentication.isAuthenticated()) {
+            Optional<String> serviceUserKey = getOnlineUserServiceUserKey(authentication);
+            serviceUserKey.ifPresent(key -> onlineUsersService.save(key, value, timeToLive));
+        }
+    }
+
+    private static Optional<String> getOnlineUserServiceUserKey(Authentication authentication) {
+        String key = null;
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof DomainUserDetails) {
+            DomainUserDetails userDetails = DomainUserDetails.class.cast(principal);
+            key = userDetails.getTenant() + ":" + userDetails.getUserKey();
+        }
+        return Optional.ofNullable(key);
+    }
+
+    private static boolean isExpired(OAuth2RefreshToken refreshToken) {
         if (refreshToken instanceof ExpiringOAuth2RefreshToken) {
             ExpiringOAuth2RefreshToken expiringToken = (ExpiringOAuth2RefreshToken) refreshToken;
             return expiringToken.getExpiration() == null
@@ -244,7 +303,7 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
             throw new InvalidTokenException("Invalid access token: " + accessTokenValue);
         } else if (accessToken.isExpired()) {
             tokenStore.removeAccessToken(accessToken);
-            throw new InvalidTokenException("Access token expired: " + accessTokenValue.substring(0,200));
+            throw new InvalidTokenException("Access token expired: " + accessTokenValue.substring(0, 200));
         }
 
         OAuth2Authentication result = tokenStore.readAuthentication(accessToken);
@@ -270,90 +329,31 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
     }
 
     private OAuth2RefreshToken createRefreshToken(OAuth2Authentication authentication) {
-        if (!isSupportRefreshToken(authentication.getOAuth2Request())) {
+        if (!tokenConstraints.isSupportRefreshToken(authentication.getOAuth2Request())) {
             return null;
         }
-        int validitySeconds = getRefreshTokenValiditySeconds(authentication);
+        int validitySeconds = tokenConstraints.getRefreshTokenValiditySeconds(authentication);
         String value = UUID.randomUUID().toString();
         if (validitySeconds > 0) {
             return new DefaultExpiringOAuth2RefreshToken(value, new Date(System.currentTimeMillis()
-                + (validitySeconds * 1000L)));
+                                                                             + (validitySeconds * 1000L)));
         }
         return new DefaultOAuth2RefreshToken(value);
     }
 
     private OAuth2AccessToken createAccessToken(OAuth2Authentication authentication, OAuth2RefreshToken refreshToken) {
         DefaultOAuth2AccessToken token = new DefaultOAuth2AccessToken(UUID.randomUUID().toString());
-        int validitySeconds = getAccessTokenValiditySeconds(authentication);
+        int validitySeconds = tokenConstraints.getAccessTokenValiditySeconds(authentication);
         if (validitySeconds > 0) {
             token.setExpiration(new Date(System.currentTimeMillis() + (validitySeconds * 1000L)));
         }
         token.setRefreshToken(refreshToken);
         token.setScope(authentication.getOAuth2Request().getScope());
 
-        return accessTokenEnhancer != null ? accessTokenEnhancer.enhance(token, authentication) : token;
-    }
+        // register new online user
+        registerThatUserIsOnline(authentication, token.getValue(), validitySeconds);
 
-    /**
-     * The access token validity period in seconds.
-     *
-     * @param authentication the current authentication
-     * @return the access token validity period in seconds
-     */
-    protected int getAccessTokenValiditySeconds(OAuth2Authentication authentication) {
-        Integer validity;
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof DomainUserDetails) {
-            validity = DomainUserDetails.class.cast(principal).getAccessTokenValiditySeconds();
-            if (validity != null) {
-                return validity;
-            }
-        }
-        validity = tenantPropertiesService.getTenantProps().getSecurity().getAccessTokenValiditySeconds();
-        if (validity != null) {
-            return validity;
-        }
-        validity = applicationProperties.getSecurity().getAccessTokenValiditySeconds();
-        if (validity != null) {
-            return validity;
-        }
-        return accessTokenValiditySeconds;
-    }
-
-    /**
-     * The refresh token validity period in seconds.
-     *
-     * @param authentication the current authentication
-     * @return the refresh token validity period in seconds
-     */
-    protected int getRefreshTokenValiditySeconds(OAuth2Authentication authentication) {
-        Integer validity;
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof DomainUserDetails) {
-            validity = DomainUserDetails.class.cast(principal).getRefreshTokenValiditySeconds();
-            if (validity != null) {
-                return validity;
-            }
-        }
-        validity = tenantPropertiesService.getTenantProps().getSecurity().getRefreshTokenValiditySeconds();
-        if (validity != null) {
-            return validity;
-        }
-        validity = applicationProperties.getSecurity().getRefreshTokenValiditySeconds();
-        if (validity != null) {
-            return validity;
-        }
-        return refreshTokenValiditySeconds;
-    }
-
-    /**
-     * Is a refresh token supported for this client.
-     *
-     * @param clientAuth the current authorization request
-     * @return boolean to indicate if refresh token is supported
-     */
-    protected boolean isSupportRefreshToken(OAuth2Request clientAuth) {
-        return this.supportRefreshToken;
+        return (accessTokenEnhancer != null) ? accessTokenEnhancer.enhance(token, authentication) : token;
     }
 
     /**
@@ -363,45 +363,6 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
      */
     public void setTokenEnhancer(TokenEnhancer accessTokenEnhancer) {
         this.accessTokenEnhancer = accessTokenEnhancer;
-    }
-
-    /**
-     * The validity (in seconds) of the refresh token. If less than or equal to zero then the tokens will be
-     * non-expiring.
-     *
-     * @param refreshTokenValiditySeconds The validity (in seconds) of the refresh token.
-     */
-    public void setRefreshTokenValiditySeconds(int refreshTokenValiditySeconds) {
-        this.refreshTokenValiditySeconds = refreshTokenValiditySeconds;
-    }
-
-    /**
-     * The default validity (in seconds) of the access token. Zero or negative for non-expiring tokens. If a client
-     * details service is set the validity period will be read from he client, defaulting to this value if not defined
-     * by the client.
-     *
-     * @param accessTokenValiditySeconds The validity (in seconds) of the access token.
-     */
-    public void setAccessTokenValiditySeconds(int accessTokenValiditySeconds) {
-        this.accessTokenValiditySeconds = accessTokenValiditySeconds;
-    }
-
-    /**
-     * Whether to support the refresh token.
-     *
-     * @param supportRefreshToken Whether to support the refresh token.
-     */
-    public void setSupportRefreshToken(boolean supportRefreshToken) {
-        this.supportRefreshToken = supportRefreshToken;
-    }
-
-    /**
-     * Whether to reuse refresh tokens (until expired).
-     *
-     * @param reuseRefreshToken Whether to reuse refresh tokens (until expired).
-     */
-    public void setReuseRefreshToken(boolean reuseRefreshToken) {
-        this.reuseRefreshToken = reuseRefreshToken;
     }
 
     /**
@@ -431,7 +392,32 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         this.tenantPropertiesService = tenantPropertiesService;
     }
 
-    public void setApplicationProperties(ApplicationProperties applicationProperties) {
-        this.applicationProperties = applicationProperties;
+    public TenantContextHolder getTenantContextHolder() {
+        return tenantContextHolder;
     }
+
+    public void setTenantContextHolder(TenantContextHolder tenantContextHolder) {
+        this.tenantContextHolder = tenantContextHolder;
+    }
+
+    public void setOnlineUsersService(OnlineUsersService onlineUsersService) {
+        this.onlineUsersService = onlineUsersService;
+    }
+
+    public void setOtpGenerator(OtpGenerator otpGenerator) {
+        this.otpGenerator = otpGenerator;
+    }
+
+    public void setOtpSendStrategy(OtpSendStrategy otpSendStrategy) {
+        this.otpSendStrategy = otpSendStrategy;
+    }
+
+    public void setOtpStore(OtpStore otpStore) {
+        this.otpStore = otpStore;
+    }
+
+    public void setTokenConstraintsService(TokenConstraintsService tokenConstraints) {
+        this.tokenConstraints = tokenConstraints;
+    }
+
 }

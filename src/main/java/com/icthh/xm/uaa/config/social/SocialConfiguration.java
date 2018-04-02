@@ -1,5 +1,7 @@
 package com.icthh.xm.uaa.config.social;
 
+import com.icthh.xm.uaa.commons.XmRequestContextHolder;
+import com.icthh.xm.uaa.config.XmRequestContextConfiguration;
 import com.icthh.xm.uaa.repository.CustomSocialUsersConnectionRepository;
 import com.icthh.xm.uaa.repository.SocialConfigRepository;
 import com.icthh.xm.uaa.repository.SocialUserConnectionRepository;
@@ -11,6 +13,7 @@ import com.icthh.xm.uaa.social.connect.web.ProviderSignInUtils;
 import com.icthh.xm.uaa.social.connect.web.SessionStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -23,18 +26,21 @@ import org.springframework.social.connect.web.SignInAdapter;
 import org.springframework.social.security.AuthenticationNameUserIdSource;
 
 /**
- * Basic Spring Social configuration.
- *
- * <p>
+ * Basic Spring Social configuration.<br>
  * Creates the beans necessary to manage Connections to social services and
  * link accounts from those services to internal Users.
  */
+@Import( {
+    XmRequestContextConfiguration.class
+})
 @Configuration
 public class SocialConfiguration {
 
     @Bean
-    public ConnectionFactoryLocator connectionFactoryLocator(SocialConfigRepository socialConfigRepository) {
-        return new DomainConnectionFactoryLocator(socialConfigRepository);
+    public ConnectionFactoryLocator connectionFactoryLocator(SocialConfigRepository socialConfigRepository,
+                                                             XmRequestContextHolder xmRequestContextHolder) {
+        return new DomainConnectionFactoryLocator(socialConfigRepository,
+                                                  xmRequestContextHolder);
     }
 
     @Bean
@@ -51,19 +57,21 @@ public class SocialConfiguration {
 
     @Bean
     public SignInAdapter signInAdapter(UserDetailsService userDetailsService,
-        AuthorizationServerTokenServices tokenServices) {
-        return new CustomSignInAdapter(userDetailsService, tokenServices);
+                                       AuthorizationServerTokenServices tokenServices,
+                                       XmRequestContextHolder xmRequestContextHolder) {
+        return new CustomSignInAdapter(userDetailsService, tokenServices, xmRequestContextHolder);
     }
 
     @Bean
     public ProviderSignInUtils providerSignInUtils(SessionStrategy sessionStrategy,
-        ConnectionFactoryLocator connectionFactoryLocator) {
+                                                   ConnectionFactoryLocator connectionFactoryLocator) {
         return new ProviderSignInUtils(sessionStrategy, connectionFactoryLocator);
     }
 
     @Bean
-    public ConnectSupport connectSupport(SessionStrategy sessionStrategy) {
-        return new ConnectSupport(sessionStrategy);
+    public ConnectSupport connectSupport(SessionStrategy sessionStrategy,
+                                         XmRequestContextHolder xmRequestContextHolder) {
+        return new ConnectSupport(sessionStrategy, xmRequestContextHolder);
     }
 
     @Bean
