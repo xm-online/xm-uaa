@@ -74,12 +74,6 @@ public class CustomAuditEventRepository implements AuditEventRepository {
         }
     }
 
-    public List<AuditEvent> find(String principal) {
-        Iterable<PersistentAuditEvent> persistentAuditEvents =
-            persistenceAuditEventRepository.findByPrincipal(principal);
-        return auditEventConverter.convertToAuditEvent(persistentAuditEvents);
-    }
-
     public List<PrincipalProjection> findAfter(Instant after, String type) {
         return persistenceAuditEventRepository.findDistinctByAuditEventDateAfterAndAuditEventType(after, type);
     }
