@@ -6,18 +6,12 @@ import com.hazelcast.config.MapConfig;
 import com.hazelcast.config.MaxSizeConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
-
 import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.config.JHipsterProperties;
-
-import javax.annotation.PreDestroy;
-
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
-
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,6 +19,9 @@ import org.springframework.core.env.Environment;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 
+import javax.annotation.PreDestroy;
+
+@RequiredArgsConstructor
 @Configuration
 @EnableCaching
 @AutoConfigureAfter(value = { MetricsConfiguration.class })
@@ -34,20 +31,10 @@ public class CacheConfiguration {
 
     private final Environment env;
 
-    public CacheConfiguration(Environment env) {
-        this.env = env;
-    }
-
     @PreDestroy
     public void destroy() {
         log.info("Closing Cache Manager");
         Hazelcast.shutdownAll();
-    }
-
-    @Bean
-    public CacheManager cacheManager(HazelcastInstance hazelcastInstance) {
-        log.debug("Starting HazelcastCacheManager");
-        return new com.hazelcast.spring.cache.HazelcastCacheManager(hazelcastInstance);
     }
 
     @Bean
@@ -110,13 +97,6 @@ public class CacheConfiguration {
 
     private MapConfig initializeDomainMapConfig(JHipsterProperties jHipsterProperties) {
         MapConfig mapConfig = new MapConfig();
-        mapConfig.setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
-        return mapConfig;
-    }
-
-    private MapConfig initializeClusteredSession(JHipsterProperties jHipsterProperties) {
-        MapConfig mapConfig = new MapConfig();
-        mapConfig.setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount());
         mapConfig.setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
         return mapConfig;
     }

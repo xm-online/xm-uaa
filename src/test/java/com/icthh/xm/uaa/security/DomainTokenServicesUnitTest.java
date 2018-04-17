@@ -62,8 +62,6 @@ public class DomainTokenServicesUnitTest {
     private TenantProperties tenantProperties;
     @Mock
     private TenantProperties.Security security;
-    @Mock
-    private OnlineUsersService onlineUsersService;
 
     private DomainTokenServices tokenServices;
 
@@ -87,7 +85,6 @@ public class DomainTokenServicesUnitTest {
 
         when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProperties);
         when(tenantProperties.getSecurity()).thenReturn(security);
-        doNothing().when(onlineUsersService).save(any(), any(), anyLong());
 
         TokenConstraintsService tokenConstraintsService = new TokenConstraintsService();
         tokenConstraintsService.setTenantPropertiesService(tenantPropertiesService);
@@ -101,7 +98,6 @@ public class DomainTokenServicesUnitTest {
         tokenServices.setTenantContextHolder(tenantContextHolder);
         tokenServices.setTokenConstraintsService(tokenConstraintsService);
         tokenServices.setAuthenticationRefreshProvider(new DefaultAuthenticationRefreshProvider());
-        tokenServices.setOnlineUsersService(onlineUsersService);
     }
 
     @Test
