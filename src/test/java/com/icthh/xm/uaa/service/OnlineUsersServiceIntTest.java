@@ -18,9 +18,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.transaction.BeforeTransaction;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -28,6 +31,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @see UserService
  */
+@Transactional
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {
     UaaApp.class,
@@ -44,9 +48,8 @@ public class OnlineUsersServiceIntTest {
 
     private static final String DEFAULT_KEY = "TEST_KEY";
     private static final String DEFAULT_VALUE = "TEST_VALUE";
-    private static final int DEFAULT_TIME_TO_LIVE = 666;
 
-    @Before
+    @BeforeTransaction
     public void initRepository() {
         TenantContextUtils.setTenant(tenantContextHolder, Constants.SUPER_TENANT);
         auditEventRepository.deleteAll();
@@ -54,48 +57,58 @@ public class OnlineUsersServiceIntTest {
 
     @Test
     public void assertThatEntryAdd() {
-        auditEventRepository.add(new AuditEvent(DEFAULT_KEY, AUTHENTICATION_SUCCESS));
-        assertThat(auditEventRepository.find(DEFAULT_KEY)).isNotNull();
+        auditEventRepository.add(new AuditEvent(DEFAULT_KEY, AUTHENTICATION_SUCCESS, Collections.emptyMap()));
+        assertThat(onlineUsersService.find()).hasSize(1);
     }
 
     @Test
     public void assertThatEntryEvicted() throws InterruptedException {
         long timeToLive = 1;
-        auditEventRepository.add(new AuditEvent(DEFAULT_KEY, DEFAULT_VALUE));
+        auditEventRepository.add(new AuditEvent(DEFAULT_KEY, AUTHENTICATION_SUCCESS, Collections.emptyMap()));
         TimeUnit.SECONDS.sleep(timeToLive);
-        assertThat(auditEventRepository.find(DEFAULT_KEY)).isEmpty();
+        assertThat(auditEventRepository.findAfter(Instant.now(), DEFAULT_VALUE)).isEmpty();
     }
 
     @Test
-    public void assertThatEntriesGetForSpecifyTenant() throws InterruptedException {
-        auditEventRepository.add(new AuditEvent("DEMO:user1", DEFAULT_VALUE));
-        auditEventRepository.add(new AuditEvent("DEMO:user2", DEFAULT_VALUE));
-        auditEventRepository.add(new AuditEvent("TEST:user1", DEFAULT_VALUE));
-        auditEventRepository.add(new AuditEvent("XM:user1", DEFAULT_VALUE));
-
-        Collection<String> allEntries = onlineUsersService.find();
-        assertThat(allEntries).isNotNull();
-        assertThat(allEntries).size().isEqualTo(4);
-
+    public void assertThatEntriesGetForSpecifyTenant() {
         PrivilegedTenantContext privilegedContext = tenantContextHolder.getPrivilegedContext();
         privilegedContext.execute(buildTenant("DEMO"),
-                                  () -> {
-                                      String tenant = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder);
-                                      assertThat(tenant).isEqualTo("DEMO");
+            () -> {
+                auditEventRepository.add(new AuditEvent("DEMO:user1", AUTHENTICATION_SUCCESS));
+                auditEventRepository.add(new AuditEvent("DEMO:user2", AUTHENTICATION_SUCCESS));
+            });
+        privilegedContext.execute(buildTenant(Constants.SUPER_TENANT),
+            () -> {
+                auditEventRepository.add(new AuditEvent("TEST:user1", AUTHENTICATION_SUCCESS));
+                auditEventRepository.add(new AuditEvent("XM:user1", AUTHENTICATION_SUCCESS));
+            });
+        privilegedContext.execute(buildTenant("DEMO"),
+            () -> {
+                String tenant = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder);
+                assertThat(tenant).isEqualTo("DEMO");
 
-                                      Collection<String> entriesForDemoTenant = onlineUsersService.find();
-                                      assertThat(entriesForDemoTenant).isNotNull();
-                                      assertThat(entriesForDemoTenant).size().isEqualTo(2);
-                                  });
+                Collection<String> entriesForDemoTenant = onlineUsersService.find();
+                assertThat(entriesForDemoTenant).isNotNull();
+                assertThat(entriesForDemoTenant).size().isEqualTo(2);
+            });
+        privilegedContext.execute(buildTenant(Constants.SUPER_TENANT),
+            () -> {
+                String tenant = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder);
+                assertThat(tenant).isEqualTo(Constants.SUPER_TENANT);
+
+                Collection<String> entriesForDemoTenant = onlineUsersService.find();
+                assertThat(entriesForDemoTenant).isNotNull();
+                assertThat(entriesForDemoTenant).size().isEqualTo(2);
+            });
     }
 
     @Test
-    public void assertThatEntriesDeleted() throws InterruptedException {
-        assertThat(auditEventRepository.findAfter(Instant.now(), AUTHENTICATION_SUCCESS)).size().isEqualTo(0);
-        auditEventRepository.add(new AuditEvent(DEFAULT_KEY, DEFAULT_VALUE));
-        assertThat(auditEventRepository.findAfter(Instant.now(), AUTHENTICATION_SUCCESS)).size().isEqualTo(1);
+    public void assertThatEntriesDeleted() {
+        assertThat(onlineUsersService.find()).size().isEqualTo(0);
+        auditEventRepository.add(new AuditEvent(DEFAULT_KEY, AUTHENTICATION_SUCCESS, Collections.emptyMap()));
+        assertThat(onlineUsersService.find().size()).isEqualTo(1);
 
         onlineUsersService.delete(DEFAULT_KEY);
-        assertThat(auditEventRepository.findAfter(Instant.now(), AUTHENTICATION_SUCCESS)).size().isEqualTo(0);
+        assertThat(onlineUsersService.find()).size().isEqualTo(0);
     }
 }

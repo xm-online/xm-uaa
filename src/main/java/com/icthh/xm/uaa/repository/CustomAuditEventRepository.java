@@ -69,7 +69,6 @@ public class CustomAuditEventRepository implements AuditEventRepository {
             persistentAuditEvent.setPrincipal(event.getPrincipal());
             persistentAuditEvent.setAuditEventType(event.getType());
             persistentAuditEvent.setAuditEventDate(event.getTimestamp().toInstant());
-            persistentAuditEvent.setTenant(tenantContextHolder.getContext().getTenantKey().map(TenantKey::getValue).orElse(null));
             persistentAuditEvent.setData(auditEventConverter.convertDataToStrings(event.getData()));
             persistenceAuditEventRepository.save(persistentAuditEvent);
         }
@@ -83,10 +82,6 @@ public class CustomAuditEventRepository implements AuditEventRepository {
 
     public List<PrincipalProjection> findAfter(Instant after, String type) {
         return persistenceAuditEventRepository.findDistinctByAuditEventDateAfterAndAuditEventType(after, type);
-    }
-
-    public List<PrincipalProjection> findAfter(Instant after, String type, String tenant) {
-        return persistenceAuditEventRepository.findDistinctByAuditEventDateAfterAndAuditEventTypeAndTenant(after, type, tenant);
     }
 
     public void delete(String principal) {

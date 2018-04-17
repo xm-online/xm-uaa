@@ -24,7 +24,5 @@ public interface PersistenceAuditEventRepository extends JpaRepository<Persisten
 
     List<PrincipalProjection> findDistinctByAuditEventDateAfterAndAuditEventType(Instant after, String type);
 
-    List<PrincipalProjection> findDistinctByAuditEventDateAfterAndAuditEventTypeAndTenant(Instant after, String type, String tenant);
-
     Long deleteByPrincipal(String principal);
 }

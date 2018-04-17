@@ -26,9 +26,6 @@ public class PersistentAuditEvent implements Serializable {
     @Column(name = "event_id")
     private Long id;
 
-    @Column
-    private String tenant;
-
     @NotNull
     @Column(nullable = false)
     private String principal;

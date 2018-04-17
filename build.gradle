@@ -91,6 +91,7 @@ if (OperatingSystem.current().isWindows()) {
 }
 
 test {
+    systemProperty "spring.profiles.active", "test"
     include '**/*UnitTest*'
     include '**/*IntTest*'
 

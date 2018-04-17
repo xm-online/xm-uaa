@@ -25,8 +25,10 @@ import com.icthh.xm.uaa.service.OnlineUsersService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -46,6 +48,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+@RunWith(MockitoJUnitRunner.class)
 public class DomainTokenServicesUnitTest {
 
     private static final String TENANT = "testTenant";
@@ -62,14 +65,13 @@ public class DomainTokenServicesUnitTest {
     private TenantProperties tenantProperties;
     @Mock
     private TenantProperties.Security security;
+    @Mock
+    private TenantContext tenantContext;
 
     private DomainTokenServices tokenServices;
 
     @Before
     public void setup() throws Exception {
-        MockitoAnnotations.initMocks(this);
-
-        TenantContext tenantContext = mock(TenantContext.class);
         when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(TENANT)));
 
         TenantContextHolder tenantContextHolder = mock(TenantContextHolder.class);

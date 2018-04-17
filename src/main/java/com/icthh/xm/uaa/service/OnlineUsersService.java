@@ -21,9 +21,9 @@ import java.util.stream.Collectors;
 /**
  * Service Implementation for managing online users.
  */
-@Service
 @Slf4j
 @AllArgsConstructor
+@Service
 public class OnlineUsersService {
 
     private final TenantContextHolder tenantContextHolder;
@@ -36,22 +36,12 @@ public class OnlineUsersService {
      * @return collection of online users
      */
     public Collection<String> find() {
-        String tenant = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder);
-        if (SUPER_TENANT.equals(tenant)) {
-            return auditEventRepository
-                .findAfter(Instant.now().minus(tokenConstraints.getDefaultAccessTokenValiditySeconds(),
-                    ChronoUnit.SECONDS), AUTHENTICATION_SUCCESS)
-                .stream()
-                .map(PrincipalProjection::getPrincipal)
-                .collect(Collectors.toList());
-        } else {
-            return auditEventRepository
-                .findAfter(Instant.now().minus(tokenConstraints.getDefaultAccessTokenValiditySeconds(),
-                    ChronoUnit.SECONDS), AUTHENTICATION_SUCCESS, tenant)
-                .stream()
-                .map(PrincipalProjection::getPrincipal)
-                .collect(Collectors.toList());
-        }
+        return auditEventRepository
+            .findAfter(Instant.now().minus(tokenConstraints.getDefaultAccessTokenValiditySeconds(),
+                ChronoUnit.SECONDS), AUTHENTICATION_SUCCESS)
+            .stream()
+            .map(PrincipalProjection::getPrincipal)
+            .collect(Collectors.toList());
     }
 
     /**

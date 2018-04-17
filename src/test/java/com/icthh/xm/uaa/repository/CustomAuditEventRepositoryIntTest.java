@@ -193,7 +193,6 @@ public class CustomAuditEventRepositoryIntTest {
         assertThat(persistentAuditEvent.getData()).containsKey("test-key");
         assertThat(persistentAuditEvent.getData().get("test-key")).isEqualTo("test-value");
         assertThat(persistentAuditEvent.getAuditEventDate()).isEqualTo(event.getTimestamp().toInstant());
-        assertThat(persistentAuditEvent.getTenant()).isEqualTo(DEFAULT_TENANT_KEY_VALUE);
     }
 
     @Test
