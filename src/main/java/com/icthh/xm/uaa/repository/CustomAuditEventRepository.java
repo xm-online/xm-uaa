@@ -29,7 +29,6 @@ public class CustomAuditEventRepository implements AuditEventRepository {
 
     private final PersistenceAuditEventRepository persistenceAuditEventRepository;
     private final AuditEventConverter auditEventConverter;
-    private final TenantContextHolder tenantContextHolder;
 
     @Override
     public List<AuditEvent> find(Date after) {

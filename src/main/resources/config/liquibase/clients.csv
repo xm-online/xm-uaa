@@ -1,0 +1,2 @@
+id;client_id;client_secret;role_key;description;created_by;created_date;last_modified_by;last_modified_date;access_token_validity_seconds
+1;internal;$2a$10$RFtjgrJz0xZ7zcvQIOTc0eDsjN1ZWCVmkwYJ07agP1SOliJheWWu2;ROLE_ADMIN;admin;xm;2018-04-16;xm;2018-04-16;86400

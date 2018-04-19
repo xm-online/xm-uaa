@@ -163,6 +163,7 @@ configurations {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
     jcenter()
     maven { url 'http://repo.spring.io/milestone' }
@@ -253,7 +254,6 @@ dependencies {
     compile "org.jboss.aerogear:aerogear-otp-java:${aerogear_version}"
     // XM custom dependencies end
 
-    compile 'org.bitsofinfo:hazelcast-consul-discovery-spi:1.0-RC7'
     compile "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson_dataformat_yaml_version}"
 
     compile "com.icthh.xm.commons:xm-commons-logging-web:${xm_commons_version}"
