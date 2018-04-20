@@ -4,6 +4,7 @@ import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.commons.tenant.TenantKey;
+import com.icthh.xm.commons.tenant.internal.DefaultTenantContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.config.DefaultProfileUtil;
 import io.github.jhipster.config.JHipsterConstants;
@@ -61,15 +62,13 @@ public class UaaApp {
             log.error("You have misconfigured your application! It should not"
                           + "run with both the 'dev' and 'cloud' profiles at the same time.");
         }
-
-        initContexts();
     }
 
-    private void initContexts() {
+    private static void initContexts() {
         // init tenant context, by default this is XM super tenant
         // TODO fix tenantKey upper case usage only for for Config server calls..., Postgres, H2 schema case sensitivity
         TenantKey superKey = TenantKey.valueOf(TenantKey.SUPER_TENANT_KEY_VALUE.toUpperCase());
-        TenantContextUtils.setTenant(tenantContextHolder, superKey);
+        TenantContextUtils.setTenant(new DefaultTenantContextHolder(), superKey);
 
         // init logger MDC context
         MdcUtils.putRid(MdcUtils.getRid() + "::" + superKey.getValue());
@@ -92,6 +91,7 @@ public class UaaApp {
     public static void main(String[] args) throws UnknownHostException {
 
         MdcUtils.putRid();
+        initContexts();
 
         SpringApplication app = new SpringApplication(UaaApp.class);
         DefaultProfileUtil.addDefaultProfile(app);
