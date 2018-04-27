@@ -256,13 +256,11 @@ dependencies {
 
     compile "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson_dataformat_yaml_version}"
 
-    compile "com.icthh.xm.commons:xm-commons-logging-web:${xm_commons_version}"
-    compile "com.icthh.xm.commons:xm-commons-migration-db:${xm_commons_version}"
-    compile "com.icthh.xm.commons:xm-commons-tenant:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-ms-web:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-lep:${xm_commons_version}"
     compile "com.icthh.xm.commons:xm-commons-tenant-endpoint:${xm_commons_version}"
     compile "com.icthh.xm.commons:xm-commons-exceptions:${xm_commons_version}"
-    compile "com.icthh.xm.commons:xm-commons-config:${xm_commons_version}"
-    compile "com.icthh.xm.commons:xm-commons-lep:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-migration-db:${xm_commons_version}"
     compile "com.icthh.xm.commons:xm-commons-permission:${xm_commons_version}"
 
     // groovy

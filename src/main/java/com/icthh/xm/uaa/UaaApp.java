@@ -62,6 +62,7 @@ public class UaaApp {
             log.error("You have misconfigured your application! It should not"
                           + "run with both the 'dev' and 'cloud' profiles at the same time.");
         }
+        initContexts();
     }
 
     private static void initContexts() {
