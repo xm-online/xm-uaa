@@ -11,7 +11,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
  */
 @RequiredArgsConstructor
 @Configuration
-public class LepInterceptorConfiguration extends WebMvcConfigurerAdapter {
+public class WebMvcConfiguration extends WebMvcConfigurerAdapter {
 
     private final LepInterceptor lepInterceptor;
 
