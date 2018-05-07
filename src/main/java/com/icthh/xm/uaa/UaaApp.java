@@ -92,6 +92,7 @@ public class UaaApp {
     public static void main(String[] args) throws UnknownHostException {
 
         MdcUtils.putRid();
+        // TODO fix database initialising tenant context first like in other services
         initContexts();
 
         SpringApplication app = new SpringApplication(UaaApp.class);
