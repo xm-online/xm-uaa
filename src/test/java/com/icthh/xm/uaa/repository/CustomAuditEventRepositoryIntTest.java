@@ -1,20 +1,17 @@
 package com.icthh.xm.uaa.repository;
 
-import static com.icthh.xm.commons.tenant.TenantContextUtils.buildTenant;
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
-import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.Constants;
+import com.icthh.xm.uaa.config.SecurityBeanOverrideConfiguration;
 import com.icthh.xm.uaa.config.audit.AuditEventConverter;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.PersistentAuditEvent;
-import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +40,7 @@ import javax.servlet.http.HttpSession;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {
     UaaApp.class,
+    SecurityBeanOverrideConfiguration.class,
     XmOverrideConfiguration.class
 })
 @Transactional

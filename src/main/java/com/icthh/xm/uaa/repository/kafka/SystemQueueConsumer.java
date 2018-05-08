@@ -6,14 +6,12 @@ import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.icthh.xm.commons.config.client.config.InitRefreshableConfigurationBeanPostProcessor;
-import com.icthh.xm.commons.messaging.event.system.SystemEventType;
-import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
+import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.kafka.SystemEvent;
@@ -28,7 +26,6 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.Objects;
 
 @RequiredArgsConstructor
 @Slf4j

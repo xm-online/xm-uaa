@@ -8,6 +8,7 @@ import com.icthh.xm.commons.tenant.internal.DefaultTenantContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.config.DefaultProfileUtil;
 import io.github.jhipster.config.JHipsterConstants;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.actuate.autoconfigure.MetricFilterAutoConfiguration;
@@ -28,21 +29,21 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 @ComponentScan("com.icthh.xm")
-@EnableAutoConfiguration(exclude = {MetricFilterAutoConfiguration.class, MetricRepositoryAutoConfiguration.class,
+@EnableAutoConfiguration(exclude = {
+    MetricFilterAutoConfiguration.class,
+    MetricRepositoryAutoConfiguration.class,
     SocialWebAutoConfiguration.class})
-@EnableConfigurationProperties({LiquibaseProperties.class, ApplicationProperties.class})
+@EnableConfigurationProperties({
+    LiquibaseProperties.class,
+    ApplicationProperties.class
+})
 @EnableDiscoveryClient
 @Slf4j
+@RequiredArgsConstructor
 public class UaaApp {
 
     private final Environment env;
-
     private final TenantContextHolder tenantContextHolder;
-
-    public UaaApp(Environment env, TenantContextHolder tenantContextHolder) {
-        this.env = env;
-        this.tenantContextHolder = tenantContextHolder;
-    }
 
     /**
      * Initializes uaa.

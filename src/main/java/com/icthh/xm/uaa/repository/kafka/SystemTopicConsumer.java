@@ -3,10 +3,9 @@ package com.icthh.xm.uaa.repository.kafka;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.icthh.xm.commons.config.client.config.InitRefreshableConfigurationBeanPostProcessor;
+import com.icthh.xm.commons.config.client.config.RefreshableConfigurationPostProcessor;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.commons.messaging.event.system.SystemEventType;
-import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.domain.kafka.SystemEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +23,7 @@ import java.util.Objects;
 @Slf4j
 public class SystemTopicConsumer {
 
-    private final InitRefreshableConfigurationBeanPostProcessor postProcessor;
+    private final RefreshableConfigurationPostProcessor postProcessor;
 
     /**
      * Consume tenant command event message.
