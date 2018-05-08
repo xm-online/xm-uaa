@@ -6,6 +6,8 @@ import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.icthh.xm.commons.config.client.config.InitRefreshableConfigurationBeanPostProcessor;
+import com.icthh.xm.commons.messaging.event.system.SystemEventType;
 import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.logging.util.MdcUtils;
@@ -26,6 +28,7 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -61,18 +64,7 @@ public class SystemQueueConsumer {
 
                 switch (event.getEventType().toUpperCase()) {
                     case Constants.UPDATE_ACCOUNT_EVENT_TYPE:
-                        String userKey = String.valueOf(event.getDataMap().get(Constants.SYSTEM_EVENT_PROP_USER_KEY));
-
-                        init(event.getTenantKey(), event.getUserLogin());
-
-                        log.info("Start to update account for userKey='{}'", userKey);
-                        User user = userService.getUser(userKey);
-                        if (user == null) {
-                            log.error("Failed to update account. User with userKey='{}' does not exists.", userKey);
-                        } else {
-                            SystemEventMapper.toUser(event, user);
-                            userService.saveUser(user);
-                        }
+                        onUpdateAcount(event);
                         break;
                     default:
                         log.info("Event ignored with type='{}', source='{}', event_id='{}'",
@@ -109,4 +101,18 @@ public class SystemQueueConsumer {
         MdcUtils.removeRid();
     }
 
+    private void onUpdateAcount(SystemEvent event) {
+        String userKey = String.valueOf(event.getDataMap().get(Constants.SYSTEM_EVENT_PROP_USER_KEY));
+
+        init(event.getTenantKey(), event.getUserLogin());
+
+        log.info("Start to update account for userKey='{}'", userKey);
+        User user = userService.getUser(userKey);
+        if (user == null) {
+            log.error("Failed to update account. User with userKey='{}' does not exists.", userKey);
+        } else {
+            SystemEventMapper.toUser(event, user);
+            userService.saveUser(user);
+        }
+    }
 }
