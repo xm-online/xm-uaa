@@ -25,8 +25,10 @@ import com.icthh.xm.uaa.service.OnlineUsersService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -46,6 +48,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+@RunWith(MockitoJUnitRunner.class)
 public class DomainTokenServicesUnitTest {
 
     private static final String TENANT = "testTenant";
@@ -63,15 +66,12 @@ public class DomainTokenServicesUnitTest {
     @Mock
     private TenantProperties.Security security;
     @Mock
-    private OnlineUsersService onlineUsersService;
+    private TenantContext tenantContext;
 
     private DomainTokenServices tokenServices;
 
     @Before
     public void setup() throws Exception {
-        MockitoAnnotations.initMocks(this);
-
-        TenantContext tenantContext = mock(TenantContext.class);
         when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(TENANT)));
 
         TenantContextHolder tenantContextHolder = mock(TenantContextHolder.class);
@@ -87,7 +87,6 @@ public class DomainTokenServicesUnitTest {
 
         when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProperties);
         when(tenantProperties.getSecurity()).thenReturn(security);
-        doNothing().when(onlineUsersService).save(any(), any(), anyLong());
 
         TokenConstraintsService tokenConstraintsService = new TokenConstraintsService();
         tokenConstraintsService.setTenantPropertiesService(tenantPropertiesService);
@@ -101,7 +100,6 @@ public class DomainTokenServicesUnitTest {
         tokenServices.setTenantContextHolder(tenantContextHolder);
         tokenServices.setTokenConstraintsService(tokenConstraintsService);
         tokenServices.setAuthenticationRefreshProvider(new DefaultAuthenticationRefreshProvider());
-        tokenServices.setOnlineUsersService(onlineUsersService);
     }
 
     @Test

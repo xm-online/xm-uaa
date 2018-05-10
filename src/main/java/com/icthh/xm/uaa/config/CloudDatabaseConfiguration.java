@@ -3,7 +3,6 @@ package com.icthh.xm.uaa.config;
 import io.github.jhipster.config.JHipsterConstants;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.CacheManager;
 import org.springframework.cloud.config.java.AbstractCloudConfig;
 import org.springframework.context.annotation.*;
 
@@ -15,7 +14,7 @@ import javax.sql.DataSource;
 public class CloudDatabaseConfiguration extends AbstractCloudConfig {
 
     @Bean
-    public DataSource dataSource(CacheManager cacheManager) {
+    public DataSource dataSource() {
         log.info("Configuring JDBC datasource from a cloud provider");
         return connectionFactory().dataSource();
     }

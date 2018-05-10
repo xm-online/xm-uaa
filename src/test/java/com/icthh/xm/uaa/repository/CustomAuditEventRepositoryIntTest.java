@@ -72,7 +72,7 @@ public class CustomAuditEventRepositoryIntTest {
 
     @Before
     public void setup() {
-        customAuditEventRepository = new CustomAuditEventRepository(persistenceAuditEventRepository, auditEventConverter);
+        customAuditEventRepository = new CustomAuditEventRepository(persistenceAuditEventRepository, auditEventConverter, tenantContextHolder);
         persistenceAuditEventRepository.deleteAll();
         Instant oneHourAgo = Instant.now().minusSeconds(3600);
 
@@ -179,7 +179,6 @@ public class CustomAuditEventRepositoryIntTest {
         assertThat(event.getTimestamp()).isEqualTo(Date.from(testUserEvent.getAuditEventDate()));
     }
 
-    @Ignore("ignored until fix multitenancy for AuthenticationAuditListener & AuthorizationAuditListener")
     @Test
     public void addAuditEvent() {
         Map<String, Object> data = new HashMap<>();
@@ -196,7 +195,6 @@ public class CustomAuditEventRepositoryIntTest {
         assertThat(persistentAuditEvent.getAuditEventDate()).isEqualTo(event.getTimestamp().toInstant());
     }
 
-    @Ignore("ignored until fix multitenancy for AuthenticationAuditListener & AuthorizationAuditListener")
     @Test
     public void testAddEventWithWebAuthenticationDetails() {
         HttpSession session = new MockHttpSession(null, "test-session-id");
@@ -215,7 +213,6 @@ public class CustomAuditEventRepositoryIntTest {
         assertThat(persistentAuditEvent.getData().get("sessionId")).isEqualTo("test-session-id");
     }
 
-    @Ignore("ignored until fix multitenancy for AuthenticationAuditListener & AuthorizationAuditListener")
     @Test
     public void testAddEventWithNullData() {
         Map<String, Object> data = new HashMap<>();
