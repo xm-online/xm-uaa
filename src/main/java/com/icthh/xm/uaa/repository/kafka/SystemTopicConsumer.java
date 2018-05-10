@@ -3,7 +3,8 @@ package com.icthh.xm.uaa.repository.kafka;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.icthh.xm.commons.config.client.config.RefreshableConfigurationPostProcessor;
+import com.icthh.xm.commons.config.client.repository.ConfigurationModel;
+import com.icthh.xm.commons.config.domain.Configuration;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.commons.messaging.event.system.SystemEventType;
 import com.icthh.xm.uaa.domain.kafka.SystemEvent;
@@ -17,13 +18,17 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class SystemTopicConsumer {
 
-    private final RefreshableConfigurationPostProcessor postProcessor;
+    private final ConfigurationModel configurationModel;
+
+    public SystemTopicConsumer(Optional<ConfigurationModel> configurationModel) {
+        this.configurationModel = configurationModel.orElse(null);
+    }
 
     /**
      * Consume tenant command event message.
@@ -67,7 +72,10 @@ public class SystemTopicConsumer {
         if (StringUtils.isBlank(path)) {
             throw new IllegalArgumentException("Event '" + event.getEventType() + "' configuration path can't be blank");
         }
-        String hash = Objects.toString(event.getDataMap().get("hash"), null);
-        postProcessor.onConfigurationChanged(path, hash);
+        String commit = Objects.toString(event.getDataMap().get("commit"), null);
+        if (StringUtils.isBlank(commit)) {
+            throw new IllegalArgumentException("Event '" + event.getEventType() + "' configuration commit can't be blank");
+        }
+        configurationModel.updateConfiguration(new Configuration(path, null, commit));
     }
 }

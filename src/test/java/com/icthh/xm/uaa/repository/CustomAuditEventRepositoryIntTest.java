@@ -40,7 +40,6 @@ import javax.servlet.http.HttpSession;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {
     UaaApp.class,
-    SecurityBeanOverrideConfiguration.class,
     XmOverrideConfiguration.class
 })
 @Transactional
