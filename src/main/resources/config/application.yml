@@ -120,6 +120,7 @@ jhipster:
 xm-config:
     enabled: true
     xm-config-url: http://config
+    max-wait-time-second: 30
 
 aspects:
     rest-call-logging: true
