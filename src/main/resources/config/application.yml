@@ -120,7 +120,7 @@ jhipster:
 xm-config:
     enabled: true
     xm-config-url: http://config
-    max-wait-time-second: 30
+    kafka-config-topic: config_topic
 
 aspects:
     rest-call-logging: true
