@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.oauth2.common.exceptions.InvalidGrantException;
 
 import java.util.Optional;
 
@@ -75,7 +76,7 @@ public class DomainUserDetailsServiceUnitTest {
         userDetailsService.loadUserByUsername("admin");
     }
 
-    @Test(expected = UserNotActivatedException.class)
+    @Test(expected = InvalidGrantException.class)
     public void testLoginUserNotActivated() {
         user.setActivated(false);
         when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(DEFAULT_TENANT_KEY_VALUE)));

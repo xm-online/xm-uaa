@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.oauth2.common.exceptions.InvalidGrantException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +40,7 @@ public class DomainUserDetailsService implements UserDetailsService {
         return userLoginRepository.findOneByLogin(login).map(userLogin -> {
             User user = userLogin.getUser();
             if (!user.isActivated()) {
-                throw new UserNotActivatedException("User " + login + " was not activated");
+                throw new InvalidGrantException("User " + login + " was not activated");
             }
 
             // get user login's
