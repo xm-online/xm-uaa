@@ -1,35 +1,34 @@
 package com.icthh.xm.uaa.repository;
 
+import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.config.audit.AuditEventConverter;
 import com.icthh.xm.uaa.domain.PersistentAuditEvent;
+import com.icthh.xm.uaa.repository.projection.PrincipalProjection;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
 /**
  * An implementation of Spring Boot's AuditEventRepository.
  */
+@RequiredArgsConstructor
 @Repository
 public class CustomAuditEventRepository implements AuditEventRepository {
 
     private static final String AUTHORIZATION_FAILURE = "AUTHORIZATION_FAILURE";
 
     private final PersistenceAuditEventRepository persistenceAuditEventRepository;
-
     private final AuditEventConverter auditEventConverter;
-
-    public CustomAuditEventRepository(PersistenceAuditEventRepository persistenceAuditEventRepository,
-                                      AuditEventConverter auditEventConverter) {
-
-        this.persistenceAuditEventRepository = persistenceAuditEventRepository;
-        this.auditEventConverter = auditEventConverter;
-    }
 
     @Override
     public List<AuditEvent> find(Date after) {
@@ -72,5 +71,17 @@ public class CustomAuditEventRepository implements AuditEventRepository {
             persistentAuditEvent.setData(auditEventConverter.convertDataToStrings(event.getData()));
             persistenceAuditEventRepository.save(persistentAuditEvent);
         }
+    }
+
+    public List<PrincipalProjection> findAfter(Instant after, String type) {
+        return persistenceAuditEventRepository.findDistinctByAuditEventDateAfterAndAuditEventType(after, type);
+    }
+
+    public void delete(String principal) {
+        persistenceAuditEventRepository.deleteByPrincipal(principal);
+    }
+
+    public void deleteAll() {
+        persistenceAuditEventRepository.deleteAll();
     }
 }

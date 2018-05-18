@@ -8,13 +8,14 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
-@Service
-@RequiredArgsConstructor
 @Slf4j
+@RequiredArgsConstructor
+@Service
 public class SystemTopicConsumer {
 
     /**
      * Consume tenant command event message.
+     *
      * @param message the tenant command event message
      */
     @Retryable(maxAttemptsExpression = "${application.retry.max-attempts}",
@@ -24,7 +25,6 @@ public class SystemTopicConsumer {
         MdcUtils.putRid();
         try {
             log.info("Consume event from topic [{}]", message.topic());
-
         } finally {
             MdcUtils.removeRid();
         }

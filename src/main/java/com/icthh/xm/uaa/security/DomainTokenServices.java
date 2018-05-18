@@ -32,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.util.Date;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -44,23 +43,14 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
     ConsumerTokenServices, InitializingBean {
 
     private TokenStore tokenStore;
-
     private TokenEnhancer accessTokenEnhancer;
-
     private AuthenticationManager authenticationManager;
-
     private AuthenticationRefreshProvider authenticationRefreshProvider;
-
     private TenantPropertiesService tenantPropertiesService;
-
     private TenantContextHolder tenantContextHolder;
-
-    private OnlineUsersService onlineUsersService;
-
     private OtpGenerator otpGenerator;
     private OtpSendStrategy otpSendStrategy;
     private OtpStore otpStore;
-
     private TokenConstraintsService tokenConstraints;
 
     /**
@@ -264,23 +254,6 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         return narrowed;
     }
 
-    private void registerThatUserIsOnline(Authentication authentication, String value, int timeToLive) {
-        if (authentication.isAuthenticated()) {
-            Optional<String> serviceUserKey = getOnlineUserServiceUserKey(authentication);
-            serviceUserKey.ifPresent(key -> onlineUsersService.save(key, value, timeToLive));
-        }
-    }
-
-    private static Optional<String> getOnlineUserServiceUserKey(Authentication authentication) {
-        String key = null;
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof DomainUserDetails) {
-            DomainUserDetails userDetails = DomainUserDetails.class.cast(principal);
-            key = userDetails.getTenant() + ":" + userDetails.getUserKey();
-        }
-        return Optional.ofNullable(key);
-    }
-
     private static boolean isExpired(OAuth2RefreshToken refreshToken) {
         if (refreshToken instanceof ExpiringOAuth2RefreshToken) {
             ExpiringOAuth2RefreshToken expiringToken = (ExpiringOAuth2RefreshToken) refreshToken;
@@ -350,9 +323,6 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         token.setRefreshToken(refreshToken);
         token.setScope(authentication.getOAuth2Request().getScope());
 
-        // register new online user
-        registerThatUserIsOnline(authentication, token.getValue(), validitySeconds);
-
         return (accessTokenEnhancer != null) ? accessTokenEnhancer.enhance(token, authentication) : token;
     }
 
@@ -398,10 +368,6 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
 
     public void setTenantContextHolder(TenantContextHolder tenantContextHolder) {
         this.tenantContextHolder = tenantContextHolder;
-    }
-
-    public void setOnlineUsersService(OnlineUsersService onlineUsersService) {
-        this.onlineUsersService = onlineUsersService;
     }
 
     public void setOtpGenerator(OtpGenerator otpGenerator) {

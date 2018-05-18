@@ -9,6 +9,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.UaaApp;
+import com.icthh.xm.uaa.config.SecurityBeanOverrideConfiguration;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.SocialUserConnection;
 import org.junit.Before;

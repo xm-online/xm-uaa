@@ -4,9 +4,11 @@ import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.commons.tenant.TenantKey;
+import com.icthh.xm.commons.tenant.internal.DefaultTenantContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.config.DefaultProfileUtil;
 import io.github.jhipster.config.JHipsterConstants;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.actuate.autoconfigure.MetricFilterAutoConfiguration;
@@ -27,21 +29,21 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 @ComponentScan("com.icthh.xm")
-@EnableAutoConfiguration(exclude = {MetricFilterAutoConfiguration.class, MetricRepositoryAutoConfiguration.class,
+@EnableAutoConfiguration(exclude = {
+    MetricFilterAutoConfiguration.class,
+    MetricRepositoryAutoConfiguration.class,
     SocialWebAutoConfiguration.class})
-@EnableConfigurationProperties({LiquibaseProperties.class, ApplicationProperties.class})
+@EnableConfigurationProperties({
+    LiquibaseProperties.class,
+    ApplicationProperties.class
+})
 @EnableDiscoveryClient
 @Slf4j
+@RequiredArgsConstructor
 public class UaaApp {
 
     private final Environment env;
-
     private final TenantContextHolder tenantContextHolder;
-
-    public UaaApp(Environment env, TenantContextHolder tenantContextHolder) {
-        this.env = env;
-        this.tenantContextHolder = tenantContextHolder;
-    }
 
     /**
      * Initializes uaa.
@@ -61,15 +63,14 @@ public class UaaApp {
             log.error("You have misconfigured your application! It should not"
                           + "run with both the 'dev' and 'cloud' profiles at the same time.");
         }
-
         initContexts();
     }
 
-    private void initContexts() {
+    private static void initContexts() {
         // init tenant context, by default this is XM super tenant
         // TODO fix tenantKey upper case usage only for for Config server calls..., Postgres, H2 schema case sensitivity
         TenantKey superKey = TenantKey.valueOf(TenantKey.SUPER_TENANT_KEY_VALUE.toUpperCase());
-        TenantContextUtils.setTenant(tenantContextHolder, superKey);
+        TenantContextUtils.setTenant(new DefaultTenantContextHolder(), superKey);
 
         // init logger MDC context
         MdcUtils.putRid(MdcUtils.getRid() + "::" + superKey.getValue());
@@ -92,6 +93,8 @@ public class UaaApp {
     public static void main(String[] args) throws UnknownHostException {
 
         MdcUtils.putRid();
+        // TODO fix database initialising tenant context first like in other services
+        initContexts();
 
         SpringApplication app = new SpringApplication(UaaApp.class);
         DefaultProfileUtil.addDefaultProfile(app);

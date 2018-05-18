@@ -173,7 +173,6 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
         tokenServices.setAuthenticationRefreshProvider(defaultAuthenticationRefreshProvider);
         tokenServices.setTenantPropertiesService(tenantPropertiesService);
         tokenServices.setTenantContextHolder(tenantContextHolder);
-        tokenServices.setOnlineUsersService(onlineUsersService);
         tokenServices.setTokenConstraintsService(tokenConstraintsService);
         // OTP settings
         tokenServices.setOtpGenerator(otpGenerator);

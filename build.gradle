@@ -91,6 +91,8 @@ if (OperatingSystem.current().isWindows()) {
 }
 
 test {
+    systemProperty "spring.profiles.active", "test"
+    mkdir("src/test/features")
     include '**/*UnitTest*'
     include '**/*IntTest*'
 
@@ -162,6 +164,7 @@ configurations {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
     jcenter()
     maven { url 'http://repo.spring.io/milestone' }
@@ -181,7 +184,7 @@ dependencies {
     compile "io.dropwizard.metrics:metrics-servlet:${dropwizard_metrics_version}"
     compile "io.dropwizard.metrics:metrics-json:${dropwizard_metrics_version}"
     compile "io.dropwizard.metrics:metrics-servlets:${dropwizard_metrics_version}"
-    compile("net.logstash.logback:logstash-logback-encoder:${logstash_logback_encoder_version}") {
+    compile ("net.logstash.logback:logstash-logback-encoder:${logstash_logback_encoder_version}") {
         exclude(group: 'ch.qos.logback')
     }
     compile "com.fasterxml.jackson.datatype:jackson-datatype-json-org"
@@ -192,10 +195,6 @@ dependencies {
     compile "com.fasterxml.jackson.core:jackson-databind"
     compile "com.fasterxml.jackson.module:jackson-module-afterburner"
     compile("com.ryantenney.metrics:metrics-spring:${metrics_spring_version}")
-    compile "com.hazelcast:hazelcast"
-    compile "com.hazelcast:hazelcast-hibernate52:${hazelcast_hibernate52_version}"
-    compile "com.hazelcast:hazelcast-spring"
-    compile "com.hazelcast:hazelcast-wm:${hazelcast_wm_version}"
     compile "javax.cache:cache-api"
     compile "org.hibernate:hibernate-core:${hibernate_version}"
     compile("com.zaxxer:HikariCP:${hikaricp_version}")
@@ -256,16 +255,13 @@ dependencies {
     compile "org.jboss.aerogear:aerogear-otp-java:${aerogear_version}"
     // XM custom dependencies end
 
-    compile 'org.bitsofinfo:hazelcast-consul-discovery-spi:1.0-RC7'
     compile "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson_dataformat_yaml_version}"
 
-    compile "com.icthh.xm.commons:xm-commons-logging-web:${xm_commons_version}"
-    compile "com.icthh.xm.commons:xm-commons-migration-db:${xm_commons_version}"
-    compile "com.icthh.xm.commons:xm-commons-tenant:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-ms-web:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-lep:${xm_commons_version}"
     compile "com.icthh.xm.commons:xm-commons-tenant-endpoint:${xm_commons_version}"
     compile "com.icthh.xm.commons:xm-commons-exceptions:${xm_commons_version}"
-    compile "com.icthh.xm.commons:xm-commons-config:${xm_commons_version}"
-    compile "com.icthh.xm.commons:xm-commons-lep:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-migration-db:${xm_commons_version}"
     compile "com.icthh.xm.commons:xm-commons-permission:${xm_commons_version}"
 
     // groovy
