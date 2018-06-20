@@ -12,6 +12,7 @@ import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.TfaEnableRequest;
 import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
+import com.icthh.xm.uaa.service.dto.UserPublicDTO;
 import com.icthh.xm.uaa.web.rest.util.HeaderUtil;
 import com.icthh.xm.uaa.web.rest.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -188,6 +189,20 @@ public class UserResource {
     public ResponseEntity<UserDTO> getUser(@PathVariable String userKey) {
         return ResponseUtil.wrapOrNotFound(
             userService.findOneWithLoginsByUserKey(userKey).map(UserDTO::new));
+    }
+
+    /**
+     * GET  /users/:userKey/public : get public user info for "userKey"
+     *
+     * @param userKey the userKey of the user to find
+     * @return the ResponseEntity with status 200 (OK) and with body the "userKey" user, or with status 404 (Not Found)
+     */
+    @GetMapping("/users/{userKey}/public")
+    @Timed
+    @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'USER.GET_LIST.ITEM.PUBLIC')")
+    public ResponseEntity<UserPublicDTO> getPublicUser(@PathVariable String userKey) {
+        return ResponseUtil.wrapOrNotFound(
+            userService.findOneWithLoginsByUserKey(userKey).map(UserPublicDTO::new));
     }
 
     /**
