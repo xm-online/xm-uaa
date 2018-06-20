@@ -366,6 +366,22 @@ public class UserResourceIntTest {
 
     @Test
     @Transactional
+    public void getPublicUser() throws Exception {
+        // Initialize the database
+        userRepository.saveAndFlush(user);
+
+        // Get the user
+        restUserMockMvc.perform(get("/api/users/{userKey}/public", user.getUserKey()))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+            .andExpect(jsonPath("$.userKey").value(user.getUserKey()))
+            .andExpect(jsonPath("$.firstName").value(DEFAULT_FIRSTNAME))
+            .andExpect(jsonPath("$.lastName").value(DEFAULT_LASTNAME))
+            .andExpect(jsonPath("$.imageUrl").value(DEFAULT_IMAGEURL));
+    }
+
+    @Test
+    @Transactional
     public void getNonExistingUser() throws Exception {
         restUserMockMvc.perform(get("/api/users/unknown"))
             .andExpect(status().isNotFound());
