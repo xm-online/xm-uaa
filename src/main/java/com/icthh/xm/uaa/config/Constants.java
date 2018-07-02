@@ -53,7 +53,6 @@ public final class Constants {
 
     public static final String CERTIFICATE = "X.509";
     public static final String KEYSTORE_TYPE = "PKCS12";
-    public static final String KEYSTORE_FILE = "keystore.p12";
 
     // System event data properties
     public static final String SYSTEM_EVENT_PROP_ID = "id";
