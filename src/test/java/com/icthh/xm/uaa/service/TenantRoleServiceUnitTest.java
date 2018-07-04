@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.service;
 
+import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -103,7 +104,7 @@ public class TenantRoleServiceUnitTest {
         when(tenantConfigRepository.getConfigFullPath(TENANT, rolesPath))
             .thenReturn(readConfigFile("/config/tenants/XM/roles.yml"));
         assertEquals("test", tenantRoleService.getRoles().get("ROLE_USER").getDescription());
-        assertEquals("test2", tenantRoleService.getRoles().get("SUPER-ADMIN").getDescription());
+        assertEquals("test2", tenantRoleService.getRoles().get(SUPER_ADMIN).getDescription());
 
         when(tenantConfigRepository.getConfigFullPath(TENANT, rolesPath))
             .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));

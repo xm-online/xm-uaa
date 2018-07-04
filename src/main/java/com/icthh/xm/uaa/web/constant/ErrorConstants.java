@@ -14,6 +14,8 @@ public class ErrorConstants {
     public static final String TENANT_NOT_SUPPLIED = "No tenant supplied";
     public static final String TENANT_IS_SUSPENDED = "Tenant is suspended";
 
+    public static final String ERROR_FORBIDDEN_ROLE = "error.role.forbidden";
+
     public static final String ERROR_USER_DELETE_HIMSELF = "error.user.delete.himself";
 
     public static final String ERROR_USER_DELETE_SUPER_ADMIN = "error.user.delete.super-admin";
