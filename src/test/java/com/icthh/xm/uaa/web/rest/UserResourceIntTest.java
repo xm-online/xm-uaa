@@ -3,8 +3,13 @@ package com.icthh.xm.uaa.web.rest;
 import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
 import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_CREATE_SUPER_ADMIN;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_DELETE_SUPER_ADMIN;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_UPDATE_SUPER_ADMIN;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -17,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.exceptions.spring.web.ExceptionTranslator;
 import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
@@ -56,14 +62,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.transaction.BeforeTransaction;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import javax.persistence.EntityManager;
 
 /**
@@ -140,6 +145,8 @@ public class UserResourceIntTest {
 
     private User user;
 
+    private User superAdminUser;
+
     @Autowired
     private LepManager lepManager;
 
@@ -172,7 +179,8 @@ public class UserResourceIntTest {
             .setMessageConverters(jacksonMessageConverter)
             .build();
         userRepository.deleteAll();
-        user = createEntity(em);
+        user = createEntity(ROLE_USER);
+        superAdminUser = createEntity(RoleConstant.SUPER_ADMIN);
     }
 
     @After
@@ -188,7 +196,7 @@ public class UserResourceIntTest {
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which has a required relationship to the User entity.
      */
-    public static User createEntity(EntityManager em) {
+    public static User createEntity(String userRoleKey) {
         User user = new User();
         user.setPassword(RandomStringUtils.random(60));
         user.setActivated(true);
@@ -196,8 +204,8 @@ public class UserResourceIntTest {
         user.setLastName(DEFAULT_LASTNAME);
         user.setImageUrl(DEFAULT_IMAGEURL);
         user.setLangKey(DEFAULT_LANGKEY);
-        user.setUserKey("testUserKey");
-        user.setRoleKey(ROLE_USER);
+        user.setUserKey(UUID.randomUUID().toString());
+        user.setRoleKey(userRoleKey);
 
         UserLogin userLogin = new UserLogin();
         userLogin.setUser(user);
@@ -209,7 +217,7 @@ public class UserResourceIntTest {
 
     @Before
     public void initTest() {
-        user = createEntity(em);
+        user = createEntity(ROLE_USER);
     }
 
     @Test
@@ -276,15 +284,56 @@ public class UserResourceIntTest {
             null,
             null,
             null,
-            ROLE_USER, "test", null, null, null, null, null, false, null);
+            ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLogin), false, null);
 
         // An entity with an existing ID cannot be created, so this API call must fail
         restUserMockMvc.perform(post("/api/users")
                                     .contentType(TestUtil.APPLICATION_JSON_UTF8)
                                     .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest())
+            .andExpect(MockMvcResultMatchers.header().string("X-uaaApp-error", "error.idexists"));
 
         // Validate the User in the database
+        List<User> userList = userRepository.findAll();
+        assertThat(userList).hasSize(databaseSizeBeforeCreate);
+    }
+
+    @Test
+    @Transactional
+    public void createSuperAdminUser() throws Exception {
+        initSecurityContextWithUserKey("test");
+
+        int databaseSizeBeforeCreate = userRepository.findAll().size();
+
+        UserLogin userLogin = new UserLogin();
+        userLogin.setLogin("test");
+        userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
+        ManagedUserVM managedUserVM = new ManagedUserVM(
+            null,
+            DEFAULT_PASSWORD,
+            DEFAULT_FIRSTNAME,
+            DEFAULT_LASTNAME,
+            true,
+            false,
+            null,
+            null,
+            DEFAULT_IMAGEURL,
+            DEFAULT_LANGKEY,
+            null,
+            null,
+            null,
+            null,
+            "test", RoleConstant.SUPER_ADMIN, null, null, null, null, Collections.singletonList(userLogin), false, null);
+
+
+        // SUPER-ADMIN entity cannot be created, so this API call must fail
+        restUserMockMvc.perform(post("/api/users")
+                .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value(ERROR_USER_CREATE_SUPER_ADMIN));
+
+        // Validate that the new SUPER-ADMIN wasn't created
         List<User> userList = userRepository.findAll();
         assertThat(userList).hasSize(databaseSizeBeforeCreate);
     }
@@ -531,6 +580,36 @@ public class UserResourceIntTest {
             .andExpect(status().isBadRequest());
     }
 
+    @Test
+    @Transactional
+    public void updateSuperAdminUser() throws Exception {
+        UserLogin userLogin = new UserLogin();
+        userLogin.setLogin("testMail");
+        userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
+        ManagedUserVM managedUserVM = new ManagedUserVM(
+            null,
+            DEFAULT_PASSWORD,
+            DEFAULT_FIRSTNAME,
+            DEFAULT_LASTNAME,
+            true,
+            false,
+            null,
+            null,
+            DEFAULT_IMAGEURL,
+            DEFAULT_LANGKEY,
+            null,
+            null,
+            null,
+            null,
+            "test", RoleConstant.SUPER_ADMIN, null, null, null, null, Collections.singletonList(userLogin), false, null);
+
+        restUserMockMvc.perform(put("/api/users")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value(ERROR_USER_UPDATE_SUPER_ADMIN));
+    }
+
 
     @Test
     @Transactional
@@ -611,6 +690,26 @@ public class UserResourceIntTest {
             .andExpect(status().isBadRequest());
 
         // Validate the database is empty
+        List<User> userList = userRepository.findAll();
+        assertThat(userList).hasSize(databaseSizeBeforeDelete);
+    }
+
+    @Test
+    @Transactional
+    public void forbidDeleteSuperAdmin() throws Exception {
+        initSecurityContextWithUserKey(user.getUserKey());
+
+        // Initialize the database
+        userRepository.saveAndFlush(superAdminUser);
+        int databaseSizeBeforeDelete = userRepository.findAll().size();
+
+        // Delete the user
+        restUserMockMvc.perform(delete("/api/users/{userKey}", superAdminUser.getUserKey())
+            .accept(TestUtil.APPLICATION_JSON_UTF8))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value(ERROR_USER_DELETE_SUPER_ADMIN));
+
+        // Validate that super-admin wasn't deleted
         List<User> userList = userRepository.findAll();
         assertThat(userList).hasSize(databaseSizeBeforeDelete);
     }

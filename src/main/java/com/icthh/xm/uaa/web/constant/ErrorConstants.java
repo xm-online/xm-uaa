@@ -15,4 +15,10 @@ public class ErrorConstants {
     public static final String TENANT_IS_SUSPENDED = "Tenant is suspended";
 
     public static final String ERROR_USER_DELETE_HIMSELF = "error.user.delete.himself";
+
+    public static final String ERROR_USER_DELETE_SUPER_ADMIN = "error.user.delete.super-admin";
+
+    public static final String ERROR_USER_CREATE_SUPER_ADMIN = "error.user.create.super-admin";
+
+    public static final String ERROR_USER_UPDATE_SUPER_ADMIN = "error.user.update.super-admin";
 }

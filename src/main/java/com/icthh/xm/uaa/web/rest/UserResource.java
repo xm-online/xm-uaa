@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import com.icthh.xm.commons.exceptions.BusinessException;
+import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
@@ -13,6 +14,7 @@ import com.icthh.xm.uaa.service.dto.TfaEnableRequest;
 import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.dto.UserPublicDTO;
+import com.icthh.xm.uaa.web.constant.ErrorConstants;
 import com.icthh.xm.uaa.web.rest.util.HeaderUtil;
 import com.icthh.xm.uaa.web.rest.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -106,6 +108,9 @@ public class UserResource {
                 .headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new user cannot already have an ID"))
                 .body(null);
         }
+        if (RoleConstant.SUPER_ADMIN.equals(user.getRoleKey())) {
+            throw new BusinessException(ErrorConstants.ERROR_USER_CREATE_SUPER_ADMIN, "Super Admin could not be created");
+        }
         user.getLogins().forEach(userLogin ->
                                      userLoginRepository.findOneByLoginIgnoreCase(userLogin.getLogin())
                                          .ifPresent(s -> {
@@ -130,6 +135,9 @@ public class UserResource {
     @Timed
     @PreAuthorize("hasPermission({'id': #user.userKey, 'newUser': #user}, 'user', 'USER.UPDATE')")
     public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody UserDTO user) {
+        if (RoleConstant.SUPER_ADMIN.equals(user.getRoleKey())) {
+            throw new BusinessException(ErrorConstants.ERROR_USER_UPDATE_SUPER_ADMIN, "Could not assign role " + RoleConstant.SUPER_ADMIN);
+        }
         Optional<UserDTO> updatedUser = userService.updateUser(user);
         updatedUser.ifPresent(userDTO -> produceEvent(userDTO, Constants.UPDATE_PROFILE_EVENT_TYPE));
         return ResponseUtil.wrapOrNotFound(updatedUser,
