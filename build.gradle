@@ -29,6 +29,7 @@ apply plugin: 'java'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 apply plugin: 'maven'
+apply plugin: 'maven-publish'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'war'
 apply plugin: 'propdeps'
@@ -151,7 +152,7 @@ if (project.hasProperty('zipkin')) {
 }
 
 group = 'com.icthh.xm.uaa'
-version = '0.0.1-SNAPSHOT'
+version = '1.0.0-SNAPSHOT'
 
 description = ''
 
@@ -161,6 +162,14 @@ configurations {
     // netty's native is pulled by spring-cloud-starter-ribbon, but is useless unless you explicitly add the native binary dependency.
     // Having it in the classpath without the binary can cause warnings
     all*.exclude group: 'io.netty', module: 'netty-transport-native-epoll'
+}
+
+publishing {
+    publications {
+        xmUaa(MavenPublication) {
+            artifact file('./build/libs/xm-uaa-1.0.0-SNAPSHOT.war')
+        }
+    }
 }
 
 repositories {
