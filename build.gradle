@@ -167,7 +167,7 @@ configurations {
 publishing {
     publications {
         xmUaa(MavenPublication) {
-            artifact file('./build/libs/xm-uaa-1.0.0-SNAPSHOT.war')
+            artifact file('./build/libs/xm-uaa-1.0.0-SNAPSHOT.jar')
         }
     }
 }
