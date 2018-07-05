@@ -47,6 +47,8 @@ import java.util.Optional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
+import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
+
 
 /**
  * REST controller for managing users.
@@ -108,9 +110,7 @@ public class UserResource {
                 .headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new user cannot already have an ID"))
                 .body(null);
         }
-        if (RoleConstant.SUPER_ADMIN.equals(user.getRoleKey())) {
-            throw new BusinessException(ErrorConstants.ERROR_USER_CREATE_SUPER_ADMIN, "Super Admin could not be created");
-        }
+        assertNotSuperAdmin(user);
         user.getLogins().forEach(userLogin ->
                                      userLoginRepository.findOneByLoginIgnoreCase(userLogin.getLogin())
                                          .ifPresent(s -> {
@@ -135,9 +135,7 @@ public class UserResource {
     @Timed
     @PreAuthorize("hasPermission({'id': #user.userKey, 'newUser': #user}, 'user', 'USER.UPDATE')")
     public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody UserDTO user) {
-        if (RoleConstant.SUPER_ADMIN.equals(user.getRoleKey())) {
-            throw new BusinessException(ErrorConstants.ERROR_USER_UPDATE_SUPER_ADMIN, "Could not assign role " + RoleConstant.SUPER_ADMIN);
-        }
+        assertNotSuperAdmin(user);
         Optional<UserDTO> updatedUser = userService.updateUser(user);
         updatedUser.ifPresent(userDTO -> produceEvent(userDTO, Constants.UPDATE_PROFILE_EVENT_TYPE));
         return ResponseUtil.wrapOrNotFound(updatedUser,

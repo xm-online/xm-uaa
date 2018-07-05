@@ -3,9 +3,7 @@ package com.icthh.xm.uaa.web.rest;
 import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
 import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_CREATE_SUPER_ADMIN;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_DELETE_SUPER_ADMIN;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_UPDATE_SUPER_ADMIN;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_SUPER_ADMIN_FORBIDDEN_OPERATION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.hamcrest.Matchers.hasItem;
@@ -331,7 +329,7 @@ public class UserResourceIntTest {
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
                 .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.error").value(ERROR_USER_CREATE_SUPER_ADMIN));
+            .andExpect(jsonPath("$.error").value(ERROR_SUPER_ADMIN_FORBIDDEN_OPERATION));
 
         // Validate that the new SUPER-ADMIN wasn't created
         List<User> userList = userRepository.findAll();
@@ -607,7 +605,7 @@ public class UserResourceIntTest {
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.error").value(ERROR_USER_UPDATE_SUPER_ADMIN));
+            .andExpect(jsonPath("$.error").value(ERROR_SUPER_ADMIN_FORBIDDEN_OPERATION));
     }
 
 
@@ -707,7 +705,7 @@ public class UserResourceIntTest {
         restUserMockMvc.perform(delete("/api/users/{userKey}", superAdminUser.getUserKey())
             .accept(TestUtil.APPLICATION_JSON_UTF8))
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.error").value(ERROR_USER_DELETE_SUPER_ADMIN));
+            .andExpect(jsonPath("$.error").value(ERROR_SUPER_ADMIN_FORBIDDEN_OPERATION));
 
         // Validate that super-admin wasn't deleted
         List<User> userList = userRepository.findAll();

@@ -2,7 +2,7 @@ package com.icthh.xm.uaa.service;
 
 import static com.icthh.xm.uaa.service.util.RandomUtil.generateActivationKey;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_DELETE_HIMSELF;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_DELETE_SUPER_ADMIN;
+import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
 
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
@@ -211,9 +211,7 @@ public class UserService {
             throw new BusinessException(ERROR_USER_DELETE_HIMSELF, "Forbidden to delete himself");
         }
         userRepository.findOneWithLoginsByUserKey(userKey).ifPresent(user -> {
-            if (RoleConstant.SUPER_ADMIN.equals(user.getRoleKey())) {
-                throw new BusinessException(ERROR_USER_DELETE_SUPER_ADMIN, "Forbidden to delete SUPER-ADMIN");
-            }
+            assertNotSuperAdmin(user.getRoleKey());
             socialService.deleteUserSocialConnection(user.getUserKey());
             userRepository.delete(user);
         });
