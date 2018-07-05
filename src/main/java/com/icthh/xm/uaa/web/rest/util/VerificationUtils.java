@@ -13,8 +13,8 @@ public class VerificationUtils {
         assertNotSuperAdmin(user.getRoleKey());
     }
 
-    public static void assertNotSuperAdmin(String userKey) {
-        if (RoleConstant.SUPER_ADMIN.equals(userKey)) {
+    public static void assertNotSuperAdmin(String roleKey) {
+        if (RoleConstant.SUPER_ADMIN.equals(roleKey)) {
             throw new BusinessException(ErrorConstants.ERROR_SUPER_ADMIN_FORBIDDEN_OPERATION, "This operation can not be applied to SUPER-ADMIN");
         }
     }
