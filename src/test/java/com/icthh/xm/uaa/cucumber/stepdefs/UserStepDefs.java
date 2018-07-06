@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.cucumber.stepdefs;
 
+import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
 import static com.icthh.xm.uaa.config.Constants.HEADER_TENANT;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
@@ -39,7 +40,7 @@ public class UserStepDefs extends StepDefs {
     @WithMockUser
     public void i_search_user_admin(String userKey, String tenant) throws Throwable {
         UserDetails userDetails = new DomainUserDetails("xm", "P@ssw0rd",
-            Collections.singletonList(new SimpleGrantedAuthority("SUPER-ADMIN")), "XM", "xm", false, null, null, false, null);
+            Collections.singletonList(new SimpleGrantedAuthority(SUPER_ADMIN)), "XM", "xm", false, null, null, false, null);
         actions = restUserMockMvc.perform(get("/api/users/" + userKey).with(user(userDetails))
             .header(HEADER_TENANT, tenant)
             .accept(MediaType.APPLICATION_JSON));

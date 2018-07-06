@@ -6,6 +6,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.permission.config.PermissionProperties;
+import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.commons.permission.domain.Permission;
 import com.icthh.xm.commons.permission.domain.Privilege;
 import com.icthh.xm.commons.permission.domain.Role;
@@ -39,6 +40,10 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+
+import javax.validation.Valid;
+
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_FORBIDDEN_ROLE;
 
 /**
  * Service Implementation for managing Role.
@@ -90,7 +95,12 @@ public class TenantRoleService {
      * @param roleDto the role dto
      */
     @SneakyThrows
-    public void addRole(RoleDTO roleDto) {
+    public void addRole(@Valid RoleDTO roleDto) {
+
+        if (StringUtils.equalsIgnoreCase(RoleConstant.SUPER_ADMIN, roleDto.getRoleKey())) {
+            throw new BusinessException(ERROR_FORBIDDEN_ROLE, "Forbidden role key");
+        }
+
         Map<String, Role> roles = getRoles();
 
         if (null != roles.get(roleDto.getRoleKey())) {

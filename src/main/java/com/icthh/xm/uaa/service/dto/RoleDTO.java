@@ -7,11 +7,14 @@ import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.validator.constraints.NotBlank;
+import org.hibernate.validator.constraints.NotEmpty;
 
 @Getter
 @Setter
 public class RoleDTO {
 
+    @NotEmpty
     private String roleKey;
     private String basedOn;
     private String description;

@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.service;
 
 import static com.icthh.xm.uaa.service.util.RandomUtil.generateActivationKey;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_DELETE_HIMSELF;
+import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
 
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
@@ -9,6 +10,7 @@ import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.logging.LoggingAspectConfig;
 import com.icthh.xm.commons.permission.annotation.FindWithPermission;
+import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
@@ -209,6 +211,7 @@ public class UserService {
             throw new BusinessException(ERROR_USER_DELETE_HIMSELF, "Forbidden to delete himself");
         }
         userRepository.findOneWithLoginsByUserKey(userKey).ifPresent(user -> {
+            assertNotSuperAdmin(user.getRoleKey());
             socialService.deleteUserSocialConnection(user.getUserKey());
             userRepository.delete(user);
         });
