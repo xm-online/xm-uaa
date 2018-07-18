@@ -38,7 +38,7 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
     @Override
     protected void bindExecutionContext(final ScopedContext executionContext) {
 
-        // services
+        // services 
         Map<String, Object> services = new HashMap<>();
 
         services.put(BINDING_SUB_KEY_SERVICE_ACCOUNT, accountService);
