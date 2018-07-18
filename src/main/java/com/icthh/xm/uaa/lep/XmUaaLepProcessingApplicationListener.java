@@ -5,6 +5,8 @@ import static com.icthh.xm.uaa.lep.XmUaaLepConstants.*;
 import com.icthh.xm.lep.api.ScopedContext;
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import com.icthh.xm.commons.lep.spring.SpringLepProcessingApplicationListener;
+import com.icthh.xm.commons.lep.commons.CommonsExecutor;
+import com.icthh.xm.commons.lep.commons.CommonsService;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
 import com.icthh.xm.uaa.service.AccountService;
 import com.icthh.xm.uaa.service.UserLoginService;
@@ -31,11 +33,14 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
     private final UserService userService;
     private final RestTemplate restTemplate;
 
+    private final CommonsService commonsService;
+
     @Override
     protected void bindExecutionContext(final ScopedContext executionContext) {
 
         // services
         Map<String, Object> services = new HashMap<>();
+
         services.put(BINDING_SUB_KEY_SERVICE_ACCOUNT, accountService);
         services.put(BINDING_SUB_KEY_SERVICE_TENANT_CONFIG_SERVICE, tenantConfigService);
         services.put(BINDING_SUB_KEY_SERVICE_USER_LOGIN_SERVICE, userLoginService);
@@ -44,6 +49,7 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
         services.put(BINDING_SUB_KEY_SERVICE_USER, userService);
         services.put(BINDING_SUB_KEY_SERVICE_MAIL, mailService);
 
+        executionContext.setValue(BINDING_KEY_COMMONS, new CommonsExecutor(commonsService));
         executionContext.setValue(BINDING_KEY_SERVICES, services);
 
         // templates
