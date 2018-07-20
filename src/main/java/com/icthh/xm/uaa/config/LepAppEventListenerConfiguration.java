@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.config;
 
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
+import com.icthh.xm.commons.lep.commons.CommonsService;
 import com.icthh.xm.uaa.lep.XmUaaLepProcessingApplicationListener;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
 import com.icthh.xm.uaa.service.AccountService;
@@ -26,9 +27,10 @@ public class LepAppEventListenerConfiguration {
                     ProfileEventProducer profileEventProducer,
                     MailService mailService,
                     @Qualifier("loadBalancedRestTemplate") RestTemplate restTemplate,
-                    UserService userService) {
+                    UserService userService,
+                    CommonsService commonsService) {
 
         return new XmUaaLepProcessingApplicationListener(accountService, tenantConfigService,
-                        userLoginService, profileEventProducer, mailService, userService, restTemplate);
+                        userLoginService, profileEventProducer, mailService, userService, restTemplate, commonsService);
     }
 }

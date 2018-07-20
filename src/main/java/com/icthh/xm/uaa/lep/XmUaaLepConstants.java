@@ -8,6 +8,7 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class XmUaaLepConstants {
 
+    public static final String BINDING_KEY_COMMONS = "commons";
     public static final String BINDING_KEY_SERVICES = "services";
 
     public static final String BINDING_SUB_KEY_SERVICE_ACCOUNT = "accountService";
