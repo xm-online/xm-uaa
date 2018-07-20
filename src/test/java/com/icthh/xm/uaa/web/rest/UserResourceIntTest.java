@@ -378,6 +378,9 @@ public class UserResourceIntTest {
     @Transactional
     public void getAllUsers() throws Exception {
         // Initialize the database
+
+        String beforeKey = user.getUserKey();
+
         userRepository.saveAndFlush(user);
 
         // Get all the users
@@ -385,7 +388,7 @@ public class UserResourceIntTest {
                                     .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.[*].userKey").value(hasItem("testUserKey")))
+            .andExpect(jsonPath("$.[*].userKey").value(hasItem(beforeKey)))
             .andExpect(jsonPath("$.[*].firstName").value(hasItem(DEFAULT_FIRSTNAME)))
             .andExpect(jsonPath("$.[*].lastName").value(hasItem(DEFAULT_LASTNAME)))
             .andExpect(jsonPath("$.[*].logins[0].login").value("test"))
@@ -636,7 +639,7 @@ public class UserResourceIntTest {
             updatedUser.getCreatedDate(),
             updatedUser.getLastModifiedBy(),
             updatedUser.getLastModifiedDate(),
-            "testUserKey", RoleConstant.SUPER_ADMIN, null, null, null, null, Collections.singletonList(userLoginNew), false, null);
+            updatedUser.getUserKey(), RoleConstant.SUPER_ADMIN, null, null, null, null, Collections.singletonList(userLoginNew), false, null);
 
         restUserMockMvc.perform(put("/api/users/logins")
                                     .contentType(TestUtil.APPLICATION_JSON_UTF8)
