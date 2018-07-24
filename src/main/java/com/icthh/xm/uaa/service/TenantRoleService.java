@@ -26,18 +26,22 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
@@ -56,6 +60,11 @@ public class TenantRoleService {
     private static final String API = "/api";
 
     private static final String EMPTY_YAML = "---";
+
+    private static final String CUSTOM_PRIVILEGES_PATH = "/config/tenants/{tenantName}/custom-privileges.yml";
+
+    @Value("${xm-permission.custom-privileges-path:}")
+    private String customPrivilegesPath;
 
     private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
     private final PermissionProperties permissionProperties;
@@ -88,6 +97,14 @@ public class TenantRoleService {
         String privilegesFile = getConfigContent(permissionProperties.getPrivilegesSpecPath()).orElse("");
         return StringUtils.isBlank(privilegesFile) ? new TreeMap<>() : PrivilegeMapper
                         .ymlToPrivileges(privilegesFile);
+    }
+
+    private Map<String, Set<Privilege>> getCustomPrivileges() {
+        String tenant = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder.getContext());
+        String path = StringUtils.isBlank(customPrivilegesPath) ? CUSTOM_PRIVILEGES_PATH : customPrivilegesPath;
+        String privilegesFile = getConfigContent(path.replace("{tenantName}", tenant)).orElse("");
+        return StringUtils.isBlank(privilegesFile) ? new TreeMap<>() : PrivilegeMapper
+            .ymlToPrivileges(privilegesFile);
     }
 
     /**
@@ -235,7 +252,7 @@ public class TenantRoleService {
                 ));
 
         // enrich role permissions with missing privileges
-        getPrivileges().forEach((msName, privileges) ->
+        BiConsumer<String, Set<Privilege>> privilegesProcessor = (msName, privileges) ->
             privileges.forEach(privilege -> {
                 PermissionDTO permission = permissions.get(msName + ":" + privilege.getKey());
                 if (permission == null) {
@@ -247,7 +264,10 @@ public class TenantRoleService {
                 }
                 permission.setResources(privilege.getResources());
                 roleDto.getPermissions().add(permission);
-            }));
+            });
+
+        getPrivileges().forEach(privilegesProcessor);
+        getCustomPrivileges().forEach(privilegesProcessor);
 
         roleDto.setEnv(environmentService.getEnvironments());
 
@@ -305,7 +325,7 @@ public class TenantRoleService {
                 ));
 
         // enrich role permissions with missing privileges
-        getPrivileges().values().forEach(privileges ->
+        Consumer<Set<Privilege>> privilegeProcessor = privileges ->
             roleMatrix.getPermissions().addAll(privileges.stream().map(privilege -> {
                 PermissionMatrixDTO permission = matrixPermissions
                     .get(privilege.getMsName() + ":" + privilege.getKey());
@@ -315,8 +335,10 @@ public class TenantRoleService {
                     permission.setPrivilegeKey(privilege.getKey());
                 }
                 return permission;
-            }).collect(Collectors.toList()))
-        );
+            }).collect(Collectors.toList()));
+
+        getPrivileges().values().forEach(privilegeProcessor);
+        getCustomPrivileges().values().forEach(privilegeProcessor);
 
         return roleMatrix;
     }
