@@ -17,6 +17,7 @@ public class PermissionDTO implements Comparable<PermissionDTO> {
     private String envCondition;
     private String resourceCondition;
     private Set<String> resources;
+    private PermissionType permissionType;
 
     public PermissionDTO() {
     }
