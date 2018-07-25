@@ -18,6 +18,7 @@ import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.service.dto.PermissionDTO;
+import com.icthh.xm.uaa.service.dto.PermissionType;
 import com.icthh.xm.uaa.service.dto.RoleDTO;
 import com.icthh.xm.uaa.service.dto.RoleMatrixDTO;
 import com.icthh.xm.uaa.service.dto.RoleMatrixDTO.PermissionMatrixDTO;
@@ -47,6 +48,8 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import javax.validation.Valid;
 
+import static com.icthh.xm.uaa.service.dto.PermissionType.SYSTEM;
+import static com.icthh.xm.uaa.service.dto.PermissionType.TENANT;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_FORBIDDEN_ROLE;
 
 /**
@@ -267,7 +270,19 @@ public class TenantRoleService {
             });
 
         getPrivileges().forEach(privilegesProcessor);
-        getCustomPrivileges().forEach(privilegesProcessor);
+        roleDto.getPermissions().forEach(it -> it.setPermissionType(SYSTEM));
+        Map<String, Set<Privilege>> customPrivileges = getCustomPrivileges();
+        customPrivileges.forEach(privilegesProcessor);
+        Set<String> customPrivilegeKeys = customPrivileges.values().stream().flatMap(Set::stream).map(Privilege::getKey)
+            .collect(Collectors.toSet());
+        roleDto.getPermissions().stream()
+            .filter(it -> customPrivilegeKeys.contains(it.getPrivilegeKey())).forEach(it -> {
+            if (it.getPermissionType() == SYSTEM) {
+                log.error("Custom privilege {} try to override system privilege, and ignored", it);
+            } else {
+                it.setPermissionType(TENANT);
+            }
+        });
 
         roleDto.setEnv(environmentService.getEnvironments());
 
@@ -325,7 +340,7 @@ public class TenantRoleService {
                 ));
 
         // enrich role permissions with missing privileges
-        Consumer<Set<Privilege>> privilegeProcessor = privileges ->
+        Consumer<Set<Privilege>> privilegesProcessor = privileges ->
             roleMatrix.getPermissions().addAll(privileges.stream().map(privilege -> {
                 PermissionMatrixDTO permission = matrixPermissions
                     .get(privilege.getMsName() + ":" + privilege.getKey());
@@ -337,8 +352,21 @@ public class TenantRoleService {
                 return permission;
             }).collect(Collectors.toList()));
 
-        getPrivileges().values().forEach(privilegeProcessor);
-        getCustomPrivileges().values().forEach(privilegeProcessor);
+
+        getPrivileges().values().forEach(privilegesProcessor);
+        roleMatrix.getPermissions().forEach(it -> it.setPermissionType(SYSTEM));
+        Map<String, Set<Privilege>> customPrivileges = getCustomPrivileges();
+        customPrivileges.values().forEach(privilegesProcessor);
+        Set<String> customPrivilegeKeys = customPrivileges.values().stream().flatMap(Set::stream).map(Privilege::getKey)
+            .collect(Collectors.toSet());
+        roleMatrix.getPermissions().stream()
+            .filter(it -> customPrivilegeKeys.contains(it.getPrivilegeKey())).forEach(it -> {
+            if (it.getPermissionType() == SYSTEM) {
+                log.error("Custom privilege {} try to override system privilege, and ignored");
+            } else {
+                it.setPermissionType(TENANT);
+            }
+        });
 
         return roleMatrix;
     }

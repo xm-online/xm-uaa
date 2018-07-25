@@ -36,6 +36,7 @@ public class RoleMatrixDTO {
 
         private String msName;
         private String privilegeKey;
+        private PermissionType permissionType;
         private Set<String> roles = new TreeSet<>();
 
         @Override
