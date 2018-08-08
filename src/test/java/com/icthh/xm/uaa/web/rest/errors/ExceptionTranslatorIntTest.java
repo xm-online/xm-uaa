@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.icthh.xm.commons.exceptions.ErrorConstants;
-import com.icthh.xm.commons.exceptions.spring.web.ExceptionTranslator;
+import com.icthh.xm.commons.i18n.error.web.ExceptionTranslator;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
@@ -26,7 +26,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 /**
  * Test class for the ExceptionTranslator controller advice.
  *
- * @see com.icthh.xm.commons.exceptions.spring.web.ExceptionTranslator
+ * @see com.icthh.xm.commons.i18n.error.web.ExceptionTranslator
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {
