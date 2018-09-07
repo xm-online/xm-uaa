@@ -139,7 +139,7 @@ application:
     tenant-login-properties-path-pattern: /config/tenants/{tenantName}/uaa/${application.tenant-login-properties-name}
     tenant-login-properties-name: logins.yml
     email-path-pattern: /config/tenants/{tenantName}/uaa/emails/{langKey}/{fileName}.ftl
-    tenant-ignored-path-list: /v2/api-docs, /swagger-resources/configuration/ui, /management/health, /oauth/token_key, /h2-console
+    tenant-ignored-path-list: /swagger-resources/configuration/ui, /management/health, /oauth/token_key, /h2-console
     kafka-system-topic: system_topic
     kafka-system-queue: system_queue
     kafka-enabled: true
