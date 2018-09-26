@@ -254,10 +254,12 @@ public class UserService {
         return userRepository.findOne(id);
     }
 
+    @LogicExtensionPoint("SaveUser")
     public void saveUser(User user) {
         userRepository.save(user);
     }
 
+    @LogicExtensionPoint("ResetActivationKey")
     public void resetActivationKey(String login) {
         UserLogin userLogin = userLoginRepository.findOneByLoginIgnoreCase(login)
             .orElseThrow(
@@ -268,6 +270,8 @@ public class UserService {
         userRepository.save(user);
     }
 
+
+    @LogicExtensionPoint("CheckPasswordReset")
     public void checkPasswordReset(String key) {
         userRepository.findOneByResetKey(key).map(this::checkResetKey)
             .orElseThrow(() -> new BusinessException("error.reset.code.used", "Reset code used"));
