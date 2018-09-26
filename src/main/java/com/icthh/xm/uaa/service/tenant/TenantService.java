@@ -1,6 +1,12 @@
 package com.icthh.xm.uaa.service.tenant;
 
+import static com.icthh.xm.uaa.config.Constants.DEFAULT_EMAILS_PATH_PATTERN;
+import static com.icthh.xm.uaa.config.Constants.DEFAULT_EMAILS_PATTERN;
+import static com.icthh.xm.uaa.config.Constants.PATH_TO_EMAILS_IN_CONFIG;
+import static com.icthh.xm.uaa.util.GeneralUtils.sneakyThrows;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.stream;
+import static org.springframework.core.io.support.ResourcePatternUtils.getResourcePatternResolver;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -12,6 +18,7 @@ import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.config.Constants;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -19,7 +26,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
+import org.springframework.util.AntPathMatcher;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -34,6 +44,7 @@ public class TenantService {
     private final TenantConfigRepository tenantConfigRepository;
     private final ApplicationProperties applicationProperties;
     private final PermissionProperties permissionProperties;
+    private final ResourceLoader resourceLoader;
     private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
     /**
@@ -52,6 +63,7 @@ public class TenantService {
             addLoginsSpecification(tenant);
             addRoleSpecification(tenant);
             addPermissionSpecification(tenant);
+            addDefaultEmailTemplates(tenant);
             log.info("STOP  - SETUP:CreateTenant: tenantKey: {}, result: OK, time = {} ms",
                 tenant, stopWatch.getTime());
         } catch (Exception e) {
@@ -113,6 +125,19 @@ public class TenantService {
         InputStream in = new ClassPathResource(Constants.DEFAULT_CONFIG_PATH).getInputStream();
         String specification = IOUtils.toString(in, UTF_8);
         tenantConfigRepository.updateConfig(tenantName, "/" + specificationName, specification);
+    }
+
+    @SneakyThrows
+    private void addDefaultEmailTemplates(String tenantName) {
+        Resource[] resources = getResourcePatternResolver(resourceLoader).getResources(DEFAULT_EMAILS_PATTERN);
+        stream(resources).forEach(sneakyThrows(resource -> {
+            AntPathMatcher matcher = new AntPathMatcher();
+            String path = resource.getURL().getPath();
+            Map<String, String> fileParams = matcher.extractUriTemplateVariables(DEFAULT_EMAILS_PATH_PATTERN, path);
+            String email = IOUtils.toString(resource.getInputStream(), UTF_8);
+            String configPath = PATH_TO_EMAILS_IN_CONFIG + fileParams.get("lang") + "/" + fileParams.get("name") + ".ftl";
+            tenantConfigRepository.updateConfig(tenantName, configPath, email);
+        }));
     }
 
     @SneakyThrows
