@@ -12,6 +12,7 @@ import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import com.icthh.xm.commons.i18n.spring.service.LocalizationMessageService;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.logging.util.MdcUtils;
+import com.icthh.xm.commons.tenant.PlainTenant;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.domain.User;
@@ -299,6 +300,8 @@ public class MailService {
         Locale locale = forLanguageTag(user.getLangKey());
 
         try {
+            tenantContextHolder.getPrivilegedContext().setTenant(new PlainTenant(tenantKey));
+
             Template mailTemplate = new Template(templateKey, emailTemplate, freeMarker);
             String content = FreeMarkerTemplateUtils.processTemplateIntoString(mailTemplate, objectModel);
             String subject = messageSource.getMessage(titleKey, null, locale);
@@ -312,6 +315,8 @@ public class MailService {
             throw new IllegalStateException("Mail template rendering failed");
         } catch (IOException e) {
             throw new IllegalStateException("Error while reading mail template");
+        } finally {
+            tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
         }
     }
 
