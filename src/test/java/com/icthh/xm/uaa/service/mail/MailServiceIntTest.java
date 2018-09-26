@@ -6,6 +6,8 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
+import com.icthh.xm.commons.config.client.service.TenantConfigService;
+import com.icthh.xm.commons.i18n.spring.service.LocalizationMessageService;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
@@ -67,6 +69,12 @@ public class MailServiceIntTest {
     @Autowired
     private TenantContextHolder tenantContextHolder;
 
+    @Autowired
+    private TenantConfigService tenantConfigService;
+
+    @Autowired
+    private LocalizationMessageService localizationMessageService;
+
     @Spy
     private JavaMailSenderImpl javaMailSender;
 
@@ -88,7 +96,8 @@ public class MailServiceIntTest {
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
         mailService = new MailService(jHipsterProperties, javaMailSender, messageSource,
-                                      tenantEmailTemplateService, freeMarker, tenantContextHolder);
+                                      tenantEmailTemplateService, freeMarker, tenantContextHolder,
+                                      tenantConfigService, localizationMessageService);
     }
 
     @After
