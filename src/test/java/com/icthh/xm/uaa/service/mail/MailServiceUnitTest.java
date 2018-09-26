@@ -6,6 +6,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static java.util.Locale.ENGLISH;
 import static java.util.Locale.FRANCE;
+import static java.util.Locale.forLanguageTag;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -23,12 +24,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.context.MessageSource;
 import org.springframework.mail.javamail.JavaMailSender;
 
 import javax.mail.Message;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.util.HashMap;
+import java.util.Locale;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MailServiceUnitTest {
@@ -58,6 +61,8 @@ public class MailServiceUnitTest {
     private TenantConfigService tenantConfigService;
     @Mock
     private LocalizationMessageService localizationMessageService;
+    @Mock
+    private MessageSource messageSource;
 
     @Test
     @SneakyThrows
@@ -88,6 +93,7 @@ public class MailServiceUnitTest {
     }
 
     private MimeMessage sendEmail() {
+        when(messageSource.getMessage(MOCK_SUBJECT, null, forLanguageTag("fr"))).thenReturn(MOCK_SUBJECT);
         when(tenantEmailTemplateService.getEmailTemplate(TENANT_KEY + "/" + FRANCE.getLanguage() + "/" + EMAIL_TEMPLATE)).thenReturn(TEST_TEMPLATE_CONTENT);
         MimeMessage mock = mock(MimeMessage.class);
         when(javaMailSender.createMimeMessage()).thenReturn(mock);
