@@ -69,6 +69,8 @@ public final class Constants {
     public static final String WEB_APP_CLIENT = "web_app";
     public static final String SUPER_TENANT = "XM";
 
+    public static final String TRANSLATION_KEY = "trKey";
+
     private Constants() {
     }
 
