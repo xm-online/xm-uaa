@@ -66,6 +66,8 @@ public final class Constants {
     public static final String DEFAULT_CONFIG_PATH = "config/specs/default-uaa.yml";
     public static final String DEFAULT_LOGINS_CONFIG_PATH = "config/specs/default-logins.yml";
 
+    public static final String PATH_TO_EMAILS = "/config/emails/";
+
     public static final String DEFAULT_EMAILS_PATTERN = "classpath*:config/emails/**/*.ftl";
     public static final String DEFAULT_EMAILS_PATH_PATTERN = "/**/config/emails/{lang}/{name}.ftl";
 
