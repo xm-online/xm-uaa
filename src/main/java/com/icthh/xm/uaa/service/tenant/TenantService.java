@@ -134,7 +134,12 @@ public class TenantService {
         stream(resources).forEach(sneakyThrows(resource -> {
             AntPathMatcher matcher = new AntPathMatcher();
             String path = resource.getURL().getPath();
-            path = path.substring(path.indexOf(PATH_TO_EMAILS));
+            int startIndex = path.indexOf(PATH_TO_EMAILS);
+            if (startIndex < 0) {
+                return;
+            }
+            path = path.substring(startIndex);
+
             Map<String, String> fileParams = matcher.extractUriTemplateVariables(DEFAULT_EMAILS_PATH_PATTERN, path);
             String email = IOUtils.toString(resource.getInputStream(), UTF_8);
             String configPath = PATH_TO_EMAILS_IN_CONFIG + fileParams.get("lang") + "/" + fileParams.get("name") + ".ftl";
