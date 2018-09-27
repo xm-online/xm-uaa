@@ -135,7 +135,7 @@ public class TenantService {
             AntPathMatcher matcher = new AntPathMatcher();
             String path = resource.getURL().getPath();
             int startIndex = path.indexOf(PATH_TO_EMAILS);
-            if (startIndex < 0) {
+            if (startIndex == -1) {
                 return;
             }
             path = path.substring(startIndex);
