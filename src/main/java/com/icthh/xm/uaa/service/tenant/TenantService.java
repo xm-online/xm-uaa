@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.service.tenant;
 
 import static com.icthh.xm.uaa.config.Constants.DEFAULT_EMAILS_PATH_PATTERN;
 import static com.icthh.xm.uaa.config.Constants.DEFAULT_EMAILS_PATTERN;
+import static com.icthh.xm.uaa.config.Constants.PATH_TO_EMAILS;
 import static com.icthh.xm.uaa.config.Constants.PATH_TO_EMAILS_IN_CONFIG;
 import static com.icthh.xm.uaa.util.GeneralUtils.sneakyThrows;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -133,6 +134,12 @@ public class TenantService {
         stream(resources).forEach(sneakyThrows(resource -> {
             AntPathMatcher matcher = new AntPathMatcher();
             String path = resource.getURL().getPath();
+            int startIndex = path.indexOf(PATH_TO_EMAILS);
+            if (startIndex == -1) {
+                return;
+            }
+            path = path.substring(startIndex);
+
             Map<String, String> fileParams = matcher.extractUriTemplateVariables(DEFAULT_EMAILS_PATH_PATTERN, path);
             String email = IOUtils.toString(resource.getInputStream(), UTF_8);
             String configPath = PATH_TO_EMAILS_IN_CONFIG + fileParams.get("lang") + "/" + fileParams.get("name") + ".ftl";
