@@ -75,6 +75,7 @@ public class UserService {
      * @return user with new password
      */
     @LoggingAspectConfig(inputExcludeParams = "newPassword")
+    @LogicExtensionPoint("CompletePasswordReset")
     public User completePasswordReset(String newPassword, String key) {
         return userRepository.findOneByResetKey(key)
             .map(this::checkResetKey)
