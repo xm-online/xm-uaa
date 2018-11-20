@@ -20,6 +20,8 @@
     <include file="classpath:config/liquibase/changelog/20180110150000_modify_imageurl_and_token_size.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20180130010000_add_jhi_user_tfa_otp_fields.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20180208010000_add_jhi_user_auto_logout_fields.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20181115161200_add_scopes_field.xml" relativeToChangelogFile="false"/>
+
     <!-- jhipster-needle-liquibase-add-changelog - JHipster will add liquibase changelogs here -->
     <!-- jhipster-needle-liquibase-add-constraints-changelog - JHipster will add liquibase constraints changelogs here -->
 </databaseChangeLog>

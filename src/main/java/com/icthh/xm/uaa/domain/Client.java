@@ -1,13 +1,21 @@
 package com.icthh.xm.uaa.domain;
 
 import java.io.Serializable;
+import java.util.List;
 import javax.persistence.Column;
+import javax.persistence.Convert;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
+import com.icthh.xm.uaa.domain.converter.ListToStringConverter;
+import com.icthh.xm.uaa.domain.converter.MapToStringConverter;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -40,6 +48,10 @@ public class Client extends AbstractAuditingEntity implements Serializable {
 
     @Column(name = "access_token_validity_seconds")
     private Integer accessTokenValiditySeconds;
+
+    @Convert(converter = ListToStringConverter.class)
+    @Getter @Setter
+    private List<String> scopes;
 
     public Long getId() {
         return id;
@@ -107,6 +119,14 @@ public class Client extends AbstractAuditingEntity implements Serializable {
 
     public void setAccessTokenValiditySeconds(Integer accessTokenValiditySeconds) {
         this.accessTokenValiditySeconds = accessTokenValiditySeconds;
+    }
+
+    public void scopes(List<String> scopes) {
+        this.scopes = scopes;
+    }
+
+    public List<String> scopes() {
+        return scopes;
     }
 
     @Override

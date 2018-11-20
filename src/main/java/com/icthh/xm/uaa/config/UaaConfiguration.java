@@ -59,7 +59,6 @@ import javax.servlet.http.HttpServletResponse;
 @EnableWebSecurity
 @Import( {
     UserAuthPasswordEncoderConfiguration.class,
-    TokenConstraintsConfiguration.class,
     UaaAccessTokenConverterConfiguration.class,
     TfaOtpConfiguration.class
 })
