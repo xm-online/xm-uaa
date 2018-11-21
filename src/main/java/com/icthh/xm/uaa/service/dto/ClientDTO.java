@@ -7,6 +7,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * Client DTO representing.
@@ -37,6 +38,8 @@ public class ClientDTO {
 
     private Instant lastModifiedDate;
 
+    private List<String> scopes;
+
     @SuppressWarnings("unused")
     public ClientDTO() {
         // Empty constructor needed for Jackson.
@@ -50,6 +53,6 @@ public class ClientDTO {
     public ClientDTO(Client client) {
         this(client.getId(), client.getClientId(), client.getClientSecret(), client.getRoleKey(),
         client.getDescription(), client.getAccessTokenValiditySeconds(), client.getCreatedBy(),
-        client.getCreatedDate(), client.getLastModifiedBy(), client.getLastModifiedDate());
+        client.getCreatedDate(), client.getLastModifiedBy(), client.getLastModifiedDate(), client.getScopes());
     }
 }

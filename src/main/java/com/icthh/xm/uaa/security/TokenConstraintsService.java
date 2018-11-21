@@ -1,17 +1,31 @@
 package com.icthh.xm.uaa.security;
 
+import static java.util.Optional.ofNullable;
+import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
+
+import com.google.common.base.Objects;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.oauth2.provider.ClientDetails;
+import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.OAuth2Request;
+import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
+import org.springframework.util.ObjectUtils;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import javax.annotation.PostConstruct;
 
 /**
  * The {@link TokenConstraintsService} class.
  */
+@Service
+@RequiredArgsConstructor
 public class TokenConstraintsService {
 
     private int defaultRefreshTokenValiditySeconds = (int) TimeUnit.DAYS.toSeconds(30); // default 30 days.
@@ -20,19 +34,15 @@ public class TokenConstraintsService {
 
     private int defaultTfaAccessTokenValiditySeconds = (int) TimeUnit.MINUTES.toSeconds(5);  // default 5 minutes.
 
-    private boolean supportRefreshToken = false;
+    private boolean supportRefreshToken = true;
 
     private boolean reuseRefreshToken = true;
 
-    private TenantPropertiesService tenantPropertiesService;
+    private final TenantPropertiesService tenantPropertiesService;
 
-    private ApplicationProperties applicationProperties;
+    private final ApplicationProperties applicationProperties;
 
-    @PostConstruct
-    public void afterPropertiesSet() throws Exception {
-        Assert.notNull(tenantPropertiesService, "tenantPropertiesService must be set");
-        Assert.notNull(applicationProperties, "applicationProperties must be set");
-    }
+    private final ClientDetailsService clientDetailsService;
 
     /**
      * The access token validity period in seconds.
@@ -45,7 +55,16 @@ public class TokenConstraintsService {
         if (principal instanceof DomainUserDetails) {
             return getAccessTokenValiditySeconds(DomainUserDetails.class.cast(principal));
         }
-        return getTenantRelatedAccessTokenValiditySeconds();
+
+        return loadClientInfo(authentication, ClientDetails::getAccessTokenValiditySeconds)
+            .orElse(getTenantRelatedAccessTokenValiditySeconds());
+    }
+
+    private <T> Optional<T> loadClientInfo(OAuth2Authentication authentication, Function<ClientDetails, T> consumer) {
+        String clientId = authentication.getOAuth2Request().getClientId();
+        return ofNullable(clientId)
+            .map(clientDetailsService::loadClientByClientId)
+            .map(consumer);
     }
 
     public int getAccessTokenValiditySeconds(DomainUserDetails userDetails) {
@@ -89,17 +108,13 @@ public class TokenConstraintsService {
             }
         }
 
-        validity = tenantPropertiesService.getTenantProps().getSecurity().getRefreshTokenValiditySeconds();
-        if (validity != null) {
-            return validity;
-        }
-
-        validity = applicationProperties.getSecurity().getRefreshTokenValiditySeconds();
-        if (validity != null) {
-            return validity;
-        }
-
-        return defaultRefreshTokenValiditySeconds;
+        return loadClientInfo(authentication, ClientDetails::getRefreshTokenValiditySeconds)
+            .orElse(firstNonNull(
+                tenantPropertiesService.getTenantProps().getSecurity().getRefreshTokenValiditySeconds(),
+                applicationProperties.getSecurity().getRefreshTokenValiditySeconds(),
+                defaultRefreshTokenValiditySeconds
+            )
+        );
     }
 
     /**
@@ -166,54 +181,4 @@ public class TokenConstraintsService {
         return reuseRefreshToken;
     }
 
-    public void setTenantPropertiesService(TenantPropertiesService tenantPropertiesService) {
-        this.tenantPropertiesService = tenantPropertiesService;
-    }
-
-    public void setApplicationProperties(ApplicationProperties applicationProperties) {
-        this.applicationProperties = applicationProperties;
-    }
-
-    /**
-     * Whether to support the refresh token.
-     *
-     * @param supportRefreshToken Whether to support the refresh token.
-     */
-    public void setSupportRefreshToken(boolean supportRefreshToken) {
-        this.supportRefreshToken = supportRefreshToken;
-    }
-
-    /**
-     * Whether to reuse refresh tokens (until expired).
-     *
-     * @param reuseRefreshToken Whether to reuse refresh tokens (until expired).
-     */
-    public void setReuseRefreshToken(boolean reuseRefreshToken) {
-        this.reuseRefreshToken = reuseRefreshToken;
-    }
-
-    /**
-     * The default validity (in seconds) of the refresh token. If less than or equal to zero then the tokens will be
-     * non-expiring.
-     *
-     * @param defaultRefreshTokenValiditySeconds The validity (in seconds) of the refresh token.
-     */
-    public void setDefaultRefreshTokenValiditySeconds(int defaultRefreshTokenValiditySeconds) {
-        this.defaultRefreshTokenValiditySeconds = defaultRefreshTokenValiditySeconds;
-    }
-
-    /**
-     * The default validity (in seconds) of the access token. Zero or negative for non-expiring tokens. If a client
-     * details service is set the validity period will be read from he client, defaulting to this value if not defined
-     * by the client.
-     *
-     * @param defaultAccessTokenValiditySeconds The validity (in seconds) of the access token.
-     */
-    public void setDefaultAccessTokenValiditySeconds(int defaultAccessTokenValiditySeconds) {
-        this.defaultAccessTokenValiditySeconds = defaultAccessTokenValiditySeconds;
-    }
-
-    public void setDefaultTfaAccessTokenValiditySeconds(int defaultTfaAccessTokenValiditySeconds) {
-        this.defaultTfaAccessTokenValiditySeconds = defaultTfaAccessTokenValiditySeconds;
-    }
 }

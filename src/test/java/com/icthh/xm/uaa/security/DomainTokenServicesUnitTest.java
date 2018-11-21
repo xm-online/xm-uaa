@@ -6,12 +6,14 @@ import static com.icthh.xm.uaa.config.Constants.AUTH_USER_KEY;
 import static com.icthh.xm.uaa.config.Constants.KEYSTORE_ALIAS;
 import static com.icthh.xm.uaa.config.Constants.KEYSTORE_PATH;
 import static com.icthh.xm.uaa.config.Constants.KEYSTORE_PSWRD;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.collect.Lists;
 import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
@@ -22,6 +24,7 @@ import com.icthh.xm.uaa.service.TenantPropertiesService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.core.io.ClassPathResource;
@@ -29,6 +32,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.security.oauth2.provider.TokenRequest;
@@ -38,8 +42,10 @@ import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.security.oauth2.provider.token.store.KeyStoreKeyFactory;
 
 import java.security.KeyPair;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 
@@ -61,7 +67,14 @@ public class DomainTokenServicesUnitTest {
     @Mock
     private TenantProperties.Security security;
     @Mock
+    private ApplicationProperties.Security appSecurity;
+    @Mock
     private TenantContext tenantContext;
+    @Mock
+    private ClientDetailsService clientDetailsService;
+
+    @InjectMocks
+    private TokenConstraintsService tokenConstraintsService;
 
     private DomainTokenServices tokenServices;
 
@@ -83,10 +96,9 @@ public class DomainTokenServicesUnitTest {
         when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProperties);
         when(tenantProperties.getSecurity()).thenReturn(security);
 
-        TokenConstraintsService tokenConstraintsService = new TokenConstraintsService();
-        tokenConstraintsService.setTenantPropertiesService(tenantPropertiesService);
-        tokenConstraintsService.setApplicationProperties(applicationProperties);
-        tokenConstraintsService.setSupportRefreshToken(true);
+        when(applicationProperties.getSecurity()).thenReturn(appSecurity);
+        when(applicationProperties.getDefaultClientId()).thenReturn(new HashSet<>(asList("internal")));
+
 
         tokenServices = new DomainTokenServices();
         tokenServices.setTokenStore(tokenStore);
@@ -95,6 +107,7 @@ public class DomainTokenServicesUnitTest {
         tokenServices.setTenantContextHolder(tenantContextHolder);
         tokenServices.setTokenConstraintsService(tokenConstraintsService);
         tokenServices.setAuthenticationRefreshProvider(new DefaultAuthenticationRefreshProvider());
+
     }
 
     @Test

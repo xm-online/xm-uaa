@@ -1,14 +1,19 @@
 package com.icthh.xm.uaa.security;
 
+import static java.util.Collections.emptySet;
+import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
+
 import com.icthh.xm.uaa.domain.Client;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.provider.ClientDetails;
 import org.springframework.security.oauth2.provider.ClientRegistrationException;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class ClientDetailsImpl implements ClientDetails {
 
@@ -25,7 +30,10 @@ public class ClientDetailsImpl implements ClientDetails {
         }
         this.client = client;
         this.grantTypes = Collections.unmodifiableSet(grantTypes);
-        this.scope = Collections.unmodifiableSet(scope);
+
+        Set<String> scopes = new HashSet<>(firstNonNull(client.getScopes(), emptySet()));
+        scopes.addAll(scope);
+        this.scope = Collections.unmodifiableSet(scopes);
     }
 
     @Override
@@ -35,7 +43,7 @@ public class ClientDetailsImpl implements ClientDetails {
 
     @Override
     public Set<String> getResourceIds() {
-        return Collections.emptySet();
+        return emptySet();
     }
 
     @Override
@@ -65,7 +73,7 @@ public class ClientDetailsImpl implements ClientDetails {
 
     @Override
     public Set<String> getRegisteredRedirectUri() {
-        return Collections.emptySet();
+        return emptySet();
     }
 
     @Override

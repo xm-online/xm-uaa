@@ -59,6 +59,7 @@ public class ClientService {
         newClient.setRoleKey(client.getRoleKey());
         newClient.setDescription(client.getDescription());
         newClient.setAccessTokenValiditySeconds(client.getAccessTokenValiditySeconds());
+        newClient.setScopes(client.getScopes());
         return clientRepository.save(newClient);
     }
 
@@ -80,6 +81,7 @@ public class ClientService {
             client.setRoleKey(updatedClient.getRoleKey());
             client.setDescription(updatedClient.getDescription());
             client.setAccessTokenValiditySeconds(updatedClient.getAccessTokenValiditySeconds());
+            client.setScopes(updatedClient.getScopes());
             return client;
         }).orElseThrow(() -> new EntityNotFoundException("Entity not found"));
     }
