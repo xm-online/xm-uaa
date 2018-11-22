@@ -156,5 +156,6 @@ application:
     client-scope: openid
     default-client-id: internal
     default-client-secret: internal
+    timelines-enabled: true
     lep:
         tenant-script-storage: XM_MS_CONFIG

@@ -36,6 +36,7 @@ public class ApplicationProperties {
     private Set<String> defaultClientId;
     private String defaultClientSecret;
     private String emailPathPattern;
+    private boolean timelinesEnabled;
 
     @Getter
     @Setter
