@@ -14,11 +14,12 @@ import lombok.ToString;
 
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder( {"security"})
+@JsonPropertyOrder({"security"})
 @Getter
 @Setter
 @ToString
@@ -100,4 +101,29 @@ public class TenantProperties {
 
     @JsonProperty("resetKeyLifeTime")
     private Long resetKeyLifeTime;
+
+    @JsonProperty("ldap")
+    private List<Ldap> ldap;
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @ToString
+    public static class Ldap {
+
+        private String domain;
+        private String providerUrl;
+        private String userDnPattern;
+        private Role role;
+
+        @Getter
+        @NoArgsConstructor
+        @AllArgsConstructor
+        @ToString
+        public static class Role {
+
+            private String defaultRole;
+            private Map<String, String> mapping;
+        }
+    }
 }

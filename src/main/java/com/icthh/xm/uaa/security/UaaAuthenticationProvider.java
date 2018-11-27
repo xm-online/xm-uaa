@@ -22,8 +22,8 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
     private final AuthenticationProvider defaultProvider;
     private final LdapAuthenticationProviderBuilder providerBuilder;
 
-    public UaaAuthenticationProvider(@Qualifier("daoAuthenticationProvider") @Lazy
-                                         AuthenticationProvider defaultProvider,
+    public UaaAuthenticationProvider(@Qualifier("daoAuthenticationProvider")
+                                     @Lazy AuthenticationProvider defaultProvider,
                                      LdapAuthenticationProviderBuilder providerBuilder) {
         this.defaultProvider = defaultProvider;
         this.providerBuilder = providerBuilder;
