@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -103,7 +104,7 @@ public class TenantProperties {
     private Long resetKeyLifeTime;
 
     @JsonProperty("ldap")
-    private List<Ldap> ldap;
+    private List<Ldap> ldap = new ArrayList<>();
 
     @Getter
     @NoArgsConstructor
@@ -114,7 +115,18 @@ public class TenantProperties {
         private String domain;
         private String providerUrl;
         private String userDnPattern;
-        private Role role;
+        private Role role = new Role();
+        private Attribute attribute = new Attribute();
+
+        @Getter
+        @NoArgsConstructor
+        @AllArgsConstructor
+        @ToString
+        public static class Attribute {
+
+            private String firstName;
+            private String lastName;
+        }
 
         @Getter
         @NoArgsConstructor

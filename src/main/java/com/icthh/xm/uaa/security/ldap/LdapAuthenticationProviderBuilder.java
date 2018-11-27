@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 public class LdapAuthenticationProviderBuilder {
 
     private final TenantPropertiesService tenantPropertiesService;
+    private final UaaLdapUserDetailsContextMapper ldapUserDetailsContextMapper;
 
     public Optional<AuthenticationProvider> build(String domain) {
         List<Ldap> ldapList = tenantPropertiesService.getTenantProps().getLdap();
@@ -40,7 +41,9 @@ public class LdapAuthenticationProviderBuilder {
         bindAuthenticator.setUserDnPatterns(Stream.of(conf.getUserDnPattern()).toArray(String[]::new));
 
         LdapAuthenticationProvider ldapAuthenticationProvider =
-            new UaaLdapAuthenticationProvider(bindAuthenticator, new UaaLdapAuthoritiesPopulator(conf));
+            new LdapAuthenticationProvider(bindAuthenticator, new UaaLdapAuthoritiesPopulator(conf));
+
+        ldapAuthenticationProvider.setUserDetailsContextMapper(ldapUserDetailsContextMapper);
 
         return Optional.of(ldapAuthenticationProvider);
     }
