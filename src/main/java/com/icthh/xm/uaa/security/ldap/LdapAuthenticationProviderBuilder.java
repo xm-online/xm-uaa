@@ -6,6 +6,7 @@ import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.ldap.DefaultSpringSecurityContextSource;
 import org.springframework.security.ldap.authentication.BindAuthenticator;
@@ -51,6 +52,8 @@ public class LdapAuthenticationProviderBuilder {
         DefaultLdapAuthoritiesPopulator authoritiesPopulator =
             new DefaultLdapAuthoritiesPopulator(ctx, conf.getGroupSearchBase());
         authoritiesPopulator.setSearchSubtree(conf.getGroupSearchSubtree());
+        authoritiesPopulator.setRolePrefix(StringUtils.EMPTY);
+        authoritiesPopulator.setConvertToUpperCase(Boolean.FALSE);
 
         //create spring ldap authenticator provider
         LdapAuthenticationProvider ldapAuthenticationProvider =

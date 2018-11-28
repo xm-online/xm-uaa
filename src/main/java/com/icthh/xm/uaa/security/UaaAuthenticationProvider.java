@@ -35,8 +35,8 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
         String principal = authentication.getPrincipal().toString();
         LinkedList<String> parts = new LinkedList<>(Arrays.asList(principal.split("@")));
 
-        if (parts.size() > BigInteger.ONE.intValue() || Objects.equals(principal, "vkirichenko")) {
-            String domain = "jbs.com";//parts.getLast();
+        if (parts.size() > BigInteger.ONE.intValue()) {
+            String domain = parts.getLast();
             log.info("Ldap domain @{} for user {}", domain, principal);
 
             Optional<AuthenticationProvider> providerOpt = providerBuilder.build(domain);
