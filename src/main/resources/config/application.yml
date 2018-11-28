@@ -142,7 +142,6 @@ application:
     tenant-ignored-path-list: /swagger-resources/configuration/ui, /management/health, /oauth/token_key, /h2-console
     kafka-system-topic: system_topic
     kafka-system-queue: system_queue
-    kafka-enabled: true
     retry:
         max-attempts: 3
         delay: 1000 #in milliseconds

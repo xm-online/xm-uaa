@@ -114,6 +114,10 @@ public class TenantProperties {
 
         private String domain;
         private String providerUrl;
+        private String systemUser;
+        private String systemPassword;
+        private String groupSearchBase;
+        private Boolean groupSearchSubtree;
         private String userDnPattern;
         private Role role = new Role();
         private Attribute attribute = new Attribute();

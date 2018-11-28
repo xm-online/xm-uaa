@@ -31,21 +31,18 @@ spring:
             port: 8500
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:h2:mem:uaa;DB_CLOSE_DELAY=-1
-        username: uaa
-        password:
-    h2:
-        console:
-            enabled: true
+        url: jdbc:postgresql://localhost:5432/xm_uaa
+        username: postgres
+        password: postgres
     jpa:
-        database-platform: io.github.jhipster.domain.util.FixedH2Dialect
-        database: H2
+        database-platform: io.github.jhipster.domain.util.FixedPostgreSQL82Dialect
+        database: POSTGRESQL
         show-sql: false
         properties:
             hibernate.id.new_generator_mappings: true
             hibernate.cache.use_second_level_cache: false
             hibernate.cache.use_query_cache: false
-            hibernate.generate_statistics: true
+            hibernate.generate_statistics: false
             #hibernate.cache.region.factory_class: com.hazelcast.hibernate.HazelcastLocalCacheRegionFactory
             #hibernate.cache.hazelcast.instance_name: uaa
             hibernate.cache.use_minimal_puts: true
@@ -74,6 +71,7 @@ spring:
 
 liquibase:
     contexts: dev
+    enabled: false
 
 # ===================================================================
 # To enable SSL, generate a certificate using:
@@ -154,5 +152,5 @@ application:
 ##   uncomment to read LEPs from flocal file storage
 ##   filestorage can be created as link to xm-sm-config-repository forlder using command:
 ##   'ln -s <xm-sm-config-repository> ~/xm-online'
-#    lep:
-#        tenant-script-storage: FILE
+    lep:
+        tenant-script-storage: FILE

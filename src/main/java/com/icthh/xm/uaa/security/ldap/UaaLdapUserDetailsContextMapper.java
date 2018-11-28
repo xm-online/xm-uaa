@@ -14,8 +14,10 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.ldap.userdetails.LdapUserDetailsMapper;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.Optional;
 
 @AllArgsConstructor
@@ -32,7 +34,10 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
                                           Collection<? extends GrantedAuthority> authorities) {
 
         Optional<User> userOpt = userService.findOneByLogin(username);
-        if (!userOpt.isPresent()) {
+
+        if (userOpt.isPresent()) {
+            updateUser(ctx, userOpt.get(), authorities);
+        } else {
             createUser(ctx, username, authorities);
         }
 
@@ -60,5 +65,40 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
         userDTO.setRoleKey(authorities.iterator().next().getAuthority());
 
         userService.createUser(userDTO);
+    }
+
+    private void updateUser(DirContextOperations ctx, User user, Collection<? extends GrantedAuthority> authorities) {
+        String mappedRole = mapRole(ldapConf.getRole(), authorities);
+        log.info("Mapped role from ldap [{}], current role [{}]", mappedRole, user.getRoleKey());
+
+        if (!mappedRole.equals(user.getRoleKey())) {
+            user.setResetKey(mappedRole);
+            userService.saveUser(user);
+        }
+    }
+
+    private String mapRole(TenantProperties.Ldap.Role roleConf, Collection<? extends GrantedAuthority> authorities) {
+        String mappedXmRole = roleConf.getDefaultRole();
+        LinkedList<String> mappedRoles = new LinkedList<>();
+
+        roleConf.getMapping().forEach((ldapRole, xmRole) -> {
+            boolean matched = authorities.stream().anyMatch(a -> ldapRole.equals(a.getAuthority()));
+            if (matched) {
+                mappedRoles.add(xmRole);
+            }
+        });
+
+        if (mappedRoles.isEmpty()) {
+            log.info("Role mapping not found. Default role {} will be used", mappedXmRole);
+        } else {
+            mappedXmRole = mappedRoles.getLast();
+        }
+
+        if (mappedRoles.size() > BigInteger.ONE.intValue()) {
+            log.warn("More than 1 role was matched: {}. Will be used the latest one: {}", mappedRoles, mappedXmRole);
+        }
+
+        log.info("Mapped role: {}", mappedXmRole);
+        return mappedXmRole;
     }
 }

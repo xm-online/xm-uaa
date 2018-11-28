@@ -10,6 +10,7 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.ldap.DefaultSpringSecurityContextSource;
 import org.springframework.security.ldap.authentication.BindAuthenticator;
 import org.springframework.security.ldap.authentication.LdapAuthenticationProvider;
+import org.springframework.security.ldap.userdetails.DefaultLdapAuthoritiesPopulator;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -36,18 +37,24 @@ public class LdapAuthenticationProviderBuilder {
         }
         Ldap conf = ldapOpt.get();
 
-        //build spring ldap context
-        DefaultSpringSecurityContextSource contextSource = new DefaultSpringSecurityContextSource(
-            conf.getProviderUrl());
-        contextSource.afterPropertiesSet();
+        //ldap context which used for role searching
+        DefaultSpringSecurityContextSource ctx = new DefaultSpringSecurityContextSource(conf.getProviderUrl());
+        ctx.setUserDn(conf.getSystemUser());
+        ctx.setPassword(conf.getSystemPassword());
+        ctx.afterPropertiesSet();
 
-        //create spring ldap authenticator
-        BindAuthenticator bindAuthenticator = new BindAuthenticator(contextSource);
+        //bind authenticator for password checking
+        BindAuthenticator bindAuthenticator = new BindAuthenticator(ctx);
         bindAuthenticator.setUserDnPatterns(Stream.of(conf.getUserDnPattern()).toArray(String[]::new));
+
+        //role extractor
+        DefaultLdapAuthoritiesPopulator authoritiesPopulator =
+            new DefaultLdapAuthoritiesPopulator(ctx, conf.getGroupSearchBase());
+        authoritiesPopulator.setSearchSubtree(conf.getGroupSearchSubtree());
 
         //create spring ldap authenticator provider
         LdapAuthenticationProvider ldapAuthenticationProvider =
-            new LdapAuthenticationProvider(bindAuthenticator, new UaaLdapAuthoritiesPopulator(conf));
+            new LdapAuthenticationProvider(bindAuthenticator, authoritiesPopulator);
         ldapAuthenticationProvider.setUserDetailsContextMapper(
             new UaaLdapUserDetailsContextMapper(userDetailsService, userService, conf));
 
