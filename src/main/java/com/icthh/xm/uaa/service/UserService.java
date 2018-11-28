@@ -130,7 +130,7 @@ public class UserService {
         newUser.setLogins(user.getLogins());
         newUser.getLogins().forEach(userLogin -> userLogin.setUser(newUser));
         newUser.setData(user.getData());
-        //userRepository.save(newUser);
+        userRepository.save(newUser);
         return newUser;
     }
 

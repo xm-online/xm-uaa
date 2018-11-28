@@ -33,21 +33,32 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
 
         Optional<User> userOpt = userService.findOneByLogin(username);
         if (!userOpt.isPresent()) {
-            UserDTO userDTO = new UserDTO();
-            userDTO.setFirstName(ctx.getStringAttribute(ldapConf.getAttribute().getFirstName()));
-            userDTO.setLastName(ctx.getStringAttribute(ldapConf.getAttribute().getLastName()));
-
-            UserLogin userLogin = new UserLogin();
-            userLogin.setLogin(username);
-            userLogin.setTypeKey(UserLoginType.NICKNAME.getValue());
-
-            userDTO.setLogins(Collections.singletonList(userLogin));
-            userDTO.setRoleKey(authorities.stream().findFirst().get().getAuthority());
-
-            userService.createUser(userDTO);
+            createUser(ctx, username, authorities);
         }
 
-        //todo create user if not exist
         return userDetailsService.loadUserByUsername(username);
+    }
+
+    private void createUser(DirContextOperations ctx,
+                            String username,
+                            Collection<? extends GrantedAuthority> authorities) {
+        UserDTO userDTO = new UserDTO();
+        //base info mapping
+        userDTO.setFirstName(ctx.getStringAttribute(ldapConf.getAttribute().getFirstName()));
+        userDTO.setLastName(ctx.getStringAttribute(ldapConf.getAttribute().getLastName()));
+
+        //login mapping
+        UserLogin userLogin = new UserLogin();
+        userLogin.setLogin(username);
+        userLogin.setTypeKey(UserLoginType.NICKNAME.getValue());
+        userDTO.setLogins(Collections.singletonList(userLogin));
+
+        //role mapping
+        if (authorities.isEmpty()) {
+            userDTO.setRoleKey(ldapConf.getRole().getDefaultRole());
+        }
+        userDTO.setRoleKey(authorities.iterator().next().getAuthority());
+
+        userService.createUser(userDTO);
     }
 }
