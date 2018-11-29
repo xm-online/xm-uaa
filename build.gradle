@@ -236,6 +236,8 @@ dependencies {
     compile "org.springframework.security:spring-security-web"
     compile "org.springframework.security.oauth:spring-security-oauth2:${spring_security_oauth2_version}"
     compile "org.springframework.security:spring-security-jwt"
+    compile "org.springframework.security:spring-security-ldap"
+
     compile("io.springfox:springfox-swagger2:${springfox_version}") {
         exclude module: 'mapstruct'
     }
@@ -288,6 +290,8 @@ dependencies {
     testCompile "com.mattbertolini:liquibase-slf4j:${liquibase_slf4j_version}"
     testCompile "org.hamcrest:hamcrest-library"
     testCompile "io.gatling.highcharts:gatling-charts-highcharts:${gatling_version}"
+    testCompile "org.zapodot:embedded-ldap-junit:${embedded_ldap_version}"
+    testCompile "com.unboundid:unboundid-ldapsdk:${ldapsdk_version}"
     optional("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
         exclude group: 'com.vaadin.external.google', module: 'android-json'
     }

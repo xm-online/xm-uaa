@@ -57,12 +57,7 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
         userLogin.setLogin(username);
         userLogin.setTypeKey(UserLoginType.NICKNAME.getValue());
         userDTO.setLogins(Collections.singletonList(userLogin));
-
-        //role mapping
-        if (authorities.isEmpty()) {
-            userDTO.setRoleKey(ldapConf.getRole().getDefaultRole());
-        }
-        userDTO.setRoleKey(authorities.iterator().next().getAuthority());
+        userDTO.setRoleKey(mapRole(ldapConf.getRole(), authorities));
 
         userService.createUser(userDTO);
     }
