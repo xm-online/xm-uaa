@@ -3,9 +3,8 @@ package com.icthh.xm.uaa.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
-import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
-import com.icthh.xm.commons.tenant.TenantKey;
+import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
@@ -19,7 +18,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +27,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.transaction.BeforeTransaction;
 import org.springframework.util.StreamUtils;
 import org.zapodot.junit.ldap.EmbeddedLdapRule;
 import org.zapodot.junit.ldap.EmbeddedLdapRuleBuilder;
@@ -88,7 +87,7 @@ public class UaaAuthenticationProviderIntTest {
     @Autowired
     private XmAuthenticationContextHolder authContextHolder;
 
-    @Mock
+    @Autowired
     private TenantContextHolder tenantContextHolder;
 
     private UaaAuthenticationProvider uaaAuthenticationProvider;
@@ -101,13 +100,15 @@ public class UaaAuthenticationProviderIntTest {
         .bindingToPort(LDAP_SERVER_PORT)
         .build();
 
+    @BeforeTransaction
+    public void beforeTransaction() {
+        TenantContextUtils.setTenant(tenantContextHolder, TENANT);
+    }
+
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-
-        TenantContext tenantContext = mock(TenantContext.class);
-        when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(TENANT)));
-        when(tenantContextHolder.getContext()).thenReturn(tenantContext);
+        TenantContextUtils.setTenant(tenantContextHolder, TENANT);
 
         TenantPropertiesService tenantPropertiesService = mock(TenantPropertiesService.class);
         String conf = StreamUtils.copyToString(spec.getInputStream(), Charset.defaultCharset());
