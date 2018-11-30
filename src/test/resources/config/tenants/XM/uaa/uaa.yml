@@ -1,0 +1,22 @@
+---
+security:
+    defaultUserRole: ROLE_USER
+    accessTokenValiditySeconds:
+    refreshTokenValiditySeconds:
+registrationCaptchaPeriodSeconds: 21600
+ldap:
+  - domain: xm.com
+    providerUrl: ldap://localhost:1389
+    systemUser: uid=test@xm.com,ou=Users,dc=xm,dc=com
+    systemPassword: test
+    groupSearchBase: ou=Groups,dc=xm,dc=com
+    groupSearchSubtree: true
+    userDnPattern: uid={0},ou=Users,dc=xm,dc=com
+    role:
+      defaultRole: ROLE-DEFAULT-USER
+      mapping:
+        role-user: ROLE-USER
+        role-admin: SUPER-ADMIN
+    attribute:
+      firstName: givenName
+      lastName: sn
