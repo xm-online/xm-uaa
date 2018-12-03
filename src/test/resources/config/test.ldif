@@ -20,61 +20,74 @@ dn: cn=role-user,ou=group1,ou=Groups,dc=xm,dc=com
 objectClass: groupOfNames
 objectClass: top
 cn: role-user
-member: uid=test@xm.com,ou=Users,dc=xm,dc=com
-member: uid=test-two-roles@xm.com,ou=Users,dc=xm,dc=com
+member: uid=test,ou=Users,dc=xm,dc=com
+member: uid=test-two-roles,ou=Users,dc=xm,dc=com
 
 dn: cn=role-admin,ou=group1,ou=Groups,dc=xm,dc=com
 objectClass: groupOfNames
 objectClass: top
 cn: role-admin
-member: uid=test-two-roles@xm.com,ou=Users,dc=xm,dc=com
+member: uid=test-two-roles,ou=Users,dc=xm,dc=com
 
 dn: cn=role-unknown,ou=group1,ou=Groups,dc=xm,dc=com
 objectClass: groupOfNames
 objectClass: top
 cn: role-unknown
-member: uid=test-unknown-role@xm.com,ou=Users,dc=xm,dc=com
+member: uid=test-unknown-role,ou=Users,dc=xm,dc=com
 
 dn: ou=Users,dc=xm,dc=com
 objectClass: organizationalUnit
 objectClass: top
 ou: Users
 
-dn: uid=test@xm.com,ou=Users,dc=xm,dc=com
+dn: uid=test,ou=Users,dc=xm,dc=com
 objectClass: inetOrgPerson
 objectClass: posixAccount
 objectClass: shadowAccount
 objectClass: inetLocalMailRecipient
-cn: test@xm.com
+cn: test
 displayName: Test User
 givenName: Test
 shadowExpire: -1
 sn: User
-uid: test@xm.com
+uid: test
 userPassword: test
 
-dn: uid=test-two-roles@xm.com,ou=Users,dc=xm,dc=com
+dn: uid=test-two-roles,ou=Users,dc=xm,dc=com
 objectClass: inetOrgPerson
 objectClass: posixAccount
 objectClass: shadowAccount
 objectClass: inetLocalMailRecipient
-cn: test-two-roles@xm.com
+cn: test-two-roles
 displayName: Test User
 givenName: Test
 shadowExpire: -1
 sn: User
-uid: test-two-roles@xm.com
+uid: test-two-roles
 userPassword: test
 
-dn: uid=test-unknown-role@xm.com,ou=Users,dc=xm,dc=com
+dn: uid=test-unknown-role,ou=Users,dc=xm,dc=com
 objectClass: inetOrgPerson
 objectClass: posixAccount
 objectClass: shadowAccount
 objectClass: inetLocalMailRecipient
-cn: test-unknown-role@xm.com
+cn: test-unknown-role
 displayName: Test User
 givenName: Test
 shadowExpire: -1
 sn: User
-uid: test-unknown-role@xm.com
+uid: test-unknown-role
+userPassword: test
+
+dn: uid=system,ou=Users,dc=xm,dc=com
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+objectClass: inetLocalMailRecipient
+cn: test-unknown-role
+displayName: Test User
+givenName: Test
+shadowExpire: -1
+sn: User
+uid: system
 userPassword: test
