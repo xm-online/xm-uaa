@@ -18,6 +18,7 @@ import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Optional;
 
 @AllArgsConstructor
@@ -75,14 +76,16 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
     private String mapRole(TenantProperties.Ldap.Role roleConf, Collection<? extends GrantedAuthority> authorities) {
         String mappedXmRole = roleConf.getDefaultRole();
         LinkedList<String> mappedRoles = new LinkedList<>();
+        Map<String, String> mappingConf = roleConf.getMapping();
 
-        roleConf.getMapping().forEach((ldapRole, xmRole) -> {
-            boolean matched = authorities.stream().anyMatch(a -> ldapRole.equals(a.getAuthority()));
-            if (matched) {
-                mappedRoles.add(xmRole);
-            }
-        });
-
+        if (mappingConf != null) {
+            mappingConf.forEach((ldapRole, xmRole) -> {
+                boolean matched = authorities.stream().anyMatch(a -> ldapRole.equals(a.getAuthority()));
+                if (matched) {
+                    mappedRoles.add(xmRole);
+                }
+            });
+        }
         if (mappedRoles.isEmpty()) {
             log.info("Role mapping not found. Default role {} will be used", mappedXmRole);
         } else {

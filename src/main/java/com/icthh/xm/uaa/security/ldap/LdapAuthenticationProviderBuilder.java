@@ -45,7 +45,7 @@ public class LdapAuthenticationProviderBuilder {
         ctx.afterPropertiesSet();
 
         //bind authenticator for password checking
-        BindAuthenticator bindAuthenticator = new BindAuthenticator(ctx);
+        BindAuthenticator bindAuthenticator = new UaaBindAuthenticator(ctx);
         bindAuthenticator.setUserDnPatterns(Stream.of(conf.getUserDnPattern()).toArray(String[]::new));
 
         //role extractor
