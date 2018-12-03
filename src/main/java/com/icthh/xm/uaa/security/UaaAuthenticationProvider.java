@@ -13,8 +13,9 @@ import org.springframework.security.core.AuthenticationException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.Objects;
 import java.util.Optional;
+
+import static com.icthh.xm.uaa.config.Constants.AUTH_USERNAME_DOMAIN_SEPARATOR;
 
 @Slf4j
 @LepService(group = "security.provider")
@@ -33,7 +34,7 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
     private AuthenticationProvider getProvider(Authentication authentication) {
         AuthenticationProvider provider = defaultProvider;
         String principal = authentication.getPrincipal().toString();
-        LinkedList<String> parts = new LinkedList<>(Arrays.asList(principal.split("@")));
+        LinkedList<String> parts = new LinkedList<>(Arrays.asList(principal.split(AUTH_USERNAME_DOMAIN_SEPARATOR)));
 
         if (parts.size() > BigInteger.ONE.intValue()) {
             String domain = parts.getLast();

@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import static com.icthh.xm.uaa.config.Constants.AUTH_USERNAME_DOMAIN_SEPARATOR;
+
 public class UaaBindAuthenticator extends BindAuthenticator {
 
     /**
@@ -18,7 +20,7 @@ public class UaaBindAuthenticator extends BindAuthenticator {
 
     @Override
     protected List<String> getUserDns(String username) {
-        LinkedList<String> parts = new LinkedList<>(Arrays.asList(username.split("@")));
+        LinkedList<String> parts = new LinkedList<>(Arrays.asList(username.split(AUTH_USERNAME_DOMAIN_SEPARATOR)));
         return super.getUserDns(parts.getFirst());
     }
 }

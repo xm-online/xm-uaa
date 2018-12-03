@@ -26,6 +26,7 @@ public final class Constants {
     public static final String AUTH_USER_KEY = "user_key";
     public static final String AUTH_USER_NAME = "user_name";
     public static final String AUTH_USERNAME = "username";
+    public static final String AUTH_USERNAME_DOMAIN_SEPARATOR = "@";
     public static final String AUTH_ROLE_KEY = "role_key";
     public static final String AUTH_LOGINS_KEY = "logins";
     public static final String KEYSTORE_PATH = "keystore.jks";
