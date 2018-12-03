@@ -1,6 +1,5 @@
 package com.icthh.xm.uaa.security.ldap;
 
-
 import org.springframework.ldap.core.support.BaseLdapPathContextSource;
 import org.springframework.security.ldap.authentication.BindAuthenticator;
 
