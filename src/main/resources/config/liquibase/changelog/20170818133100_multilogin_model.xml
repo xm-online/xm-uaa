@@ -6,6 +6,7 @@
 
     <property name="uuid_function" value="MD5(random()::text)" dbms="postgresql"/>
     <property name="uuid_function" value="sys_guid()" dbms="oracle"/>
+    <property name="uuid_function" value="random_uuid()" dbms="h2"/>
 
     <changeSet id="20170818133100" author="ekashina">
         <dropColumn columnName="login"
