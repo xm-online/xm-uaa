@@ -15,7 +15,7 @@
         <dropTable tableName="jhi_authority"/>
 
         <addColumn tableName="jhi_user">
-            <column name="role_key" type="varchar" defaultValue="ROLE_USER">
+            <column name="role_key" type="varchar(255)" defaultValue="ROLE_USER">
                 <constraints nullable="false"/>
             </column>
         </addColumn>

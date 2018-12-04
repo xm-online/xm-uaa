@@ -6,7 +6,7 @@
 
     <changeSet id="20180208010000" author="adovbnya">
         <addColumn tableName="jhi_user">
-            <column name="auto_logout_enabled" type="boolean" valueBoolean="false" defaultValue="false">
+            <column name="auto_logout_enabled" type="boolean" valueBoolean="false" defaultValue="0">
                 <constraints nullable="false" />
             </column>
 

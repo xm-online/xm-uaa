@@ -4,6 +4,10 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
+    <property name="uuid_function" value="MD5(random()::text)" dbms="postgresql"/>
+    <property name="uuid_function" value="sys_guid()" dbms="oracle"/>
+    <property name="uuid_function" value="random_uuid()" dbms="h2"/>
+
     <changeSet id="20170818133100" author="ekashina">
         <dropColumn columnName="login"
                     tableName="jhi_user"/>
@@ -12,7 +16,7 @@
                     tableName="jhi_user"/>
 
         <addColumn tableName="jhi_user">
-            <column name="user_key" type="varchar(255)" defaultValueComputed="random()">
+            <column name="user_key" type="varchar(255)" defaultValueComputed="${uuid_function}">
                 <constraints nullable="false"/>
             </column>
         </addColumn>
@@ -32,13 +36,6 @@
                                  constraintName="fk_social_user_connection"
                                  referencedColumnNames="user_key"
                                  referencedTableName="jhi_user"/>
-
-
-        <createIndex indexName="idx_user_key"
-                     tableName="jhi_user"
-                     unique="true">
-            <column name="user_key" type="varchar(255)"/>
-        </createIndex>
 
         <createTable tableName="user_login">
             <column name="id" type="bigint" autoIncrement="${autoIncrement}">
@@ -69,13 +66,8 @@
     </changeSet>
 
     <changeSet id="20170818133100_1" author="ekashina">
-        <addUniqueConstraint tableName="user_login" columnNames="login"/>
-
-        <createIndex indexName="idx_user_login"
-                     tableName="user_login"
-                     unique="true">
-            <column name="login" type="varchar(255)"/>
-        </createIndex>
+        <addUniqueConstraint tableName="user_login" columnNames="login"
+                             constraintName="idx_user_login"/>
 
     </changeSet>
 
