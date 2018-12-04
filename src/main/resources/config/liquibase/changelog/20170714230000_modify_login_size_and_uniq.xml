@@ -38,12 +38,6 @@
         <addUniqueConstraint columnNames="email"
                              tableName="jhi_user"/>
 
-        <!--<createIndex indexName="idx_user_login"-->
-                     <!--tableName="jhi_user"-->
-                     <!--unique="true">-->
-            <!--<column name="login" type="varchar(100)"/>-->
-        <!--</createIndex>-->
-
         <createIndex indexName="idx_persistent_audit_event"
                      tableName="jhi_persistent_audit_event"
                      unique="false">
