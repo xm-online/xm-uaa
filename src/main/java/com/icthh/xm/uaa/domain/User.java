@@ -106,10 +106,10 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "reset_date")
     private Instant resetDate = null;
 
-    @Column(name = "access_token_validity_seconds")
+    @Column(name = "access_token_validity")
     private Integer accessTokenValiditySeconds;
 
-    @Column(name = "refresh_token_validity_seconds")
+    @Column(name = "refresh_token_validity")
     private Integer refreshTokenValiditySeconds;
 
     @Column(name = "tfa_access_token_validity")
@@ -130,7 +130,7 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "auto_logout_enabled")
     private boolean autoLogoutEnabled = false;
 
-    @Column(name = "auto_logout_timeout_seconds")
+    @Column(name = "auto_logout_timeout")
     private Integer autoLogoutTimeoutSeconds;
 
     // TODO refactor, put EMAIL type to configuration
