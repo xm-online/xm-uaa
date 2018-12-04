@@ -33,6 +33,7 @@ public final class Constants {
     public static final String KEYSTORE_PSWRD = "password";
     public static final String KEYSTORE_ALIAS = "selfsigned";
     public static final String DDL_CREATE_SCHEMA = "CREATE SCHEMA IF NOT EXISTS %s";
+    public static final String DB_SCHEMA_CREATETION_ENABLED = "db.schema.creation.enabled";
     public static final String CHANGE_LOG_PATH = "classpath:config/liquibase/master.xml";
     public static final String LOGIN_IS_USED_ERROR_TEXT = "Login already in use";
     public static final String ACTIVATE_PROFILE_EVENT_TYPE = "ACTIVATE_PROFILE";

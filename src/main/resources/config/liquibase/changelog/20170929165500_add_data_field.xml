@@ -7,7 +7,7 @@
     <changeSet id="20170929165500" author="ssenko">
 
         <addColumn tableName="jhi_user">
-            <column name="data" type="varchar">
+            <column name="data" type="text">
                 <constraints nullable="true" />
             </column>
         </addColumn>

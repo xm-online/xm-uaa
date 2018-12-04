@@ -6,7 +6,7 @@
 
     <changeSet id="20181115161200" author="ssenko">
         <addColumn tableName="client">
-            <column name="scopes" type="varchar">
+            <column name="scopes" type="varchar(255)">
                 <constraints nullable="true" />
             </column>
         </addColumn>

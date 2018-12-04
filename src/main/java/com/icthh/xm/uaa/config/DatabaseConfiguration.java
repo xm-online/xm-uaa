@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.config;
 
 import static com.icthh.xm.uaa.config.Constants.CHANGE_LOG_PATH;
+import static com.icthh.xm.uaa.config.Constants.DB_SCHEMA_CREATETION_ENABLED;
 
 import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
 import com.icthh.xm.commons.config.client.repository.TenantListRepository;
@@ -27,6 +28,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.vendor.Database;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -113,6 +115,11 @@ public class DatabaseConfiguration {
     }
 
     private void createSchemas(DataSource dataSource) {
+        if (jpaProperties.getProperties().containsKey(DB_SCHEMA_CREATETION_ENABLED)
+            && !Boolean.valueOf(jpaProperties.getProperties().get(DB_SCHEMA_CREATETION_ENABLED))) {
+            log.info("Schema creation for {} jpa provider is disabled", jpaProperties.getDatabase());
+            return;
+        }
         for (String schema : getSchemas()) {
             try {
                 DatabaseUtil.createSchema(dataSource, schema);

@@ -6,7 +6,7 @@
 
     <changeSet id="20180130010000" author="adovbnya">
         <addColumn tableName="jhi_user">
-            <column name="tfa_enabled" type="boolean" valueBoolean="false" defaultValue="false">
+            <column name="tfa_enabled" type="boolean" valueBoolean="false" defaultValue="0">
                 <constraints nullable="false" />
             </column>
 
@@ -14,7 +14,7 @@
                 <constraints nullable="true" />
             </column>
 
-            <column name="tfa_access_token_validity_seconds"  type="int">
+            <column name="tfa_access_token_validity"  type="int">
                 <constraints nullable="true"/>
             </column>
         </addColumn>
