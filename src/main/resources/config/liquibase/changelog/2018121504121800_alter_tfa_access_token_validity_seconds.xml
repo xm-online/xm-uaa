@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="2018121504121800" author="vkirichenko">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="jhi_user" columnName="tfa_access_token_validity_seconds"/>
+        </preConditions>
+
+        <renameColumn tableName="jhi_user"
+                      oldColumnName="tfa_access_token_validity_seconds"
+                      newColumnName="tfa_access_token_validity"/>
+    </changeSet>
+
+</databaseChangeLog>

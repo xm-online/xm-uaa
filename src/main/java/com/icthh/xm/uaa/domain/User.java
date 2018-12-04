@@ -112,7 +112,7 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "refresh_token_validity_seconds")
     private Integer refreshTokenValiditySeconds;
 
-    @Column(name = "tfa_access_token_validity_seconds")
+    @Column(name = "tfa_access_token_validity")
     private Integer tfaAccessTokenValiditySeconds;
 
     @Column(name = "role_key")
