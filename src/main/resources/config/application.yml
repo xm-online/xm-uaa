@@ -154,8 +154,7 @@ application:
         registration-captcha-period-seconds: 21600
     client-grant-types: client_credentials, refresh_token, password, tfa_otp_token
     client-scope: openid
-    default-client-id: internal
-    default-client-secret: internal
+    tenant-path: /config/tenants/XM/tenant-config.yml
     timelines-enabled: true
     lep:
         tenant-script-storage: XM_MS_CONFIG

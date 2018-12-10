@@ -33,8 +33,7 @@ public class ApplicationProperties {
     private String tenantLoginPropertiesName;
     private Set<String> clientGrantTypes;
     private Set<String> clientScope;
-    private Set<String> defaultClientId;
-    private String defaultClientSecret;
+    private String tenantPath;
     private String emailPathPattern;
     private boolean timelinesEnabled;
 
