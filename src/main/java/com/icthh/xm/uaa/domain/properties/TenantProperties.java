@@ -55,6 +55,9 @@ public class TenantProperties {
         @JsonProperty("refreshTokenValiditySeconds")
         private Integer refreshTokenValiditySeconds;
 
+        @JsonProperty("defaultClientSecret")
+        private String defaultClientSecret;
+
         @JsonSetter("accessTokenValiditySeconds")
         public void setAccessTokenValiditySeconds(Integer accessTokenValiditySeconds) {
             this.accessTokenValiditySeconds = accessTokenValiditySeconds;
