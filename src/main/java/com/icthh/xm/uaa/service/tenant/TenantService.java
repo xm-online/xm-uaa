@@ -16,17 +16,15 @@ import com.icthh.xm.commons.config.client.repository.TenantListRepository;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.permission.config.PermissionProperties;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
-import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.config.Constants;
 import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.icthh.xm.uaa.domain.Client;
-import com.icthh.xm.uaa.domain.User;
-import com.icthh.xm.uaa.repository.ClientRepository;
-import com.icthh.xm.uaa.repository.UserRepository;
+import com.icthh.xm.uaa.config.tenant.SchemaChangeResolver;
 import com.icthh.xm.uaa.service.ClientService;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
 import lombok.RequiredArgsConstructor;
@@ -34,11 +32,14 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.StopWatch;
+import org.hibernate.internal.SessionImpl;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
+
+import javax.persistence.EntityManager;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -47,6 +48,9 @@ import org.springframework.util.AntPathMatcher;
 public class TenantService {
 
     private static final String API = "/api";
+    public static final String CLIENT_ID = "webapp";
+    public static final String CLIENT_SECRET = "webapp";
+    public static final String ROLE_KEY = "ROLE_ANONYMOUS";
 
     private final TenantDatabaseService databaseService;
     private final TenantListRepository tenantListRepository;
@@ -56,6 +60,8 @@ public class TenantService {
     private final ResourceLoader resourceLoader;
     private final ClientService clientRepository;
     private final TenantContextHolder tenantContextHolder;
+    private final EntityManager em;
+    private final SchemaChangeResolver schemaChangeResolver;
     private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
     /**
@@ -67,11 +73,10 @@ public class TenantService {
         log.info("START - SETUP:CreateTenant: tenantKey: {}", tenant);
 
         try {
-//            tenantListRepository.addTenant(tenant);
+            tenantListRepository.addTenant(tenant);
             databaseService.create(tenant);
             databaseService.migrate(tenant);
-            TenantContextUtils.setTenant(tenantContextHolder, tenant);
-            addDefaultOauth2Client();
+            addDefaultOauth2Client(tenant);
             addUaaSpecification(tenant);
 
             addLoginsSpecification(tenant);
@@ -88,12 +93,18 @@ public class TenantService {
         }
     }
 
-    private void addDefaultOauth2Client() {
+    @SneakyThrows
+    private void addDefaultOauth2Client(String tenant) {
+        SessionImpl delegate = (SessionImpl) em.getDelegate();
+        Connection connection = delegate.connection();
+        Statement statement = connection.createStatement();
+        statement.execute(String.format(schemaChangeResolver.getSchemaSwitchCommand(), tenant));
         ClientDTO u = new ClientDTO();
-        u.setClientId("webapp");
-        u.setClientSecret("webapp");
-        u.setRoleKey("ROLE_ANONYMOUS");
+        u.setClientId(CLIENT_ID);
+        u.setClientSecret(CLIENT_SECRET);
+        u.setRoleKey(ROLE_KEY);
         clientRepository.createClient(u);
+
     }
 
     /**
