@@ -48,6 +48,8 @@ import javax.persistence.EntityManager;
 public class TenantService {
 
     private static final String API = "/api";
+
+    //todo use application.yml  web-client: section
     public static final String CLIENT_ID = "webapp";
     public static final String CLIENT_SECRET = "webapp";
     public static final String ROLE_KEY = "ROLE_ANONYMOUS";
@@ -93,6 +95,7 @@ public class TenantService {
         }
     }
 
+    //todo move to the Client service
     @SneakyThrows
     private void addDefaultOauth2Client(String tenant) {
         SessionImpl delegate = (SessionImpl) em.getDelegate();

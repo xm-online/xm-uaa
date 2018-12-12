@@ -60,7 +60,7 @@ public class ClientService {
         newClient.setDescription(client.getDescription());
         newClient.setAccessTokenValiditySeconds(client.getAccessTokenValiditySeconds());
         newClient.setScopes(client.getScopes());
-        return clientRepository.saveAndFlush(newClient);
+        return clientRepository.save(newClient);
     }
 
     /**
