@@ -63,6 +63,8 @@
     <logger name="sun.rmi.transport" level="WARN"/>
     <logger name="org.reflections" level="INFO"/>
     <logger name="com.netflix.loadbalancer" level="INFO"/>
+    <logger name="org.hibernate.SQL" level="DEBUG" />
+    <logger name="org.hibernate.type" level="TRACE" />
 
     <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
         <resetJUL>true</resetJUL>

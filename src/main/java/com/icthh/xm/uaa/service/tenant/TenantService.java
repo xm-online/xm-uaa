@@ -15,12 +15,20 @@ import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
 import com.icthh.xm.commons.config.client.repository.TenantListRepository;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.permission.config.PermissionProperties;
+import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.config.Constants;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.icthh.xm.uaa.domain.Client;
+import com.icthh.xm.uaa.domain.User;
+import com.icthh.xm.uaa.repository.ClientRepository;
+import com.icthh.xm.uaa.repository.UserRepository;
+import com.icthh.xm.uaa.service.ClientService;
+import com.icthh.xm.uaa.service.dto.ClientDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +54,8 @@ public class TenantService {
     private final ApplicationProperties applicationProperties;
     private final PermissionProperties permissionProperties;
     private final ResourceLoader resourceLoader;
+    private final ClientService clientRepository;
+    private final TenantContextHolder tenantContextHolder;
     private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
     /**
@@ -57,14 +67,18 @@ public class TenantService {
         log.info("START - SETUP:CreateTenant: tenantKey: {}", tenant);
 
         try {
-            tenantListRepository.addTenant(tenant);
+//            tenantListRepository.addTenant(tenant);
             databaseService.create(tenant);
             databaseService.migrate(tenant);
+            TenantContextUtils.setTenant(tenantContextHolder, tenant);
+            addDefaultOauth2Client();
             addUaaSpecification(tenant);
+
             addLoginsSpecification(tenant);
             addRoleSpecification(tenant);
             addPermissionSpecification(tenant);
             addDefaultEmailTemplates(tenant);
+
             log.info("STOP  - SETUP:CreateTenant: tenantKey: {}, result: OK, time = {} ms",
                 tenant, stopWatch.getTime());
         } catch (Exception e) {
@@ -72,6 +86,14 @@ public class TenantService {
                 tenant, e.getMessage(), stopWatch.getTime());
             throw e;
         }
+    }
+
+    private void addDefaultOauth2Client() {
+        ClientDTO u = new ClientDTO();
+        u.setClientId("webapp");
+        u.setClientSecret("webapp");
+        u.setRoleKey("ROLE_ANONYMOUS");
+        clientRepository.createClient(u);
     }
 
     /**

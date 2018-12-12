@@ -31,16 +31,14 @@ spring:
             port: 8500
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:h2:mem:uaa;DB_CLOSE_DELAY=-1
-        username: uaa
-        password:
+        url: jdbc:postgresql://localhost:5432/uaa
     h2:
         console:
             enabled: true
     jpa:
-        database-platform: io.github.jhipster.domain.util.FixedH2Dialect
-        database: H2
-        show-sql: false
+        database-platform: io.github.jhipster.domain.util.FixedPostgreSQL82Dialect
+        database: POSTGRESQL
+        show-sql: true
         properties:
             hibernate.id.new_generator_mappings: true
             hibernate.cache.use_second_level_cache: false
@@ -74,7 +72,7 @@ spring:
 
 liquibase:
     contexts: dev
-    enabled: false
+    enabled: true
 
 # ===================================================================
 # To enable SSL, generate a certificate using:
