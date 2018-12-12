@@ -128,4 +128,3 @@ application:
     client-grant-types: client_credentials, refresh_token, password
     client-scope: openid
     default-client-id:
-    default-client-secret:
