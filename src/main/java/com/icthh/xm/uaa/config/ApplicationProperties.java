@@ -34,7 +34,6 @@ public class ApplicationProperties {
     private Set<String> clientGrantTypes;
     private Set<String> clientScope;
     private Set<String> defaultClientId;
-    private String defaultClientSecret;
     private String emailPathPattern;
     private boolean timelinesEnabled;
 

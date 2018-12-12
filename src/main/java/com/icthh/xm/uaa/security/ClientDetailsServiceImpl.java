@@ -6,6 +6,7 @@ import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.domain.Client;
 import com.icthh.xm.uaa.service.ClientService;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
@@ -27,6 +28,8 @@ public class ClientDetailsServiceImpl implements ClientDetailsService {
 
     private final PasswordEncoder passwordEncoder;
 
+    private final TenantPropertiesService tenantPropertiesService;
+
     @Override
     public ClientDetails loadClientByClientId(String clientId) throws ClientRegistrationException {
 
@@ -38,7 +41,9 @@ public class ClientDetailsServiceImpl implements ClientDetailsService {
             principal = new Client();
             principal.setClientId(clientId);
             if (!Constants.WEB_APP_CLIENT.equals(clientId)) {
-                principal.setClientSecret(passwordEncoder.encode(applicationProperties.getDefaultClientSecret()));
+                principal.setClientSecret(passwordEncoder.encode(
+                    tenantPropertiesService.getTenantProps().getSecurity().getDefaultClientSecret())
+                );
             }
             principal.setRoleKey(RoleConstant.SUPER_ADMIN);
         } else {
