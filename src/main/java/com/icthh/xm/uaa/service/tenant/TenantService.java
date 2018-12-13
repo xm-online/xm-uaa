@@ -1,5 +1,28 @@
 package com.icthh.xm.uaa.service.tenant;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
+import com.icthh.xm.commons.config.client.repository.TenantListRepository;
+import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
+import com.icthh.xm.commons.permission.config.PermissionProperties;
+import com.icthh.xm.uaa.config.ApplicationProperties;
+import com.icthh.xm.uaa.config.Constants;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.time.StopWatch;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.stereotype.Service;
+import org.springframework.util.AntPathMatcher;
+
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+
 import static com.icthh.xm.uaa.config.Constants.DEFAULT_EMAILS_PATH_PATTERN;
 import static com.icthh.xm.uaa.config.Constants.DEFAULT_EMAILS_PATTERN;
 import static com.icthh.xm.uaa.config.Constants.PATH_TO_EMAILS;
@@ -8,38 +31,6 @@ import static com.icthh.xm.uaa.util.GeneralUtils.sneakyThrows;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.stream;
 import static org.springframework.core.io.support.ResourcePatternUtils.getResourcePatternResolver;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
-import com.icthh.xm.commons.config.client.repository.TenantListRepository;
-import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
-import com.icthh.xm.commons.permission.config.PermissionProperties;
-import com.icthh.xm.commons.tenant.TenantContextHolder;
-import com.icthh.xm.uaa.config.ApplicationProperties;
-import com.icthh.xm.uaa.config.Constants;
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.Statement;
-import java.util.HashMap;
-import java.util.Map;
-
-import com.icthh.xm.uaa.config.tenant.SchemaChangeResolver;
-import com.icthh.xm.uaa.service.ClientService;
-import com.icthh.xm.uaa.service.dto.ClientDTO;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.time.StopWatch;
-import org.hibernate.internal.SessionImpl;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.stereotype.Service;
-import org.springframework.util.AntPathMatcher;
-
-import javax.persistence.EntityManager;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -70,12 +61,10 @@ public class TenantService {
             databaseService.create(tenant);
             databaseService.migrate(tenant);
             addUaaSpecification(tenant);
-
             addLoginsSpecification(tenant);
             addRoleSpecification(tenant);
             addPermissionSpecification(tenant);
             addDefaultEmailTemplates(tenant);
-
             log.info("STOP  - SETUP:CreateTenant: tenantKey: {}, result: OK, time = {} ms",
                 tenant, stopWatch.getTime());
         } catch (Exception e) {
@@ -84,8 +73,6 @@ public class TenantService {
             throw e;
         }
     }
-
-
 
     /**
      * Delete tenant.

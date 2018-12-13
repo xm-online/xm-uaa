@@ -27,6 +27,7 @@ public class ClientService {
     private final ClientRepository clientRepository;
     private final PasswordEncoder passwordEncoder;
     private final PermittedRepository permittedRepository;
+
     private static final String PSWRD_MASK = "*****";
 
     /**

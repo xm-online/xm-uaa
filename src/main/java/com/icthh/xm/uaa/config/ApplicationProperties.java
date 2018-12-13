@@ -71,5 +71,4 @@ public class ApplicationProperties {
         private TenantScriptStorage tenantScriptStorage;
     }
 
-
 }

@@ -26,19 +26,21 @@ spring:
     cloud:
         consul:
             discovery:
-               prefer-ip-address: true
+                prefer-ip-address: true
             host: localhost
             port: 8500
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:postgresql://localhost:5432/uaa
+        url: jdbc:h2:mem:uaa;DB_CLOSE_DELAY=-1
+        username: uaa
+        password:
     h2:
         console:
             enabled: true
     jpa:
-        database-platform: io.github.jhipster.domain.util.FixedPostgreSQL82Dialect
-        database: POSTGRESQL
-        show-sql: true
+        database-platform: io.github.jhipster.domain.util.FixedH2Dialect
+        database: H2
+        show-sql: false
         properties:
             hibernate.id.new_generator_mappings: true
             hibernate.cache.use_second_level_cache: false
@@ -49,14 +51,14 @@ spring:
             hibernate.cache.use_minimal_puts: true
             #hibernate.cache.hazelcast.use_lite_member: true
     mail:
-            host:
-            port:
-            username:
-            password:
-            properties:
-                mail.smtp.starttls.enable: true
-                ssl.trust:
-                mail.imap.ssl.enable: true
+        host:
+        port:
+        username:
+        password:
+        properties:
+            mail.smtp.starttls.enable: true
+            ssl.trust:
+            mail.imap.ssl.enable: true
     messages:
         cache-seconds: 1
     thymeleaf:
@@ -72,7 +74,7 @@ spring:
 
 liquibase:
     contexts: dev
-    enabled: true
+    enabled: false
 
 # ===================================================================
 # To enable SSL, generate a certificate using:
