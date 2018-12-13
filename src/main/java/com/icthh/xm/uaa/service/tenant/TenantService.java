@@ -1,5 +1,14 @@
 package com.icthh.xm.uaa.service.tenant;
 
+import static com.icthh.xm.uaa.config.Constants.DEFAULT_EMAILS_PATH_PATTERN;
+import static com.icthh.xm.uaa.config.Constants.DEFAULT_EMAILS_PATTERN;
+import static com.icthh.xm.uaa.config.Constants.PATH_TO_EMAILS;
+import static com.icthh.xm.uaa.config.Constants.PATH_TO_EMAILS_IN_CONFIG;
+import static com.icthh.xm.uaa.util.GeneralUtils.sneakyThrows;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.stream;
+import static org.springframework.core.io.support.ResourcePatternUtils.getResourcePatternResolver;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
@@ -8,6 +17,10 @@ import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.permission.config.PermissionProperties;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.config.Constants;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -18,19 +31,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
-
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-
-import static com.icthh.xm.uaa.config.Constants.DEFAULT_EMAILS_PATH_PATTERN;
-import static com.icthh.xm.uaa.config.Constants.DEFAULT_EMAILS_PATTERN;
-import static com.icthh.xm.uaa.config.Constants.PATH_TO_EMAILS;
-import static com.icthh.xm.uaa.config.Constants.PATH_TO_EMAILS_IN_CONFIG;
-import static com.icthh.xm.uaa.util.GeneralUtils.sneakyThrows;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Arrays.stream;
-import static org.springframework.core.io.support.ResourcePatternUtils.getResourcePatternResolver;
 
 @Slf4j
 @RequiredArgsConstructor
