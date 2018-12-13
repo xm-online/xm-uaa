@@ -40,11 +40,10 @@ public class ClientDetailsServiceImpl implements ClientDetailsService {
         if (applicationProperties.getDefaultClientId().contains(clientId)) {
             principal = new Client();
             principal.setClientId(clientId);
-            if (!Constants.WEB_APP_CLIENT.equals(clientId)) {
-                principal.setClientSecret(passwordEncoder.encode(
-                    tenantPropertiesService.getTenantProps().getSecurity().getDefaultClientSecret())
-                );
-            }
+
+            principal.setClientSecret(passwordEncoder.encode(
+                tenantPropertiesService.getTenantProps().getSecurity().getDefaultClientSecret()));
+
             principal.setRoleKey(RoleConstant.SUPER_ADMIN);
         } else {
             try {
