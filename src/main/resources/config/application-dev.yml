@@ -51,14 +51,14 @@ spring:
             hibernate.cache.use_minimal_puts: true
             #hibernate.cache.hazelcast.use_lite_member: true
     mail:
-        host:
-        port:
-        username:
-        password:
-        properties:
-            mail.smtp.starttls.enable: true
-            ssl.trust:
-            mail.imap.ssl.enable: true
+            host:
+            port:
+            username:
+            password:
+            properties:
+                mail.smtp.starttls.enable: true
+                ssl.trust:
+                mail.imap.ssl.enable: true
     messages:
         cache-seconds: 1
     thymeleaf:
