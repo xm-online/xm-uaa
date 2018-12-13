@@ -55,7 +55,6 @@ public class TenantService {
     private final ApplicationProperties applicationProperties;
     private final PermissionProperties permissionProperties;
     private final ResourceLoader resourceLoader;
-    private final ClientService clientService;
     private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
     /**
@@ -70,7 +69,6 @@ public class TenantService {
             tenantListRepository.addTenant(tenant);
             databaseService.create(tenant);
             databaseService.migrate(tenant);
-            clientService.addDefaultOauth2Client(tenant);
             addUaaSpecification(tenant);
 
             addLoginsSpecification(tenant);

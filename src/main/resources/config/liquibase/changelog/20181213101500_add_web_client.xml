@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="20181213101500" author="akoidan">
+        <insert tableName="client ">
+            <column name="id" valueNumeric="1"/>
+            <column name="client_id" value="webapp"/>
+            <column name="client_secret" value="$2a$10$kjjsKoaMucoyzq88emi8fuX4AzgupSwQEMyoTcBuwzJKtu/cwlAcK"/>
+            <column name="role_key" value="ROLE_ANONYMOUS"/>
+            <column name="created_by" value="internal"/>
+            <column name="last_modified_by" value="internal"/>
+            <column name="scopes" value="[]"/>
+            <column name="created_date" value="now()"/>
+            <column name="last_modified_date" value="now()"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

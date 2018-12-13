@@ -155,10 +155,6 @@ application:
     client-grant-types: client_credentials, refresh_token, password, tfa_otp_token
     client-scope: openid
     default-client-id: internal
-    web-client:
-        client-id: webapp
-        client-secret: webapp
-        default-role: ROLE_ANONYMOUS
     timelines-enabled: true
     lep:
         tenant-script-storage: XM_MS_CONFIG
