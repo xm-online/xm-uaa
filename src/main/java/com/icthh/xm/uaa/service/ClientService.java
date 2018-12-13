@@ -3,17 +3,25 @@ package com.icthh.xm.uaa.service;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.permission.annotation.FindWithPermission;
 import com.icthh.xm.commons.permission.repository.PermittedRepository;
+import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.uaa.config.ApplicationProperties;
+import com.icthh.xm.uaa.config.tenant.SchemaChangeResolver;
 import com.icthh.xm.uaa.domain.Client;
 import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.internal.SessionImpl;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.Optional;
 
 /**
@@ -27,7 +35,9 @@ public class ClientService {
     private final ClientRepository clientRepository;
     private final PasswordEncoder passwordEncoder;
     private final PermittedRepository permittedRepository;
-
+    private final EntityManager em;
+    private final SchemaChangeResolver schemaChangeResolver;
+    private final ApplicationProperties applicationProperties;
     private static final String PSWRD_MASK = "*****";
 
     /**
@@ -61,6 +71,21 @@ public class ClientService {
         newClient.setAccessTokenValiditySeconds(client.getAccessTokenValiditySeconds());
         newClient.setScopes(client.getScopes());
         return clientRepository.save(newClient);
+    }
+
+    @SneakyThrows
+    public void addDefaultOauth2Client(String tenant) {
+        SessionImpl delegate = (SessionImpl) em.getDelegate();
+        Connection connection = delegate.connection();
+        Statement statement = connection.createStatement();
+        statement.execute(String.format(schemaChangeResolver.getSchemaSwitchCommand(), tenant));
+        ClientDTO u = new ClientDTO();
+        ApplicationProperties.Client props = applicationProperties.getWebClient();
+        u.setClientId(props.getClientId());
+        u.setClientSecret(props.getClientSecret());
+        u.setRoleKey(props.getDefaultRole());
+        this.createClient(u);
+
     }
 
     /**

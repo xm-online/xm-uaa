@@ -49,21 +49,13 @@ public class TenantService {
 
     private static final String API = "/api";
 
-    //todo use application.yml  web-client: section
-    public static final String CLIENT_ID = "webapp";
-    public static final String CLIENT_SECRET = "webapp";
-    public static final String ROLE_KEY = "ROLE_ANONYMOUS";
-
     private final TenantDatabaseService databaseService;
     private final TenantListRepository tenantListRepository;
     private final TenantConfigRepository tenantConfigRepository;
     private final ApplicationProperties applicationProperties;
     private final PermissionProperties permissionProperties;
     private final ResourceLoader resourceLoader;
-    private final ClientService clientRepository;
-    private final TenantContextHolder tenantContextHolder;
-    private final EntityManager em;
-    private final SchemaChangeResolver schemaChangeResolver;
+    private final ClientService clientService;
     private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
     /**
@@ -78,7 +70,7 @@ public class TenantService {
             tenantListRepository.addTenant(tenant);
             databaseService.create(tenant);
             databaseService.migrate(tenant);
-            addDefaultOauth2Client(tenant);
+            clientService.addDefaultOauth2Client(tenant);
             addUaaSpecification(tenant);
 
             addLoginsSpecification(tenant);
@@ -95,20 +87,7 @@ public class TenantService {
         }
     }
 
-    //todo move to the Client service
-    @SneakyThrows
-    private void addDefaultOauth2Client(String tenant) {
-        SessionImpl delegate = (SessionImpl) em.getDelegate();
-        Connection connection = delegate.connection();
-        Statement statement = connection.createStatement();
-        statement.execute(String.format(schemaChangeResolver.getSchemaSwitchCommand(), tenant));
-        ClientDTO u = new ClientDTO();
-        u.setClientId(CLIENT_ID);
-        u.setClientSecret(CLIENT_SECRET);
-        u.setRoleKey(ROLE_KEY);
-        clientRepository.createClient(u);
 
-    }
 
     /**
      * Delete tenant.

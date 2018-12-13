@@ -22,6 +22,7 @@ public class ApplicationProperties {
     private final Security security = new Security();
     private final ReCaptcha reCaptcha = new ReCaptcha();
     private final Lep lep = new Lep();
+    private final Client webClient = new Client();
 
     private List<String> tenantIgnoredPathList;
     private String kafkaSystemTopic;
@@ -69,6 +70,15 @@ public class ApplicationProperties {
     @Setter
     public static class Lep {
         private TenantScriptStorage tenantScriptStorage;
+    }
+
+    @Getter
+    @Setter
+    public static class Client {
+        private String clientId;
+        private String clientSecret;
+        private String defaultRole;
+
     }
 
 }
