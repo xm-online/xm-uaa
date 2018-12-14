@@ -11,6 +11,7 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.ldap.DefaultSpringSecurityContextSource;
 import org.springframework.security.ldap.authentication.BindAuthenticator;
 import org.springframework.security.ldap.authentication.LdapAuthenticationProvider;
+import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider;
 import org.springframework.security.ldap.userdetails.DefaultLdapAuthoritiesPopulator;
 import org.springframework.stereotype.Component;
 
@@ -36,17 +37,37 @@ public class LdapAuthenticationProviderBuilder {
             log.info("Ldap configuration not found for domain {}", domain);
             return Optional.empty();
         }
-        Ldap conf = ldapOpt.get();
 
+        Ldap conf = ldapOpt.get();
+        return Optional.of(buildAuthenticationProvider(conf));
+    }
+
+    private AuthenticationProvider buildAuthenticationProvider(Ldap conf) {
+        Type ldapType = conf.getType();
+        log.info("Ldap type {}", ldapType);
+        if (conf.getType() == null) {
+            ldapType = Type.OPEN_LDAP;
+        }
+
+        AuthenticationProvider provider = null;
+        switch (ldapType) {
+            case ACTIVE_DIRECTORY:
+                provider = buildAdAuthProvier(conf);
+                break;
+            case OPEN_LDAP:
+                provider = buildLdapAuthProvier(conf);
+                break;
+        }
+
+        return provider;
+    }
+
+    private AuthenticationProvider buildLdapAuthProvier(Ldap conf) {
         //ldap context which used for role searching
         DefaultSpringSecurityContextSource ctx = new DefaultSpringSecurityContextSource(conf.getProviderUrl());
         ctx.setUserDn(conf.getSystemUser());
         ctx.setPassword(conf.getSystemPassword());
         ctx.afterPropertiesSet();
-
-        //bind authenticator for password checking
-        BindAuthenticator bindAuthenticator = new UaaBindAuthenticator(ctx);
-        bindAuthenticator.setUserDnPatterns(Stream.of(conf.getUserDnPattern()).toArray(String[]::new));
 
         //role extractor
         DefaultLdapAuthoritiesPopulator authoritiesPopulator =
@@ -55,12 +76,26 @@ public class LdapAuthenticationProviderBuilder {
         authoritiesPopulator.setRolePrefix(StringUtils.EMPTY);
         authoritiesPopulator.setConvertToUpperCase(Boolean.FALSE);
 
+        //bind authenticator for password checking
+        BindAuthenticator bindAuthenticator = new UaaBindAuthenticator(ctx);
+        bindAuthenticator.setUserDnPatterns(Stream.of(conf.getUserDnPattern()).toArray(String[]::new));
+
         //create spring ldap authenticator provider
         LdapAuthenticationProvider ldapAuthenticationProvider =
             new LdapAuthenticationProvider(bindAuthenticator, authoritiesPopulator);
         ldapAuthenticationProvider.setUserDetailsContextMapper(
             new UaaLdapUserDetailsContextMapper(userDetailsService, userService, conf));
 
-        return Optional.of(ldapAuthenticationProvider);
+        return ldapAuthenticationProvider;
+    }
+
+    private AuthenticationProvider buildAdAuthProvier(Ldap conf) {
+        ActiveDirectoryLdapAuthenticationProvider adLdapAuthenticationProvider
+            = new ActiveDirectoryLdapAuthenticationProvider(null, conf.getProviderUrl(), conf.getRootDn());
+
+        adLdapAuthenticationProvider.setUserDetailsContextMapper(
+            new UaaLdapUserDetailsContextMapper(userDetailsService, userService, conf));
+
+        return adLdapAuthenticationProvider;
     }
 }
