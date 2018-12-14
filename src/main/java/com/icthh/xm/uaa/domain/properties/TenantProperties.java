@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.icthh.xm.uaa.domain.OtpChannelType;
+import com.icthh.xm.uaa.security.ldap.Type;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -116,9 +117,11 @@ public class TenantProperties {
     public static class Ldap {
 
         private String domain;
+        private Type type;
         private String providerUrl;
         private String systemUser;
         private String systemPassword;
+        private String rootDn;
         private String groupSearchBase;
         private Boolean groupSearchSubtree;
         private String userDnPattern;
