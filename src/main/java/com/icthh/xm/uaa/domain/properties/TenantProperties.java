@@ -113,7 +113,7 @@ public class TenantProperties {
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
-    @ToString
+    @ToString(exclude = "systemPassword")
     public static class Ldap {
 
         private String domain;
