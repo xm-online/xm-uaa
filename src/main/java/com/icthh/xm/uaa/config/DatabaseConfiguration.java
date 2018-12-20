@@ -9,8 +9,18 @@ import com.icthh.xm.commons.migration.db.XmMultiTenantSpringLiquibase;
 import com.icthh.xm.commons.migration.db.XmSpringLiquibase;
 import com.icthh.xm.uaa.util.DatabaseUtil;
 import io.github.jhipster.config.JHipsterConstants;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import javax.sql.DataSource;
+
 import liquibase.integration.spring.MultiTenantSpringLiquibase;
 import liquibase.integration.spring.SpringLiquibase;
+import org.apache.commons.lang.StringUtils;
 import org.h2.tools.Server;
 import org.hibernate.MultiTenancyStrategy;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
@@ -31,18 +41,14 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import javax.sql.DataSource;
-
 @Configuration
 @EnableJpaRepositories("com.icthh.xm.uaa.repository")
 @EnableJpaAuditing(auditorAwareRef = "springSecurityAuditorAware")
 @EnableTransactionManagement
 public class DatabaseConfiguration {
+
+    /** The application properties. */
+    private ApplicationProperties applicationProperties;
 
     private final Logger log = LoggerFactory.getLogger(DatabaseConfiguration.class);
 
@@ -54,10 +60,12 @@ public class DatabaseConfiguration {
 
     public DatabaseConfiguration(Environment env,
                                  JpaProperties jpaProperties,
-                                 TenantListRepository tenantListRepository) {
+                                 TenantListRepository tenantListRepository,
+                                 ApplicationProperties applicationProperties) {
         this.env = env;
         this.jpaProperties = jpaProperties;
         this.tenantListRepository = tenantListRepository;
+        this.applicationProperties = applicationProperties;
     }
 
     /**
@@ -129,7 +137,14 @@ public class DatabaseConfiguration {
     }
 
     private List<String> getSchemas() {
-        return new ArrayList<>(tenantListRepository.getTenants());
+        String suffix = applicationProperties.getDbSchemaSuffix();
+        List<String> schemas = new ArrayList<>(tenantListRepository.getTenants());
+
+        if (StringUtils.isNotBlank(suffix)) {
+            return schemas.stream().map((schema) -> (schema.concat(suffix)))
+                .collect(Collectors.toList());
+        }
+        return schemas;
     }
 
     @Bean
