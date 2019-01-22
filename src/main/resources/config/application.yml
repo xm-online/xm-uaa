@@ -21,7 +21,7 @@ management:
     health:
         mail:
             enabled: false # When using the MailService, configure an SMTP server and set this to true
-spring.cloud.inetutils.preferredNetworks
+
 spring:
     application:
         name: uaa
