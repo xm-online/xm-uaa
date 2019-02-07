@@ -50,6 +50,7 @@ import javax.servlet.http.HttpServletResponse;
 public class ProxyFilterUnitTest {
 
     private static final String API_IGNORE = "/api/ignore";
+    private static final String API_WHITE_LIST = "/api/white-list";
     private static final String USER_NAME = "testUser";
 
     @Mock
@@ -89,6 +90,7 @@ public class ProxyFilterUnitTest {
         when(request.getHeaders("Authorization")).thenReturn(
             Collections.enumeration(Collections.singleton("Bearer token")));
         when(properties.getTenantIgnoredPathList()).thenReturn(Collections.singletonList(API_IGNORE));
+        when(properties.getProxyFilterWhiteList()).thenReturn(Collections.singletonList(API_WHITE_LIST));
         when(response.getWriter()).thenReturn(writer);
         when(tenantListRepository.getSuspendedTenants()).thenReturn(Collections.emptySet());
         PrivilegedTenantContext privilegedTenantContext = mock(PrivilegedTenantContext.class);
@@ -149,6 +151,16 @@ public class ProxyFilterUnitTest {
         verify(response, times(2)).getWriter();
         verify(writer).write(String.format(ERROR_PATTERN, ERR_TENANT_NOT_SUPPLIED, TENANT_NOT_SUPPLIED));
         verify(writer).flush();
+    }
+
+    @Test
+    public void testTenantNotSetWithProxyWhiteList() throws Exception {
+        when(request.getServletPath()).thenReturn(API_WHITE_LIST);
+        when(request.getHeader(HEADER_TENANT)).thenReturn(null);
+
+        filter.doFilter(request, response, chain);
+
+        verify(chain).doFilter(request, response);
     }
 
     @Test

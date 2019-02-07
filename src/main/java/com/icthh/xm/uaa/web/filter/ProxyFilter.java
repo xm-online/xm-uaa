@@ -102,6 +102,12 @@ public class ProxyFilter implements Filter {
             + StringUtils.defaultIfBlank(userLogin, "") + ":"
             + StringUtils.defaultIfBlank(tenantKey, ""));
 
+        //check is request without tenant can be skipped by this filter
+        if (isNullTenantKeyAllowed(httpRequest, tenantKey)) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         if (!verify(httpResponse, tenantKey)) {
             return;
         }
@@ -166,10 +172,17 @@ public class ProxyFilter implements Filter {
     }
 
     private boolean isIgnoredRequest(HttpServletRequest request) {
+        return isPatternMatch(request, applicationProperties.getTenantIgnoredPathList());
+    }
+
+    private boolean isWhiteListRequest(HttpServletRequest request) {
+        return isPatternMatch(request, applicationProperties.getProxyFilterWhiteList());
+    }
+
+    private boolean isPatternMatch(HttpServletRequest request, List<String> patterns) {
         String path = request.getServletPath();
-        List<String> ignoredPatterns = applicationProperties.getTenantIgnoredPathList();
-        if (ignoredPatterns != null && path != null) {
-            for (String pattern : ignoredPatterns) {
+        if (patterns != null && path != null) {
+            for (String pattern : patterns) {
                 if (matcher.match(pattern, path)) {
                     return true;
                 }
@@ -198,6 +211,14 @@ public class ProxyFilter implements Filter {
             return false;
         }
         return true;
+    }
+
+    private boolean isNullTenantKeyAllowed(HttpServletRequest httpRequest, String tenantKey) {
+        if (StringUtils.isBlank(tenantKey) && isWhiteListRequest(httpRequest)) {
+            return true;
+        }
+
+        return false;
     }
 
     private void sendResponse(HttpServletResponse httpResponse, String format) throws IOException {
