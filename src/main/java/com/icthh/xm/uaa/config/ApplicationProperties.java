@@ -24,6 +24,7 @@ public class ApplicationProperties {
     private final Lep lep = new Lep();
 
     private List<String> tenantIgnoredPathList;
+    private List<String> proxyFilterWhiteList;
     private String kafkaSystemTopic;
     private String kafkaSystemQueue;
     private boolean kafkaEnabled;
