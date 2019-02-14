@@ -64,20 +64,8 @@ public class TenantProperties {
             this.accessTokenValiditySeconds = accessTokenValiditySeconds;
         }
 
-        // TODO FIXME remove after fix all config in prod
-        @JsonSetter("access-token-validity-seconds")
-        public void setAccessTokenValiditySecondsAlias(Integer accessTokenValiditySeconds) {
-            this.accessTokenValiditySeconds = accessTokenValiditySeconds;
-        }
-
         @JsonSetter("refreshTokenValiditySeconds")
         public void setRefreshTokenValiditySeconds(Integer refreshTokenValiditySeconds) {
-            this.refreshTokenValiditySeconds = refreshTokenValiditySeconds;
-        }
-
-        // TODO FIXME remove after fix all config in prod
-        @JsonSetter("refresh-token-validity-seconds")
-        public void setRefreshTokenValiditySecondsAlias(Integer refreshTokenValiditySeconds) {
             this.refreshTokenValiditySeconds = refreshTokenValiditySeconds;
         }
     }
@@ -88,13 +76,16 @@ public class TenantProperties {
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
-    @ToString(of = {"providerId", "domain"})
+    @ToString(of = {"providerId"})
     public static class Social {
 
         private String providerId;
-        private String consumerKey;
-        private String consumerSecret;
-        private String domain;
+        private String clientId;
+        private String clientSecret;
+        private String authorizeUrl;
+        private String accessTokenUrl;
+        private String scope;
+        private String userInfoUri;
 
     }
 

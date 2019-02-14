@@ -14,11 +14,13 @@ import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
 import org.springframework.social.connect.Connection;
 import org.springframework.social.connect.web.SignInAdapter;
+import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.context.request.ServletWebRequest;
 
 import javax.servlet.http.Cookie;
 
+@Component
 public class CustomSignInAdapter implements SignInAdapter {
 
     private final UserDetailsService userDetailsService;
@@ -60,7 +62,6 @@ public class CustomSignInAdapter implements SignInAdapter {
 
     private static Cookie getSocialAuthenticationCookie(String token) {
         Cookie socialAuthCookie = new Cookie("social-authentication", token);
-        // socialAuthCookie.setSecure(true);
         socialAuthCookie.setPath("/");
         socialAuthCookie.setMaxAge(60);
         return socialAuthCookie;

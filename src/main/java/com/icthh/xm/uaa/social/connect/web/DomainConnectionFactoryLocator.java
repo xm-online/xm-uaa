@@ -1,82 +1,38 @@
 package com.icthh.xm.uaa.social.connect.web;
 
-import com.icthh.xm.uaa.commons.UaaUtils;
-import com.icthh.xm.uaa.commons.XmRequestContextHolder;
-import com.icthh.xm.uaa.domain.SocialConfig;
-import com.icthh.xm.uaa.repository.SocialConfigRepository;
-import com.icthh.xm.uaa.social.twitter.connect.TwitterConnectionFactory;
+import com.icthh.xm.uaa.domain.properties.TenantProperties.Social;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
+import com.icthh.xm.uaa.social.connect.web.configurable.ConfigOAuth2ConnectionFactory;
+import java.util.Set;
+import lombok.RequiredArgsConstructor;
 import org.springframework.social.connect.ConnectionFactory;
 import org.springframework.social.connect.ConnectionFactoryLocator;
-import org.springframework.social.facebook.connect.FacebookConnectionFactory;
-import org.springframework.social.google.connect.GoogleConnectionFactory;
-import org.springframework.social.linkedin.connect.LinkedInConnectionFactory;
+import org.springframework.social.connect.support.OAuth2ConnectionFactory;
+import org.springframework.stereotype.Component;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
-/**
- * Social api registry.
- */
+@Component
+@RequiredArgsConstructor
 public class DomainConnectionFactoryLocator implements ConnectionFactoryLocator {
 
-    private final SocialConfigRepository socialConfigRepository;
-    private final XmRequestContextHolder xmRequestContextHolder;
-
-    private final Map<Class<?>, String> apiTypeIndex = new HashMap<>();
-
-    public DomainConnectionFactoryLocator(SocialConfigRepository socialConfigRepository,
-                                          XmRequestContextHolder xmRequestContextHolder) {
-        this.socialConfigRepository = socialConfigRepository;
-        this.xmRequestContextHolder = xmRequestContextHolder;
-        initializeApis();
-    }
-
-    private void initializeApis() {
-        apiTypeIndex.put(FacebookConnectionFactory.class, "facebook");
-        apiTypeIndex.put(GoogleConnectionFactory.class, "google");
-        apiTypeIndex.put(TwitterConnectionFactory.class, "twitter");
-        apiTypeIndex.put(LinkedInConnectionFactory.class, "linkedin");
-    }
+    private final TenantPropertiesService tenantPropertiesService;
 
     @Override
-    public ConnectionFactory<?> getConnectionFactory(String providerId) {
-        String domain = UaaUtils.getRequestDomain(xmRequestContextHolder);
-        Optional<SocialConfig> config = socialConfigRepository.findOneByProviderIdAndDomain(providerId, domain);
-        if (config.isPresent()) {
-            SocialConfig sc = config.get();
-            switch (sc.getProviderId()) {
-                case "facebook":
-                    return new FacebookConnectionFactory(sc.getConsumerKey(), sc.getConsumerSecret());
-                case "google":
-                    return new GoogleConnectionFactory(sc.getConsumerKey(), sc.getConsumerSecret());
-                case "twitter":
-                    return new TwitterConnectionFactory(sc.getConsumerKey(), sc.getConsumerSecret());
-                case "linkedin":
-                    return new LinkedInConnectionFactory(sc.getConsumerKey(), sc.getConsumerSecret());
-                default:
-                    break;
-            }
-        }
-
-        throw new IllegalArgumentException("No provider config found for " + providerId);
+    public OAuth2ConnectionFactory<?> getConnectionFactory(String providerId) {
+        Social social = tenantPropertiesService.getTenantProps().getSocial()
+                                               .stream()
+                                               .filter(s -> s.getProviderId().equals(providerId))
+                                               .findAny()
+                                               .get();
+        return new ConfigOAuth2ConnectionFactory(social);
     }
 
     @Override
     public <A> ConnectionFactory<A> getConnectionFactory(Class<A> apiType) {
-        String providerId = apiTypeIndex.get(apiType);
-        if (providerId == null) {
-            throw new IllegalArgumentException(
-                "No connection factory for API [" + apiType.getName() + "] is registered");
-        }
-
-        return (ConnectionFactory<A>) getConnectionFactory(providerId);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Set<String> registeredProviderIds() {
-        return Collections.emptySet();
+        throw new UnsupportedOperationException();
     }
 }
