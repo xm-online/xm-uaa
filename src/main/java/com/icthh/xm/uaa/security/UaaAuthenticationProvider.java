@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.security;
 
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
+import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.uaa.security.ldap.LdapAuthenticationProviderBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,6 +19,7 @@ import java.util.Optional;
 import static com.icthh.xm.uaa.config.Constants.AUTH_USERNAME_DOMAIN_SEPARATOR;
 
 @Slf4j
+@IgnoreLogginAspect
 @LepService(group = "security.provider")
 public class UaaAuthenticationProvider implements AuthenticationProvider {
 
@@ -55,7 +57,9 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
     @LogicExtensionPoint(value = "Authenticate")
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        return getProvider(authentication).authenticate(authentication);
+        Authentication result = getProvider(authentication).authenticate(authentication);
+        log.info("authenticated: {}, role: {}, {}",result.isAuthenticated(), result.getAuthorities(), result.getPrincipal());
+        return result;
     }
 
     /**

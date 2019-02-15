@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.security;
 
 import static java.util.stream.Collectors.toList;
 
+import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.domain.User;
@@ -32,6 +33,7 @@ public class DomainUserDetailsService implements UserDetailsService {
 
     @Override
     @Transactional
+    @IgnoreLogginAspect
     public DomainUserDetails loadUserByUsername(final String login) {
         log.debug("Authenticating {}", login);
         TenantKey tenantKey = tenantContextHolder.getContext().getTenantKey()

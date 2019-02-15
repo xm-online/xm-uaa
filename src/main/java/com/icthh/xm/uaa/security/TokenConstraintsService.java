@@ -3,7 +3,7 @@ package com.icthh.xm.uaa.security;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 
-import com.google.common.base.Objects;
+import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.RequiredArgsConstructor;
@@ -12,20 +12,17 @@ import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
-import org.springframework.util.ObjectUtils;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import javax.annotation.PostConstruct;
 
 /**
  * The {@link TokenConstraintsService} class.
  */
 @Service
 @RequiredArgsConstructor
+@IgnoreLogginAspect
 public class TokenConstraintsService {
 
     private int defaultRefreshTokenValiditySeconds = (int) TimeUnit.DAYS.toSeconds(30); // default 30 days.
