@@ -21,6 +21,7 @@ import org.springframework.web.context.request.ServletWebRequest;
 import javax.servlet.http.Cookie;
 
 @Component
+// TODO inline this class
 public class CustomSignInAdapter implements SignInAdapter {
 
     private final UserDetailsService userDetailsService;

@@ -58,6 +58,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserLoginRepository userLoginRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SocialService socialService;
     private final AccountMailService accountMailService;
     private final TenantPropertiesService tenantPropertiesService;
     private final XmAuthenticationContextHolder xmAuthenticationContextHolder;
@@ -210,6 +211,7 @@ public class UserService {
         }
         userRepository.findOneWithLoginsByUserKey(userKey).ifPresent(user -> {
             assertNotSuperAdmin(user.getRoleKey());
+            socialService.deleteUserSocialConnection(user.getUserKey());
             userRepository.delete(user);
         });
     }

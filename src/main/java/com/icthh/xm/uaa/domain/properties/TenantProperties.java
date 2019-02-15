@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.security.ldap.Type;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -86,7 +87,25 @@ public class TenantProperties {
         private String accessTokenUrl;
         private String scope;
         private String userInfoUri;
+        private UserInfoMapping userInfoMapping;
+        private String tokenStrategy;
+    }
 
+    @Data
+    @NoArgsConstructor
+    public static class UserInfoMapping {
+        private String id;
+        private String name;
+        private String firstName;
+        private String lastName;
+        private String email;
+        private String username;
+
+        private String profileUrl;
+        private String imageUrl;
+
+        private String phoneNumber;
+        private String langKey;
     }
 
     @JsonProperty("registrationCaptchaPeriodSeconds")

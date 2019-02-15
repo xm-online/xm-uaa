@@ -1,4 +1,4 @@
-package com.icthh.xm.uaa.social.connect.web.configurable;
+package com.icthh.xm.uaa.social;
 
 import com.icthh.xm.uaa.domain.properties.TenantProperties.Social;
 import org.springframework.social.connect.support.OAuth2ConnectionFactory;

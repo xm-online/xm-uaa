@@ -1,7 +1,6 @@
 package com.icthh.xm.uaa.web.rest;
 
-import com.icthh.xm.uaa.social.connect.web.ConnectSupport;
-import com.icthh.xm.uaa.social.connect.web.DomainConnectionFactoryLocator;
+import com.icthh.xm.uaa.service.SocialService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,9 +8,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.social.connect.Connection;
 import org.springframework.social.connect.ConnectionFactory;
 import org.springframework.social.connect.support.OAuth2ConnectionFactory;
-import org.springframework.social.connect.web.SignInAdapter;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,32 +26,18 @@ public class SocialController {
 
     private static final String POST_SIGN_IN_URL = "/";
 
-    private final DomainConnectionFactoryLocator connectionFactoryLocator;
-
-    private final SignInAdapter signInAdapter;
-
-    private final ConnectSupport connectSupport;
+    private final SocialService socialService;
 
     @PostMapping(value = "/signin/{providerId}")
     @PreAuthorize("hasPermission(null, 'SOCIAL.SIGN_IN')")
-    public RedirectView signIn(@PathVariable String providerId, NativeWebRequest request) {
-        OAuth2ConnectionFactory<?> connectionFactory = connectionFactoryLocator.getConnectionFactory(providerId);
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        return new RedirectView(connectSupport.buildOAuthUrl(connectionFactory, request, parameters), false);
+    public RedirectView signIn(@PathVariable String providerId) {
+        return new RedirectView(socialService.initSocialLogin(providerId), false);
     }
 
     @GetMapping(value = "/signin/{providerId}", params = "code")
     public RedirectView oauth2Callback(@PathVariable String providerId, @RequestParam("code") String code,
                                        NativeWebRequest request) {
-        OAuth2ConnectionFactory<?> connectionFactory = connectionFactoryLocator.getConnectionFactory(providerId);
-        Connection<?> connection = connectSupport.completeConnection(connectionFactory, request);
         return handleSignIn(connection, connectionFactory, request);
     }
 
-    private RedirectView handleSignIn(Connection<?> connection, ConnectionFactory<?> connectionFactory,
-                                      NativeWebRequest request) {
-        log.info("AUTHORIZATED");
-        String originalUrl = signInAdapter.signIn("", connection, request);
-        return originalUrl != null ? new RedirectView(originalUrl, true) : new RedirectView(POST_SIGN_IN_URL, true);
-    }
 }
