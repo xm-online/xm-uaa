@@ -3,7 +3,6 @@ package com.icthh.xm.uaa.security;
 import com.google.common.base.Preconditions;
 import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.uaa.config.ApplicationProperties;
-import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.domain.Client;
 import com.icthh.xm.uaa.service.ClientService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
@@ -55,6 +54,7 @@ public class ClientDetailsServiceImpl implements ClientDetailsService {
         }
 
         if (principal == null) {
+            log.error("Client was not found: {}", clientId);
             throw new ClientRegistrationException("Client was not found: " + clientId);
         }
 

@@ -149,8 +149,7 @@ public class DomainUserDetails extends User {
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this, ToStringStyle.DEFAULT_STYLE)
-            .appendSuper(super.toString())
+        return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
             .append("tenant", this.tenant)
             .append("userKey", this.userKey)
             .append("tfaEnabled", this.tfaEnabled)

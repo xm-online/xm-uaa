@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.config.client.api.RefreshableConfiguration;
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
+import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.config.ApplicationProperties;
@@ -20,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@IgnoreLogginAspect
 public class TenantPropertiesService implements RefreshableConfiguration {
 
     private static final String TENANT_NAME = "tenantName";
@@ -46,16 +48,16 @@ public class TenantPropertiesService implements RefreshableConfiguration {
     }
 
     @SneakyThrows
-    public void updateTenantProps(String timelineYml) {
+    public void updateTenantProps(String tenentPropertiesYml) {
         String tenantKey = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder);
         String cfgTenantKey = tenantKey.toUpperCase();
 
         String configName = applicationProperties.getTenantPropertiesName();
 
         // Simple validation correct structure
-        mapper.readValue(timelineYml, TenantProperties.class);
+        mapper.readValue(tenentPropertiesYml, TenantProperties.class);
 
-        tenantConfigRepository.updateConfig(cfgTenantKey, "/" + configName, timelineYml);
+        tenantConfigRepository.updateConfig(cfgTenantKey, "/" + configName, tenentPropertiesYml);
     }
 
     @Override
@@ -67,14 +69,14 @@ public class TenantPropertiesService implements RefreshableConfiguration {
             String tenant = matcher.extractUriTemplateVariables(specificationPathPattern, updatedKey).get(TENANT_NAME);
             if (StringUtils.isBlank(config)) {
                 tenantProps.remove(tenant);
-                log.info("Specification for tenant {} was removed", tenant);
+                log.info("Specification for tenant {} was removed: {}", tenant, updatedKey);
             } else {
                 TenantProperties spec = mapper.readValue(config, TenantProperties.class);
                 tenantProps.put(tenant, spec);
-                log.info("Specification for tenant {} was updated", tenant);
+                log.info("Specification for tenant {} was updated: {}", tenant, updatedKey);
             }
         } catch (Exception e) {
-            log.error("Error read xm specification from path " + updatedKey, e);
+            log.error("Error read xm specification from path {}", updatedKey, e);
         }
     }
 

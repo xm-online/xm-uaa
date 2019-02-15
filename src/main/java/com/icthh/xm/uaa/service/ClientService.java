@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.service;
 
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
+import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.permission.annotation.FindWithPermission;
 import com.icthh.xm.commons.permission.repository.PermittedRepository;
 import com.icthh.xm.uaa.domain.Client;
@@ -122,6 +123,7 @@ public class ClientService {
         clientRepository.delete(id);
     }
 
+    @IgnoreLogginAspect
     public Client getClient(String clientId) {
         return clientRepository.findOneByClientId(clientId);
     }
