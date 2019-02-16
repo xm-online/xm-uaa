@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.repository;
 
 import com.icthh.xm.uaa.domain.SocialUserConnection;
 
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Set;
@@ -11,6 +12,7 @@ import java.util.Set;
  */
 public interface SocialUserConnectionRepository extends JpaRepository<SocialUserConnection, Long> {
 
-    void findByProviderUserIdAndAndProviderId(String providerUserId, String providerId);
+    Optional<SocialUserConnection> findByProviderUserIdAndProviderId(String providerUserId, String providerId);
 
+    void deleteByUserKey(String userKey);
 }

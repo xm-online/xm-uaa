@@ -8,6 +8,8 @@ import com.icthh.xm.uaa.domain.properties.TenantProperties.Social;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.UserInfoMapping;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.social.ApiBinding;
@@ -37,54 +39,53 @@ public class ConfigOAuth2Api extends AbstractOAuth2ApiBinding implements ApiBind
     }
 
     public ConnectionValuesDto fetchConnectionValues() {
+        return fetchUserInfo((userInfo, mapping) ->
+                                 new ConnectionValuesDto(
+                                     map(mapping::getId, userInfo),
+                                     map(mapping::getName, userInfo),
+                                     map(mapping::getProfileUrl, userInfo),
+                                     map(mapping::getImageUrl, userInfo)
+                                 )
+                            );
+    }
+
+    private <T> T fetchUserInfo(BiFunction<Map<String, Object>, UserInfoMapping, T> mapper) {
         Map<String, Object> userInfo = getRestTemplate().getForObject(social.getUserInfoUri(), Map.class);
         log.info("User info {}", userInfo);
         UserInfoMapping socialMapping = social.getUserInfoMapping();
-        UserInfoMapping mapping = socialMapping != null ? socialMapping : new UserInfoMapping();
-
-        return new ConnectionValuesDto(
-            map(mapping::getId, userInfo),
-            map(mapping::getName, userInfo),
-            map(mapping::getProfileUrl, userInfo),
-            map(mapping::getImageUrl, userInfo)
-        );
+        socialMapping = socialMapping != null ? socialMapping : new UserInfoMapping();
+        return mapper.apply(userInfo, socialMapping);
     }
 
     @SuppressWarnings("unchecked")
     public UserProfile fetchUserProfile() {
-        Map<String, Object> userInfo = getRestTemplate().getForObject(social.getUserInfoUri(), Map.class);
-        log.info("User info {}", userInfo);
-        UserInfoMapping socialMapping = social.getUserInfoMapping();
-        UserInfoMapping mapping = socialMapping != null ? socialMapping : new UserInfoMapping();
-
-        String email = map(() -> defaultIfBlank(mapping.getEmail(), "email"), userInfo);
-        return new UserProfile(
-            map(mapping::getId, userInfo),
-            map(mapping::getName, userInfo),
-            map(mapping::getFirstName, userInfo),
-            map(mapping::getLastName, userInfo),
-            email, map(mapping::getUsername, userInfo)
-        );
+        return fetchUserInfo((userInfo, mapping) ->
+                                 new UserProfile(
+                                     map(mapping::getId, userInfo),
+                                     map(mapping::getName, userInfo),
+                                     map(mapping::getFirstName, userInfo),
+                                     map(mapping::getLastName, userInfo),
+                                     map(() -> defaultIfBlank(mapping.getEmail(), "email"), userInfo),
+                                     map(mapping::getUsername, userInfo)
+                                 )
+                            );
     }
 
     public SocialUserDto fetchSocialUser() {
-        Map<String, Object> userInfo = getRestTemplate().getForObject(social.getUserInfoUri(), Map.class);
-        log.info("User info {}", userInfo);
-        UserInfoMapping socialMapping = social.getUserInfoMapping();
-        UserInfoMapping mapping = socialMapping != null ? socialMapping : new UserInfoMapping();
-
-        String email = map(() -> defaultIfBlank(mapping.getEmail(), "email"), userInfo);
-        return new SocialUserDto(
-            map(mapping::getId, userInfo),
-            map(mapping::getName, userInfo),
-            map(mapping::getFirstName, userInfo),
-            map(mapping::getLastName, userInfo),
-            email, map(mapping::getUsername, userInfo),
-            map(mapping::getProfileUrl, userInfo),
-            map(mapping::getImageUrl, userInfo),
-            map(mapping::getPhoneNumber, userInfo),
-            map(mapping::getLangKey, userInfo)
-        );
+        return fetchUserInfo((userInfo, mapping) ->
+                                 new SocialUserDto(
+                                     map(mapping::getId, userInfo),
+                                     map(mapping::getName, userInfo),
+                                     map(mapping::getFirstName, userInfo),
+                                     map(mapping::getLastName, userInfo),
+                                     map(() -> defaultIfBlank(mapping.getEmail(), "email"), userInfo),
+                                     map(mapping::getUsername, userInfo),
+                                     map(mapping::getProfileUrl, userInfo),
+                                     map(mapping::getImageUrl, userInfo),
+                                     map(mapping::getPhoneNumber, userInfo),
+                                     map(mapping::getLangKey, userInfo)
+                                 )
+                            );
     }
 
     private String map(Supplier<String> mapping, Map<String, Object> userInfo) {

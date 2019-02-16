@@ -1,10 +1,13 @@
 package com.icthh.xm.uaa.service;
 
+import com.google.common.collect.Sets;
+import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.commons.UaaUtils;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
+import com.icthh.xm.uaa.domain.SocialUserConnection;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
@@ -23,27 +26,44 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.ProviderNotFoundException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.security.oauth2.provider.OAuth2Request;
+import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
 import org.springframework.social.connect.Connection;
 import org.springframework.social.connect.UserProfile;
 import org.springframework.social.oauth2.AccessGrant;
 import org.springframework.social.oauth2.OAuth2Operations;
 import org.springframework.social.oauth2.OAuth2Parameters;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
 @AllArgsConstructor
+@Transactional
 public class SocialService {
 
-    private final SocialUserConnectionRepository socialUserConnectionRepository;
+    private final SocialUserConnectionRepository socialRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final MailService mailService;
-    private final UserLoginRepository userLoginRepository;
+    private final UserDetailsService userDetailsService;
+
     private final TenantContextHolder tenantContextHolder;
     private final XmRequestContextHolder requestContextHolder;
     private final TenantPropertiesService tenantPropertiesService;
+
+    private final AuthorizationServerTokenServices tokenServices;
+    private final UserLoginRepository userLoginRepository;
+
+
 
     public String initSocialLogin(String providerId) {
         ConfigOAuth2ConnectionFactory connectionFactory = createConnectionFactory(providerId);
@@ -77,21 +97,54 @@ public class SocialService {
         return new ProviderNotFoundException(providerId + " not found");
     }
 
-    public void loginUser(String providerId, String code) {
+    public String loginUser(String providerId, String code) {
         ConfigOAuth2ConnectionFactory connectionFactory = createConnectionFactory(providerId);
         AccessGrant accessGrant = connectionFactory.getOAuthOperations()
                                                    .exchangeForAccess(code, getRedirectUri(), null);
         SocialUserDto socialUserDto = connectionFactory.createConnection(accessGrant).getApi().fetchSocialUser();
-        socialUserConnectionRepository.findByProviderUserIdAndAndProviderId(socialUserDto.getId(), providerId);
+        String id = socialUserDto.getId();
+        Optional<SocialUserConnection> connection = socialRepository.findByProviderUserIdAndProviderId(id, providerId);
+        if (connection.isPresent()) {
 
+        } else {
+
+        }
+
+
+
+        return signIn("ssenko");
     }
 
-    /**
-     * Create new user.
-     *
-     * @param connection connection
-     * @param langKey    lang key
-     */
+    public String signIn(String userKey) {
+        User user = getUser(userKey);
+        UserDetails userDetailts = userDetailsService.loadUserByUsername(user.getEmail());
+        Authentication userAuth = new UsernamePasswordAuthenticationToken(
+            userDetailts,
+            "N/A",
+            userDetailts.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(userAuth);
+        return createToken(userAuth);
+    }
+
+    private User getUser(String userKey) {
+        return userRepository.findOneByUserKey(userKey).orElseThrow(() -> new EntityNotFoundException("User with key " + userKey + " not found"));
+    }
+
+    private String createToken(Authentication userAuth) {
+        OAuth2Request storedOAuth2Request = new OAuth2Request(null, "web_app", null, true, Sets.newHashSet("openid"),
+                                                              null, null, null, null);
+        OAuth2Authentication oauth2 = new OAuth2Authentication(storedOAuth2Request, userAuth);
+        OAuth2AccessToken oauthToken = tokenServices.createAccessToken(oauth2);
+        return oauthToken.getValue();
+    }
+
+
+
+
+
+
+
+
     public void createSocialUser(Connection<?> connection, String langKey) {
         if (connection == null) {
             log.error("Cannot create social user because connection is null");
@@ -140,10 +193,6 @@ public class SocialService {
         newUser.getLogins().add(userLogin);
 
         return userRepository.save(newUser);
-    }
-
-    void deleteUserSocialConnection(String userKey) {
-        //TODO
     }
 
 }
