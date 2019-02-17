@@ -1,25 +1,31 @@
 package com.icthh.xm.uaa.social;
 
 import com.icthh.xm.uaa.domain.properties.TenantProperties.Social;
-import org.springframework.social.oauth2.AbstractOAuth2ServiceProvider;
+import org.springframework.social.oauth2.OAuth2Operations;
+import org.springframework.social.oauth2.OAuth2ServiceProvider;
 import org.springframework.social.oauth2.OAuth2Template;
-import org.springframework.web.client.RestTemplate;
 
-public class ConfigServiceProvider extends AbstractOAuth2ServiceProvider<ConfigOAuth2Api> {
+public class ConfigServiceProvider implements OAuth2ServiceProvider<ConfigOAuth2Api> {
 
     private final Social social;
     private final SocialUserInfoMapper socialUserInfoMapper;
+    private final ConfigOAuth2Template oAuth2Template;
 
     public ConfigServiceProvider(Social social, SocialUserInfoMapper socialUserInfoMapper) {
-        super(createOAuth2Template(social));
         this.social = social;
         this.socialUserInfoMapper = socialUserInfoMapper;
+        this.oAuth2Template = createOAuth2Template(social);
     }
 
-    private static OAuth2Template createOAuth2Template(Social social) {
-        OAuth2Template oAuth2Template = new OAuth2Template(social.getClientId(), social.getClientSecret(),
+    protected ConfigOAuth2Template createOAuth2Template(Social social) {
+        ConfigOAuth2Template oAuth2Template = new ConfigOAuth2Template(social.getClientId(), social.getClientSecret(),
                                                            social.getAuthorizeUrl(), social.getAccessTokenUrl());
         oAuth2Template.setUseParametersForClientAuthentication(true);
+        return oAuth2Template;
+    }
+
+    @Override
+    public OAuth2Operations getOAuthOperations() {
         return oAuth2Template;
     }
 

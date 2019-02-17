@@ -7,8 +7,8 @@ public class ConfigOAuth2ConnectionFactory extends OAuth2ConnectionFactory<Confi
 
     private final Social social;
 
-    public ConfigOAuth2ConnectionFactory(Social social, SocialUserInfoMapper socialUserInfoMapper) {
-        super(social.getProviderId(), new ConfigServiceProvider(social, socialUserInfoMapper), new ConfigAdapter());
+    public ConfigOAuth2ConnectionFactory(Social social, ConfigServiceProvider configServiceProvider) {
+        super(social.getProviderId(), configServiceProvider, new ConfigAdapter());
         this.social = social;
     }
 

@@ -18,11 +18,13 @@ import com.icthh.xm.uaa.domain.SocialUserConnection;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
+import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.Social;
 import com.icthh.xm.uaa.repository.SocialUserConnectionRepository;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.social.ConfigOAuth2ConnectionFactory;
+import com.icthh.xm.uaa.social.ConfigServiceProvider;
 import com.icthh.xm.uaa.social.SocialLoginAnswer;
 import com.icthh.xm.uaa.social.SocialUserInfo;
 import com.icthh.xm.uaa.social.SocialUserInfoMapper;
@@ -69,7 +71,7 @@ public class SocialService {
 
     private final AuthorizationServerTokenServices tokenServices;
     private final UserLoginRepository userLoginRepository;
-    private final SocialUserInfoMapper socialUserInfoMapper;
+    protected final SocialUserInfoMapper socialUserInfoMapper;
     private final XmAuthenticationContextHolder xmAuthenticationContextHolder;
     private final XmRequestContextHolder xmRequestContextHolder;
 
@@ -109,7 +111,11 @@ public class SocialService {
 
     private ConfigOAuth2ConnectionFactory createConnectionFactory(String providerId) {
         Social social = findSocialByProviderId(providerId);
-        return new ConfigOAuth2ConnectionFactory(social, socialUserInfoMapper);
+        return new ConfigOAuth2ConnectionFactory(social, createConfigServiceProvider(social));
+    }
+
+    protected ConfigServiceProvider createConfigServiceProvider(Social social) {
+        return new ConfigServiceProvider(social, socialUserInfoMapper);
     }
 
     private Social findSocialByProviderId(String providerId) {
