@@ -5,14 +5,24 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
     <changeSet id="20190215122900" author="ssenko">
-        <renameColumn tableName="jhi_social_user_connection" oldColumnName="user_id" newColumnName="user_key" />
-        <dropUniqueConstraint tableName="jhi_social_user_connection" uniqueColumns="user_id, provider_id, rank" />
-        <dropColumn tableName="jhi_social_user_connection" columnName="rank" />
-        <dropColumn tableName="jhi_social_user_connection" columnName="display_name" />
-        <dropColumn tableName="jhi_social_user_connection" columnName="image_url" />
-        <dropColumn tableName="jhi_social_user_connection" columnName="access_token" />
-        <dropColumn tableName="jhi_social_user_connection" columnName="secret" />
-        <dropColumn tableName="jhi_social_user_connection" columnName="refresh_token" />
-        <dropColumn tableName="jhi_social_user_connection" columnName="expire_time" />
+        <dropTable tableName="jhi_social_user_connection" />
+
+        <createTable tableName="social_connection">
+            <column name="id" type="bigint" autoIncrement="${autoIncrement}">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_key" type="varchar(255)" />
+            <column name="provider_id" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="provider_user_id" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="profile_url" type="varchar(255)"/>
+            <column name="activation_code" type="varchar(255)"/>
+        </createTable>
+        <addUniqueConstraint tableName="social_connection" columnNames="user_key, provider_id, provider_user_id"/>
+
     </changeSet>
+
 </databaseChangeLog>

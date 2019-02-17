@@ -47,4 +47,12 @@ public class AccountMailService {
             MdcUtils.getRid());
     }
 
+    @LogicExtensionPoint("SendSocialRegistrationValidationEmail")
+    public void sendSocialRegistrationValidationEmail(User user ,String providerId) {
+        mailService.sendSocialRegistrationValidationEmail(user, providerId,
+                                          UaaUtils.getApplicationUrl(xmRequestContextHolder),
+                                          TenantContextUtils.getRequiredTenantKey(tenantContextHolder),
+                                          MdcUtils.getRid());
+    }
+
 }

@@ -1,9 +1,11 @@
 package com.icthh.xm.uaa.social;
 
+import java.util.HashMap;
+import java.util.Map;
 import lombok.Data;
 
 @Data
-public class SocialUserDto {
+public class SocialUserInfo {
     private final String id;
     private final String name;
     private final String firstName;
@@ -14,4 +16,7 @@ public class SocialUserDto {
     private final String imageUrl;
     private final String phoneNumber;
     private final String langKey;
+    private final String emailVerified;
+
+    private Map<String, Object> data = new HashMap<>();
 }

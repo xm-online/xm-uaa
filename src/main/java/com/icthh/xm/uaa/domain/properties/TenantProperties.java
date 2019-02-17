@@ -1,13 +1,17 @@
 package com.icthh.xm.uaa.domain.properties;
 
+import static java.util.Optional.ofNullable;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import com.google.common.base.Objects;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.security.ldap.Type;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -74,9 +78,7 @@ public class TenantProperties {
     @JsonProperty("social")
     private List<Social> social;
 
-    @Getter
-    @NoArgsConstructor
-    @AllArgsConstructor
+    @Data
     @ToString(of = {"providerId"})
     public static class Social {
 
@@ -89,6 +91,12 @@ public class TenantProperties {
         private String userInfoUri;
         private UserInfoMapping userInfoMapping;
         private String tokenStrategy;
+        private Boolean createAccountAutomatically;
+        private String redirectUrl;
+
+        public Boolean getCreateAccountAutomatically() {
+            return ofNullable(createAccountAutomatically).orElse(true);
+        }
     }
 
     @Data
@@ -106,6 +114,10 @@ public class TenantProperties {
 
         private String phoneNumber;
         private String langKey;
+
+        // It's field detect is email verified in provider.
+        // If field null or empty verification wiil be disabled.
+        private String emailVerifiedCheckField;
     }
 
     @JsonProperty("registrationCaptchaPeriodSeconds")

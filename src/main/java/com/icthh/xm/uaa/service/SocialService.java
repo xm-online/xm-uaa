@@ -1,10 +1,17 @@
 package com.icthh.xm.uaa.service;
 
-import com.google.common.collect.Sets;
+import static com.google.common.collect.ImmutableSet.of;
+import static com.icthh.xm.uaa.social.SocialLoginAnswer.AnswerType.NEED_ACCEPT_CONNECTION;
+import static com.icthh.xm.uaa.social.SocialLoginAnswer.AnswerType.REGISTERED;
+import static com.icthh.xm.uaa.social.SocialLoginAnswer.AnswerType.SING_IN;
+import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
-import com.icthh.xm.commons.logging.util.MdcUtils;
-import com.icthh.xm.commons.tenant.TenantContextHolder;
-import com.icthh.xm.commons.tenant.TenantContextUtils;
+import com.icthh.xm.commons.lep.LogicExtensionPoint;
+import com.icthh.xm.commons.lep.spring.LepService;
+import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.uaa.commons.UaaUtils;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.domain.SocialUserConnection;
@@ -15,16 +22,20 @@ import com.icthh.xm.uaa.domain.properties.TenantProperties.Social;
 import com.icthh.xm.uaa.repository.SocialUserConnectionRepository;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
-import com.icthh.xm.uaa.service.mail.MailService;
 import com.icthh.xm.uaa.social.ConfigOAuth2ConnectionFactory;
-import com.icthh.xm.uaa.social.SocialUserDto;
+import com.icthh.xm.uaa.social.SocialLoginAnswer;
+import com.icthh.xm.uaa.social.SocialUserInfo;
+import com.icthh.xm.uaa.social.SocialUserInfoMapper;
+import com.icthh.xm.uaa.social.exceptions.FoundMoreThanOneUserBySocialUserInfo;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
-import lombok.AllArgsConstructor;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.ProviderNotFoundException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -36,163 +47,215 @@ import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
-import org.springframework.social.connect.Connection;
-import org.springframework.social.connect.UserProfile;
 import org.springframework.social.oauth2.AccessGrant;
 import org.springframework.social.oauth2.OAuth2Operations;
 import org.springframework.social.oauth2.OAuth2Parameters;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
 @Slf4j
-@AllArgsConstructor
+@Service
 @Transactional
+@LepService(group = "service.social")
 public class SocialService {
 
     private final SocialUserConnectionRepository socialRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
-    private final MailService mailService;
+    private final AccountMailService accountMailService;
     private final UserDetailsService userDetailsService;
 
-    private final TenantContextHolder tenantContextHolder;
-    private final XmRequestContextHolder requestContextHolder;
     private final TenantPropertiesService tenantPropertiesService;
 
     private final AuthorizationServerTokenServices tokenServices;
     private final UserLoginRepository userLoginRepository;
+    private final SocialUserInfoMapper socialUserInfoMapper;
+    private final XmAuthenticationContextHolder xmAuthenticationContextHolder;
+    private final XmRequestContextHolder xmRequestContextHolder;
 
+    private SocialService self;
 
+    public SocialService(SocialUserConnectionRepository socialRepository, PasswordEncoder passwordEncoder,
+                         UserRepository userRepository, AccountMailService accountMailService,
+                         UserDetailsService userDetailsService, TenantPropertiesService tenantPropertiesService,
+                         AuthorizationServerTokenServices tokenServices, UserLoginRepository userLoginRepository,
+                         SocialUserInfoMapper socialUserInfoMapper,
+                         XmAuthenticationContextHolder xmAuthenticationContextHolder,
+                         XmRequestContextHolder xmRequestContextHolder,
+                         @Lazy SocialService self) {
+        this.socialRepository = socialRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.userRepository = userRepository;
+        this.accountMailService = accountMailService;
+        this.userDetailsService = userDetailsService;
+        this.tenantPropertiesService = tenantPropertiesService;
+        this.tokenServices = tokenServices;
+        this.userLoginRepository = userLoginRepository;
+        this.socialUserInfoMapper = socialUserInfoMapper;
+        this.xmAuthenticationContextHolder = xmAuthenticationContextHolder;
+        this.xmRequestContextHolder = xmRequestContextHolder;
+        this.self = self;
+    }
 
+    @LogicExtensionPoint("InitSocialLogin")
     public String initSocialLogin(String providerId) {
         ConfigOAuth2ConnectionFactory connectionFactory = createConnectionFactory(providerId);
         OAuth2Operations oauthOperations = connectionFactory.getOAuthOperations();
-        String scope = connectionFactory.getScope();
         OAuth2Parameters parameters = new OAuth2Parameters();
-        parameters.setRedirectUri(getRedirectUri());
-        parameters.setScope(scope);
-        String state = connectionFactory.generateState();
-        parameters.add("state", state);
+        parameters.setRedirectUri(redirectUri(providerId));
+        parameters.setScope(connectionFactory.getScope());
         return oauthOperations.buildAuthenticateUrl(parameters);
     }
 
     private ConfigOAuth2ConnectionFactory createConnectionFactory(String providerId) {
+        Social social = findSocialByProviderId(providerId);
+        return new ConfigOAuth2ConnectionFactory(social, socialUserInfoMapper);
+    }
+
+    private Social findSocialByProviderId(String providerId) {
         List<Social> socials = tenantPropertiesService.getTenantProps().getSocial();
         if (socials == null) {
             throw providerNotFound(providerId);
         }
-        Social social = socials.stream()
-                               .filter(s -> s.getProviderId().equals(providerId))
-                               .findAny()
-                               .orElseThrow(() -> providerNotFound(providerId));
-        return new ConfigOAuth2ConnectionFactory(social);
+        return socials.stream().filter(s -> s.getProviderId().equals(providerId)).findAny()
+            .orElseThrow(() -> providerNotFound(providerId));
     }
 
-    private String getRedirectUri() {
-        return "http://localhost:8080/google/login";
+    private String redirectUri(String providerId) {
+        Social social = findSocialByProviderId(providerId);
+        return Optional.ofNullable(social.getRedirectUrl())
+            .orElse(UaaUtils.getApplicationUrl(xmRequestContextHolder) + "/uaa/social/signin/" + providerId);
     }
 
     private ProviderNotFoundException providerNotFound(String providerId) {
         return new ProviderNotFoundException(providerId + " not found");
     }
 
-    public String loginUser(String providerId, String code) {
+    @LogicExtensionPoint("AcceptSocialLogin")
+    public SocialLoginAnswer acceptSocialLoginUser(String providerId, String code) {
+        Social social = findSocialByProviderId(providerId);
         ConfigOAuth2ConnectionFactory connectionFactory = createConnectionFactory(providerId);
-        AccessGrant accessGrant = connectionFactory.getOAuthOperations()
-                                                   .exchangeForAccess(code, getRedirectUri(), null);
-        SocialUserDto socialUserDto = connectionFactory.createConnection(accessGrant).getApi().fetchSocialUser();
-        String id = socialUserDto.getId();
+        OAuth2Operations oAuthOperations = connectionFactory.getOAuthOperations();
+        AccessGrant accessGrant = oAuthOperations.exchangeForAccess(code, redirectUri(providerId), null);
+        SocialUserInfo socialUserInfo = connectionFactory.createConnection(accessGrant).getApi().fetchSocialUser();
+
+        String id = socialUserInfo.getId();
         Optional<SocialUserConnection> connection = socialRepository.findByProviderUserIdAndProviderId(id, providerId);
-        if (connection.isPresent()) {
-
-        } else {
-
+        if (connection.isPresent() && isNotBlank(connection.get().getUserKey())) {
+            log.info("Found user social connection {}", connection.get());
+            return SocialLoginAnswer.builder().answerType(SING_IN)
+                .oAuth2AccessToken(signIn(connection.get().getUserKey())).build();
         }
 
+        log.info("User social connection not found by providerUserid {} and providerId", id, providerId);
 
-
-        return signIn("ssenko");
+        List<User> existingUser = self.findUsersByUserInfo(socialUserInfo);
+        if (existingUser.isEmpty()) {
+            if (social.getCreateAccountAutomatically()) {
+                User user = self.createSocialUser(socialUserInfo, providerId);
+                createSocialConnection(socialUserInfo, user.getUserKey(), providerId);
+                return SocialLoginAnswer.builder().answerType(REGISTERED).oAuth2AccessToken(signIn(user.getUserKey()))
+                    .build();
+            } else {
+                throw new NotImplementedException("Will be implemented in future");
+            }
+        } else if (existingUser.size() == 1) {
+            SocialUserConnection userConnection = createSocialConnection(socialUserInfo, null, providerId);
+            return SocialLoginAnswer.builder().answerType(NEED_ACCEPT_CONNECTION)
+                .activationCode(userConnection.getActivationCode()).build();
+        } else {
+            throw new FoundMoreThanOneUserBySocialUserInfo(existingUser);
+        }
     }
 
-    public String signIn(String userKey) {
+    @LogicExtensionPoint("AcceptConnection")
+    public void acceptConnection(String activationCode) {
+        Optional<SocialUserConnection> connection = socialRepository.findByActivationCode(activationCode);
+        SocialUserConnection userConnection =
+            connection.orElseThrow(() -> new EntityNotFoundException("User connection not found"));
+        userConnection.setUserKey(xmAuthenticationContextHolder.getContext().getRequiredUserKey());
+        userConnection.setActivationCode(null);
+        socialRepository.save(userConnection);
+    }
+
+    private SocialUserConnection createSocialConnection(SocialUserInfo socialUserInfo, String userKey,
+                                                        String providerId) {
+        return socialRepository.save(
+            new SocialUserConnection(null, userKey, providerId, socialUserInfo.getId(), socialUserInfo.getProfileUrl(),
+                                     randomUUID().toString()));
+    }
+
+    @LogicExtensionPoint("SignIn")
+    public OAuth2AccessToken signIn(String userKey) {
         User user = getUser(userKey);
         UserDetails userDetailts = userDetailsService.loadUserByUsername(user.getEmail());
-        Authentication userAuth = new UsernamePasswordAuthenticationToken(
-            userDetailts,
-            "N/A",
-            userDetailts.getAuthorities());
+        Authentication userAuth =
+            new UsernamePasswordAuthenticationToken(userDetailts, "N/A", userDetailts.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(userAuth);
-        return createToken(userAuth);
+        OAuth2Request storedOAuth2Request =
+            new OAuth2Request(null, "webapp", null, true, of("openid"), null, null, null, null);
+        OAuth2Authentication oauth2 = new OAuth2Authentication(storedOAuth2Request, userAuth);
+        return tokenServices.createAccessToken(oauth2);
+    }
+
+    @LogicExtensionPoint("FindUsersBySocialUserInfo")
+    public List<User> findUsersByUserInfo(SocialUserInfo socialUserInfo) {
+        return Stream.of(socialUserInfo.getEmail(), socialUserInfo.getUsername(), socialUserInfo.getPhoneNumber())
+            .filter(Objects::nonNull).map(String::valueOf).filter(StringUtils::isNotBlank)
+            .map(userLoginRepository::findOneByLoginIgnoreCase).filter(Optional::isPresent).map(Optional::get)
+            .map(UserLogin::getUser).collect(toList());
+    }
+
+    @LogicExtensionPoint("CreateSocialUser")
+    public User createSocialUser(SocialUserInfo userInfo, String providerId) {
+        String encryptedPassword = passwordEncoder.encode(RandomStringUtils.random(10));
+        User newUser = new User();
+        newUser.setPassword(encryptedPassword);
+        newUser.setFirstName(userInfo.getFirstName());
+        newUser.setLastName(userInfo.getLastName());
+        newUser.setUserKey(randomUUID().toString());
+        newUser.setActivated(true);
+        newUser.setRoleKey(tenantPropertiesService.getTenantProps().getSecurity().getDefaultUserRole());
+        newUser.setLangKey(userInfo.getLangKey());
+        newUser.setImageUrl(userInfo.getImageUrl());
+
+        if (isNotBlank(userInfo.getEmail())) {
+            UserLogin userLogin = new UserLogin();
+            userLogin.setUser(newUser);
+            userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
+            userLogin.setLogin(userInfo.getEmail());
+            newUser.getLogins().add(userLogin);
+        }
+
+        if (isNotBlank(userInfo.getPhoneNumber())) {
+            UserLogin userLogin = new UserLogin();
+            userLogin.setUser(newUser);
+            userLogin.setTypeKey(UserLoginType.MSISDN.getValue());
+            userLogin.setLogin(userInfo.getPhoneNumber());
+            newUser.getLogins().add(userLogin);
+        }
+
+        if (isNotBlank(userInfo.getUsername())) {
+            UserLogin userLogin = new UserLogin();
+            userLogin.setUser(newUser);
+            userLogin.setTypeKey(UserLoginType.NICKNAME.getValue());
+            userLogin.setLogin(userInfo.getUsername());
+            newUser.getLogins().add(userLogin);
+        }
+
+        log.info("Create user {}", newUser);
+
+        User user = userRepository.save(newUser);
+        accountMailService.sendSocialRegistrationValidationEmail(user, providerId);
+        return user;
     }
 
     private User getUser(String userKey) {
-        return userRepository.findOneByUserKey(userKey).orElseThrow(() -> new EntityNotFoundException("User with key " + userKey + " not found"));
+        return userRepository.findOneByUserKey(userKey)
+            .orElseThrow(() -> new EntityNotFoundException("User with key " + userKey + " not found"));
     }
 
-    private String createToken(Authentication userAuth) {
-        OAuth2Request storedOAuth2Request = new OAuth2Request(null, "web_app", null, true, Sets.newHashSet("openid"),
-                                                              null, null, null, null);
-        OAuth2Authentication oauth2 = new OAuth2Authentication(storedOAuth2Request, userAuth);
-        OAuth2AccessToken oauthToken = tokenServices.createAccessToken(oauth2);
-        return oauthToken.getValue();
+    public void setSelf(SocialService self) {
+        this.self = self;
     }
-
-
-
-
-
-
-
-
-    public void createSocialUser(Connection<?> connection, String langKey) {
-        if (connection == null) {
-            log.error("Cannot create social user because connection is null");
-            throw new IllegalArgumentException("Connection cannot be null");
-        }
-
-        UserProfile userProfile = connection.fetchUserProfile();
-        String providerId = connection.getKey().getProviderId();
-        String imageUrl = connection.getImageUrl();
-        User user = createUserIfNotExist(userProfile, langKey, imageUrl);
-
-        mailService.sendSocialRegistrationValidationEmail(user, userProfile.getEmail(), providerId,
-                                                          UaaUtils.getApplicationUrl(requestContextHolder),
-                                                          TenantContextUtils.getRequiredTenantKey(tenantContextHolder),
-                                                          MdcUtils.getRid());
-    }
-
-    private User createUserIfNotExist(UserProfile userProfile, String langKey, String imageUrl) {
-        String email = userProfile.getEmail();
-        if (StringUtils.isBlank(email)) {
-            log.error("Cannot create social user because email is null");
-            throw new IllegalArgumentException("Email cannot be null");
-        } else {
-            Optional<UserLogin> user = userLoginRepository.findOneByLoginIgnoreCase(email);
-            if (user.isPresent()) {
-                log.info("User already exist associate the connection to this account");
-                return user.get().getUser();
-            }
-        }
-
-        String encryptedPassword = passwordEncoder.encode(RandomStringUtils.random(10));
-        User newUser = new User();
-        newUser.setUserKey(UUID.randomUUID().toString());
-        newUser.setPassword(encryptedPassword);
-        newUser.setFirstName(userProfile.getFirstName());
-        newUser.setLastName(userProfile.getLastName());
-        newUser.setActivated(true);
-        newUser.setRoleKey(tenantPropertiesService.getTenantProps().getSecurity().getDefaultUserRole());
-        newUser.setLangKey(langKey);
-        newUser.setImageUrl(imageUrl);
-
-        UserLogin userLogin = new UserLogin();
-        userLogin.setUser(newUser);
-        userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
-        userLogin.setLogin(email);
-        newUser.getLogins().add(userLogin);
-
-        return userRepository.save(newUser);
-    }
-
 }

@@ -1,7 +1,7 @@
 logins:
-    - key: LOGIN.NICKNAME
+    - key: SING_IN.NICKNAME
       name: { en: "Nickname", ru: "Никнейм" }
-    - key: LOGIN.MSISDN
+    - key: SING_IN.MSISDN
       name: { en: "Phone number", ru: "Номер телефона" }
-    - key: LOGIN.EMAIL
+    - key: SING_IN.EMAIL
       name: { en: "Email", ru: "Email" }
