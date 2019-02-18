@@ -7,9 +7,9 @@ import java.util.Optional;
 
 @SuppressWarnings("unused")
 public enum UserLoginType {
-    EMAIL("SING_IN.EMAIL"),
-    MSISDN("SING_IN.MSISDN"),
-    NICKNAME("SING_IN.NICKNAME");
+    EMAIL("LOGIN.EMAIL"),
+    MSISDN("LOGIN.MSISDN"),
+    NICKNAME("LOGIN.NICKNAME");
 
     private final String value;
 
