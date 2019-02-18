@@ -24,6 +24,9 @@
     <include file="classpath:config/liquibase/changelog/2018121504121800_reduce_column_length_for_oracle_support.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20181213101500_add_web_client.xml" relativeToChangelogFile="false"/>
 
+    <include file="classpath:config/liquibase/changelog/20190215122900_drop_social_connection_fields.xml" relativeToChangelogFile="false"/>
+
+
     <!-- jhipster-needle-liquibase-add-changelog - JHipster will add liquibase changelogs here -->
     <!-- jhipster-needle-liquibase-add-constraints-changelog - JHipster will add liquibase constraints changelogs here -->
 </databaseChangeLog>

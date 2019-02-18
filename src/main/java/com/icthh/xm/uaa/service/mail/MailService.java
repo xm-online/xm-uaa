@@ -201,13 +201,12 @@ public class MailService {
      */
     @Async
     public void sendSocialRegistrationValidationEmail(User user,
-                                                      String email,
                                                       String provider,
                                                       String applicationUrl,
                                                       TenantKey tenantKey,
                                                       String rid) {
         execForCustomRid(rid, () -> {
-            log.info("Sending social registration validation email to {}", email);
+            log.info("Sending social registration validation email to {}", user.getEmail());
 
             Map<String, Object> objectModel = new HashMap<>();
             objectModel.put(USER, user);
@@ -219,7 +218,7 @@ public class MailService {
                 user,
                 "socialRegistrationValidationEmail",
                 "email.social.registration.title",
-                email,
+                user.getEmail(),
                 objectModel
             );
 

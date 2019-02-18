@@ -1,427 +1,383 @@
 package com.icthh.xm.uaa.service;
 
-import static com.icthh.xm.commons.tenant.TenantContextUtils.buildTenant;
-import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyObject;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.doNothing;
+import static com.google.common.collect.ImmutableBiMap.of;
+import static com.icthh.xm.uaa.social.SocialLoginAnswer.AnswerType.REGISTERED;
+import static com.icthh.xm.uaa.social.SocialLoginAnswer.AnswerType.SING_IN;
+import static com.icthh.xm.uaa.utils.DeepReflectionEquals.deepRefEq;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyMap;
+import static java.util.Optional.empty;
+import static java.util.UUID.randomUUID;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.refEq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.client.ExpectedCount.once;
+import static org.springframework.test.web.client.ExpectedCount.times;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
+import com.icthh.xm.commons.tenant.Tenant;
+import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
-import com.icthh.xm.uaa.UaaApp;
+import com.icthh.xm.commons.tenant.TenantKey;
+import com.icthh.xm.uaa.commons.XmRequestContext;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
-import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
+import com.icthh.xm.uaa.domain.SocialUserConnection;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
+import com.icthh.xm.uaa.domain.properties.TenantProperties.Social;
+import com.icthh.xm.uaa.domain.properties.TenantProperties.UserInfoMapping;
+import com.icthh.xm.uaa.repository.SocialUserConnectionRepository;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
-import com.icthh.xm.uaa.service.mail.MailService;
+import com.icthh.xm.uaa.security.DomainJwtAccessTokenConverter;
+import com.icthh.xm.uaa.security.DomainTokenServices;
+import com.icthh.xm.uaa.security.DomainUserDetailsService;
+import com.icthh.xm.uaa.security.TokenConstraintsService;
+import com.icthh.xm.uaa.social.ConfigOAuth2Api;
+import com.icthh.xm.uaa.social.ConfigOAuth2Template;
+import com.icthh.xm.uaa.social.ConfigServiceProvider;
+import com.icthh.xm.uaa.social.SocialLoginAnswer;
+import com.icthh.xm.uaa.social.SocialUserInfoMapper;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Consumer;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.security.authentication.ProviderNotFoundException;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.social.connect.Connection;
-import org.springframework.social.connect.ConnectionKey;
-import org.springframework.social.connect.ConnectionRepository;
-import org.springframework.social.connect.UserProfile;
-import org.springframework.social.connect.UsersConnectionRepository;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.context.transaction.AfterTransaction;
-import org.springframework.test.context.transaction.BeforeTransaction;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.support.RestGatewaySupport;
 
-import java.util.Optional;
-
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = {
-    UaaApp.class,
-    XmOverrideConfiguration.class
-})
-@Transactional
+@Slf4j
 public class SocialServiceIntTest {
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private UserLoginRepository userLoginRepository;
-
-    @Autowired
-    private TenantContextHolder tenantContextHolder;
-
-    @Autowired
-    private XmRequestContextHolder requestContextHolder;
-
-    @Autowired
-    private TenantPropertiesService tenantPropertiesService;
-
-    @Mock
-    private MailService mockMailService;
-
-    @Mock
-    private UsersConnectionRepository mockUsersConnectionRepository;
-
-    @Mock
-    private ConnectionRepository mockConnectionRepository;
+    private static final String MOCK_ACCESS_TOKEN = "MOCK_ACCESS_TOKEN";
+    public static final String PROVIDER_ID = "P_ID";
+    public static final String PROVIDER_USER_ID = "123";
 
     private SocialService socialService;
 
+    @Mock
+    private  SocialUserConnectionRepository socialRepository;
+    @Mock
+    private  PasswordEncoder passwordEncoder;
+    @Mock
+    private  UserRepository userRepository;
+    @Mock
+    private  AccountMailService accountMailService;
+
+    private  UserDetailsService userDetailsService;
+    @Mock
+    private  TenantPropertiesService tenantPropertiesService;
+
+    private  DomainTokenServices tokenServices;
+    @Mock
+    private  UserLoginRepository userLoginRepository;
+
+    private  SocialUserInfoMapper socialUserInfoMapper = new SocialUserInfoMapper();
+    @Mock
+    private  XmAuthenticationContextHolder xmAuthenticationContextHolder;
+    @Mock
+    private  XmRequestContextHolder xmRequestContextHolder;
+    @Mock
+    private TenantContextHolder tenantContextHolder;
+
+    private MockRestServiceServer oAuth2TemplateMockServer;
+    List<Consumer<?>> oAuth2RestMoks = new ArrayList<>();
+
+    private MockRestServiceServer apiMockSserver;
+    List<Consumer<?>> apiRestMoks = new ArrayList<>();
+
     private static final String ROLE_USER = "ROLE_USER";
 
-    @BeforeTransaction
-    public void beforeTransaction() {
-        tenantContextHolder.getPrivilegedContext().setTenant(buildTenant(DEFAULT_TENANT_KEY_VALUE));
-    }
-
-    @AfterTransaction
-    public void afterTransaction() {
-        tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
-    }
-
     @Before
-    @SneakyThrows
     public void setup() {
-        TenantProperties.Security security = new TenantProperties.Security();
-        security.setDefaultUserRole(ROLE_USER);
-
-        TenantProperties properties = new TenantProperties();
-        properties.setSecurity(security);
-        properties.setRegistrationCaptchaPeriodSeconds(null);
-
-        tenantPropertiesService.onRefresh("/config/tenants/XM/uaa/uaa.yml",
-            new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
-
         MockitoAnnotations.initMocks(this);
+        userDetailsService = new DomainUserDetailsService(userLoginRepository, tenantContextHolder);
+        tokenServices = new DomainTokenServices();
+        DomainJwtAccessTokenConverter accessTokenEnhancer = new DomainJwtAccessTokenConverter(tenantContextHolder);
+        tokenServices.setTokenStore(new JwtTokenStore(accessTokenEnhancer));
+        tokenServices.setTokenConstraintsService(mock(TokenConstraintsService.class));
+        tokenServices.setTokenEnhancer(accessTokenEnhancer);
 
-        doNothing().when(mockMailService).sendSocialRegistrationValidationEmail(any(),
-                                                                                anyString(),
-                                                                                anyString(),
-                                                                                anyString(),
-                                                                                any(),
-                                                                                anyString());
-        doNothing().when(mockConnectionRepository).addConnection(anyObject());
-        when(mockUsersConnectionRepository.createConnectionRepository(anyString())).thenReturn(mockConnectionRepository);
-
-        socialService = new SocialService(mockUsersConnectionRepository,
+        socialService = new SocialService(socialRepository,
                                           passwordEncoder,
                                           userRepository,
-                                          mockMailService,
+                                          accountMailService,
+                                          userDetailsService,
+                                          tenantPropertiesService,
+                                          tokenServices,
                                           userLoginRepository,
-                                          tenantContextHolder,
-                                          requestContextHolder,
-                                          tenantPropertiesService);
+                                          socialUserInfoMapper,
+                                          xmAuthenticationContextHolder,
+                                          xmRequestContextHolder,
+                                          null) {
+            @Override
+            protected ConfigServiceProvider createConfigServiceProvider(Social social) {
+                return new ConfigServiceProvider(social, socialUserInfoMapper) {
+                    @Override
+                    protected ConfigOAuth2Template createOAuth2Template(Social social) {
+                        ConfigOAuth2Template oAuth2Template = super.createOAuth2Template(social);
+
+                        RestGatewaySupport gateway = new RestGatewaySupport();
+                        gateway.setRestTemplate(oAuth2Template.getRestTemplate());
+                        oAuth2TemplateMockServer = MockRestServiceServer.createServer(gateway);
+                        oAuth2RestMoks.forEach(it -> it.accept(null));
+
+                        return oAuth2Template;
+                    }
+
+                    @Override
+                    public ConfigOAuth2Api getApi(String accessToken) {
+                        ConfigOAuth2Api api = super.getApi(accessToken);
+
+                        RestGatewaySupport gateway = new RestGatewaySupport();
+                        gateway.setRestTemplate(api.getRestTemplate());
+                        apiMockSserver = MockRestServiceServer.createServer(gateway);
+                        apiRestMoks.forEach(it -> it.accept(null));
+
+                        return api;
+                    }
+                };
+            }
+        };
+        socialService.setSelf(socialService);
+    }
+
+    @Test(expected = ProviderNotFoundException.class)
+    public void testProviderNotFound() {
+        mockTenantProperties();
+        socialService.initSocialLogin("unknow provider");
     }
 
     @Test
-    public void testDeleteUserSocialConnection() throws Exception {
-        // Setup
-        Connection<?> connection = createConnection("@LOGIN",
-                                                    "mail@mail.com",
-                                                    "FIRST_NAME",
-                                                    "LAST_NAME",
-                                                    "IMAGE_URL",
-                                                    "PROVIDER");
-        socialService.createSocialUser(connection, "fr");
-        MultiValueMap<String, Connection<?>> connectionsByProviderId = new LinkedMultiValueMap<>();
-        connectionsByProviderId.put("PROVIDER", null);
-        when(mockConnectionRepository.findAllConnections()).thenReturn(connectionsByProviderId);
-
-        // Exercise
-        socialService.deleteUserSocialConnection("@LOGIN");
-
-        // Verify
-        verify(mockConnectionRepository, times(1)).removeConnections("PROVIDER");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testCreateSocialUserShouldThrowExceptionIfConnectionIsNull() {
-        // Exercise
-        socialService.createSocialUser(null, "fr");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testCreateSocialUserShouldThrowExceptionIfConnectionHasNoEmailAndNoLogin() {
-        // Setup
-        Connection<?> connection = createConnection("",
-                                                    "",
-                                                    "FIRST_NAME",
-                                                    "LAST_NAME",
-                                                    "IMAGE_URL",
-                                                    "PROVIDER");
-
-        // Exercise
-        socialService.createSocialUser(connection, "fr");
+    public void testInitUrl() {
+        mockTenantProperties();
+        mockRequestContext();
+        String result = socialService.initSocialLogin("P_ID");
+        Assert.assertEquals(result, "http://AU?client_id=CI&response_type=code&redirect_uri=http%3A%2F%2Fdomainname%3A0987%2Fuaa%2Fsocial%2Fsignin%2FP_ID&scope=SCOPE");
     }
 
     @Test
-    public void testCreateSocialUserShouldCreateUserIfNotExist() {
-        // Setup
-        Connection<?> connection = createConnection("@LOGIN",
-                                                    "mail@mail.com",
-                                                    "FIRST_NAME",
-                                                    "LAST_NAME",
-                                                    "IMAGE_URL",
-                                                    "PROVIDER");
+    @SneakyThrows
+    public void testSuccessSingIn() {
+        mockTenantProperties();
+        mockRequestContext();
+        mockGetAccessRequests();
 
-        // Exercise
-        socialService.createSocialUser(connection, "fr");
+        SocialUserConnection userConnection = new SocialUserConnection();
+        userConnection.setUserKey("USER_KEY");
+        when(socialRepository.findByProviderUserIdAndProviderId(PROVIDER_USER_ID, PROVIDER_ID)).thenReturn(
+            Optional.of(userConnection));
 
-        // Verify
-        final Optional<UserLogin> user = userLoginRepository.findOneByLogin("mail@mail.com");
-        assertThat(user).isPresent();
+        User user = new User();
+        UserLogin userLogin = new UserLogin();
+        userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
+        userLogin.setUser(user);
+        userLogin.setLogin("test@email.com");
 
-        // Teardown
-        userRepository.delete(user.get().getUser());
+        UserLogin number = new UserLogin();
+        number.setTypeKey(UserLoginType.MSISDN.getValue());
+        number.setUser(user);
+        number.setLogin("380930912700");
+        user.setActivated(true);
+        user.setRoleKey("ROLE_USER");
+        user.setUserKey("USER_KEY");
+        user.setPassword("password");
+
+        user.setLogins(asList(userLogin, number));
+        when(userRepository.findOneByUserKey("USER_KEY")).thenReturn(Optional.of(user));
+        when(userLoginRepository.findOneByLogin("test@email.com")).thenReturn(Optional.of(userLogin));
+
+        mockTenant();
+
+        SocialLoginAnswer socialLoginAnswer = socialService.acceptSocialLoginUser("P_ID", "activationCode");
+
+        Assert.assertEquals(socialLoginAnswer.getAnswerType(), SING_IN);
+
+        assertJwtToken(socialLoginAnswer);
+    }
+
+    private void assertJwtToken(SocialLoginAnswer socialLoginAnswer) throws java.io.IOException {
+        Map<String, Object> jwt = new HashMap<>();
+        jwt.put("user_name", "test@email.com");
+        jwt.put("scope", asList("openid"));
+        jwt.put("role_key", "ROLE_USER");
+        jwt.put("user_key", "USER_KEY");
+        jwt.put("additionalDetails", emptyMap());
+        jwt.put("logins", asList(login("LOGIN.EMAIL", "test@email.com"),
+                                 login("LOGIN.MSISDN", "380930912700")));
+        jwt.put("authorities", asList("ROLE_USER"));
+        jwt.put("tenant", "TEST_T");
+        jwt.put("client_id", "webapp");
+
+        log.info("{}", socialLoginAnswer.getOAuth2AccessToken().getValue());
+        String value = socialLoginAnswer.getOAuth2AccessToken().getValue().split("\\.")[1];
+        Map map = new ObjectMapper().readValue(Base64.getDecoder().decode(value), Map.class);
+        map.remove("createTokenTime");
+        map.remove("jti");
+
+        Assert.assertEquals(jwt, map);
     }
 
     @Test
-    public void testCreateSocialUserShouldCreateUserWithSocialInformation() {
-        // Setup
-        Connection<?> connection = createConnection("@LOGIN",
-                                                    "mail@mail.com",
-                                                    "FIRST_NAME",
-                                                    "LAST_NAME",
-                                                    "IMAGE_URL",
-                                                    "PROVIDER");
+    @SneakyThrows
+    public void createUserAutomaticallyByDefault() {
+        mockTenantProperties();
+        mockRequestContext();
+        mockGetAccessRequests();
 
-        // Exercise
-        socialService.createSocialUser(connection, "fr");
+        when(socialRepository.findByProviderUserIdAndProviderId(PROVIDER_USER_ID, PROVIDER_ID)).thenReturn(empty());
 
-        // Verify
-        UserLogin userLogin = userLoginRepository.findOneByLogin("mail@mail.com").get();
-        assertThat(userLogin.getUser().getFirstName()).isEqualTo("FIRST_NAME");
-        assertThat(userLogin.getUser().getLastName()).isEqualTo("LAST_NAME");
-        assertThat(userLogin.getUser().getImageUrl()).isEqualTo("IMAGE_URL");
+        User user = new User();
+        UserLogin userLogin = new UserLogin();
+        userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
+        userLogin.setUser(user);
+        userLogin.setLogin("test@email.com");
 
-        // Teardown
-        userRepository.delete(userLogin.getUser());
+        UserLogin number = new UserLogin();
+        number.setTypeKey(UserLoginType.MSISDN.getValue());
+        number.setUser(user);
+        number.setLogin("380930912700");
+
+        user.setActivated(true);
+        user.setRoleKey("ROLE_USER");
+        user.setUserKey("USER_KEY");
+        user.setPassword("PWD");
+        user.setFirstName("firstN");
+        user.setLangKey(null);
+        user.setLogins(asList(userLogin, number));
+        when(userRepository.findOneByUserKey("USER_KEY")).thenReturn(Optional.of(user));
+        when(userLoginRepository.findOneByLoginIgnoreCase("test@email.com")).thenReturn(empty());
+        when(userLoginRepository.findOneByLoginIgnoreCase("380930912700")).thenReturn(empty());
+        when(userLoginRepository.findOneByLogin("test@email.com")).thenReturn(Optional.of(userLogin));
+        mockTenant();
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        SocialUserConnection userConnection = new SocialUserConnection(null, "USER_KEY", PROVIDER_ID, PROVIDER_USER_ID,
+                                                                       null, null);
+        when(socialRepository.save(any(SocialUserConnection.class))).thenReturn(userConnection);
+
+        SocialLoginAnswer socialLoginAnswer = socialService.acceptSocialLoginUser("P_ID", "activationCode");
+
+        user.setPassword(null);
+        verify(userRepository).save(deepRefEq(user, "userKey", "tfaOtpSecret", "createdDate",
+                                              "lastModifiedDate"));
+        verify(socialRepository).save(refEq(userConnection, "activationCode"));
+        Assert.assertEquals(socialLoginAnswer.getAnswerType(), REGISTERED);
+        assertJwtToken(socialLoginAnswer);
     }
 
-    @Test
-    public void testCreateSocialUserShouldCreateActivatedUserWithRoleUserAndPassword() {
-        // Setup
-        Connection<?> connection = createConnection("@LOGIN",
-                                                    "mail@mail.com",
-                                                    "FIRST_NAME",
-                                                    "LAST_NAME",
-                                                    "IMAGE_URL",
-                                                    "PROVIDER");
-
-        // Exercise
-        socialService.createSocialUser(connection, "fr");
-
-        //Verify
-        UserLogin userLogin = userLoginRepository.findOneByLogin("mail@mail.com").get();
-        assertThat(userLogin.getUser().isActivated()).isEqualTo(true);
-        assertThat(userLogin.getUser().getPassword()).isNotEmpty();
-        assertThat(userLogin.getUser().getRoleKey()).isEqualTo(ROLE_USER);
-
-        // Teardown
-        userRepository.delete(userLogin.getUser());
+    private Map<String, Object> login(String typeKey, String value) {
+        Map<String, Object> login = new HashMap<>();
+        login.put("typeKey", typeKey);
+        login.put("stateKey", null);
+        login.put("login", value);
+        return login;
     }
 
-    @Test
-    public void testCreateSocialUserShouldCreateUserWithExactLangKey() {
-        // Setup
-        Connection<?> connection = createConnection("@LOGIN",
-                                                    "mail@mail.com",
-                                                    "FIRST_NAME",
-                                                    "LAST_NAME",
-                                                    "IMAGE_URL",
-                                                    "PROVIDER");
+    private void mockTenant() {
+        when(tenantContextHolder.getContext()).thenReturn(new TenantContext() {
 
-        // Exercise
-        socialService.createSocialUser(connection, "fr");
+            @Override
+            public boolean isInitialized() {
+                return true;
+            }
 
-        //Verify
-        final UserLogin userLogin = userLoginRepository.findOneByLogin("mail@mail.com").get();
-        assertThat(userLogin.getUser().getLangKey()).isEqualTo("fr");
+            @Override
+            public Optional<Tenant> getTenant() {
+                return empty();
+            }
 
-        // Teardown
-        userRepository.delete(userLogin.getUser());
+            @Override
+            public Optional<TenantKey> getTenantKey() {
+                return Optional.of(TenantKey.valueOf("TEST_T"));
+            }
+        });
     }
 
-    @Test
-    public void testCreateSocialUserShouldCreateUserWithLoginSameAsEmailIfNotTwitter() {
-        // Setup
-        Connection<?> connection = createConnection("@LOGIN",
-                                                    "mail@mail.com",
-                                                    "FIRST_NAME",
-                                                    "LAST_NAME",
-                                                    "IMAGE_URL",
-                                                    "PROVIDER_OTHER_THAN_TWITTER");
+    private void mockGetAccessRequests() {
+        oAuth2RestMoks.add(r -> {
+            oAuth2TemplateMockServer.expect(once(), requestTo("http://ATU"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(content().string("client_id=CI&client_secret=CS&code=activationCode&redirect_uri=http%3A%2F%2Fdomainname%3A0987%2Fuaa%2Fsocial%2Fsignin%2FP_ID&grant_type=authorization_code"))
+                .andRespond(withSuccess("{\"access_token\": \"" + MOCK_ACCESS_TOKEN + "\"}", MediaType.APPLICATION_JSON));
+        });
+        apiRestMoks.add(r -> {
+            Map<String, Object> user = new HashMap<>();
+            user.put("email", "test@email.com");
+            user.put("fn", "firstN");
+            user.put("id", 123);
+            user.put("path", of("to", of("to", of("image", of("url", "URL_IMAGE")))));
+            user.put("phoneNumher", "380930912700");
+                apiMockSserver.expect(times(2), requestTo("http://UIU"))
+                    .andExpect(method(HttpMethod.GET))
+                    .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer " + MOCK_ACCESS_TOKEN))
+                    .andRespond(withSuccess(toJson(user), MediaType.APPLICATION_JSON));
 
-        // Exercise
-        socialService.createSocialUser(connection, "fr");
-
-        //Verify
-        UserLogin userLogin = userLoginRepository.findOneByLogin("mail@mail.com").get();
-        assertThat(userLogin.getLogin()).isEqualTo("mail@mail.com");
-
-        // Teardown
-        userRepository.delete(userLogin.getUser());
+        });
     }
 
-    @Test
-    public void testCreateSocialUserShouldCreateUserWithSocialLoginWhenIsTwitter() {
-        // Setup
-        Connection<?> connection = createConnection("@LOGIN",
-                                                    "mail@mail.com",
-                                                    "FIRST_NAME",
-                                                    "LAST_NAME",
-                                                    "IMAGE_URL",
-                                                    "twitter");
-
-        // Exercise
-        socialService.createSocialUser(connection, "fr");
-
-        //Verify
-        UserLogin userLogin = userLoginRepository.findOneByLogin("mail@mail.com").get();
-        assertThat(userLogin.getLogin()).isEqualToIgnoringCase("mail@mail.com");
-
-        // Teardown
-        userRepository.delete(userLogin.getUser());
+    @SneakyThrows
+    private String toJson(Map<String, Object> user) {
+        return new ObjectMapper().writeValueAsString(user);
     }
 
-    @Test
-    public void testCreateSocialUserShouldCreateSocialConnection() {
-        // Setup
-        Connection<?> connection = createConnection("@LOGIN",
-                                                    "mail@mail.com",
-                                                    "FIRST_NAME",
-                                                    "LAST_NAME",
-                                                    "IMAGE_URL",
-                                                    "PROVIDER");
-
-        // Exercise
-        socialService.createSocialUser(connection, "fr");
-
-        //Verify
-        verify(mockConnectionRepository, times(1)).addConnection(connection);
-
-        // Teardown
-        UserLogin userToDelete = userLoginRepository.findOneByLogin("mail@mail.com").get();
-        userRepository.delete(userToDelete.getUser());
+    private void mockRequestContext() {
+        XmRequestContext mock = mock(XmRequestContext.class);
+        when(xmRequestContextHolder.getContext()).thenReturn(mock);
+        when(mock.getValue("protocol", String.class)).thenReturn("http");
+        when(mock.getValue("domain", String.class)).thenReturn("domainname");
+        when(mock.getValue("port", String.class)).thenReturn("0987");
     }
 
-    @Test
-    public void testCreateSocialUserShouldNotCreateUserIfEmailAlreadyExist() {
-        // Setup
-        createExistingUser(
-            "mail@mail.com",
-            "OTHER_FIRST_NAME",
-            "OTHER_LAST_NAME",
-            "OTHER_IMAGE_URL");
-        long initialUserCount = userRepository.count();
-        Connection<?> connection = createConnection("@LOGIN",
-                                                    "mail@mail.com",
-                                                    "FIRST_NAME",
-                                                    "LAST_NAME",
-                                                    "IMAGE_URL",
-                                                    "PROVIDER");
-
-        // Exercise
-        socialService.createSocialUser(connection, "fr");
-
-        //Verify
-        assertThat(userRepository.count()).isEqualTo(initialUserCount);
-
-        // Teardown
-        UserLogin userToDelete = userLoginRepository.findOneByLogin("mail@mail.com").get();
-        userRepository.delete(userToDelete.getUser());
-    }
-
-    @Test
-    public void testCreateSocialUserShouldNotChangeUserIfEmailAlreadyExist() {
-        // Setup
-        createExistingUser("mail@mail.com",
-                           "OTHER_FIRST_NAME",
-                           "OTHER_LAST_NAME",
-                           "OTHER_IMAGE_URL");
-        Connection<?> connection = createConnection("@LOGIN",
-                                                    "mail@mail.com",
-                                                    "FIRST_NAME",
-                                                    "LAST_NAME",
-                                                    "IMAGE_URL",
-                                                    "PROVIDER");
-
-        // Exercise
-        socialService.createSocialUser(connection, "fr");
-
-        // Verify
-        UserLogin userToVerify = userLoginRepository.findOneByLogin("mail@mail.com").get();
-        assertThat(userToVerify.getLogin()).isEqualTo("mail@mail.com");
-        assertThat(userToVerify.getUser().getFirstName()).isEqualTo("OTHER_FIRST_NAME");
-        assertThat(userToVerify.getUser().getLastName()).isEqualTo("OTHER_LAST_NAME");
-        assertThat(userToVerify.getUser().getImageUrl()).isEqualTo("OTHER_IMAGE_URL");
-        // Teardown
-        userRepository.delete(userToVerify.getUser());
-    }
-
-    @Test
-    public void testCreateSocialUserShouldSendRegistrationValidationEmail() {
-        // Setup
-        Connection<?> connection = createConnection("@LOGIN",
-                                                    "mail@mail.com",
-                                                    "FIRST_NAME",
-                                                    "LAST_NAME",
-                                                    "IMAGE_URL",
-                                                    "PROVIDER");
-
-        // Exercise
-        socialService.createSocialUser(connection, "fr");
-
-        // Verify
-        verify(mockMailService, times(1)).sendSocialRegistrationValidationEmail(any(),
-                                                                                anyString(),
-                                                                                anyString(),
-                                                                                anyString(),
-                                                                                any(),
-                                                                                anyString());
-
-        // Teardown
-        UserLogin userToDelete = userLoginRepository.findOneByLogin("mail@mail.com").get();
-        userRepository.delete(userToDelete.getUser());
-    }
-
-    private Connection<?> createConnection(String login,
-                                           String email,
-                                           String firstName,
-                                           String lastName,
-                                           String imageUrl,
-                                           String providerId) {
-        UserProfile userProfile = mock(UserProfile.class);
-        when(userProfile.getEmail()).thenReturn(email);
-        when(userProfile.getUsername()).thenReturn(login);
-        when(userProfile.getFirstName()).thenReturn(firstName);
-        when(userProfile.getLastName()).thenReturn(lastName);
-
-        Connection<?> connection = mock(Connection.class);
-        ConnectionKey key = new ConnectionKey(providerId, "PROVIDER_USER_ID");
-        when(connection.fetchUserProfile()).thenReturn(userProfile);
-        when(connection.getKey()).thenReturn(key);
-        when(connection.getImageUrl()).thenReturn(imageUrl);
-
-        return connection;
+    private void mockTenantProperties() {
+        TenantProperties tenantProperties = new TenantProperties();
+        when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProperties);
+        Social social = new Social();
+        tenantProperties.setSocial(asList(social));
+        social.setAccessTokenUrl("http://ATU");
+        social.setAuthorizeUrl("http://AU");
+        social.setClientId("CI");
+        social.setClientSecret("CS");
+        social.setProviderId("P_ID");
+        social.setScope("SCOPE");
+        social.setUserInfoUri("http://UIU");
+        UserInfoMapping userInfoMapping = new UserInfoMapping();
+        social.setUserInfoMapping(userInfoMapping);
+        userInfoMapping.setEmail("email");
+        userInfoMapping.setFirstName("fn");
+        userInfoMapping.setLastName("ln");
+        userInfoMapping.setId("id");
+        userInfoMapping.setLangKey("path.to.lang");
+        userInfoMapping.setImageUrl("path.to.image.url");
+        userInfoMapping.setPhoneNumber("phoneNumher");
+        TenantProperties.Security security = new TenantProperties.Security();
+        security.setDefaultUserRole("ROLE_USER");
+        tenantProperties.setSecurity(security);
     }
 
     private User createExistingUser(String email,
@@ -431,7 +387,7 @@ public class SocialServiceIntTest {
         User user = new User();
         user.setUserKey("test");
         user.setRoleKey(ROLE_USER);
-        user.setPassword(passwordEncoder.encode("password"));
+        user.setPassword("password");
         user.setFirstName(firstName);
         user.setLastName(lastName);
         user.setImageUrl(imageUrl);
@@ -440,6 +396,7 @@ public class SocialServiceIntTest {
         userLogin.setUser(user);
         userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
         user.getLogins().add(userLogin);
-        return userRepository.saveAndFlush(user);
+        return user;
     }
 }
+

@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.repository;
 
 import com.icthh.xm.uaa.domain.SocialUserConnection;
 
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Set;
@@ -11,19 +12,9 @@ import java.util.Set;
  */
 public interface SocialUserConnectionRepository extends JpaRepository<SocialUserConnection, Long> {
 
-    List<SocialUserConnection> findAllByProviderIdAndProviderUserId(String providerId, String providerUserId);
+    Optional<SocialUserConnection> findByProviderUserIdAndProviderId(String providerUserId, String providerId);
 
-    List<SocialUserConnection> findAllByProviderIdAndProviderUserIdIn(String providerId, Set<String> providerUserIds);
+    void deleteByUserKey(String userKey);
 
-    List<SocialUserConnection> findAllByUserIdOrderByProviderIdAscRankAsc(String userId);
-
-    List<SocialUserConnection> findAllByUserIdAndProviderIdOrderByRankAsc(String userId, String providerId);
-
-    List<SocialUserConnection> findAllByUserIdAndProviderIdAndProviderUserIdIn(String userId, String providerId, List<String> provideUserId);
-
-    SocialUserConnection findOneByUserIdAndProviderIdAndProviderUserId(String userId, String providerId, String providerUserId);
-
-    void deleteByUserIdAndProviderId(String userId, String providerId);
-
-    void deleteByUserIdAndProviderIdAndProviderUserId(String userId, String providerId, String providerUserId);
+    Optional<SocialUserConnection> findByActivationCode(String activationCode);
 }

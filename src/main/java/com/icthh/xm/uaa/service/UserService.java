@@ -10,12 +10,12 @@ import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.logging.LoggingAspectConfig;
 import com.icthh.xm.commons.permission.annotation.FindWithPermission;
-import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
+import com.icthh.xm.uaa.repository.SocialUserConnectionRepository;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserPermittedRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
@@ -24,16 +24,6 @@ import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.util.RandomUtil;
 import com.icthh.xm.uaa.util.OtpUtils;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
-
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,6 +34,15 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 /**
  * Service class for managing users.
@@ -60,7 +59,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserLoginRepository userLoginRepository;
     private final PasswordEncoder passwordEncoder;
-    private final SocialService socialService;
+    private final SocialUserConnectionRepository socialUserConnectionRepository;
     private final AccountMailService accountMailService;
     private final TenantPropertiesService tenantPropertiesService;
     private final XmAuthenticationContextHolder xmAuthenticationContextHolder;
@@ -213,7 +212,7 @@ public class UserService {
         }
         userRepository.findOneWithLoginsByUserKey(userKey).ifPresent(user -> {
             assertNotSuperAdmin(user.getRoleKey());
-            socialService.deleteUserSocialConnection(user.getUserKey());
+            socialUserConnectionRepository.deleteByUserKey(user.getUserKey());
             userRepository.delete(user);
         });
     }
