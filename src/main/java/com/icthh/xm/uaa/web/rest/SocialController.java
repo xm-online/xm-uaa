@@ -9,6 +9,7 @@ import com.icthh.xm.uaa.commons.UaaUtils;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.service.SocialService;
 import com.icthh.xm.uaa.social.SocialLoginAnswer;
+import javax.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,8 +55,8 @@ public class SocialController {
             SocialLoginAnswer answer = socialService.acceptSocialLoginUser(providerId, code);
             if (answer.getAnswerType() == SING_IN || answer.getAnswerType() == REGISTERED) {
                 OAuth2AccessToken token = answer.getOAuth2AccessToken();
-                request.getResponse().addHeader(HttpHeaders.AUTHORIZATION, token.getTokenType() + " " + token.getValue());
-                return redirect("/");
+                request.getResponse().addCookie(new Cookie("social-authentication", token.getValue()));
+                return redirect("/social-auth");
             } else if (answer.getAnswerType() == NEED_ACCEPT_CONNECTION) {
                 request.getResponse().addHeader("X-ACTIVATION-CODE", answer.getActivationCode());
                 return redirect("/social-accept-connection");
