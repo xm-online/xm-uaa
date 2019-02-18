@@ -1,8 +1,17 @@
 package com.icthh.xm.uaa.service;
+
 import static com.google.common.collect.ImmutableBiMap.of;
+import static com.icthh.xm.uaa.social.SocialLoginAnswer.AnswerType.REGISTERED;
 import static com.icthh.xm.uaa.social.SocialLoginAnswer.AnswerType.SING_IN;
+import static com.icthh.xm.uaa.utils.DeepReflectionEquals.deepRefEq;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyMap;
+import static java.util.Optional.empty;
+import static java.util.UUID.randomUUID;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.refEq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.ExpectedCount.once;
 import static org.springframework.test.web.client.ExpectedCount.times;
@@ -12,6 +21,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.Tenant;
 import com.icthh.xm.commons.tenant.TenantContext;
@@ -29,39 +39,41 @@ import com.icthh.xm.uaa.domain.properties.TenantProperties.UserInfoMapping;
 import com.icthh.xm.uaa.repository.SocialUserConnectionRepository;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
+import com.icthh.xm.uaa.security.DomainJwtAccessTokenConverter;
+import com.icthh.xm.uaa.security.DomainTokenServices;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
+import com.icthh.xm.uaa.security.TokenConstraintsService;
 import com.icthh.xm.uaa.social.ConfigOAuth2Api;
 import com.icthh.xm.uaa.social.ConfigOAuth2Template;
 import com.icthh.xm.uaa.social.ConfigServiceProvider;
 import com.icthh.xm.uaa.social.SocialLoginAnswer;
 import com.icthh.xm.uaa.social.SocialUserInfoMapper;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import lombok.SneakyThrows;
-import org.codehaus.jackson.map.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.ProviderNotFoundException;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
-import org.springframework.social.oauth2.OAuth2Template;
+import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.support.RestGatewaySupport;
 
-public class SocialServiceUnitTest {
+@Slf4j
+public class SocialServiceIntTest {
 
     private static final String MOCK_ACCESS_TOKEN = "MOCK_ACCESS_TOKEN";
     public static final String PROVIDER_ID = "P_ID";
@@ -81,8 +93,8 @@ public class SocialServiceUnitTest {
     private  UserDetailsService userDetailsService;
     @Mock
     private  TenantPropertiesService tenantPropertiesService;
-    @Mock
-    private  AuthorizationServerTokenServices tokenServices;
+
+    private  DomainTokenServices tokenServices;
     @Mock
     private  UserLoginRepository userLoginRepository;
 
@@ -106,6 +118,12 @@ public class SocialServiceUnitTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
         userDetailsService = new DomainUserDetailsService(userLoginRepository, tenantContextHolder);
+        tokenServices = new DomainTokenServices();
+        DomainJwtAccessTokenConverter accessTokenEnhancer = new DomainJwtAccessTokenConverter(tenantContextHolder);
+        tokenServices.setTokenStore(new JwtTokenStore(accessTokenEnhancer));
+        tokenServices.setTokenConstraintsService(mock(TokenConstraintsService.class));
+        tokenServices.setTokenEnhancer(accessTokenEnhancer);
+
         socialService = new SocialService(socialRepository,
                                           passwordEncoder,
                                           userRepository,
@@ -165,13 +183,13 @@ public class SocialServiceUnitTest {
     }
 
     @Test
-    public void test() {
+    @SneakyThrows
+    public void testSuccessSingIn() {
         mockTenantProperties();
         mockRequestContext();
         mockGetAccessRequests();
 
         SocialUserConnection userConnection = new SocialUserConnection();
-        userConnection.setActivationCode("ACTIVATION_CODE");
         userConnection.setUserKey("USER_KEY");
         when(socialRepository.findByProviderUserIdAndProviderId(PROVIDER_USER_ID, PROVIDER_ID)).thenReturn(
             Optional.of(userConnection));
@@ -188,17 +206,97 @@ public class SocialServiceUnitTest {
         number.setLogin("380930912700");
         user.setActivated(true);
         user.setRoleKey("ROLE_USER");
+        user.setUserKey("USER_KEY");
         user.setPassword("password");
+
         user.setLogins(asList(userLogin, number));
         when(userRepository.findOneByUserKey("USER_KEY")).thenReturn(Optional.of(user));
         when(userLoginRepository.findOneByLogin("test@email.com")).thenReturn(Optional.of(userLogin));
+
         mockTenant();
 
         SocialLoginAnswer socialLoginAnswer = socialService.acceptSocialLoginUser("P_ID", "activationCode");
 
         Assert.assertEquals(socialLoginAnswer.getAnswerType(), SING_IN);
 
+        assertJwtToken(socialLoginAnswer);
+    }
 
+    private void assertJwtToken(SocialLoginAnswer socialLoginAnswer) throws java.io.IOException {
+        Map<String, Object> jwt = new HashMap<>();
+        jwt.put("user_name", "test@email.com");
+        jwt.put("scope", asList("openid"));
+        jwt.put("role_key", "ROLE_USER");
+        jwt.put("user_key", "USER_KEY");
+        jwt.put("additionalDetails", emptyMap());
+        jwt.put("logins", asList(login("LOGIN.EMAIL", "test@email.com"),
+                                 login("LOGIN.MSISDN", "380930912700")));
+        jwt.put("authorities", asList("ROLE_USER"));
+        jwt.put("tenant", "TEST_T");
+        jwt.put("client_id", "webapp");
+
+        log.info("{}", socialLoginAnswer.getOAuth2AccessToken().getValue());
+        String value = socialLoginAnswer.getOAuth2AccessToken().getValue().split("\\.")[1];
+        Map map = new ObjectMapper().readValue(Base64.getDecoder().decode(value), Map.class);
+        map.remove("createTokenTime");
+        map.remove("jti");
+
+        Assert.assertEquals(jwt, map);
+    }
+
+    @Test
+    @SneakyThrows
+    public void createUserAutomaticallyByDefault() {
+        mockTenantProperties();
+        mockRequestContext();
+        mockGetAccessRequests();
+
+        when(socialRepository.findByProviderUserIdAndProviderId(PROVIDER_USER_ID, PROVIDER_ID)).thenReturn(empty());
+
+        User user = new User();
+        UserLogin userLogin = new UserLogin();
+        userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
+        userLogin.setUser(user);
+        userLogin.setLogin("test@email.com");
+
+        UserLogin number = new UserLogin();
+        number.setTypeKey(UserLoginType.MSISDN.getValue());
+        number.setUser(user);
+        number.setLogin("380930912700");
+
+        user.setActivated(true);
+        user.setRoleKey("ROLE_USER");
+        user.setUserKey("USER_KEY");
+        user.setPassword("PWD");
+        user.setFirstName("firstN");
+        user.setLangKey(null);
+        user.setLogins(asList(userLogin, number));
+        when(userRepository.findOneByUserKey("USER_KEY")).thenReturn(Optional.of(user));
+        when(userLoginRepository.findOneByLoginIgnoreCase("test@email.com")).thenReturn(empty());
+        when(userLoginRepository.findOneByLoginIgnoreCase("380930912700")).thenReturn(empty());
+        when(userLoginRepository.findOneByLogin("test@email.com")).thenReturn(Optional.of(userLogin));
+        mockTenant();
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        SocialUserConnection userConnection = new SocialUserConnection(null, "USER_KEY", PROVIDER_ID, PROVIDER_USER_ID,
+                                                                       null, null);
+        when(socialRepository.save(any(SocialUserConnection.class))).thenReturn(userConnection);
+
+        SocialLoginAnswer socialLoginAnswer = socialService.acceptSocialLoginUser("P_ID", "activationCode");
+
+        user.setPassword(null);
+        verify(userRepository).save(deepRefEq(user, "userKey", "tfaOtpSecret", "createdDate",
+                                              "lastModifiedDate"));
+        verify(socialRepository).save(refEq(userConnection, "activationCode"));
+        Assert.assertEquals(socialLoginAnswer.getAnswerType(), REGISTERED);
+        assertJwtToken(socialLoginAnswer);
+    }
+
+    private Map<String, Object> login(String typeKey, String value) {
+        Map<String, Object> login = new HashMap<>();
+        login.put("typeKey", typeKey);
+        login.put("stateKey", null);
+        login.put("login", value);
+        return login;
     }
 
     private void mockTenant() {
@@ -211,7 +309,7 @@ public class SocialServiceUnitTest {
 
             @Override
             public Optional<Tenant> getTenant() {
-                return Optional.empty();
+                return empty();
             }
 
             @Override
@@ -277,6 +375,9 @@ public class SocialServiceUnitTest {
         userInfoMapping.setLangKey("path.to.lang");
         userInfoMapping.setImageUrl("path.to.image.url");
         userInfoMapping.setPhoneNumber("phoneNumher");
+        TenantProperties.Security security = new TenantProperties.Security();
+        security.setDefaultUserRole("ROLE_USER");
+        tenantProperties.setSecurity(security);
     }
 
     private User createExistingUser(String email,

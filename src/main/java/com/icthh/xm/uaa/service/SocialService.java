@@ -149,8 +149,8 @@ public class SocialService {
         Optional<SocialUserConnection> connection = socialRepository.findByProviderUserIdAndProviderId(id, providerId);
         if (connection.isPresent() && isNotBlank(connection.get().getUserKey())) {
             log.info("Found user social connection {}", connection.get());
-            return SocialLoginAnswer.builder().answerType(SING_IN)
-                .oAuth2AccessToken(signIn(connection.get().getUserKey())).build();
+            OAuth2AccessToken accessToken = self.signIn(connection.get().getUserKey());
+            return SocialLoginAnswer.builder().answerType(SING_IN).oAuth2AccessToken(accessToken).build();
         }
 
         log.info("User social connection not found by providerUserid {} and providerId", id, providerId);
@@ -160,8 +160,8 @@ public class SocialService {
             if (social.getCreateAccountAutomatically()) {
                 User user = self.createSocialUser(socialUserInfo, providerId);
                 createSocialConnection(socialUserInfo, user.getUserKey(), providerId);
-                return SocialLoginAnswer.builder().answerType(REGISTERED).oAuth2AccessToken(signIn(user.getUserKey()))
-                    .build();
+                OAuth2AccessToken oAuth2AccessToken = signIn(user.getUserKey());
+                return SocialLoginAnswer.builder().answerType(REGISTERED).oAuth2AccessToken(oAuth2AccessToken).build();
             } else {
                 throw new NotImplementedException("Will be implemented in future");
             }

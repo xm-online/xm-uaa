@@ -18,7 +18,7 @@ import javax.validation.constraints.NotNull;
 @ToString(exclude = {"user"})
 @Getter
 @Setter
-@EqualsAndHashCode
+@EqualsAndHashCode(exclude = {"user"})
 public class UserLogin {
 
     private static final long serialVersionUID = 1L;
