@@ -1,13 +1,12 @@
 package com.icthh.xm.uaa.security;
 
-import static org.mockito.BDDMockito.given;
-
-import org.mockito.Spy;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.OAuth2Request;
@@ -21,13 +20,15 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.mockito.BDDMockito.given;
+
 /**
  * A bean providing simple mocking of OAuth2 access tokens for security integration tests.
  */
 @Component
 public class OAuth2TokenMockUtil {
 
-    @Spy
+    @MockBean
     private ResourceServerTokenServices tokenServices;
 
     private OAuth2Authentication createAuthentication(String username, Set<String> scopes, Set<String> roles) {
@@ -35,12 +36,7 @@ public class OAuth2TokenMockUtil {
             .map(SimpleGrantedAuthority::new)
             .collect(Collectors.toList());
 
-        DomainUserDetails principal = new DomainUserDetails(username, "test", authorities, "XM",
-                                                            "test",
-                                                            false,
-                                                            null,
-                                                            null,
-                                                            false, null);
+        User principal = new User(username, "test", true, true, true, true, authorities);
         Authentication authentication = new UsernamePasswordAuthenticationToken(principal, principal.getPassword(),
             principal.getAuthorities());
 

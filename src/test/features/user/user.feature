@@ -1,6 +1,6 @@
 Feature: User management
 
     Scenario: Retrieve administrator user
-        When I search user by users key 'xm' on tenant 'XM'
+        When I search user 'admin'
         Then the user is found
-        And his first name is 'Administrator'
+        And his last name is 'Administrator'

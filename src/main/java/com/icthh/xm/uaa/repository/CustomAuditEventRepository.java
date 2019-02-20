@@ -1,12 +1,11 @@
 package com.icthh.xm.uaa.repository;
 
-import com.icthh.xm.commons.tenant.TenantContextHolder;
-import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.config.audit.AuditEventConverter;
 import com.icthh.xm.uaa.domain.PersistentAuditEvent;
-import com.icthh.xm.uaa.repository.projection.PrincipalProjection;
-import lombok.RequiredArgsConstructor;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.stereotype.Repository;
@@ -14,74 +13,77 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * An implementation of Spring Boot's AuditEventRepository.
  */
-@RequiredArgsConstructor
 @Repository
 public class CustomAuditEventRepository implements AuditEventRepository {
 
     private static final String AUTHORIZATION_FAILURE = "AUTHORIZATION_FAILURE";
 
+    /**
+     * Should be the same as in Liquibase migration.
+     */
+    protected static final int EVENT_DATA_COLUMN_MAX_LENGTH = 255;
+
     private final PersistenceAuditEventRepository persistenceAuditEventRepository;
+
     private final AuditEventConverter auditEventConverter;
 
+    private final Logger log = LoggerFactory.getLogger(getClass());
+
+    public CustomAuditEventRepository(PersistenceAuditEventRepository persistenceAuditEventRepository,
+            AuditEventConverter auditEventConverter) {
+
+        this.persistenceAuditEventRepository = persistenceAuditEventRepository;
+        this.auditEventConverter = auditEventConverter;
+    }
+
     @Override
-    public List<AuditEvent> find(Date after) {
+    public List<AuditEvent> find(String principal, Instant after, String type) {
         Iterable<PersistentAuditEvent> persistentAuditEvents =
-            persistenceAuditEventRepository.findByAuditEventDateAfter(after.toInstant());
+            persistenceAuditEventRepository.findByPrincipalAndAuditEventDateAfterAndAuditEventType(principal, after, type);
         return auditEventConverter.convertToAuditEvent(persistentAuditEvents);
     }
 
     @Override
-    public List<AuditEvent> find(String principal, Date after) {
-        Iterable<PersistentAuditEvent> persistentAuditEvents;
-        if (principal == null && after == null) {
-            persistentAuditEvents = persistenceAuditEventRepository.findAll();
-        } else if (after == null) {
-            persistentAuditEvents = persistenceAuditEventRepository.findByPrincipal(principal);
-        } else {
-            persistentAuditEvents =
-                persistenceAuditEventRepository.findByPrincipalAndAuditEventDateAfter(principal, after.toInstant());
-        }
-        return auditEventConverter.convertToAuditEvent(persistentAuditEvents);
-    }
-
-    @Override
-    public List<AuditEvent> find(String principal, Date after, String type) {
-        Iterable<PersistentAuditEvent> persistentAuditEvents =
-            persistenceAuditEventRepository.findByPrincipalAndAuditEventDateAfterAndAuditEventType(principal, after.toInstant(), type);
-        return auditEventConverter.convertToAuditEvent(persistentAuditEvents);
-    }
-
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @Override
     public void add(AuditEvent event) {
-        if (!AUTHORIZATION_FAILURE.equals(event.getType())
-            && !Constants.ANONYMOUS_USER.equals(event.getPrincipal())) {
+        if (!AUTHORIZATION_FAILURE.equals(event.getType()) &&
+            !Constants.ANONYMOUS_USER.equals(event.getPrincipal())) {
 
             PersistentAuditEvent persistentAuditEvent = new PersistentAuditEvent();
             persistentAuditEvent.setPrincipal(event.getPrincipal());
             persistentAuditEvent.setAuditEventType(event.getType());
-            persistentAuditEvent.setAuditEventDate(event.getTimestamp().toInstant());
-            persistentAuditEvent.setData(auditEventConverter.convertDataToStrings(event.getData()));
+            persistentAuditEvent.setAuditEventDate(event.getTimestamp());
+            Map<String, String> eventData = auditEventConverter.convertDataToStrings(event.getData());
+            persistentAuditEvent.setData(truncate(eventData));
             persistenceAuditEventRepository.save(persistentAuditEvent);
         }
     }
 
-    public List<PrincipalProjection> findAfter(Instant after, String type) {
-        return persistenceAuditEventRepository.findDistinctByAuditEventDateAfterAndAuditEventType(after, type);
-    }
+    /**
+     * Truncate event data that might exceed column length.
+     */
+    private Map<String, String> truncate(Map<String, String> data) {
+        Map<String, String> results = new HashMap<>();
 
-    public void delete(String principal) {
-        persistenceAuditEventRepository.deleteByPrincipal(principal);
-    }
-
-    public void deleteAll() {
-        persistenceAuditEventRepository.deleteAll();
+        if (data != null) {
+            for (Map.Entry<String, String> entry : data.entrySet()) {
+                String value = entry.getValue();
+                if (value != null) {
+                    int length = value.length();
+                    if (length > EVENT_DATA_COLUMN_MAX_LENGTH) {
+                        value = value.substring(0, EVENT_DATA_COLUMN_MAX_LENGTH);
+                        log.warn("Event data for {} too long ({}) has been truncated to {}. Consider increasing column width.",
+                                 entry.getKey(), length, EVENT_DATA_COLUMN_MAX_LENGTH);
+                    }
+                }
+                results.put(entry.getKey(), value);
+            }
+        }
+        return results;
     }
 }

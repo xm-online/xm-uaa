@@ -1,6 +1,0 @@
----
-security:
-    defaultUserRole: ROLE_USER
-    accessTokenValiditySeconds:
-    refreshTokenValiditySeconds:
-registrationCaptchaPeriodSeconds: 21600

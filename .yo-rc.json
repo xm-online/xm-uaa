@@ -1,35 +1,33 @@
 {
   "generator-jhipster": {
-    "jhipsterVersion": "4.6.1",
+    "promptValues": {
+      "packageName": "com.icthh.xm.uaa"
+    },
+    "jhipsterVersion": "5.7.2",
+    "applicationType": "uaa",
     "baseName": "uaa",
     "packageName": "com.icthh.xm.uaa",
     "packageFolder": "com/icthh/xm/uaa",
     "serverPort": "9999",
     "authenticationType": "uaa",
-    "hibernateCache": "hazelcast",
-    "clusteredHttpSession": false,
+    "cacheProvider": "no",
     "websocket": false,
     "databaseType": "sql",
     "devDatabaseType": "h2Memory",
     "prodDatabaseType": "postgresql",
     "searchEngine": false,
-    "messageBroker": false,
+    "messageBroker": "kafka",
     "serviceDiscoveryType": "consul",
     "buildTool": "gradle",
-    "enableSocialSignIn": true,
-    "enableTranslation": true,
-    "applicationType": "uaa",
+    "enableSwaggerCodegen": false,
     "testFrameworks": [
       "gatling",
       "cucumber"
     ],
     "jhiPrefix": "jhi",
-    "skipClient": true,
-    "nativeLanguage": "en",
-    "languages": [
-      "en",
-      "ru"
-    ],
-    "clientPackageManager": "yarn"
+    "otherModules": [],
+    "enableTranslation": false,
+    "clientPackageManager": "npm",
+    "skipClient": true
   }
 }

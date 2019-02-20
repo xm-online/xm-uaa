@@ -1,7 +1,0 @@
-logins:
-    - key: LOGIN.NICKNAME
-      name: { en: "Nickname", ru: "Никнейм" }
-    - key: LOGIN.MSISDN
-      name: { en: "Phone number", ru: "Номер телефона" }
-    - key: LOGIN.EMAIL
-      name: { en: "Email", ru: "Email" }

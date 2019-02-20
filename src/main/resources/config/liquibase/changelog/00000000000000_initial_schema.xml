@@ -3,12 +3,8 @@
     xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
     xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd
                         http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
-
-    <property name="now" value="now()" dbms="h2"/>
-    <property name="now" value="current_timestamp" dbms="postgresql"/>
-    <property name="now" value="sysdate" dbms="oracle"/>
 
     <changeSet id="00000000000000" author="jhipster">
         <createSequence sequenceName="hibernate_sequence" startValue="1000" incrementBy="50"/>
@@ -19,80 +15,37 @@
         The initial schema has the '00000000000001' id, so that it is over-written if we re-generate it.
     -->
     <changeSet id="00000000000001" author="jhipster">
-        <validCheckSum>7:baf11f5e81cee6b1ddc259d7bc444415</validCheckSum>
-        <validCheckSum>7:bc2802b76d606c6a089b80a7996e38b2</validCheckSum>
-
-        <createTable tableName="social_config">
-            <column name="id" type="bigint" autoIncrement="${autoIncrement}">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-
-            <column name="domain_name" type="varchar(50)">
-                <constraints nullable="false" />
-            </column>
-
-            <column name="provider_id" type="varchar(20)">
-                <constraints nullable="false" />
-            </column>
-
-            <column name="consumer_key" type="varchar(100)">
-                <constraints nullable="false" />
-            </column>
-
-            <column name="consumer_secret" type="varchar(100)">
-                <constraints nullable="false" />
-            </column>
-
-            <!-- jhipster-needle-liquibase-add-column - JHipster will add columns here, do not remove-->
-        </createTable>
-
-        <loadData encoding="UTF-8"
-            file="config/liquibase/social_configs.csv"
-            separator=";"
-            tableName="social_config">
-        </loadData>
-
         <createTable tableName="jhi_user">
             <column name="id" type="bigint" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="login" type="varchar(50)">
-                <constraints nullable="false"/>
+                <constraints unique="true" nullable="false" uniqueConstraintName="ux_user_login"/>
             </column>
             <column name="password_hash" type="varchar(60)"/>
             <column name="first_name" type="varchar(50)"/>
             <column name="last_name" type="varchar(50)"/>
-            <column name="email" type="varchar(100)"/>
+            <column name="email" type="varchar(254)">
+                <constraints unique="true" nullable="true" uniqueConstraintName="ux_user_email"/>
+            </column>
             <column name="image_url" type="varchar(256)"/>
             <column name="activated" type="boolean" valueBoolean="false">
                 <constraints nullable="false" />
             </column>
-            <column name="lang_key" type="varchar(5)"/>
+            <column name="lang_key" type="varchar(6)"/>
             <column name="activation_key" type="varchar(20)"/>
             <column name="reset_key" type="varchar(20)"/>
             <column name="created_by" type="varchar(50)">
                 <constraints nullable="false"/>
             </column>
-            <column name="created_date" type="timestamp" defaultValueDate="${now}">
-                <constraints nullable="false"/>
-            </column>
+            <column name="created_date" type="timestamp"/>
             <column name="reset_date" type="timestamp">
                 <constraints nullable="true"/>
             </column>
             <column name="last_modified_by" type="varchar(50)"/>
             <column name="last_modified_date" type="timestamp"/>
         </createTable>
-        <createIndex indexName="idx_user_login"
-            tableName="jhi_user"
-            unique="true">
-            <column name="login" type="varchar(50)"/>
-        </createIndex>
 
-        <createIndex indexName="idx_user_email"
-            tableName="jhi_user"
-            unique="true">
-            <column name="email" type="varchar(100)"/>
-        </createIndex>
         <createTable tableName="jhi_authority">
             <column name="name" type="varchar(50)">
                 <constraints primaryKey="true" nullable="false"/>
@@ -122,6 +75,9 @@
                                  referencedColumnNames="id"
                                  referencedTableName="jhi_user"/>
 
+        <addNotNullConstraint   columnName="password_hash"
+                                columnDataType="varchar(60)"
+                                tableName="jhi_user"/>
         <loadData encoding="UTF-8"
                   file="config/liquibase/users.csv"
                   separator=";"
@@ -130,7 +86,6 @@
             <column name="created_date" type="timestamp"/>
         </loadData>
         <dropDefaultValue tableName="jhi_user" columnName="created_date" columnDataType="datetime"/>
-
         <loadData encoding="UTF-8"
                   file="config/liquibase/authorities.csv"
                   separator=";"
@@ -180,38 +135,20 @@
                                  constraintName="fk_evt_pers_audit_evt_data"
                                  referencedColumnNames="event_id"
                                  referencedTableName="jhi_persistent_audit_event"/>
-
-        <!-- Social -->
-        <createTable tableName="jhi_social_user_connection">
-            <column name="id" type="bigint" autoIncrement="${autoIncrement}">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="user_id" type="varchar(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="provider_id" type="varchar(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="provider_user_id" type="varchar(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="rank" type="bigint">
-                <constraints nullable="false"/>
-            </column>
-            <column name="display_name" type="varchar(255)"/>
-            <column name="profile_url" type="varchar(255)"/>
-            <column name="image_url" type="varchar(255)"/>
-            <column name="access_token" type="varchar(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="secret" type="varchar(255)"/>
-            <column name="refresh_token" type="varchar(255)"/>
-            <column name="expire_time" type="bigint"/>
-        </createTable>
-
-        <addUniqueConstraint tableName="jhi_social_user_connection" columnNames="user_id, provider_id, provider_user_id"/>
-
-        <addUniqueConstraint tableName="jhi_social_user_connection" columnNames="user_id, provider_id, rank"/>
     </changeSet>
 
+    <changeSet author="jhipster" id="00000000000002" context="test">
+        <createTable tableName="jhi_date_time_wrapper">
+            <column autoIncrement="${autoIncrement}" name="id" type="BIGINT">
+                <constraints primaryKey="true" primaryKeyName="jhi_date_time_wrapperPK"/>
+            </column>
+            <column name="instant" type="timestamp"/>
+            <column name="local_date_time" type="timestamp"/>
+            <column name="offset_date_time" type="timestamp"/>
+            <column name="zoned_date_time" type="timestamp"/>
+            <column name="local_time" type="time"/>
+            <column name="offset_time" type="time"/>
+            <column name="local_date" type="date"/>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>

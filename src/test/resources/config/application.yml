@@ -3,8 +3,8 @@
 #
 # This configuration is used for unit/integration tests.
 #
-# More information on profiles: https://jhipster.github.io/profiles/
-# More information on configuration properties: https://jhipster.github.io/common-application-properties/
+# More information on profiles: https://www.jhipster.tech/profiles/
+# More information on configuration properties: https://www.jhipster.tech/common-application-properties/
 # ===================================================================
 
 # ===================================================================
@@ -17,18 +17,23 @@
 spring:
     application:
         name: uaa
-    autoconfigure:
-        exclude: org.springframework.boot.autoconfigure.social.SocialWebAutoConfiguration
-    jackson:
-        serialization.write_dates_as_timestamps: false
-    cache:
-        type: none
+    cloud:
+        stream:
+            kafka:
+                binder:
+                    brokers: localhost
+                    zk-nodes: localhost
+            bindings:
+                output:
+                    destination: topic-jhipster
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:h2:mem:uaa;DB_CLOSE_DELAY=-1
+        url: jdbc:h2:mem:uaa;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
         name:
         username:
         password:
+        hikari:
+            auto-commit: false
     jpa:
         database-platform: io.github.jhipster.domain.util.FixedH2Dialect
         database: H2
@@ -41,10 +46,14 @@ spring:
                 implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
         properties:
             hibernate.id.new_generator_mappings: true
+            hibernate.connection.provider_disables_autocommit: true
             hibernate.cache.use_second_level_cache: false
             hibernate.cache.use_query_cache: false
             hibernate.generate_statistics: true
             hibernate.hbm2ddl.auto: validate
+            hibernate.jdbc.time_zone: UTC
+    liquibase:
+        contexts: test
     mail:
         host: localhost
     messages:
@@ -53,14 +62,8 @@ spring:
         favicon:
             enabled: false
     thymeleaf:
-        mode: XHTML
+        mode: HTML
 
-liquibase:
-    contexts: test
-
-security:
-    basic:
-        enabled: false
 
 server:
     port: 10344
@@ -69,7 +72,7 @@ server:
 # ===================================================================
 # JHipster specific properties
 #
-# Full reference is available at: https://jhipster.github.io/common-application-properties/
+# Full reference is available at: https://www.jhipster.tech/common-application-properties/
 # ===================================================================
 
 jhipster:
@@ -85,17 +88,18 @@ jhipster:
             port: 5000
             queue-size: 512
     mail:
-        from: <tenantname>@xm-online.com
+        from: test@localhost
         base-url: http://127.0.0.1:8080
     security:
         authentication:
             jwt:
-                secret:
+                # This token must be encoded using Base64 (you can type `echo 'secret-key'|base64` on your command line)
+                base64-secret: 
                 # Token is valid 24 hours
                 token-validity-in-seconds: 86400
         client-authorization:
-            client-id:
-            client-secret:
+            client-id: internal
+            client-secret: internal
     metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
         jmx.enabled: true
         logs: # Reports Dropwizard metrics in the logs
@@ -108,23 +112,7 @@ jhipster:
 # to have type-safe configuration, like in the JHipsterProperties above
 #
 # More documentation is available at:
-# https://jhipster.github.io/common-application-properties/
+# https://www.jhipster.tech/common-application-properties/
 # ===================================================================
 
-xm-config:
-    enabled: false
-
-application:
-    kafka-system-topic: system_topic
-    kafka-system-queue: system_queue
-    kafka-enabled: false
-    tenant-properties-path-pattern: /config/tenants/{tenantName}/uaa/${application.tenant-properties-name}
-    tenant-properties-name: uaa.yml
-    tenant-login-properties-path-pattern: /config/tenants/{tenantName}/uaa/${application.tenant-login-properties-name}
-    tenant-login-properties-name: logins.yml
-    email-path-pattern: /config/tenants/{tenantName}/uaa/emails/{langKey}/{fileName}.ftl
-    lep:
-        tenant-script-storage: XM_MS_CONFIG
-    client-grant-types: client_credentials, refresh_token, password
-    client-scope: openid
-    default-client-id:
+# application:

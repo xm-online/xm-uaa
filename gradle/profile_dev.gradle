@@ -2,17 +2,17 @@ import org.gradle.internal.os.OperatingSystem
 
 apply plugin: 'org.springframework.boot'
 
-ext {
-    logbackLoglevel = "DEBUG"
-}
-
 dependencies {
     compile "org.springframework.boot:spring-boot-devtools"
+    compile "com.h2database:h2"
 }
 
 def profiles = 'dev'
 if (project.hasProperty('no-liquibase')) {
     profiles += ',no-liquibase'
+}
+if (project.hasProperty('tls')) {
+    profiles += ',tls'
 }
 
 bootRun {
@@ -21,17 +21,14 @@ bootRun {
 
 
 processResources {
-    filesMatching('**/logback-spring.xml') {
+    filesMatching('**/application.yml') {
         filter {
-            it.replace('#logback.loglevel#', logbackLoglevel)
+            it.replace('#project.version#', version)
         }
     }
     filesMatching('**/bootstrap.yml') {
         filter {
             it.replace('#spring.profiles.active#', profiles)
-        }
-        filter {
-            it.replace('#project.version#', version)
         }
     }
 }

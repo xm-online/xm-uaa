@@ -3,17 +3,30 @@ services:
     uaa-app:
         image: uaa
         environment:
+            - _JAVA_OPTIONS=-Xmx512m -Xms256m
             - SPRING_PROFILES_ACTIVE=prod,swagger
             - SPRING_CLOUD_CONSUL_HOST=consul
             - SPRING_CLOUD_CONSUL_PORT=8500
             - SPRING_DATASOURCE_URL=jdbc:postgresql://uaa-postgresql:5432/uaa
             - JHIPSTER_SLEEP=10 # gives time for the database to boot before the application
+            - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS=kafka
+            - SPRING_CLOUD_STREAM_KAFKA_BINDER_ZK_NODES=zookeeper
     uaa-postgresql:
         extends:
             file: postgresql.yml
             service: uaa-postgresql
+    kafka:
+        extends:
+            file: kafka.yml
+            service: kafka
+        environment:
+            - KAFKA_ADVERTISED_HOST_NAME=kafka
+    zookeeper:
+        extends:
+            file: kafka.yml
+            service: zookeeper
     consul:
-        image: consul:0.8.3
+        image: consul:1.4.0
         command: consul agent -dev -ui -client 0.0.0.0
         ports:
             - 8300:8300
@@ -21,14 +34,14 @@ services:
             - 8600:8600
 
     consul-config-loader:
-        image: jhipster/consul-config-loader:v0.2.2
+        image: jhipster/consul-config-loader:v0.3.0
         volumes:
             - ./central-server-config:/config
         environment:
             - INIT_SLEEP_SECONDS=5
             - CONSUL_URL=consul
             - CONSUL_PORT=8500
-        # Uncomment to load configuration into Consul from a git repository
+        # Uncomment to load configuration into Consul from a Git repository
         # as configured in central-server-config/git2consul.json
         # Also set SPRING_CLOUD_CONSUL_CONFIG_FORMAT=files on your apps
         #    - CONFIG_MODE=git

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration>
 
 <configuration scan="true">
-
-    <!--<include resource="org/springframework/boot/logging/logback/base.xml"/>-->
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
 
 <!-- The FILE and ASYNC appenders are here as examples for a production configuration -->
 <!--
@@ -21,21 +21,15 @@
         <queueSize>512</queueSize>
         <appender-ref ref="FILE"/>
     </appender>
+
+    <root level="${logging.level.root}">
+        <appender-ref ref="ASYNC"/>
+    </root>
 -->
-
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <charset>utf-8</charset>
-            <Pattern>%d %-5level [%thread] [%X{rid}] %logger{0}: %msg%n</Pattern>
-        </encoder>
-    </appender>
-
-    <logger name="com.icthh.xm.uaa" level="#logback.loglevel#"/>
-
-    <logger name="io.github.jhipster" level="#logback.loglevel#"/>
 
     <logger name="javax.activation" level="WARN"/>
     <logger name="javax.mail" level="WARN"/>
+    <logger name="javax.management.remote" level="WARN"/>
     <logger name="javax.xml.bind" level="WARN"/>
     <logger name="ch.qos.logback" level="WARN"/>
     <logger name="com.codahale.metrics" level="WARN"/>
@@ -50,29 +44,26 @@
     <logger name="org.hibernate.validator" level="WARN"/>
     <logger name="org.hibernate" level="WARN"/>
     <logger name="org.hibernate.ejb.HibernatePersistence" level="OFF"/>
+    <logger name="org.postgresql.jdbc" level="WARN"/>
     <logger name="org.springframework" level="WARN"/>
     <logger name="org.springframework.web" level="WARN"/>
     <logger name="org.springframework.security" level="WARN"/>
     <logger name="org.springframework.cache" level="WARN"/>
     <logger name="org.thymeleaf" level="WARN"/>
     <logger name="org.xnio" level="WARN"/>
+    <logger name="kafka" level="WARN"/>
+    <logger name="org.I0Itec" level="WARN"/>
     <logger name="springfox" level="WARN"/>
     <logger name="sun.rmi" level="WARN"/>
     <logger name="liquibase" level="WARN"/>
     <logger name="LiquibaseSchemaResolver" level="INFO"/>
     <logger name="sun.rmi.transport" level="WARN"/>
-    <logger name="org.reflections" level="INFO"/>
-    <logger name="com.netflix.loadbalancer" level="INFO"/>
+
+    <!-- https://logback.qos.ch/manual/configuration.html#shutdownHook and https://jira.qos.ch/browse/LOGBACK-1090 -->
+    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
 
     <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
         <resetJUL>true</resetJUL>
     </contextListener>
-
-    <root level="#logback.loglevel#">
-        <appender-ref ref="STDOUT"/>
-<!--
-        <appender-ref ref="FILE"/>
--->
-    </root>
 
 </configuration>

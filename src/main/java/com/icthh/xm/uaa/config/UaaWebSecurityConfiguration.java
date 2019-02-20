@@ -1,19 +1,16 @@
 package com.icthh.xm.uaa.config;
 
-import com.icthh.xm.uaa.security.UaaAuthenticationProvider;
-import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpAuthenticationProvider;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.data.repository.query.SecurityEvaluationContextExtension;
 
@@ -21,43 +18,32 @@ import javax.annotation.PostConstruct;
 
 @Configuration
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
-@Import({
-    UserAuthPasswordEncoderConfiguration.class,
-    TfaOtpConfiguration.class
-})
 public class UaaWebSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final UserDetailsService userDetailsService;
 
-    private final PasswordEncoder passwordEncoder;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
-    private final AuthenticationProvider uaaAuthenticationProvider;
-    private final TfaOtpAuthenticationProvider tfaOtpAuthenticationProvider;
 
-    public UaaWebSecurityConfiguration(PasswordEncoder passwordEncoder,
-                                       UserDetailsService userDetailsService,
-                                       AuthenticationManagerBuilder authenticationManagerBuilder,
-                                       @Qualifier("uaaAuthenticationProvider") UaaAuthenticationProvider uaaAuthenticationProvider,
-                                       TfaOtpAuthenticationProvider tfaOtpAuthenticationProvider
-    ) {
-        this.passwordEncoder = passwordEncoder;
+    public UaaWebSecurityConfiguration(UserDetailsService userDetailsService, AuthenticationManagerBuilder authenticationManagerBuilder) {
         this.userDetailsService = userDetailsService;
         this.authenticationManagerBuilder = authenticationManagerBuilder;
-        this.uaaAuthenticationProvider = uaaAuthenticationProvider;
-        this.tfaOtpAuthenticationProvider = tfaOtpAuthenticationProvider;
-    }
-
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.authenticationProvider(uaaAuthenticationProvider);
-        auth.authenticationProvider(tfaOtpAuthenticationProvider);
     }
 
     @PostConstruct
     public void init() throws Exception {
-        authenticationManagerBuilder
-            .userDetailsService(userDetailsService)
-            .passwordEncoder(passwordEncoder);
+        try {
+            authenticationManagerBuilder
+                .userDetailsService(userDetailsService)
+                .passwordEncoder(passwordEncoder());
+        } catch (Exception e) {
+            throw new BeanInitializationException("Security configuration failed", e);
+        }
+    }
+
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
     @Override
@@ -71,7 +57,6 @@ public class UaaWebSecurityConfiguration extends WebSecurityConfigurerAdapter {
         web.ignoring()
             .antMatchers(HttpMethod.OPTIONS, "/**")
             .antMatchers("/app/**/*.{js,html}")
-            .antMatchers("/bower_components/**")
             .antMatchers("/i18n/**")
             .antMatchers("/content/**")
             .antMatchers("/swagger-ui/index.html")

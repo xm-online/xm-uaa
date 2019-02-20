@@ -1,65 +1,45 @@
 package com.icthh.xm.uaa.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
-import com.icthh.xm.commons.exceptions.BusinessException;
-import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.uaa.config.Constants;
-import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
-import com.icthh.xm.uaa.repository.UserLoginRepository;
-import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
-import com.icthh.xm.uaa.service.UserMailService;
+import com.icthh.xm.uaa.repository.UserRepository;
+import com.icthh.xm.uaa.security.AuthoritiesConstants;
+import com.icthh.xm.uaa.service.MailService;
 import com.icthh.xm.uaa.service.UserService;
-import com.icthh.xm.uaa.service.dto.TfaEnableRequest;
-import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
-import com.icthh.xm.uaa.service.dto.UserPublicDTO;
-import com.icthh.xm.uaa.web.constant.ErrorConstants;
+import com.icthh.xm.uaa.web.rest.errors.BadRequestAlertException;
+import com.icthh.xm.uaa.web.rest.errors.EmailAlreadyUsedException;
+import com.icthh.xm.uaa.web.rest.errors.LoginAlreadyUsedException;
 import com.icthh.xm.uaa.web.rest.util.HeaderUtil;
 import com.icthh.xm.uaa.web.rest.util.PaginationUtil;
+import com.codahale.metrics.annotation.Timed;
 import io.github.jhipster.web.util.ResponseUtil;
-import io.swagger.annotations.ApiParam;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.util.CollectionUtils;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-
-import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
-
+import java.util.*;
 
 /**
  * REST controller for managing users.
  * <p>
- * <p>This class accesses the User entity, and needs to fetch its collection of authorities.
+ * This class accesses the User entity, and needs to fetch its collection of authorities.
  * <p>
- * <p>For a normal use-case, it would be better to have an eager relationship between User and Authority,
+ * For a normal use-case, it would be better to have an eager relationship between User and Authority,
  * and send everything to the client side: there would be no View Model and DTO, a lot less code, and an outer-join
  * which would be good for performance.
  * <p>
- * <p>We use a View Model and a DTO for 3 reasons:
+ * We use a View Model and a DTO for 3 reasons:
  * <ul>
  * <li>We want to keep a lazy association between the user and the authorities, because people will
  * quite often do relationships with the user, and we don't want them to get the authorities all
@@ -72,216 +52,139 @@ import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdm
  * <li> As this manages users, for security reasons, we'd rather have a DTO layer.</li>
  * </ul>
  * <p>
- * <p>Another option would be to have a specific JPA entity graph to handle this case.
+ * Another option would be to have a specific JPA entity graph to handle this case.
  */
 @RestController
 @RequestMapping("/api")
-@Slf4j
-@AllArgsConstructor
 public class UserResource {
 
-    private static final String ENTITY_NAME = "userManagement";
-
-    private final UserLoginRepository userLoginRepository;
-
-    private final UserMailService userMailService;
+    private final Logger log = LoggerFactory.getLogger(UserResource.class);
 
     private final UserService userService;
 
-    private final ProfileEventProducer profileEventProducer;
+    private final UserRepository userRepository;
 
+    private final MailService mailService;
+
+    public UserResource(UserService userService, UserRepository userRepository, MailService mailService) {
+
+        this.userService = userService;
+        this.userRepository = userRepository;
+        this.mailService = mailService;
+    }
 
     /**
-     * POST /users : Creates a new user.
-     * Creates a new user if the login and email are not already used, and sends an mail with an
-     * activation link. The user needs to be activated on creation.
+     * POST  /users  : Creates a new user.
+     * <p>
+     * Creates a new user if the login and email are not already used, and sends an
+     * mail with an activation link.
+     * The user needs to be activated on creation.
      *
-     * @param user the user to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new user, or with
-     * status 400 (Bad Request) if the login or email is already in use
+     * @param userDTO the user to create
+     * @return the ResponseEntity with status 201 (Created) and with body the new user, or with status 400 (Bad Request) if the login or email is already in use
      * @throws URISyntaxException if the Location URI syntax is incorrect
+     * @throws BadRequestAlertException 400 (Bad Request) if the login or email is already in use
      */
     @PostMapping("/users")
     @Timed
-    @PreAuthorize("hasPermission({'user': #user}, 'USER.CREATE')")
-    public ResponseEntity createUser(@Valid @RequestBody UserDTO user) throws URISyntaxException {
-        if (user.getId() != null) {
-            return ResponseEntity.badRequest()
-                .headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new user cannot already have an ID"))
-                .body(null);
+    @PreAuthorize("hasRole(\"" + AuthoritiesConstants.ADMIN + "\")")
+    public ResponseEntity<User> createUser(@Valid @RequestBody UserDTO userDTO) throws URISyntaxException {
+        log.debug("REST request to save User : {}", userDTO);
+
+        if (userDTO.getId() != null) {
+            throw new BadRequestAlertException("A new user cannot already have an ID", "userManagement", "idexists");
+            // Lowercase the user login before comparing with database
+        } else if (userRepository.findOneByLogin(userDTO.getLogin().toLowerCase()).isPresent()) {
+            throw new LoginAlreadyUsedException();
+        } else if (userRepository.findOneByEmailIgnoreCase(userDTO.getEmail()).isPresent()) {
+            throw new EmailAlreadyUsedException();
+        } else {
+            User newUser = userService.createUser(userDTO);
+            mailService.sendCreationEmail(newUser);
+            return ResponseEntity.created(new URI("/api/users/" + newUser.getLogin()))
+                .headers(HeaderUtil.createAlert( "A user is created with identifier " + newUser.getLogin(), newUser.getLogin()))
+                .body(newUser);
         }
-        assertNotSuperAdmin(user);
-        user.getLogins().forEach(userLogin ->
-                                     userLoginRepository.findOneByLoginIgnoreCase(userLogin.getLogin())
-                                         .ifPresent(s -> {
-                                             throw new BusinessException(Constants.LOGIN_IS_USED_ERROR_TEXT);
-                                         })
-        );
-        User newUser = userService.createUser(user);
-        produceEvent(new UserDTO(newUser), Constants.CREATE_PROFILE_EVENT_TYPE);
-        userMailService.sendMailOnCreateUser(newUser);
-        return ResponseEntity.created(new URI("/api/users/" + newUser.getUserKey()))
-            .headers(HeaderUtil.createAlert("userManagement.created", newUser.getUserKey()))
-            .body(new UserDTO(newUser));
     }
 
     /**
-     * PUT  /users : Updates an existing User.
+     * PUT /users : Updates an existing User.
      *
-     * @param user the user to update
+     * @param userDTO the user to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated user
+     * @throws EmailAlreadyUsedException 400 (Bad Request) if the email is already in use
+     * @throws LoginAlreadyUsedException 400 (Bad Request) if the login is already in use
      */
     @PutMapping("/users")
     @Timed
-    @PreAuthorize("hasPermission({'id': #user.userKey, 'newUser': #user}, 'user', 'USER.UPDATE')")
-    public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody UserDTO user) {
-        assertNotSuperAdmin(user);
-        Optional<UserDTO> updatedUser = userService.updateUser(user);
-        updatedUser.ifPresent(userDTO -> produceEvent(userDTO, Constants.UPDATE_PROFILE_EVENT_TYPE));
-        return ResponseUtil.wrapOrNotFound(updatedUser,
-                                           HeaderUtil.createAlert("userManagement.updated", user.getUserKey()));
-    }
+    @PreAuthorize("hasRole(\"" + AuthoritiesConstants.ADMIN + "\")")
+    public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody UserDTO userDTO) {
+        log.debug("REST request to update User : {}", userDTO);
+        Optional<User> existingUser = userRepository.findOneByEmailIgnoreCase(userDTO.getEmail());
+        if (existingUser.isPresent() && (!existingUser.get().getId().equals(userDTO.getId()))) {
+            throw new EmailAlreadyUsedException();
+        }
+        existingUser = userRepository.findOneByLogin(userDTO.getLogin().toLowerCase());
+        if (existingUser.isPresent() && (!existingUser.get().getId().equals(userDTO.getId()))) {
+            throw new LoginAlreadyUsedException();
+        }
+        Optional<UserDTO> updatedUser = userService.updateUser(userDTO);
 
-
-    /**
-     * PUT /user/logins : Updates an existing User logins.
-     *
-     * @param user the user to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated user, or with
-     * status 400 (Bad Request) if the login or email is already in use, or with status 500
-     * (Internal Server Error) if the user couldn't be updated
-     */
-    @PutMapping("/users/logins")
-    @Timed
-    @PreAuthorize("hasPermission({'id': #user.userKey, 'newUser': #user}, 'user', 'USER.LOGIN.UPDATE')")
-    public ResponseEntity<UserDTO> updateUserLogins(@Valid @RequestBody UserDTO user) {
-        user.getLogins().forEach(userLogin ->
-                                     userLoginRepository.findOneByLoginIgnoreCaseAndUserIdNot(userLogin.getLogin(), user.getId())
-                                         .ifPresent(s -> {
-                                             throw new BusinessException(Constants.LOGIN_IS_USED_ERROR_TEXT);
-                                         })
-        );
-        Optional<UserDTO> updatedUser = userService.updateUserLogins(user.getUserKey(), user.getLogins());
-        updatedUser.ifPresent(userDTO -> produceEvent(userDTO, Constants.UPDATE_PROFILE_EVENT_TYPE));
         return ResponseUtil.wrapOrNotFound(updatedUser,
-                                           HeaderUtil.createAlert("userManagement.updated", user.getUserKey()));
+            HeaderUtil.createAlert("A user is updated with identifier " + userDTO.getLogin(), userDTO.getLogin()));
     }
 
     /**
-     * GET  /users : get all users.
+     * GET /users : get all users.
      *
      * @param pageable the pagination information
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
     @GetMapping("/users")
     @Timed
-    public ResponseEntity<List<UserDTO>> getAllUsers(
-        @ApiParam Pageable pageable,
-        @RequestParam(required = false) String roleKey) {
-        final Page<UserDTO> page = userService.getAllManagedUsers(pageable, roleKey, null);
+    public ResponseEntity<List<UserDTO>> getAllUsers(Pageable pageable) {
+        final Page<UserDTO> page = userService.getAllManagedUsers(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/users");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
     /**
-     * GET  /users/:userKey : get the "userKey" user.
-     *
-     * @param userKey the userKey of the user to find
-     * @return the ResponseEntity with status 200 (OK) and with body the "userKey" user, or with status 404 (Not Found)
+     * @return a string list of the all of the roles
      */
-    @GetMapping("/users/{userKey}")
+    @GetMapping("/users/authorities")
     @Timed
-    @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'USER.GET_LIST.ITEM')")
-    public ResponseEntity<UserDTO> getUser(@PathVariable String userKey) {
-        return ResponseUtil.wrapOrNotFound(
-            userService.findOneWithLoginsByUserKey(userKey).map(UserDTO::new));
+    @PreAuthorize("hasRole(\"" + AuthoritiesConstants.ADMIN + "\")")
+    public List<String> getAuthorities() {
+        return userService.getAuthorities();
     }
 
     /**
-     * GET  /users/:userKey/public : get public user info for "userKey"
-     *
-     * @param userKey the userKey of the user to find
-     * @return the ResponseEntity with status 200 (OK) and with body the "userKey" user, or with status 404 (Not Found)
-     */
-    @GetMapping("/users/{userKey}/public")
-    @Timed
-    @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'USER.GET_LIST.ITEM.PUBLIC')")
-    public ResponseEntity<UserPublicDTO> getPublicUser(@PathVariable String userKey) {
-        return ResponseUtil.wrapOrNotFound(
-            userService.findOneWithLoginsByUserKey(userKey).map(UserPublicDTO::new));
-    }
-
-    /**
-     * GET  /users/logins/:login : get the "login" user.
+     * GET /users/:login : get the "login" user.
      *
      * @param login the login of the user to find
      * @return the ResponseEntity with status 200 (OK) and with body the "login" user, or with status 404 (Not Found)
      */
-    @GetMapping("/users/logins")
+    @GetMapping("/users/{login:" + Constants.LOGIN_REGEX + "}")
     @Timed
-    @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'USER.GET_USER_BY_LOGIN')")
-    public ResponseEntity<UserDTO> getUserByLogin(@RequestParam String login) {
-        return ResponseUtil.wrapOrNotFound(userService.findOneByLogin(login).map(UserDTO::new));
+    public ResponseEntity<UserDTO> getUser(@PathVariable String login) {
+        log.debug("REST request to get User : {}", login);
+        return ResponseUtil.wrapOrNotFound(
+            userService.getUserWithAuthoritiesByLogin(login)
+                .map(UserDTO::new));
     }
 
     /**
-     * DELETE /users/:userKey : delete the "userKey" User.
+     * DELETE /users/:login : delete the "login" User.
      *
-     * @param userKey the user key of the user to delete
+     * @param login the login of the user to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/users/{userKey}")
+    @DeleteMapping("/users/{login:" + Constants.LOGIN_REGEX + "}")
     @Timed
-    @PreAuthorize("hasPermission({'id':#userKey}, 'user', 'USER.DELETE')")
-    public ResponseEntity<Void> deleteUser(@PathVariable String userKey) {
-        userService.deleteUser(userKey);
-        return ResponseEntity.ok().headers(HeaderUtil.createAlert("userManagement.deleted", userKey)).build();
+    @PreAuthorize("hasRole(\"" + AuthoritiesConstants.ADMIN + "\")")
+    public ResponseEntity<Void> deleteUser(@PathVariable String login) {
+        log.debug("REST request to delete User: {}", login);
+        userService.deleteUser(login);
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert( "A user is deleted with identifier " + login, login)).build();
     }
-
-    private void produceEvent(UserDTO userDto, String eventType) {
-        String content = profileEventProducer.createEventJson(userDto, eventType);
-        profileEventProducer.send(content);
-    }
-
-    /**
-     * POST /users/:userKey/tfa_enable : enable TFA for User with "userKey".
-     *
-     * @param userKey the user key to enable TFA
-     * @param request TFE enable request
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @PostMapping(path = "/users/{userKey}/tfa_enable")
-    @Timed
-    @PreAuthorize("hasPermission({'id':#userKey}, 'user', 'USER.TFA.ENABLE')")
-    public ResponseEntity<Void> enableTwoFactorAuth(@PathVariable String userKey,
-                                                    @Valid @NotNull @RequestBody TfaEnableRequest request) {
-        userService.enableTwoFactorAuth(userKey, request.getOtpChannelSpec());
-        return new ResponseEntity<>(HttpStatus.OK);
-    }
-
-    /**
-     * POST /users/:userKey/tfa_disable : disable TFA for User with "userKey".
-     *
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @PostMapping(path = "/users/{userKey}/tfa_disable")
-    @Timed
-    @PreAuthorize("hasPermission({'id':#userKey}, 'user', 'USER.TFA.DISABLE')")
-    public ResponseEntity<Void> disableTwoFactorAuth(@PathVariable String userKey) {
-        userService.disableTwoFactorAuth(userKey);
-        return new ResponseEntity<>(HttpStatus.OK);
-    }
-
-    @GetMapping(path = "/users/{userKey}/tfa_available_otp_channel_specs")
-    @Timed
-    @PreAuthorize("hasPermission(null, 'USER.TFA.AVAILABLE_OTP_CHANNEL_SPECS')")
-    public ResponseEntity<Map<OtpChannelType, List<TfaOtpChannelSpec>>> getTfaAvailableOtpChannelSpecs(@PathVariable String userKey) {
-        Map<OtpChannelType, List<TfaOtpChannelSpec>> channelSpecs = userService.getTfaAvailableOtpChannelSpecs(userKey);
-        if (CollectionUtils.isEmpty(channelSpecs)) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        return ResponseEntity.ok().body(channelSpecs);
-    }
-
 }

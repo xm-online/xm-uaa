@@ -3,60 +3,55 @@ package com.icthh.xm.uaa.config;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.servlet.InstrumentedFilter;
 import com.codahale.metrics.servlets.MetricsServlet;
-import com.icthh.xm.commons.security.spring.config.XmAuthenticationContextConfiguration;
-import com.icthh.xm.commons.tenant.spring.config.TenantContextConfiguration;
-import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpRequestFilter;
 import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.config.JHipsterProperties;
+import io.github.jhipster.config.h2.H2ConfigurationHelper;
 import io.undertow.UndertowOptions;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.embedded.ConfigurableEmbeddedServletContainer;
-import org.springframework.boot.context.embedded.EmbeddedServletContainerCustomizer;
-import org.springframework.boot.context.embedded.MimeMappings;
-import org.springframework.boot.context.embedded.undertow.UndertowEmbeddedServletContainerFactory;
+import org.springframework.boot.web.embedded.undertow.UndertowServletWebServerFactory;
+import org.springframework.boot.web.server.*;
 import org.springframework.boot.web.servlet.ServletContextInitializer;
+import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
+import org.springframework.http.MediaType;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-import java.util.EnumSet;
-import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRegistration;
+import javax.servlet.*;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+
 
 /**
  * Configuration of web application with Servlet 3.0 APIs.
  */
-@Slf4j
-@RequiredArgsConstructor
-@Import({
-    TenantContextConfiguration.class,
-    XmAuthenticationContextConfiguration.class
-})
 @Configuration
-public class WebConfigurer implements ServletContextInitializer, EmbeddedServletContainerCustomizer {
+public class WebConfigurer implements ServletContextInitializer, WebServerFactoryCustomizer<WebServerFactory> {
+
+    private final Logger log = LoggerFactory.getLogger(WebConfigurer.class);
 
     private final Environment env;
+
     private final JHipsterProperties jHipsterProperties;
 
     private MetricRegistry metricRegistry;
+
+    public WebConfigurer(Environment env, JHipsterProperties jHipsterProperties) {
+
+        this.env = env;
+        this.jHipsterProperties = jHipsterProperties;
+    }
 
     @Override
     public void onStartup(ServletContext servletContext) throws ServletException {
         if (env.getActiveProfiles().length != 0) {
             log.info("Web application configuration, using profiles: {}", (Object[]) env.getActiveProfiles());
         }
-
-        initTfaOtpFilter(servletContext);
-
         EnumSet<DispatcherType> disps = EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD, DispatcherType.ASYNC);
         initMetrics(servletContext, disps);
         if (env.acceptsProfiles(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
@@ -65,24 +60,12 @@ public class WebConfigurer implements ServletContextInitializer, EmbeddedServlet
         log.info("Web application fully configured");
     }
 
-    private void initTfaOtpFilter(ServletContext servletContext) {
-        log.debug("Registering TFA OTP Filter");
-        FilterRegistration.Dynamic tfaOtpFilter = servletContext
-            .addFilter("tfaOtpResponseHeadersInitFilter", new TfaOtpRequestFilter());
-        tfaOtpFilter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), true, "/oauth/token");
-    }
-
     /**
      * Customize the Servlet engine: Mime types, the document root, the cache.
      */
     @Override
-    public void customize(ConfigurableEmbeddedServletContainer container) {
-        MimeMappings mappings = new MimeMappings(MimeMappings.DEFAULT);
-        // IE issue, see https://github.com/jhipster/generator-jhipster/pull/711
-        mappings.add("html", "text/html;charset=utf-8");
-        // CloudFoundry issue, see https://github.com/cloudfoundry/gorouter/issues/64
-        mappings.add("json", "text/html;charset=utf-8");
-        container.setMimeMappings(mappings);
+    public void customize(WebServerFactory server) {
+        setMimeMappings(server);
 
         /*
          * Enable HTTP/2 for Undertow - https://twitter.com/ankinson/status/829256167700492288
@@ -91,11 +74,23 @@ public class WebConfigurer implements ServletContextInitializer, EmbeddedServlet
          * for more information.
          */
         if (jHipsterProperties.getHttp().getVersion().equals(JHipsterProperties.Http.Version.V_2_0) &&
-            container instanceof UndertowEmbeddedServletContainerFactory) {
+            server instanceof UndertowServletWebServerFactory) {
 
-            ((UndertowEmbeddedServletContainerFactory) container)
+            ((UndertowServletWebServerFactory) server)
                 .addBuilderCustomizers(builder ->
-                                           builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true));
+                    builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true));
+        }
+    }
+
+    private void setMimeMappings(WebServerFactory server) {
+        if (server instanceof ConfigurableServletWebServerFactory) {
+            MimeMappings mappings = new MimeMappings(MimeMappings.DEFAULT);
+            // IE issue, see https://github.com/jhipster/generator-jhipster/pull/711
+            mappings.add("html", MediaType.TEXT_HTML_VALUE + ";charset=" + StandardCharsets.UTF_8.name().toLowerCase());
+            // CloudFoundry issue, see https://github.com/cloudfoundry/gorouter/issues/64
+            mappings.add("json", MediaType.TEXT_HTML_VALUE + ";charset=" + StandardCharsets.UTF_8.name().toLowerCase());
+            ConfigurableServletWebServerFactory servletWebServer = (ConfigurableServletWebServerFactory) server;
+            servletWebServer.setMimeMappings(mappings);
         }
     }
 
@@ -105,13 +100,13 @@ public class WebConfigurer implements ServletContextInitializer, EmbeddedServlet
     private void initMetrics(ServletContext servletContext, EnumSet<DispatcherType> disps) {
         log.debug("Initializing Metrics registries");
         servletContext.setAttribute(InstrumentedFilter.REGISTRY_ATTRIBUTE,
-                                    metricRegistry);
+            metricRegistry);
         servletContext.setAttribute(MetricsServlet.METRICS_REGISTRY,
-                                    metricRegistry);
+            metricRegistry);
 
         log.debug("Registering Metrics Filter");
         FilterRegistration.Dynamic metricsFilter = servletContext.addFilter("webappMetricsFilter",
-                                                                            new InstrumentedFilter());
+            new InstrumentedFilter());
 
         metricsFilter.addMappingForUrlPatterns(disps, true, "/*");
         metricsFilter.setAsyncSupported(true);
@@ -132,6 +127,7 @@ public class WebConfigurer implements ServletContextInitializer, EmbeddedServlet
         if (config.getAllowedOrigins() != null && !config.getAllowedOrigins().isEmpty()) {
             log.debug("Registering CORS filter");
             source.registerCorsConfiguration("/api/**", config);
+            source.registerCorsConfiguration("/management/**", config);
             source.registerCorsConfiguration("/v2/api-docs", config);
         }
         return new CorsFilter(source);
@@ -142,15 +138,11 @@ public class WebConfigurer implements ServletContextInitializer, EmbeddedServlet
      */
     private void initH2Console(ServletContext servletContext) {
         log.debug("Initialize H2 console");
-        ServletRegistration.Dynamic h2ConsoleServlet = servletContext.addServlet("H2Console", new org.h2.server.web.WebServlet());
-        h2ConsoleServlet.addMapping("/h2-console/*");
-        h2ConsoleServlet.setInitParameter("-properties", "src/main/resources/");
-        h2ConsoleServlet.setLoadOnStartup(1);
+        H2ConfigurationHelper.initH2Console(servletContext);
     }
 
     @Autowired(required = false)
     public void setMetricRegistry(MetricRegistry metricRegistry) {
         this.metricRegistry = metricRegistry;
     }
-
 }

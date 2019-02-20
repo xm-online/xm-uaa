@@ -1,35 +1,29 @@
 package com.icthh.xm.uaa.service.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.icthh.xm.uaa.domain.OtpChannelType;
-import com.icthh.xm.uaa.domain.User;
-import com.icthh.xm.uaa.domain.UserLogin;
-import com.icthh.xm.uaa.domain.UserLoginType;
-import com.icthh.xm.uaa.util.OtpUtils;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
-import org.hibernate.validator.constraints.NotEmpty;
+import com.icthh.xm.uaa.config.Constants;
 
+import com.icthh.xm.uaa.domain.Authority;
+import com.icthh.xm.uaa.domain.User;
+
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
+
+import javax.validation.constraints.*;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import javax.validation.Valid;
-import javax.validation.constraints.Size;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A DTO representing a user, with his authorities.
  */
-@AllArgsConstructor
-@ToString(exclude = {"permissions"})
-@Getter
-@Setter
 public class UserDTO {
 
     private Long id;
+
+    @NotBlank
+    @Pattern(regexp = Constants.LOGIN_REGEX)
+    @Size(min = 1, max = 50)
+    private String login;
 
     @Size(max = 50)
     private String firstName;
@@ -37,27 +31,16 @@ public class UserDTO {
     @Size(max = 50)
     private String lastName;
 
+    @Email
+    @Size(min = 5, max = 254)
+    private String email;
+
     @Size(max = 256)
     private String imageUrl;
 
     private boolean activated = false;
 
-    /**
-     * Flag is TFA enabled for user. Use as read only!.
-     */
-    private boolean tfaEnabled = false;
-
-    /**
-     * User OTP channel type. Can be null. Use as read only!
-     */
-    private OtpChannelType tfaOtpChannelType;
-
-    /**
-     *  Current user TFA channel. Can be null. Use as read only!
-     */
-    private TfaOtpChannelSpec tfaOtpChannelSpec;
-
-    @Size(min = 2, max = 5)
+    @Size(min = 2, max = 6)
     private String langKey;
 
     private String createdBy;
@@ -68,71 +51,149 @@ public class UserDTO {
 
     private Instant lastModifiedDate;
 
-    private String userKey;
+    private Set<String> authorities;
 
-    private String roleKey;
-
-    private Integer accessTokenValiditySeconds;
-
-    private Integer refreshTokenValiditySeconds;
-
-    private Integer tfaAccessTokenValiditySeconds;
-
-    private Map<String, Object> data = new HashMap<>();
-
-    @NotEmpty
-    @Valid
-    private List<UserLogin> logins;
-
-    private List<AccPermissionDTO> permissions;
-
-    private boolean autoLogoutEnabled = false;
-
-    private Integer autoLogoutTimeoutSeconds;
-
-    @SuppressWarnings("unused")
     public UserDTO() {
         // Empty constructor needed for Jackson.
     }
 
-    /**
-     * UserDTO constructor.
-     *
-     * @param user user
-     */
     public UserDTO(User user) {
-        this(user.getId(),
-             user.getFirstName(),
-             user.getLastName(),
-             user.getImageUrl(),
-             user.isActivated(),
-             user.isTfaEnabled(),
-             user.getTfaOtpChannelType(),
-             null,
-             user.getLangKey(),
-             user.getCreatedBy(),
-             user.getCreatedDate(),
-             user.getLastModifiedBy(),
-             user.getLastModifiedDate(),
-             user.getUserKey(),
-             user.getRoleKey(),
-             user.getAccessTokenValiditySeconds(),
-             user.getRefreshTokenValiditySeconds(),
-             user.getTfaAccessTokenValiditySeconds(),
-             user.getData(),
-             user.getLogins(),
-             new ArrayList<>(),
-             user.isAutoLogoutEnabled(),
-             user.getAutoLogoutTimeoutSeconds()
-        );
-        OtpUtils.enrichTfaOtpChannelSpec(this);
+        this.id = user.getId();
+        this.login = user.getLogin();
+        this.firstName = user.getFirstName();
+        this.lastName = user.getLastName();
+        this.email = user.getEmail();
+        this.activated = user.getActivated();
+        this.imageUrl = user.getImageUrl();
+        this.langKey = user.getLangKey();
+        this.createdBy = user.getCreatedBy();
+        this.createdDate = user.getCreatedDate();
+        this.lastModifiedBy = user.getLastModifiedBy();
+        this.lastModifiedDate = user.getLastModifiedDate();
+        this.authorities = user.getAuthorities().stream()
+            .map(Authority::getName)
+            .collect(Collectors.toSet());
     }
 
-    // TODO refactor, put EMAIL type to configuration
-    @JsonIgnore
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getLogin() {
+        return login;
+    }
+
+    public void setLogin(String login) {
+        this.login = login;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
     public String getEmail() {
-        return getLogins().stream().filter(userLogin -> UserLoginType.EMAIL.getValue().equals(userLogin.getTypeKey()))
-            .findFirst().map(UserLogin::getLogin).orElse(null);
+        return email;
     }
 
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public boolean isActivated() {
+        return activated;
+    }
+
+    public void setActivated(boolean activated) {
+        this.activated = activated;
+    }
+
+    public String getLangKey() {
+        return langKey;
+    }
+
+    public void setLangKey(String langKey) {
+        this.langKey = langKey;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public Instant getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(Instant createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    public String getLastModifiedBy() {
+        return lastModifiedBy;
+    }
+
+    public void setLastModifiedBy(String lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
+    }
+
+    public Instant getLastModifiedDate() {
+        return lastModifiedDate;
+    }
+
+    public void setLastModifiedDate(Instant lastModifiedDate) {
+        this.lastModifiedDate = lastModifiedDate;
+    }
+
+    public Set<String> getAuthorities() {
+        return authorities;
+    }
+
+    public void setAuthorities(Set<String> authorities) {
+        this.authorities = authorities;
+    }
+
+    @Override
+    public String toString() {
+        return "UserDTO{" +
+            "login='" + login + '\'' +
+            ", firstName='" + firstName + '\'' +
+            ", lastName='" + lastName + '\'' +
+            ", email='" + email + '\'' +
+            ", imageUrl='" + imageUrl + '\'' +
+            ", activated=" + activated +
+            ", langKey='" + langKey + '\'' +
+            ", createdBy=" + createdBy +
+            ", createdDate=" + createdDate +
+            ", lastModifiedBy='" + lastModifiedBy + '\'' +
+            ", lastModifiedDate=" + lastModifiedDate +
+            ", authorities=" + authorities +
+            "}";
+    }
 }
