@@ -2,10 +2,18 @@ package com.icthh.xm.uaa.config;
 
 import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.uaa.security.DomainTokenServices;
+import com.icthh.xm.uaa.security.TokenConstraintsService;
+import com.icthh.xm.uaa.security.oauth2.otp.OtpGenerator;
+import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
+import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
+import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpTokenGranter;
+import com.icthh.xm.uaa.security.provider.DefaultAuthenticationRefreshProvider;
+import com.icthh.xm.uaa.service.OnlineUsersService;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
 import io.github.jhipster.config.JHipsterProperties;
 
 import java.io.IOException;
-import java.security.KeyPair;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
@@ -16,15 +24,11 @@ import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -47,7 +51,6 @@ import org.springframework.security.oauth2.provider.token.AuthorizationServerTok
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
-import org.springframework.security.oauth2.provider.token.store.KeyStoreKeyFactory;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.CorsFilter;
 
@@ -60,7 +63,7 @@ import org.springframework.web.filter.CorsFilter;
     UaaAccessTokenConverterConfiguration.class,
     TfaOtpConfiguration.class
 })
-public class UaaConfiguration extends AuthorizationServerConfigurerAdapter implements ApplicationContextAware {
+public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
 
     @RequiredArgsConstructor
     @EnableResourceServer
@@ -117,10 +120,8 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter imple
 
     private final PasswordEncoder passwordEncoder;
     private final TenantContextHolder tenantContextHolder;
-    private final JHipsterProperties jHipsterProperties;
     private final DefaultAuthenticationRefreshProvider defaultAuthenticationRefreshProvider;
     private final TenantPropertiesService tenantPropertiesService;
-    private final OnlineUsersService onlineUsersService;
     private final ClientDetailsService clientDetailsService;
     private final JwtTokenStore tokenStore;
     private final JwtAccessTokenConverter jwtAccessTokenConverter;
