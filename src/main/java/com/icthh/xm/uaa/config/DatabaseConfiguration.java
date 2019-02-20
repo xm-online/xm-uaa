@@ -7,7 +7,8 @@ import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
 import com.icthh.xm.commons.config.client.repository.TenantListRepository;
 import com.icthh.xm.commons.migration.db.XmMultiTenantSpringLiquibase;
 import com.icthh.xm.commons.migration.db.XmSpringLiquibase;
-import com.icthh.xm.uaa.web.rest.util.DatabaseUtil;
+
+import com.icthh.xm.uaa.util.DatabaseUtil;
 import io.github.jhipster.config.JHipsterConstants;
 
 import java.sql.SQLException;

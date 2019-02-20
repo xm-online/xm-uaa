@@ -2,15 +2,21 @@ package com.icthh.xm.uaa.web.rest;
 
 import com.icthh.xm.uaa.service.AuditEventService;
 import com.icthh.xm.uaa.web.rest.util.PaginationUtil;
-
 import io.github.jhipster.web.util.ResponseUtil;
+import io.swagger.annotations.ApiParam;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -21,23 +27,20 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/management/audits")
+@RequiredArgsConstructor
 public class AuditResource {
 
     private final AuditEventService auditEventService;
 
-    public AuditResource(AuditEventService auditEventService) {
-        this.auditEventService = auditEventService;
-    }
-
     /**
-     * GET /audits : get a page of AuditEvents.
+     * GET  /audits : get a page of AuditEvents.
      *
      * @param pageable the pagination information
      * @return the ResponseEntity with status 200 (OK) and the list of AuditEvents in body
      */
     @GetMapping
-    public ResponseEntity<List<AuditEvent>> getAll(Pageable pageable) {
-        Page<AuditEvent> page = auditEventService.findAll(pageable);
+    public ResponseEntity<List<AuditEvent>> getAll(@ApiParam Pageable pageable) {
+        Page<AuditEvent> page = auditEventService.findAll(pageable, null);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/management/audits");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -54,12 +57,12 @@ public class AuditResource {
     public ResponseEntity<List<AuditEvent>> getByDates(
         @RequestParam(value = "fromDate") LocalDate fromDate,
         @RequestParam(value = "toDate") LocalDate toDate,
-        Pageable pageable) {
+        @ApiParam Pageable pageable) {
 
         Page<AuditEvent> page = auditEventService.findByDates(
             fromDate.atStartOfDay(ZoneId.systemDefault()).toInstant(),
             toDate.atStartOfDay(ZoneId.systemDefault()).plusDays(1).toInstant(),
-            pageable);
+            pageable, null);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/management/audits");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -71,6 +74,7 @@ public class AuditResource {
      * @return the ResponseEntity with status 200 (OK) and the AuditEvent in body, or status 404 (Not Found)
      */
     @GetMapping("/{id:.+}")
+    @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'AUDIT.GET_LIST.ITEM')")
     public ResponseEntity<AuditEvent> get(@PathVariable Long id) {
         return ResponseUtil.wrapOrNotFound(auditEventService.find(id));
     }

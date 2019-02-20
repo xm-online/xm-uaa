@@ -1,15 +1,15 @@
-package com.icthh.xm.uaa.web.rest.util;
+package com.icthh.xm.uaa.util;
 
-import static com.icthh.xm.uaa.config.Constants.DDL_CREATE_SCHEMA;
+import lombok.experimental.UtilityClass;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
-import javax.sql.DataSource;
 
-import lombok.experimental.UtilityClass;
+import static com.icthh.xm.uaa.config.Constants.DDL_CREATE_SCHEMA;
 
 /**
  * Utility for database operations.
@@ -37,7 +37,6 @@ public final class DatabaseUtil {
 
     /**
      * Get tenant default language.
-     *
      * @param tenant the tenant key
      * @return default language
      */
