@@ -1,62 +1,77 @@
 package com.icthh.xm.uaa.security;
 
+import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
+import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.domain.User;
-import com.icthh.xm.uaa.repository.UserRepository;
-import org.hibernate.validator.internal.constraintvalidators.hv.EmailValidator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.core.GrantedAuthority;
+import com.icthh.xm.uaa.repository.UserLoginRepository;
+import com.icthh.xm.uaa.service.dto.UserLoginDto;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Component;
+import org.springframework.security.oauth2.common.exceptions.InvalidGrantException;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.List;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * Authenticate a user from the database.
  */
-@Component("userDetailsService")
+@Service("userDetailsService")
+@AllArgsConstructor
+@Slf4j
 public class DomainUserDetailsService implements UserDetailsService {
 
-    private final Logger log = LoggerFactory.getLogger(DomainUserDetailsService.class);
-
-    private final UserRepository userRepository;
-
-    public DomainUserDetailsService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+    private final UserLoginRepository userLoginRepository;
+    private final TenantContextHolder tenantContextHolder;
 
     @Override
     @Transactional
-    public UserDetails loadUserByUsername(final String login) {
+    @IgnoreLogginAspect
+    public DomainUserDetails loadUserByUsername(final String login) {
         log.debug("Authenticating {}", login);
+        TenantKey tenantKey = tenantContextHolder.getContext().getTenantKey()
+            .orElseThrow(() -> new TenantNotProvidedException("Tenant not provided for authentication"));
 
-        if (new EmailValidator().isValid(login, null)) {
-            return userRepository.findOneWithAuthoritiesByEmail(login)
-                .map(user -> createSpringSecurityUser(login, user))
-                .orElseThrow(() -> new UsernameNotFoundException("User with email " + login + " was not found in the database"));
-        }
+        return userLoginRepository.findOneByLogin(login).map(userLogin -> {
+            User user = userLogin.getUser();
+            if (!user.isActivated()) {
+                throw new InvalidGrantException("User " + login + " was not activated");
+            }
 
-        String lowercaseLogin = login.toLowerCase(Locale.ENGLISH);
-        return userRepository.findOneWithAuthoritiesByLogin(lowercaseLogin)
-            .map(user -> createSpringSecurityUser(lowercaseLogin, user))
-            .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLogin + " was not found in the database"));
+            // get user login's
+            List<UserLoginDto> logins = user.getLogins().stream()
+                .filter(l -> !l.isRemoved())
+                .map(UserLoginDto::new)
+                .collect(toList());
 
+            // get user role authority
+            SimpleGrantedAuthority authority = new SimpleGrantedAuthority(user.getRoleKey());
+            List<SimpleGrantedAuthority> authorities = Collections.singletonList(authority);
+
+            return new DomainUserDetails(login,
+                                         user.getPassword(),
+                                         authorities,
+                                         tenantKey.getValue(),
+                                         user.getUserKey(),
+                                         user.isTfaEnabled(),
+                                         user.getTfaOtpSecret(),
+                                         user.getTfaOtpChannelType(),
+                                         user.getAccessTokenValiditySeconds(),
+                                         user.getRefreshTokenValiditySeconds(),
+                                         user.getTfaAccessTokenValiditySeconds(),
+                                         user.isAutoLogoutEnabled(),
+                                         user.getAutoLogoutTimeoutSeconds(),
+                                         logins);
+        }).orElseThrow(
+            () -> new UsernameNotFoundException("User " + login
+                                                    + " was not found for tenant " + tenantKey.getValue()));
     }
 
-    private org.springframework.security.core.userdetails.User createSpringSecurityUser(String lowercaseLogin, User user) {
-        if (!user.getActivated()) {
-            throw new UserNotActivatedException("User " + lowercaseLogin + " was not activated");
-        }
-        List<GrantedAuthority> grantedAuthorities = user.getAuthorities().stream()
-            .map(authority -> new SimpleGrantedAuthority(authority.getName()))
-            .collect(Collectors.toList());
-        return new org.springframework.security.core.userdetails.User(user.getLogin(),
-            user.getPassword(),
-            grantedAuthorities);
-    }
 }

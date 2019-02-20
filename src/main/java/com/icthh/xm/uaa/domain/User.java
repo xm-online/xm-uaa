@@ -1,29 +1,44 @@
 package com.icthh.xm.uaa.domain;
 
-import com.icthh.xm.uaa.config.Constants;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.apache.commons.lang3.StringUtils;
-import org.hibernate.annotations.BatchSize;
-import javax.validation.constraints.Email;
+import com.icthh.xm.uaa.domain.converter.MapToStringConverter;
+import com.icthh.xm.uaa.repository.converter.OtpChannelTypeAttributeConverter;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jboss.aerogear.security.otp.api.Base32;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Convert;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Set;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * A user.
  */
 @Entity
 @Table(name = "jhi_user")
-
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@Getter
+@Setter
 public class User extends AbstractAuditingEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -34,15 +49,13 @@ public class User extends AbstractAuditingEntity implements Serializable {
     private Long id;
 
     @NotNull
-    @Pattern(regexp = Constants.LOGIN_REGEX)
-    @Size(min = 1, max = 50)
-    @Column(length = 50, unique = true, nullable = false)
-    private String login;
+    @Column(name = "user_key", unique = true, nullable = false)
+    private String userKey;
 
     @JsonIgnore
     @NotNull
     @Size(min = 60, max = 60)
-    @Column(name = "password_hash", length = 60, nullable = false)
+    @Column(name = "password_hash", length = 60)
     private String password;
 
     @Size(max = 50)
@@ -53,18 +66,24 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "last_name", length = 50)
     private String lastName;
 
-    @Email
-    @Size(min = 5, max = 254)
-    @Column(length = 254, unique = true)
-    private String email;
-
     @NotNull
     @Column(nullable = false)
     private boolean activated = false;
 
-    @Size(min = 2, max = 6)
-    @Column(name = "lang_key", length = 6)
-    private String langKey;
+    @NotNull
+    @Column(name = "tfa_enabled")
+    private boolean tfaEnabled = false;
+
+    @Convert(converter = OtpChannelTypeAttributeConverter.class)
+    @Column(name = "tfa_otp_channel_type", length = 64)
+    private OtpChannelType tfaOtpChannelType;
+
+    @Transient
+    private transient String tfaOtpSecret = Base32.random();
+
+    @Size(min = 2, max = 5)
+    @Column(name = "lang_key", length = 5)
+    private String langKey = "en";
 
     @Size(max = 256)
     @Column(name = "image_url", length = 256)
@@ -75,6 +94,10 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @JsonIgnore
     private String activationKey;
 
+    @Column(name = "create_activation_key_date")
+    @JsonIgnore
+    private Instant createActivationKeyDate;
+
     @Size(max = 20)
     @Column(name = "reset_key", length = 20)
     @JsonIgnore
@@ -83,119 +106,42 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "reset_date")
     private Instant resetDate = null;
 
+    @Column(name = "access_token_validity")
+    private Integer accessTokenValiditySeconds;
+
+    @Column(name = "refresh_token_validity")
+    private Integer refreshTokenValiditySeconds;
+
+    @Column(name = "tfa_access_token_validity")
+    private Integer tfaAccessTokenValiditySeconds;
+
+    @Column(name = "role_key")
+    private String roleKey;
+
+    @Convert(converter = MapToStringConverter.class)
+    @Column(name = "data")
+    private Map<String, Object> data = new HashMap<>();
+
     @JsonIgnore
-    @ManyToMany
-    @JoinTable(
-        name = "jhi_user_authority",
-        joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
-        inverseJoinColumns = {@JoinColumn(name = "authority_name", referencedColumnName = "name")})
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserLogin> logins = new ArrayList<>();
 
-    @BatchSize(size = 20)
-    private Set<Authority> authorities = new HashSet<>();
+    @NotNull
+    @Column(name = "auto_logout_enabled")
+    private boolean autoLogoutEnabled = false;
 
-    public Long getId() {
-        return id;
-    }
+    @Column(name = "auto_logout_timeout")
+    private Integer autoLogoutTimeoutSeconds;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getLogin() {
-        return login;
-    }
-
-    // Lowercase the login before saving it in database
-    public void setLogin(String login) {
-        this.login = StringUtils.lowerCase(login, Locale.ENGLISH);
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
+    // TODO refactor, put EMAIL type to configuration
     public String getEmail() {
-        return email;
+        return getLogins().stream().filter(userLogin -> UserLoginType.EMAIL.getValue().equals(userLogin.getTypeKey()))
+            .findFirst().map(UserLogin::getLogin).orElse(null);
     }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
-
-    public boolean getActivated() {
-        return activated;
-    }
-
-    public void setActivated(boolean activated) {
-        this.activated = activated;
-    }
-
-    public String getActivationKey() {
-        return activationKey;
-    }
-
-    public void setActivationKey(String activationKey) {
-        this.activationKey = activationKey;
-    }
-
-    public String getResetKey() {
-        return resetKey;
-    }
-
-    public void setResetKey(String resetKey) {
-        this.resetKey = resetKey;
-    }
-
-    public Instant getResetDate() {
-        return resetDate;
-    }
-
-    public void setResetDate(Instant resetDate) {
-        this.resetDate = resetDate;
-    }
-
-    public String getLangKey() {
-        return langKey;
-    }
-
-    public void setLangKey(String langKey) {
-        this.langKey = langKey;
-    }
-
-    public Set<Authority> getAuthorities() {
-        return authorities;
-    }
-
-    public void setAuthorities(Set<Authority> authorities) {
-        this.authorities = authorities;
+    public void setActivationKey(String key) {
+        this.activationKey = key;
+        this.createActivationKeyDate = Instant.now();
     }
 
     @Override
@@ -218,15 +164,19 @@ public class User extends AbstractAuditingEntity implements Serializable {
 
     @Override
     public String toString() {
-        return "User{" +
-            "login='" + login + '\'' +
-            ", firstName='" + firstName + '\'' +
-            ", lastName='" + lastName + '\'' +
-            ", email='" + email + '\'' +
-            ", imageUrl='" + imageUrl + '\'' +
-            ", activated='" + activated + '\'' +
-            ", langKey='" + langKey + '\'' +
-            ", activationKey='" + activationKey + '\'' +
-            "}";
+        return "User{"
+            + "userKey='" + userKey + '\''
+            + ", firstName='" + firstName + '\''
+            + ", lastName='" + lastName + '\''
+            + ", imageUrl='" + imageUrl + '\''
+            + ", activated='" + activated + '\''
+            + ", tfaEnabled='" + tfaEnabled + '\''
+            + ", tfaOtpChannelType='" + tfaOtpChannelType + '\''
+            + ", autoLogoutEnabled='" + autoLogoutEnabled + '\''
+            + ", autoLogoutTimeoutSeconds='" + autoLogoutTimeoutSeconds + '\''
+            + ", langKey='" + langKey + '\''
+            + ", activationKey='" + activationKey + '\''
+            + ", roleKey='" + roleKey + '\''
+            + "}";
     }
 }
