@@ -22,6 +22,7 @@ plugins {
     id "net.ltgt.apt" version "0.19"
     id "io.spring.dependency-management" version "1.0.6.RELEASE"
     id 'org.liquibase.gradle' version '2.0.1'
+    id "com.github.spotbugs" version "1.6.3"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
 }
 
@@ -37,6 +38,8 @@ apply plugin: 'war'
 apply plugin: 'propdeps'
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'idea'
+apply plugin: 'checkstyle'
+apply plugin: 'pmd'
 
 dependencyManagement {
   imports {
@@ -64,6 +67,24 @@ war {
 springBoot {
     mainClassName = 'com.icthh.xm.uaa.UaaApp'
     buildInfo()
+}
+
+checkstyle {
+    toolVersion = "7.6.1"
+    ignoreFailures = true
+    configFile = rootProject.file('./qa/checkstyle.xml')
+}
+
+spotbugs {
+    toolVersion = '3.1.3'
+    ignoreFailures = true
+}
+
+pmd {
+    rulePriority = 3
+    toolVersion = '5.5.4'
+    ignoreFailures = true
+    ruleSetFiles = files("./qa/pmd.xml")
 }
 
 if (OperatingSystem.current().isWindows()) {
@@ -95,7 +116,7 @@ test {
     // uncomment if the tests reports are not generated
     // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
     // ignoreFailures true
-    reports.html.enabled = false
+    reports.html.enabled = true
 }
 
 task cucumberTest(type: Test) {
@@ -107,6 +128,11 @@ task cucumberTest(type: Test) {
     // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
     // ignoreFailures true
     reports.html.enabled = false
+    testLogging {
+        events = ["passed", "failed", "skipped", "standardOut", "standardError"]
+        showStandardStreams = true
+        exceptionFormat = 'full'
+    }
 }
 
 check.dependsOn cucumberTest
@@ -251,6 +277,18 @@ dependencies {
     compile "org.postgresql:postgresql"
     liquibaseRuntime "org.postgresql:postgresql"
     compile "org.mapstruct:mapstruct-jdk8:${mapstruct_version}"
+    compileOnly "org.projectlombok:lombok:${lombok_version}"
+
+    compile "com.icthh.xm.commons:xm-commons-ms-web:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-lep:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-tenant-endpoint:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-i18n:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-migration-db:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-permission:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-timeline:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-metric:${xm_commons_version}"
+
+    annotationProcessor "org.projectlombok:lombok:${lombok_version}"
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     annotationProcessor "org.hibernate:hibernate-jpamodelgen"
     annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor") {
