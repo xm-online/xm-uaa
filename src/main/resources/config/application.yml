@@ -124,4 +124,30 @@ xm-config:
 # https://www.jhipster.tech/common-application-properties/
 # ===================================================================
 
-# application:
+application:
+    tenant-properties-path-pattern: /config/tenants/{tenantName}/uaa/${application.tenant-properties-name}
+    tenant-properties-name: uaa.yml
+    tenant-login-properties-path-pattern: /config/tenants/{tenantName}/uaa/${application.tenant-login-properties-name}
+    tenant-login-properties-name: logins.yml
+    email-path-pattern: /config/tenants/{tenantName}/uaa/emails/{langKey}/{fileName}.ftl
+    tenant-ignored-path-list: /swagger-resources/configuration/ui, /oauth/token_key, /h2-console
+    proxy-filter-white-list: /management/health
+    kafka-system-topic: system_topic
+    kafka-system-queue: system_queue
+    kafka-enabled: true
+    retry:
+        max-attempts: 3
+        delay: 1000 #in milliseconds
+        multiplier: 2
+    reCaptcha:
+        url: https://www.google.com/recaptcha/api/siteverify
+        secretKey:
+        publicKey:
+        registration-captcha-period-seconds: 21600
+    client-grant-types: client_credentials, refresh_token, password, tfa_otp_token
+    client-scope: openid
+    default-client-id: internal
+    timelines-enabled: true
+    db-schema-suffix:
+    lep:
+        tenant-script-storage: XM_MS_CONFIG

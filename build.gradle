@@ -277,6 +277,7 @@ dependencies {
     compile "org.postgresql:postgresql"
     liquibaseRuntime "org.postgresql:postgresql"
     compile "org.mapstruct:mapstruct-jdk8:${mapstruct_version}"
+    compile "org.freemarker:freemarker:${freemarker_version}"
     compileOnly "org.projectlombok:lombok:${lombok_version}"
 
     compile "com.icthh.xm.commons:xm-commons-ms-web:${xm_commons_version}"
