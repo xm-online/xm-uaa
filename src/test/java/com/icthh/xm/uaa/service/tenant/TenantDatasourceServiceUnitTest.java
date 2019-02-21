@@ -19,7 +19,7 @@ import java.sql.Statement;
 
 import static com.icthh.xm.uaa.config.Constants.DDL_CREATE_SCHEMA;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 

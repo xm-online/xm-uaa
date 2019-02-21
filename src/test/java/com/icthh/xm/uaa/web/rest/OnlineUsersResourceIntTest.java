@@ -66,8 +66,12 @@ public class OnlineUsersResourceIntTest {
     public void getAllOnlineUsers() throws Exception {
         // Initialize the database
         auditEventRepository.add(new AuditEvent("user1", AUTHENTICATION_SUCCESS));
-        auditEventRepository.add(new AuditEvent(Date.from(Instant.now().minus(1, ChronoUnit.DAYS)), "user2", AUTHENTICATION_SUCCESS, Collections
-            .emptyMap()));
+        auditEventRepository.add(new AuditEvent(
+            Instant.now().minus(1, ChronoUnit.DAYS),
+            "user2",
+            AUTHENTICATION_SUCCESS,
+            Collections
+                .emptyMap()));
 
         // Get all the clientList
         restClientMockMvc.perform(get("/api/onlineUsers"))

@@ -29,6 +29,7 @@ import java.util.Optional;
 import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
 import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
+import static com.icthh.xm.commons.tenant.TenantContextUtils.buildTenant;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**

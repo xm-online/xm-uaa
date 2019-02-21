@@ -1,17 +1,17 @@
 package com.icthh.xm.uaa.utils;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.argThat;
+
 import org.mockito.ArgumentMatcher;
 
 import java.io.Serializable;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.argThat;
-
 /**
- *  Argument matcher for deep reflection compare objects.
- *  For example: verify(service).doWord(deepRefEq(expected));
+ * Argument matcher for deep reflection compare objects.
+ * For example: verify(service).doWord(deepRefEq(expected));
  */
-public class DeepReflectionEquals<T> extends ArgumentMatcher<T> implements Serializable {
+public class DeepReflectionEquals<T> implements ArgumentMatcher<T>, Serializable {
 
     private final Object wanted;
     private final String[] excludeFields;

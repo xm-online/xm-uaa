@@ -13,7 +13,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.MessageSource;
 import org.springframework.mail.javamail.JavaMailSender;
 
@@ -29,7 +29,7 @@ import static java.util.Collections.emptyMap;
 import static java.util.Locale.ENGLISH;
 import static java.util.Locale.FRANCE;
 import static java.util.Locale.forLanguageTag;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;

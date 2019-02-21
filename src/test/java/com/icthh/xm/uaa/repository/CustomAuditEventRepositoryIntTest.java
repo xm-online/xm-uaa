@@ -165,7 +165,8 @@ public class CustomAuditEventRepositoryIntTest {
         persistenceAuditEventRepository.save(testUserOtherTypeEvent);
 
         List<AuditEvent> events = customAuditEventRepository.find("test-user",
-                                                                  Date.from(testUserEvent.getAuditEventDate().minusSeconds(3600)), "test-type");
+            testUserEvent.getAuditEventDate().minusSeconds(3600),
+            "test-type");
         assertThat(events).hasSize(1);
         AuditEvent event = events.get(0);
         assertThat(event.getPrincipal()).isEqualTo(testUserEvent.getPrincipal());
@@ -188,7 +189,7 @@ public class CustomAuditEventRepositoryIntTest {
         assertThat(persistentAuditEvent.getAuditEventType()).isEqualTo(event.getType());
         assertThat(persistentAuditEvent.getData()).containsKey("test-key");
         assertThat(persistentAuditEvent.getData().get("test-key")).isEqualTo("test-value");
-        assertThat(persistentAuditEvent.getAuditEventDate()).isEqualTo(event.getTimestamp().toInstant());
+        assertThat(persistentAuditEvent.getAuditEventDate()).isEqualTo(event.getTimestamp());
     }
 
     @Test

@@ -11,8 +11,8 @@ import io.undertow.UndertowOptions;
 import org.h2.server.web.WebServlet;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
-import org.springframework.boot.context.embedded.undertow.UndertowEmbeddedServletContainerFactory;
+import org.mockito.ArgumentMatchers;
+import org.springframework.boot.web.embedded.undertow.UndertowServletWebServerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.mock.env.MockEnvironment;
 import org.springframework.mock.web.MockServletContext;
@@ -38,8 +38,8 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -89,9 +89,9 @@ public class WebConfigurerTest {
 
         assertThat(servletContext.getAttribute(InstrumentedFilter.REGISTRY_ATTRIBUTE)).isEqualTo(metricRegistry);
         assertThat(servletContext.getAttribute(MetricsServlet.METRICS_REGISTRY)).isEqualTo(metricRegistry);
-        verify(servletContext).addFilter(Matchers.eq("webappMetricsFilter"), any(InstrumentedFilter.class));
-        verify(servletContext).addServlet(Matchers.eq("metricsServlet"), any(MetricsServlet.class));
-        verify(servletContext, never()).addServlet(Matchers.eq("H2Console"), any(WebServlet.class));
+        verify(servletContext).addFilter(ArgumentMatchers.eq("webappMetricsFilter"), any(InstrumentedFilter.class));
+        verify(servletContext).addServlet(ArgumentMatchers.eq("metricsServlet"), any(MetricsServlet.class));
+        verify(servletContext, never()).addServlet(ArgumentMatchers.eq("H2Console"), any(WebServlet.class));
     }
 
     @Test
@@ -101,15 +101,15 @@ public class WebConfigurerTest {
 
         assertThat(servletContext.getAttribute(InstrumentedFilter.REGISTRY_ATTRIBUTE)).isEqualTo(metricRegistry);
         assertThat(servletContext.getAttribute(MetricsServlet.METRICS_REGISTRY)).isEqualTo(metricRegistry);
-        verify(servletContext).addFilter(Matchers.eq("webappMetricsFilter"), any(InstrumentedFilter.class));
-        verify(servletContext).addServlet(Matchers.eq("metricsServlet"), any(MetricsServlet.class));
-        verify(servletContext).addServlet(Matchers.eq("H2Console"), any(WebServlet.class));
+        verify(servletContext).addFilter(ArgumentMatchers.eq("webappMetricsFilter"), any(InstrumentedFilter.class));
+        verify(servletContext).addServlet(ArgumentMatchers.eq("metricsServlet"), any(MetricsServlet.class));
+        verify(servletContext).addServlet(ArgumentMatchers.eq("H2Console"), any(WebServlet.class));
     }
 
     @Test
     public void testCustomizeServletContainer() {
         env.setActiveProfiles(JHipsterConstants.SPRING_PROFILE_PRODUCTION);
-        UndertowEmbeddedServletContainerFactory container = new UndertowEmbeddedServletContainerFactory();
+        UndertowServletWebServerFactory container = new UndertowServletWebServerFactory();
         webConfigurer.customize(container);
         assertThat(container.getMimeMappings().get("abs")).isEqualTo("audio/x-mpeg");
         assertThat(container.getMimeMappings().get("html")).isEqualTo("text/html;charset=utf-8");
@@ -124,7 +124,7 @@ public class WebConfigurerTest {
     @Test
     public void testUndertowHttp2Enabled() {
         props.getHttp().setVersion(JHipsterProperties.Http.Version.V_2_0);
-        UndertowEmbeddedServletContainerFactory container = new UndertowEmbeddedServletContainerFactory();
+        UndertowServletWebServerFactory container = new UndertowServletWebServerFactory();
         webConfigurer.customize(container);
         Builder builder = Undertow.builder();
         container.getBuilderCustomizers().forEach(c -> c.customize(builder));

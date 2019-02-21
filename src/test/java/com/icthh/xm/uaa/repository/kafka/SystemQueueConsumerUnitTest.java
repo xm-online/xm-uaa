@@ -17,7 +17,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.Optional;
 
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -96,23 +96,23 @@ public class SystemQueueConsumerUnitTest {
     public void updateProfile() {
         when(authContext.getLogin()).thenReturn(Optional.empty());
         when(userService.getUser(USER_KEY)).thenReturn(new User());
-        doNothing().when(userService).saveUser(anyObject());
+        doNothing().when(userService).saveUser(any());
 
         consumer.consumeEvent(new ConsumerRecord<>("test", 0, 0, "", UPDATE_ACCOUNT_EVENT));
 
         verify(userService).getUser(USER_KEY);
-        verify(userService).saveUser(anyObject());
+        verify(userService).saveUser(any());
     }
 
     @Test
     public void updateNotExistsProfile() {
         when(authContext.getLogin()).thenReturn(Optional.empty());
         when(userService.getUser(USER_KEY)).thenReturn(null);
-        doNothing().when(userService).saveUser(anyObject());
+        doNothing().when(userService).saveUser(any());
         consumer.consumeEvent(new ConsumerRecord<>("test", 0, 0, "", UPDATE_ACCOUNT_EVENT));
 
         verify(userService).getUser(USER_KEY);
-        verify(userService, times(0)).saveUser(anyObject());
+        verify(userService, times(0)).saveUser(any());
     }
 
 }

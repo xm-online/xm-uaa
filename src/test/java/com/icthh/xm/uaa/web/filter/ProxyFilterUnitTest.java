@@ -39,7 +39,8 @@ import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERR_TENANT_NOT_SUPPLI
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERR_TENANT_SUSPENDED;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.TENANT_IS_SUSPENDED;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.TENANT_NOT_SUPPLIED;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
