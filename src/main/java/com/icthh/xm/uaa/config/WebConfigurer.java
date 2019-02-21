@@ -5,31 +5,38 @@ import com.codahale.metrics.servlet.InstrumentedFilter;
 import com.codahale.metrics.servlets.MetricsServlet;
 import com.icthh.xm.commons.security.spring.config.XmAuthenticationContextConfiguration;
 import com.icthh.xm.commons.tenant.spring.config.TenantContextConfiguration;
+import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpRequestFilter;
 import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.config.JHipsterProperties;
 import io.github.jhipster.config.h2.H2ConfigurationHelper;
 import io.undertow.UndertowOptions;
+
+import java.nio.charset.StandardCharsets;
+import java.util.EnumSet;
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRegistration;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.embedded.undertow.UndertowServletWebServerFactory;
-import org.springframework.boot.web.server.*;
+
+import org.springframework.boot.web.server.MimeMappings;
+import org.springframework.boot.web.server.WebServerFactory;
+import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
-
-import javax.servlet.*;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
 
 /**
  * Configuration of web application with Servlet 3.0 APIs.
@@ -54,7 +61,9 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
         initTfaOtpFilter(servletContext);
 
-        EnumSet<DispatcherType> disps = EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD, DispatcherType.ASYNC);
+        EnumSet<DispatcherType> disps = EnumSet.of(DispatcherType.REQUEST,
+            DispatcherType.FORWARD,
+            DispatcherType.ASYNC);
         initMetrics(servletContext, disps);
         if (env.acceptsProfiles(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
             initH2Console(servletContext);
@@ -95,9 +104,11 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         if (server instanceof ConfigurableServletWebServerFactory) {
             MimeMappings mappings = new MimeMappings(MimeMappings.DEFAULT);
             // IE issue, see https://github.com/jhipster/generator-jhipster/pull/711
-            mappings.add("html", MediaType.TEXT_HTML_VALUE + ";charset=" + StandardCharsets.UTF_8.name().toLowerCase());
+            mappings.add("html", MediaType.TEXT_HTML_VALUE
+                + ";charset=" + StandardCharsets.UTF_8.name().toLowerCase());
             // CloudFoundry issue, see https://github.com/cloudfoundry/gorouter/issues/64
-            mappings.add("json", MediaType.TEXT_HTML_VALUE + ";charset=" + StandardCharsets.UTF_8.name().toLowerCase());
+            mappings.add("json", MediaType.TEXT_HTML_VALUE
+                + ";charset=" + StandardCharsets.UTF_8.name().toLowerCase());
             ConfigurableServletWebServerFactory servletWebServer = (ConfigurableServletWebServerFactory) server;
             servletWebServer.setMimeMappings(mappings);
         }

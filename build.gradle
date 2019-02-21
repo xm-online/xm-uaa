@@ -3,8 +3,10 @@ import org.gradle.internal.os.OperatingSystem
 buildscript {
     repositories {
         mavenLocal()
+        jcenter()
         mavenCentral()
         maven { url "http://repo.spring.io/plugins-release" }
+        maven { url "http://repo.spring.io/milestone" }
         maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
@@ -204,7 +206,12 @@ repositories {
     mavenLocal()
     mavenCentral()
     jcenter()
-    //jhipster-needle-gradle-repositories - JHipster will add additional repositories
+    maven { url 'http://repo.spring.io/milestone' }
+    maven { url 'http://repo.spring.io/snapshot' }
+    maven { url 'https://repository.jboss.org/nexus/content/repositories/releases' }
+    maven { url 'https://oss.sonatype.org/content/repositories/releases' }
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+    maven { url 'http://repo.maven.apache.org/maven2' }
 }
 
 dependencies {
@@ -270,6 +277,7 @@ dependencies {
     compile "org.springframework.security:spring-security-web"
     compile "org.springframework.security.oauth:spring-security-oauth2"
     compile "org.springframework.security:spring-security-jwt"
+    compile "org.springframework.security:spring-security-ldap"
     compile ("io.springfox:springfox-swagger2") {
         exclude module: 'mapstruct'
     }
@@ -278,6 +286,14 @@ dependencies {
     liquibaseRuntime "org.postgresql:postgresql"
     compile "org.mapstruct:mapstruct-jdk8:${mapstruct_version}"
     compile "org.freemarker:freemarker:${freemarker_version}"
+    compile "org.springframework.social:spring-social-security:${spring_social_version}"
+    compile "org.springframework.social:spring-social-core:${spring_social_version}"
+    compile "org.springframework.social:spring-social-config:${spring_social_version}"
+    compile "org.springframework.social:spring-social-google:${spring_social_google_version}"
+    compile "org.springframework.social:spring-social-facebook:${spring_social_facebook_version}"
+    compile "org.springframework.social:spring-social-twitter:${spring_social_twitter_version}"
+    compile "org.springframework.social:spring-social-linkedin:${spring_social_linkedin_version}"
+    compile "org.jboss.aerogear:aerogear-otp-java:${aerogear_version}"
     compileOnly "org.projectlombok:lombok:${lombok_version}"
 
     compile "com.icthh.xm.commons:xm-commons-ms-web:${xm_commons_version}"

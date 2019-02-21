@@ -1,18 +1,19 @@
 package com.icthh.xm.uaa.social;
 
+import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.UserInfoMapping;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.social.connect.UserProfile;
-import org.springframework.stereotype.Service;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
-import static org.apache.commons.lang3.StringUtils.isBlank;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.social.connect.UserProfile;
+import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -63,7 +64,7 @@ public class SocialUserInfoMapper {
             return null;
         }
         Object value = userInfo;
-        for(String property: mapping.get().split("\\.")) {
+        for (String property : mapping.get().split("\\.")) {
             value = getProperty(Optional.ofNullable(value), property);
         }
         return value == null ? null : String.valueOf(value);
@@ -71,7 +72,7 @@ public class SocialUserInfoMapper {
 
     private Object getProperty(Optional<Object> object, String property) {
         return object.filter(Map.class::isInstance)
-            .map (Map.class::cast)
+            .map(Map.class::cast)
             .map(map -> map.get(property))
             .orElse(null);
     }

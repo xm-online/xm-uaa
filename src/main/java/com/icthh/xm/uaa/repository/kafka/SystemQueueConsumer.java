@@ -1,5 +1,8 @@
 package com.icthh.xm.uaa.repository.kafka;
 
+import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_AUTH_CONTEXT;
+import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
+
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -14,6 +17,9 @@ import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.kafka.SystemEvent;
 import com.icthh.xm.uaa.repository.util.SystemEventMapper;
 import com.icthh.xm.uaa.service.UserService;
+
+import java.io.IOException;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -21,11 +27,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
-
-import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_AUTH_CONTEXT;
-import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
 
 @RequiredArgsConstructor
 @Slf4j

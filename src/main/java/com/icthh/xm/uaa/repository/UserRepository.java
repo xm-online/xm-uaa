@@ -33,8 +33,4 @@ public interface UserRepository extends JpaRepository<User, Long>, ResourceRepos
     Page<User> findAll(Pageable pageable);
 
     List<User> findByRoleKey(String roleKey);
-
-    @Override
-    @Query("SELECT u FROM User u WHERE u.userKey = :id")
-    User findById(@Param("id") Object id);
 }

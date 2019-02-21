@@ -36,16 +36,17 @@ public class ProfileInfoResource {
     }
 
     private String getRibbonEnv(String[] activeProfiles) {
-        String[] displayOnActiveProfiles = jHipsterProperties.getRibbon().getDisplayOnActiveProfiles();
-        if (displayOnActiveProfiles == null) {
-            return null;
-        }
-        List<String> ribbonProfiles = new ArrayList<>(Arrays.asList(displayOnActiveProfiles));
-        List<String> springBootProfiles = Arrays.asList(activeProfiles);
-        ribbonProfiles.retainAll(springBootProfiles);
-        if (!ribbonProfiles.isEmpty()) {
-            return ribbonProfiles.get(0);
-        }
+        //todo 5.7.0
+//        String[] displayOnActiveProfiles = jHipsterProperties.getRibbon().getDisplayOnActiveProfiles();
+//        if (displayOnActiveProfiles == null) {
+//            return null;
+//        }
+//        List<String> ribbonProfiles = new ArrayList<>(Arrays.asList(displayOnActiveProfiles));
+//        List<String> springBootProfiles = Arrays.asList(activeProfiles);
+//        ribbonProfiles.retainAll(springBootProfiles);
+//        if (!ribbonProfiles.isEmpty()) {
+//            return ribbonProfiles.get(0);
+//        }
         return null;
     }
 

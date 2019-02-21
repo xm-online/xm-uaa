@@ -1,12 +1,13 @@
 package com.icthh.xm.uaa.service.dto;
 
 import com.icthh.xm.commons.permission.domain.Role;
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.validator.constraints.NotEmpty;
 
 import java.util.Collection;
 import java.util.List;
+import javax.validation.constraints.NotEmpty;
+
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -40,15 +41,15 @@ public class RoleDTO {
     @Override
     public String toString() {
         return "RoleDTO{" +
-               "roleKey='" + roleKey + '\'' +
-               ", basedOn='" + basedOn + '\'' +
-               ", description='" + description + '\'' +
-               ", createdDate='" + createdDate + '\'' +
-               ", createdBy='" + createdBy + '\'' +
-               ", updatedDate='" + updatedDate + '\'' +
-               ", updatedBy='" + updatedBy + '\'' +
-               ", permissions.size=" + (permissions != null ? permissions.size() : null) +
-               ", env=" + env +
-               '}';
+            "roleKey='" + roleKey + '\'' +
+            ", basedOn='" + basedOn + '\'' +
+            ", description='" + description + '\'' +
+            ", createdDate='" + createdDate + '\'' +
+            ", createdBy='" + createdBy + '\'' +
+            ", updatedDate='" + updatedDate + '\'' +
+            ", updatedBy='" + updatedBy + '\'' +
+            ", permissions.size=" + (permissions != null ? permissions.size() : null) +
+            ", env=" + env +
+            '}';
     }
 }

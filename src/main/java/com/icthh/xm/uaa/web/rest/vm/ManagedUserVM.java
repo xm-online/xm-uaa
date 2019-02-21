@@ -4,14 +4,15 @@ import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.validator.constraints.NotBlank;
 
-import javax.validation.constraints.Size;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * View Model extending the UserDTO, which is meant to be used in the user management UI.
@@ -88,28 +89,28 @@ public class ManagedUserVM extends UserDTO {
                          Integer autoLogoutTimeoutSeconds) {
 
         super(id,
-              firstName,
-              lastName,
-              imageUrl,
-              activated,
-              tfaEnabled,
-              tfaOtpChannelType,
-              tfaOtpChannelSpec,
-              langKey,
-              createdBy,
-              createdDate,
-              lastModifiedBy,
-              lastModifiedDate,
-              userKey,
-              roleKey,
-              accessTokenValiditySeconds,
-              refreshTokenValiditySeconds,
-              tfaAccessTokenValiditySeconds,
-              data,
-              logins,
-              null,
-              autoLogoutEnabled,
-              autoLogoutTimeoutSeconds);
+            firstName,
+            lastName,
+            imageUrl,
+            activated,
+            tfaEnabled,
+            tfaOtpChannelType,
+            tfaOtpChannelSpec,
+            langKey,
+            createdBy,
+            createdDate,
+            lastModifiedBy,
+            lastModifiedDate,
+            userKey,
+            roleKey,
+            accessTokenValiditySeconds,
+            refreshTokenValiditySeconds,
+            tfaAccessTokenValiditySeconds,
+            data,
+            logins,
+            null,
+            autoLogoutEnabled,
+            autoLogoutTimeoutSeconds);
         this.password = password;
     }
 

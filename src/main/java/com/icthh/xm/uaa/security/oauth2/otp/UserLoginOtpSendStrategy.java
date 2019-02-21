@@ -1,23 +1,24 @@
 package com.icthh.xm.uaa.security.oauth2.otp;
 
+import static com.icthh.xm.uaa.config.Constants.REQ_ATTR_TFA_OTP_CHANNEL_TYPE;
+
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.security.DomainUserDetails;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.dto.UserLoginDto;
 import com.icthh.xm.uaa.util.OtpUtils;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-
-import static com.icthh.xm.uaa.config.Constants.REQ_ATTR_TFA_OTP_CHANNEL_TYPE;
 
 /**
  * The {@link UserLoginOtpSendStrategy} class.
@@ -37,15 +38,15 @@ public class UserLoginOtpSendStrategy implements OtpSendStrategy {
         OtpChannel otpChannel = getOtpChannel(userDetails);
         OtpSender sender = otpSenderFactory.getSender(otpChannel.getType()).orElseThrow(
             () -> new AuthenticationServiceException("Can't find OTP sender for channel type: "
-                                                         + otpChannel.getType().getTypeName())
+                + otpChannel.getType().getTypeName())
         );
 
         // Enrich user details with OTP channel type (User additional details will be copied to JWT access token)
         userDetails.setTfaOtpChannelType(otpChannel.getType());
         // Enrich request context with OTP channel type (it will be copied to response HTTP header)
         RequestContextHolder.getRequestAttributes().setAttribute(REQ_ATTR_TFA_OTP_CHANNEL_TYPE,
-                                                                 otpChannel.getType(),
-                                                                 RequestAttributes.SCOPE_REQUEST);
+            otpChannel.getType(),
+            RequestAttributes.SCOPE_REQUEST);
 
         sender.send(otp, otpChannel.getDestination(), userDetails.getUserKey());
     }
@@ -64,9 +65,9 @@ public class UserLoginOtpSendStrategy implements OtpSendStrategy {
         Optional<OtpChannel> channel = userLogin.map(userLoginDto -> new OtpChannel(channelType, userLoginDto.getLogin()));
         return channel.orElseThrow(
             () -> new InternalAuthenticationServiceException("User (key: " + userDetails.getUserKey()
-                                                                 + ", tenant: " + userDetails.getTenant()
-                                                                 + ") has no appropriate channel for type: "
-                                                                 + channelType.getTypeName())
+                + ", tenant: " + userDetails.getTenant()
+                + ") has no appropriate channel for type: "
+                + channelType.getTypeName())
         );
     }
 
@@ -85,8 +86,8 @@ public class UserLoginOtpSendStrategy implements OtpSendStrategy {
 
         return channelTypeOptional.orElseThrow(
             () -> new InternalAuthenticationServiceException("User (key: " + userDetails.getUserKey()
-                                                                 + ") and tenant: " + userDetails.getTenant()
-                                                                 + " config both has no configured OTP sender channel")
+                + ") and tenant: " + userDetails.getTenant()
+                + " config both has no configured OTP sender channel")
         );
     }
 

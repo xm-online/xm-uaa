@@ -1,5 +1,8 @@
 package com.icthh.xm.uaa.config;
 
+import com.icthh.xm.uaa.security.UaaAuthenticationProvider;
+import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpAuthenticationProvider;
+
 import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Qualifier;

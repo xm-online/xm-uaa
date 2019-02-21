@@ -1,8 +1,6 @@
 package com.icthh.xm.uaa.web.rest.vm;
 
-
-import org.hibernate.validator.constraints.NotBlank;
-
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 /**

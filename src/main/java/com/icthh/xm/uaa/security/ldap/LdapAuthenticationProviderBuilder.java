@@ -4,6 +4,11 @@ import com.icthh.xm.uaa.domain.properties.TenantProperties.Ldap;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -14,10 +19,6 @@ import org.springframework.security.ldap.authentication.LdapAuthenticationProvid
 import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider;
 import org.springframework.security.ldap.userdetails.DefaultLdapAuthoritiesPopulator;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 @AllArgsConstructor
 @Slf4j
@@ -34,7 +35,7 @@ public class LdapAuthenticationProviderBuilder {
         //get tenant ldap configuration
         Optional<Ldap> ldapOpt = ldapList.stream().filter(l -> l.getDomain().equals(domain)).findFirst();
         if (!ldapOpt.isPresent()) {
-            log.info("Ldap configuration not found for com.icthh.xm.uaa.domain {}", domain);
+            log.info("Ldap configuration not found for domain {}", domain);
             return Optional.empty();
         }
 
@@ -55,14 +56,14 @@ public class LdapAuthenticationProviderBuilder {
                 provider = buildAdAuthProvier(conf);
                 break;
             case OPEN_LDAP:
-                provider = buildLdapAuthProvier(conf);
+                provider = buildLdapAuthProvider(conf);
                 break;
         }
 
         return provider;
     }
 
-    private AuthenticationProvider buildLdapAuthProvier(Ldap conf) {
+    private AuthenticationProvider buildLdapAuthProvider(Ldap conf) {
         //ldap context which used for role searching
         DefaultSpringSecurityContextSource ctx = new DefaultSpringSecurityContextSource(conf.getProviderUrl());
         ctx.setUserDn(conf.getSystemUser());
