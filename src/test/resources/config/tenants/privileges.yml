@@ -1,0 +1,11 @@
+---
+uaa:
+- key: "ATTACHMENT.CREATE"
+  description: {}
+  resources:
+  - "attachment"
+- key: "ATTACHMENT.DELETE"
+  description: {}
+  resources:
+  - "attachment"
+  - "id"

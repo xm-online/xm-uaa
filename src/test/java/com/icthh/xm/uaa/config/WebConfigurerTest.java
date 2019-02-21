@@ -8,11 +8,11 @@ import io.github.jhipster.config.JHipsterProperties;
 import io.undertow.Undertow;
 import io.undertow.Undertow.Builder;
 import io.undertow.UndertowOptions;
-
 import org.h2.server.web.WebServlet;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.boot.web.embedded.undertow.UndertowServletWebServerFactory;
+import org.mockito.Matchers;
+import org.springframework.boot.context.embedded.undertow.UndertowEmbeddedServletContainerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.mock.env.MockEnvironment;
 import org.springframework.mock.web.MockServletContext;
@@ -21,13 +21,29 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.xnio.OptionMap;
 
-import javax.servlet.*;
-import java.util.*;
+import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
+import javax.servlet.FilterRegistration;
+import javax.servlet.MultipartConfigElement;
+import javax.servlet.Servlet;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRegistration;
+import javax.servlet.ServletSecurityElement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -53,9 +69,9 @@ public class WebConfigurerTest {
     @Before
     public void setup() {
         servletContext = spy(new MockServletContext());
-        doReturn(mock(FilterRegistration.Dynamic.class))
+        doReturn(new MockFilterRegistration())
             .when(servletContext).addFilter(anyString(), any(Filter.class));
-        doReturn(mock(ServletRegistration.Dynamic.class))
+        doReturn(new MockServletRegistration())
             .when(servletContext).addServlet(anyString(), any(Servlet.class));
 
         env = new MockEnvironment();
@@ -73,9 +89,9 @@ public class WebConfigurerTest {
 
         assertThat(servletContext.getAttribute(InstrumentedFilter.REGISTRY_ATTRIBUTE)).isEqualTo(metricRegistry);
         assertThat(servletContext.getAttribute(MetricsServlet.METRICS_REGISTRY)).isEqualTo(metricRegistry);
-        verify(servletContext).addFilter(eq("webappMetricsFilter"), any(InstrumentedFilter.class));
-        verify(servletContext).addServlet(eq("metricsServlet"), any(MetricsServlet.class));
-        verify(servletContext, never()).addServlet(eq("H2Console"), any(WebServlet.class));
+        verify(servletContext).addFilter(Matchers.eq("webappMetricsFilter"), any(InstrumentedFilter.class));
+        verify(servletContext).addServlet(Matchers.eq("metricsServlet"), any(MetricsServlet.class));
+        verify(servletContext, never()).addServlet(Matchers.eq("H2Console"), any(WebServlet.class));
     }
 
     @Test
@@ -85,15 +101,15 @@ public class WebConfigurerTest {
 
         assertThat(servletContext.getAttribute(InstrumentedFilter.REGISTRY_ATTRIBUTE)).isEqualTo(metricRegistry);
         assertThat(servletContext.getAttribute(MetricsServlet.METRICS_REGISTRY)).isEqualTo(metricRegistry);
-        verify(servletContext).addFilter(eq("webappMetricsFilter"), any(InstrumentedFilter.class));
-        verify(servletContext).addServlet(eq("metricsServlet"), any(MetricsServlet.class));
-        verify(servletContext).addServlet(eq("H2Console"), any(WebServlet.class));
+        verify(servletContext).addFilter(Matchers.eq("webappMetricsFilter"), any(InstrumentedFilter.class));
+        verify(servletContext).addServlet(Matchers.eq("metricsServlet"), any(MetricsServlet.class));
+        verify(servletContext).addServlet(Matchers.eq("H2Console"), any(WebServlet.class));
     }
 
     @Test
     public void testCustomizeServletContainer() {
         env.setActiveProfiles(JHipsterConstants.SPRING_PROFILE_PRODUCTION);
-        UndertowServletWebServerFactory container = new UndertowServletWebServerFactory();
+        UndertowEmbeddedServletContainerFactory container = new UndertowEmbeddedServletContainerFactory();
         webConfigurer.customize(container);
         assertThat(container.getMimeMappings().get("abs")).isEqualTo("audio/x-mpeg");
         assertThat(container.getMimeMappings().get("html")).isEqualTo("text/html;charset=utf-8");
@@ -108,7 +124,7 @@ public class WebConfigurerTest {
     @Test
     public void testUndertowHttp2Enabled() {
         props.getHttp().setVersion(JHipsterProperties.Http.Version.V_2_0);
-        UndertowServletWebServerFactory container = new UndertowServletWebServerFactory();
+        UndertowEmbeddedServletContainerFactory container = new UndertowEmbeddedServletContainerFactory();
         webConfigurer.customize(container);
         Builder builder = Undertow.builder();
         container.getBuilderCustomizers().forEach(c -> c.customize(builder));
@@ -193,5 +209,136 @@ public class WebConfigurerTest {
                 .header(HttpHeaders.ORIGIN, "other.domain.com"))
             .andExpect(status().isOk())
             .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
+    }
+
+    static class MockFilterRegistration implements FilterRegistration, FilterRegistration.Dynamic {
+
+        @Override
+        public void addMappingForServletNames(EnumSet<DispatcherType> dispatcherTypes, boolean isMatchAfter, String... servletNames) {
+
+        }
+
+        @Override
+        public Collection<String> getServletNameMappings() {
+            return null;
+        }
+
+        @Override
+        public void addMappingForUrlPatterns(EnumSet<DispatcherType> dispatcherTypes, boolean isMatchAfter, String... urlPatterns) {
+
+        }
+
+        @Override
+        public Collection<String> getUrlPatternMappings() {
+            return null;
+        }
+
+        @Override
+        public void setAsyncSupported(boolean isAsyncSupported) {
+
+        }
+
+        @Override
+        public String getName() {
+            return null;
+        }
+
+        @Override
+        public String getClassName() {
+            return null;
+        }
+
+        @Override
+        public boolean setInitParameter(String name, String value) {
+            return false;
+        }
+
+        @Override
+        public String getInitParameter(String name) {
+            return null;
+        }
+
+        @Override
+        public Set<String> setInitParameters(Map<String, String> initParameters) {
+            return null;
+        }
+
+        @Override
+        public Map<String, String> getInitParameters() {
+            return null;
+        }
+    }
+
+    static class MockServletRegistration implements ServletRegistration, ServletRegistration.Dynamic {
+
+        @Override
+        public void setLoadOnStartup(int loadOnStartup) {
+
+        }
+
+        @Override
+        public Set<String> setServletSecurity(ServletSecurityElement constraint) {
+            return null;
+        }
+
+        @Override
+        public void setMultipartConfig(MultipartConfigElement multipartConfig) {
+
+        }
+
+        @Override
+        public void setRunAsRole(String roleName) {
+
+        }
+
+        @Override
+        public void setAsyncSupported(boolean isAsyncSupported) {
+
+        }
+
+        @Override
+        public Set<String> addMapping(String... urlPatterns) {
+            return null;
+        }
+
+        @Override
+        public Collection<String> getMappings() {
+            return null;
+        }
+
+        @Override
+        public String getRunAsRole() {
+            return null;
+        }
+
+        @Override
+        public String getName() {
+            return null;
+        }
+
+        @Override
+        public String getClassName() {
+            return null;
+        }
+
+        @Override
+        public boolean setInitParameter(String name, String value) {
+            return false;
+        }
+
+        @Override
+        public String getInitParameter(String name) {
+            return null;
+        }
+
+        @Override
+        public Set<String> setInitParameters(Map<String, String> initParameters) {
+            return null;
+        }
+
+        @Override
+        public Map<String, String> getInitParameters() {
+            return null;
+        }
     }
 }

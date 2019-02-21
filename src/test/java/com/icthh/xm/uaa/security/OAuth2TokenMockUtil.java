@@ -1,12 +1,11 @@
 package com.icthh.xm.uaa.security;
 
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.Spy;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.OAuth2Request;
@@ -28,7 +27,7 @@ import static org.mockito.BDDMockito.given;
 @Component
 public class OAuth2TokenMockUtil {
 
-    @MockBean
+    @Spy
     private ResourceServerTokenServices tokenServices;
 
     private OAuth2Authentication createAuthentication(String username, Set<String> scopes, Set<String> roles) {
@@ -36,7 +35,12 @@ public class OAuth2TokenMockUtil {
             .map(SimpleGrantedAuthority::new)
             .collect(Collectors.toList());
 
-        User principal = new User(username, "test", true, true, true, true, authorities);
+        DomainUserDetails principal = new DomainUserDetails(username, "test", authorities, "XM",
+                                                            "test",
+                                                            false,
+                                                            null,
+                                                            null,
+                                                            false, null);
         Authentication authentication = new UsernamePasswordAuthenticationToken(principal, principal.getPassword(),
             principal.getAuthorities());
 
