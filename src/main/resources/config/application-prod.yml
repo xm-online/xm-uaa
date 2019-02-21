@@ -139,22 +139,6 @@ jhipster:
             host: localhost
             port: 5000
             queue-size: 512
-uaa:
-    #be sure to to change to a different keystore in production!
-    #create one using: keytool -genkey -alias uaa -storetype PKCS12 -keyalg RSA -keysize 2048 -keystore keystore.p12 -validity 3650
-    key-store:
-        name: config/tls/keystore.p12
-        password: password
-        alias: selfsigned
-    web-client-configuration:
-        # Access Token is valid for 5 mins
-        access-token-validity-in-seconds: 300
-        # Refresh Token is valid for 7 days
-        refresh-token-validity-in-seconds-for-remember-me: 604800
-        #change client secret in production, keep in sync with gateway configuration
-        client-id: web_app
-        secret: changeit
-
 # ===================================================================
 # Application specific properties
 # Add your own application properties here, see the ApplicationProperties class

@@ -71,6 +71,7 @@ spring:
             hibernate.generate_statistics: true
     liquibase:
         contexts: dev
+        enabled: true
     mail:
         host: localhost
         port: 25
@@ -89,6 +90,8 @@ spring:
         locator:
             discovery:
                 enabled: true
+    kafka:
+        bootstrap-servers: localhost:9093
 
 server:
     port: 9999
@@ -131,19 +134,6 @@ jhipster:
             host: localhost
             port: 5000
             queue-size: 512
-uaa:
-    key-store:
-        name: config/tls/keystore.p12
-        password: password
-        alias: selfsigned
-    web-client-configuration:
-        # Access Token is valid for 5 mins
-        access-token-validity-in-seconds: 300
-        # Refresh Token is valid for 7 days
-        refresh-token-validity-in-seconds-for-remember-me: 604800
-        client-id: web_app
-        secret: changeit
-
 # ===================================================================
 # Application specific properties
 # Add your own application properties here, see the ApplicationProperties class

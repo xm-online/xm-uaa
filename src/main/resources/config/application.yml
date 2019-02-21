@@ -22,7 +22,7 @@ management:
                 include: ["configprops", "env", "health", "info", "threaddump", "logfile" ]
     endpoint:
         health:
-            show-details: when-authorized
+            show-details: when_authorized
     info:
         git:
             mode: full
@@ -38,6 +38,11 @@ spring:
     application:
         name: uaa
     cloud:
+        inetutils:
+            preferredNetworks:
+                - 192.168.
+                - 10.0.
+                - 10.
         consul:
             discovery:
                 healthCheckPath: /management/health
@@ -61,11 +66,34 @@ spring:
             enabled: false
     thymeleaf:
         mode: HTML
+    mail:
+        host: localhost
+        port: 25
+        protocol: smtp
+        properties:
+            mail:
+                smtp:
+                    starttls.enable: false
+                    auth: false
+                    starttls.required: false
+    kafka:
+        consumer:
+            group-id: uaa
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        listener:
+            concurrency: 16
+        producer:
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    liquibase:
+        default-schema: XM
 security:
+    basic:
+        enabled: false
     oauth2:
         resource:
             filter-order: 3
-
 server:
     servlet:
         session:

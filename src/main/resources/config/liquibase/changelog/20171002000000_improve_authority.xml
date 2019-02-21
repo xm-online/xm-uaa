@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+    <!--
+        Deleted deprecated user's role tables and added column roleKey to user's table.
+    -->
+    <changeSet id="20171002000000-1" author="abonert">
+        <dropTable tableName="jhi_user_authority"/>
+
+        <dropTable tableName="jhi_authority"/>
+
+        <addColumn tableName="jhi_user">
+            <column name="role_key" type="varchar(255)" defaultValue="ROLE_USER">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!--
+        Set role's key to default user
+    -->
+    <changeSet id="20171002000000-2" author="abonert">
+        <update tableName="jhi_user">
+            <column name="role_key" value="SUPER-ADMIN"/>
+            <where>id=1</where>
+        </update>
+    </changeSet>
+</databaseChangeLog>
