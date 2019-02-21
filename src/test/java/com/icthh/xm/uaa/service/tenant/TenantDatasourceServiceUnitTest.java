@@ -1,7 +1,7 @@
 package com.icthh.xm.uaa.service.tenant;
 
+import com.icthh.xm.commons.migration.db.tenant.DropSchemaResolver;
 import com.icthh.xm.uaa.UaaTestConstants;
-import com.icthh.xm.uaa.config.tenant.SchemaDropResolver;
 import liquibase.configuration.GlobalConfiguration;
 import liquibase.configuration.LiquibaseConfiguration;
 import org.junit.Before;
@@ -36,7 +36,7 @@ public class TenantDatasourceServiceUnitTest {
     @Mock
     private ResourceLoader resourceLoader;
     @Mock
-    private SchemaDropResolver schemaDropResolver;
+    private DropSchemaResolver schemaDropResolver;
     @Mock
     private Connection connection;
     @Mock

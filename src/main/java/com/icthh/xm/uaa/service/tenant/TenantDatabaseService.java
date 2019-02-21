@@ -1,8 +1,17 @@
 package com.icthh.xm.uaa.service.tenant;
 
+import static com.icthh.xm.uaa.config.Constants.CHANGE_LOG_PATH;
+import static org.apache.commons.lang3.time.StopWatch.createStarted;
+
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
-import com.icthh.xm.uaa.config.tenant.SchemaDropResolver;
+
+import com.icthh.xm.commons.migration.db.tenant.DropSchemaResolver;
 import com.icthh.xm.uaa.util.DatabaseUtil;
+
+import java.sql.Connection;
+import java.sql.Statement;
+import javax.sql.DataSource;
+
 import liquibase.integration.spring.SpringLiquibase;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -11,13 +20,6 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
-
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.Statement;
-
-import static com.icthh.xm.uaa.config.Constants.CHANGE_LOG_PATH;
-import static org.apache.commons.lang3.time.StopWatch.createStarted;
 
 @Service
 @AllArgsConstructor
@@ -28,7 +30,7 @@ public class TenantDatabaseService {
     private DataSource dataSource;
     private LiquibaseProperties liquibaseProperties;
     private ResourceLoader resourceLoader;
-    private SchemaDropResolver schemaDropResolver;
+    private DropSchemaResolver schemaDropResolver;
 
     /**
      * Create database schema for tenant.
@@ -52,6 +54,7 @@ public class TenantDatabaseService {
 
     /**
      * Migrate database with liquibase.
+     *
      * @param tenantKey the tenant key
      */
     @SneakyThrows
