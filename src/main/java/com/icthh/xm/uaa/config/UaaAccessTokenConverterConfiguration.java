@@ -62,7 +62,7 @@ public class UaaAccessTokenConverterConfiguration {
     }
 
     /**
-     * This bean generates an token enhancer, which manages the exchange between JWT acces tokens and Authentication
+     * This bean generates an token enhancer, which manages the exchange between JWT access tokens and Authentication
      * in both directions.
      *
      * @return an access token converter configured with the authorization server's public/private keys
