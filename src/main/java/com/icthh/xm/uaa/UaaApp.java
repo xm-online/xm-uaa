@@ -1,5 +1,10 @@
 package com.icthh.xm.uaa;
 
+import com.icthh.xm.commons.logging.util.MdcUtils;
+import com.icthh.xm.commons.tenant.TenantContextUtils;
+import com.icthh.xm.commons.tenant.TenantKey;
+import com.icthh.xm.commons.tenant.internal.DefaultTenantContextHolder;
+import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.config.DefaultProfileUtil;
 import io.github.jhipster.config.JHipsterConstants;
 
@@ -14,12 +19,22 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.env.Environment;
 
-@Slf4j
+@ComponentScan("com.icthh.xm")
+@EnableAutoConfiguration
+@EnableConfigurationProperties({
+    LiquibaseProperties.class,
+    ApplicationProperties.class
+})
 @EnableDiscoveryClient
+@Slf4j
 @SpringBootApplication(scanBasePackages = {"com.icthh.xm"})
 @RequiredArgsConstructor
 public class UaaApp {
@@ -47,6 +62,18 @@ public class UaaApp {
             log.error("You have misconfigured your application! It should not "
                 + "run with both the 'dev' and 'cloud' profiles at the same time.");
         }
+
+        initContexts();
+    }
+
+    private static void initContexts() {
+        // init tenant context, by default this is XM super tenant
+        // TODO fix tenantKey upper case usage only for for Config server calls..., Postgres, H2 schema case sensitivity
+        TenantKey superKey = TenantKey.valueOf(TenantKey.SUPER_TENANT_KEY_VALUE.toUpperCase());
+        TenantContextUtils.setTenant(new DefaultTenantContextHolder(), superKey);
+
+        // init logger MDC context
+        MdcUtils.putRid(MdcUtils.getRid() + "::" + superKey.getValue());
     }
 
     /**
@@ -55,6 +82,10 @@ public class UaaApp {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        MdcUtils.putRid();
+        // TODO fix database initialising tenant context first like in other services
+        initContexts();
+
         SpringApplication app = new SpringApplication(UaaApp.class);
         DefaultProfileUtil.addDefaultProfile(app);
         Environment env = app.run(args).getEnvironment();

@@ -144,16 +144,6 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
             .tokenGranter(tokenGranter(endpoints));
     }
 
-//    /**
-//     * Apply the token converter (and enhancer) for token store.
-//     *
-//     * @return the JwtTokenStore managing the tokens.
-//     */
-//    @Bean
-//    public JwtTokenStore tokenStore() {
-//        return new JwtTokenStore(jwtAccessTokenConverter());
-//    }
-
     private TokenGranter tokenGranter(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         List<TokenGranter> granters = new ArrayList<>(Collections.singletonList(endpoints.getTokenGranter()));
         TfaOtpTokenGranter tfaOtpTokenGranter = new TfaOtpTokenGranter(tenantContextHolder,
@@ -165,23 +155,6 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
         granters.add(tfaOtpTokenGranter);
         return new CompositeTokenGranter(granters);
     }
-//
-//    /**
-//     * This bean generates an token enhancer, which manages the exchange between JWT acces tokens and Authentication
-//     * in both directions.
-//     *
-//     * @return an access token converter configured with the authorization server's public/private keys
-//     */
-//    @Bean
-//    public JwtAccessTokenConverter jwtAccessTokenConverter() {
-//        JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
-//        KeyPair keyPair = new KeyStoreKeyFactory(
-//            new ClassPathResource(uaaProperties.getKeyStore().getName()), uaaProperties.getKeyStore().getPassword().toCharArray())
-//            .getKeyPair(uaaProperties.getKeyStore().getAlias());
-//        converter.setKeyPair(keyPair);
-//        return converter;
-//    }
-
 
     /**
      * Apply custom token services.

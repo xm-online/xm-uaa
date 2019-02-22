@@ -12,7 +12,8 @@ import org.springframework.ui.freemarker.FreeMarkerConfigurationFactoryBean;
 @Configuration
 public class FreeMarkerConfiguration {
 
-    @Bean
+    //todo 5.7.0
+    //@Bean
     public freemarker.template.Configuration freeMarkerConfiguration() {
         UaaFreeMarkerConfigurationFactoryBean bean = new UaaFreeMarkerConfigurationFactoryBean();
         bean.setDefaultEncoding(StandardCharsets.UTF_8.name());
