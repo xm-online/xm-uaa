@@ -31,7 +31,6 @@ import org.springframework.security.oauth2.provider.token.store.KeyStoreKeyFacto
 import java.security.KeyPair;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 
@@ -41,7 +40,6 @@ import static com.icthh.xm.uaa.config.Constants.AUTH_USER_KEY;
 import static com.icthh.xm.uaa.config.Constants.KEYSTORE_ALIAS;
 import static com.icthh.xm.uaa.config.Constants.KEYSTORE_PATH;
 import static com.icthh.xm.uaa.config.Constants.KEYSTORE_PSWRD;
-import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
@@ -95,8 +93,6 @@ public class DomainTokenServicesUnitTest {
         when(tenantProperties.getSecurity()).thenReturn(security);
 
         when(applicationProperties.getSecurity()).thenReturn(appSecurity);
-        when(applicationProperties.getDefaultClientId()).thenReturn(new HashSet<>(asList("internal")));
-
 
         tokenServices = new DomainTokenServices();
         tokenServices.setTokenStore(tokenStore);
