@@ -183,9 +183,6 @@ public class MailServiceUnitTest {
     @Test
     @SneakyThrows
     public void ifInConfigNoTranslationKeyReturnByLocale() {
-        when(localizationMessageService.getMessage("tr subject key")).thenReturn("subject value");
-        when(localizationMessageService.getMessage("tr from key")).thenReturn("fromvalue (From value caption)");
-
         when(tenantConfigService.getConfig()).thenReturn(
             of(MAIL_SETTINGS, asList(of(
                 TEMPLATE_NAME, EMAIL_TEMPLATE,
@@ -206,9 +203,6 @@ public class MailServiceUnitTest {
     @Test
     @SneakyThrows
     public void ifInConfigNoTranslationKeyAndNoTranslationsByLocaleReturnEn() {
-        when(localizationMessageService.getMessage("tr subject key")).thenReturn("subject value");
-        when(localizationMessageService.getMessage("tr from key")).thenReturn("fromvalue (From value caption)");
-
         when(tenantConfigService.getConfig()).thenReturn(
             of(MAIL_SETTINGS, asList(of(
                 TEMPLATE_NAME, EMAIL_TEMPLATE,

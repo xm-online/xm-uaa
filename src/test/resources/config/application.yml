@@ -88,7 +88,7 @@ jhipster:
             port: 5000
             queue-size: 512
     mail:
-        from: test@localhost
+        from: <tenantname>@xm-online.com
         base-url: http://127.0.0.1:8080
     security:
         authentication:
