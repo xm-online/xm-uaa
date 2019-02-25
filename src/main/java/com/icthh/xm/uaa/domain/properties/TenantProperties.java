@@ -91,6 +91,11 @@ public class TenantProperties {
         private String tokenStrategy;
         private Boolean createAccountAutomatically;
         private String redirectUrl;
+        private Boolean useParametersForClientAuthentication;
+
+        public Boolean getUseParametersForClientAuthentication() {
+            return ofNullable(useParametersForClientAuthentication).orElse(true);
+        }
 
         public Boolean getCreateAccountAutomatically() {
             return ofNullable(createAccountAutomatically).orElse(true);

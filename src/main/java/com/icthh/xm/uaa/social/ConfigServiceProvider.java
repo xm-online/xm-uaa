@@ -19,7 +19,7 @@ public class ConfigServiceProvider implements OAuth2ServiceProvider<ConfigOAuth2
     protected ConfigOAuth2Template createOAuth2Template(Social social) {
         ConfigOAuth2Template oAuth2Template = new ConfigOAuth2Template(social.getClientId(), social.getClientSecret(),
                                                            social.getAuthorizeUrl(), social.getAccessTokenUrl());
-        oAuth2Template.setUseParametersForClientAuthentication(true);
+        oAuth2Template.setUseParametersForClientAuthentication(social.getUseParametersForClientAuthentication());
         return oAuth2Template;
     }
 
