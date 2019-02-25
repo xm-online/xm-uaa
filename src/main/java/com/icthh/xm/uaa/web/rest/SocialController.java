@@ -75,7 +75,7 @@ public class SocialController {
     }
 
     private RedirectView redirect(String url) {
-        return new RedirectView(url, true);
+        return new RedirectView(UaaUtils.getApplicationUrl(xmRequestContextHolder) + url, true);
     }
 
     private RedirectView redirectOnError(String providerId) {
