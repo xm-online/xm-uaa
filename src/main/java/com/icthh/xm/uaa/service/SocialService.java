@@ -1,5 +1,14 @@
 package com.icthh.xm.uaa.service;
 
+import static com.google.common.collect.ImmutableSet.of;
+import static com.icthh.xm.uaa.social.SocialLoginAnswer.AnswerType.NEED_ACCEPT_CONNECTION;
+import static com.icthh.xm.uaa.social.SocialLoginAnswer.AnswerType.REGISTERED;
+import static com.icthh.xm.uaa.social.SocialLoginAnswer.AnswerType.SING_IN;
+import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
+import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
@@ -20,6 +29,10 @@ import com.icthh.xm.uaa.social.SocialLoginAnswer;
 import com.icthh.xm.uaa.social.SocialUserInfo;
 import com.icthh.xm.uaa.social.SocialUserInfoMapper;
 import com.icthh.xm.uaa.social.exceptions.FoundMoreThanOneUserBySocialUserInfo;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -41,19 +54,6 @@ import org.springframework.social.oauth2.OAuth2Operations;
 import org.springframework.social.oauth2.OAuth2Parameters;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Stream;
-
-import static com.google.common.collect.ImmutableSet.of;
-import static com.icthh.xm.uaa.social.SocialLoginAnswer.AnswerType.NEED_ACCEPT_CONNECTION;
-import static com.icthh.xm.uaa.social.SocialLoginAnswer.AnswerType.REGISTERED;
-import static com.icthh.xm.uaa.social.SocialLoginAnswer.AnswerType.SING_IN;
-import static java.util.UUID.randomUUID;
-import static java.util.stream.Collectors.toList;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @Slf4j
 @Service
@@ -194,7 +194,7 @@ public class SocialService {
     @LogicExtensionPoint("SignIn")
     public OAuth2AccessToken signIn(String userKey) {
         User user = getUser(userKey);
-        UserDetails userDetailts = userDetailsService.loadUserByUsername(user.getEmail());
+        UserDetails userDetailts = userDetailsService.loadUserByUsername(getLogin(user));
         Authentication userAuth =
             new UsernamePasswordAuthenticationToken(userDetailts, "N/A", userDetailts.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(userAuth);
@@ -206,10 +206,16 @@ public class SocialService {
 
     @LogicExtensionPoint("FindUsersBySocialUserInfo")
     public List<User> findUsersByUserInfo(SocialUserInfo socialUserInfo) {
-        return Stream.of(socialUserInfo.getEmail(), socialUserInfo.getUsername(), socialUserInfo.getPhoneNumber())
-            .filter(Objects::nonNull).map(String::valueOf).filter(StringUtils::isNotBlank)
-            .map(userLoginRepository::findOneByLoginIgnoreCase).filter(Optional::isPresent).map(Optional::get)
-            .map(UserLogin::getUser).collect(toList());
+        return Stream.of(socialUserInfo.getEmail(), socialUserInfo.getPhoneNumber(), socialUserInfo.getUsername())
+                     .filter(Objects::nonNull).map(String::valueOf).filter(StringUtils::isNotBlank)
+                     .map(userLoginRepository::findOneByLoginIgnoreCase).filter(Objects::nonNull)
+                     .filter(Optional::isPresent).map(Optional::get)
+                     .map(UserLogin::getUser).collect(toList());
+    }
+
+    private String getLogin(User user) {
+        return user.getLogins().stream().map(UserLogin::getLogin).filter(StringUtils::isNotBlank).findFirst()
+                   .orElseThrow(() -> new BusinessException("error.not.logins.found", "All logins is null"));
     }
 
     @LogicExtensionPoint("CreateSocialUser")
