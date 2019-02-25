@@ -3,7 +3,8 @@
 ######################
 /build/www/**
 /src/test/javascript/coverage/
-
+/src/test/javascript/PhantomJS*/
+/src/main/resources/.h2.server.properties
 ######################
 # Node
 ######################
@@ -142,3 +143,6 @@ Desktop.ini
 # ESLint
 ######################
 .eslintcache
+
+src/main/lep-sandbox
+
