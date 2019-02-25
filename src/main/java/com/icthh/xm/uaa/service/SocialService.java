@@ -8,6 +8,7 @@ import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
+import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
@@ -194,7 +195,7 @@ public class SocialService {
     @LogicExtensionPoint("SignIn")
     public OAuth2AccessToken signIn(String userKey) {
         User user = getUser(userKey);
-        UserDetails userDetailts = userDetailsService.loadUserByUsername(user.getEmail());
+        UserDetails userDetailts = userDetailsService.loadUserByUsername(getLogin(user));
         Authentication userAuth =
             new UsernamePasswordAuthenticationToken(userDetailts, "N/A", userDetailts.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(userAuth);
@@ -206,10 +207,16 @@ public class SocialService {
 
     @LogicExtensionPoint("FindUsersBySocialUserInfo")
     public List<User> findUsersByUserInfo(SocialUserInfo socialUserInfo) {
-        return Stream.of(socialUserInfo.getEmail(), socialUserInfo.getUsername(), socialUserInfo.getPhoneNumber())
-            .filter(Objects::nonNull).map(String::valueOf).filter(StringUtils::isNotBlank)
-            .map(userLoginRepository::findOneByLoginIgnoreCase).filter(Optional::isPresent).map(Optional::get)
-            .map(UserLogin::getUser).collect(toList());
+        return Stream.of(socialUserInfo.getEmail(), socialUserInfo.getPhoneNumber(), socialUserInfo.getUsername())
+                     .filter(Objects::nonNull).map(String::valueOf).filter(StringUtils::isNotBlank)
+                     .map(userLoginRepository::findOneByLoginIgnoreCase).filter(Objects::nonNull)
+                     .filter(Optional::isPresent).map(Optional::get)
+                     .map(UserLogin::getUser).collect(toList());
+    }
+
+    private String getLogin(User user) {
+        return user.getLogins().stream().map(UserLogin::getLogin).filter(StringUtils::isNotBlank).findFirst()
+                   .orElseThrow(() -> new BusinessException("error.not.logins.found", "All logins is null"));
     }
 
     @LogicExtensionPoint("CreateSocialUser")
