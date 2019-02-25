@@ -214,12 +214,14 @@ public class SocialServiceIntTest {
 
         mockTenant();
 
-        SocialLoginAnswer socialLoginAnswer = socialService.acceptSocialLoginUser("P_ID", "activationCode");
+        SocialLoginAnswer socialLoginAnswer = socialService.acceptSocialLoginUser("P_ID",
+            "activationCode");
 
         Assert.assertEquals(socialLoginAnswer.getAnswerType(), SING_IN);
 
         assertJwtToken(socialLoginAnswer, "test@email.com",
-                       asList(login("LOGIN.EMAIL", "test@email.com"), login("LOGIN.MSISDN", "380930912700")));
+                       asList(login("LOGIN.EMAIL", "test@email.com"),
+                           login("LOGIN.MSISDN", "380930912700")));
     }
 
     private void assertJwtToken(SocialLoginAnswer socialLoginAnswer, String userName,
