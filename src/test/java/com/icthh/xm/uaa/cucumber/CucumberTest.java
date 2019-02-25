@@ -8,7 +8,6 @@ import org.junit.runner.RunWith;
 @RunWith(Cucumber.class)
 @CucumberOptions(plugin = "pretty", features = "src/test/features")
 @Ignore
-//todo 5.7.0
 public class CucumberTest {
 
 }
