@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -74,6 +75,14 @@ public class UaaApp {
 
         // init logger MDC context
         MdcUtils.putRid(MdcUtils.getRid() + "::" + superKey.getValue());
+    }
+
+    @PreDestroy
+    public void destroyApplication() {
+        log.info("\n----------------------------------------------------------\n\t"
+                + "Application {} is closing"
+                + "\n----------------------------------------------------------",
+            env.getProperty("spring.application.name"));
     }
 
     /**

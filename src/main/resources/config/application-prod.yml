@@ -123,7 +123,7 @@ jhipster:
                 # Refresh Token is valid for 7 days
                 token-validity-in-seconds-for-remember-me: 252000
     mail: # specific JHipster mail property, for standard properties see MailProperties
-        from: uaa@localhost
+        from: <tenantname>@xm-online.com
         base-url: http://my-server-url-to-change # Modify according to your server's URL
     metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
         jmx:
