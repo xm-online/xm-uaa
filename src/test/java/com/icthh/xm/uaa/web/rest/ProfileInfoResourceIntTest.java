@@ -3,7 +3,6 @@ package com.icthh.xm.uaa.web.rest;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
-import io.github.jhipster.config.JHipsterProperties;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -37,14 +36,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     UaaApp.class,
     XmOverrideConfiguration.class
 })
-//todo 5.7.0
 public class ProfileInfoResourceIntTest {
 
     @Mock
     private Environment environment;
-
-    @Mock
-    private JHipsterProperties jHipsterProperties;
 
     @Autowired
     private TenantContextHolder tenantContextHolder;
@@ -57,16 +52,11 @@ public class ProfileInfoResourceIntTest {
 
         tenantContextHolder.getPrivilegedContext().setTenant(buildTenant(DEFAULT_TENANT_KEY_VALUE));
 
-//        String mockProfile[] = {"test"};
-//        JHipsterProperties.Ribbon ribbon = new JHipsterProperties.Ribbon();
-//        ribbon.setDisplayOnActiveProfiles(mockProfile);
-//        when(jHipsterProperties.getRibbon()).thenReturn(ribbon);
-
         String activeProfiles[] = {"test"};
         when(environment.getDefaultProfiles()).thenReturn(activeProfiles);
         when(environment.getActiveProfiles()).thenReturn(activeProfiles);
 
-        ProfileInfoResource profileInfoResource = new ProfileInfoResource(environment, jHipsterProperties);
+        ProfileInfoResource profileInfoResource = new ProfileInfoResource(environment);
         this.restProfileMockMvc = MockMvcBuilders
             .standaloneSetup(profileInfoResource)
             .build();
@@ -83,17 +73,6 @@ public class ProfileInfoResourceIntTest {
         restProfileMockMvc.perform(get("/api/profile-info"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE));
-    }
-
-    @Test
-    public void getProfileInfoWithoutRibbon() throws Exception {
-//        JHipsterProperties.Ribbon ribbon = new JHipsterProperties.Ribbon();
-//        ribbon.setDisplayOnActiveProfiles(null);
-//        when(jHipsterProperties.getRibbon()).thenReturn(ribbon);
-//
-//        restProfileMockMvc.perform(get("/api/profile-info"))
-//            .andExpect(status().isOk())
-//            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE));
     }
 
     @Test
