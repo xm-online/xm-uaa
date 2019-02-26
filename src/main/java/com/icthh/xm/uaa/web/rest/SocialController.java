@@ -58,7 +58,10 @@ public class SocialController {
             SocialLoginAnswer answer = socialService.acceptSocialLoginUser(providerId, code);
             if (answer.getAnswerType() == SING_IN || answer.getAnswerType() == REGISTERED) {
                 OAuth2AccessToken token = answer.getOAuth2AccessToken();
-                request.getResponse().addCookie(new Cookie("social-authentication", token.getValue()));
+                Cookie cookie = new Cookie("social-authentication", token.getValue());
+                cookie.setMaxAge(60);
+                cookie.setPath("/");
+                request.getResponse().addCookie(cookie);
                 return redirect("/social-auth");
             } else if (answer.getAnswerType() == NEED_ACCEPT_CONNECTION) {
                 request.getResponse().addHeader("X-ACTIVATION-CODE", answer.getActivationCode());
