@@ -73,10 +73,14 @@ spring:
         contexts: dev
         enabled: true
     mail:
-        host: localhost
-        port: 25
-        username:
-        password:
+            host:
+            port:
+            username:
+            password:
+            properties:
+                mail.smtp.starttls.enable: true
+                ssl.trust:
+                mail.imap.ssl.enable: true
     messages:
         cache-duration: PT1S # 1 second, see the ISO 8601 standard
     thymeleaf:
