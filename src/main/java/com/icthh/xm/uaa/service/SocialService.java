@@ -128,9 +128,8 @@ public class SocialService {
     }
 
     private String redirectUri(String providerId) {
-        Social social = findSocialByProviderId(providerId);
-        return Optional.ofNullable(social.getRedirectUrl())
-            .orElse(UaaUtils.getApplicationUrl(xmRequestContextHolder) + "/uaa/social/signin/" + providerId);
+        return Optional.ofNullable(tenantPropertiesService.getTenantProps().getSocialBaseUrl())
+            .orElse(UaaUtils.getApplicationUrl(xmRequestContextHolder)) + "/uaa/social/signin/" + providerId;
     }
 
     private ProviderNotFoundException providerNotFound(String providerId) {

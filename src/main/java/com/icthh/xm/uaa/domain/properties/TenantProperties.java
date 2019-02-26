@@ -76,6 +76,9 @@ public class TenantProperties {
     @JsonProperty("social")
     private List<Social> social;
 
+    @JsonProperty("socialBaseUrl")
+    private String socialBaseUrl;
+
     @Data
     @ToString(of = {"providerId"})
     public static class Social {
@@ -90,7 +93,6 @@ public class TenantProperties {
         private UserInfoMapping userInfoMapping;
         private String tokenStrategy;
         private Boolean createAccountAutomatically;
-        private String redirectUrl;
         private Boolean useParametersForClientAuthentication;
 
         public Boolean getUseParametersForClientAuthentication() {
