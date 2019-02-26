@@ -8,7 +8,9 @@ import static org.springframework.social.support.URIBuilder.fromUri;
 import com.icthh.xm.uaa.commons.UaaUtils;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.service.SocialService;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.social.SocialLoginAnswer;
+import java.util.Optional;
 import javax.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -37,6 +39,7 @@ public class SocialController {
 
     private final SocialService socialService;
     private final XmRequestContextHolder xmRequestContextHolder;
+    private final TenantPropertiesService tenantPropertiesService;
 
     @PostMapping(value = "/signin/{providerId}")
     @PreAuthorize("hasPermission(null, 'SOCIAL.SIGN_IN')")
@@ -74,12 +77,17 @@ public class SocialController {
         socialService.acceptConnection(activationCode);
     }
 
+    private String baseUrl() {
+        return Optional.ofNullable(tenantPropertiesService.getTenantProps().getSocialBaseUrl())
+                       .orElse(UaaUtils.getApplicationUrl(xmRequestContextHolder));
+    }
+
     private RedirectView redirect(String url) {
-        return new RedirectView(UaaUtils.getApplicationUrl(xmRequestContextHolder) + url, true);
+        return new RedirectView(baseUrl() + url, true);
     }
 
     private RedirectView redirectOnError(String providerId) {
-        return redirect(fromUri(UaaUtils.getApplicationUrl(xmRequestContextHolder) + "/social-register/" + providerId)
+        return redirect(fromUri(baseUrl() + "/social-register/" + providerId)
                             .queryParam("success", "false").build().toString());
     }
 
