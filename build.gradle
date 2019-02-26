@@ -71,23 +71,6 @@ springBoot {
     buildInfo()
 }
 
-checkstyle {
-    toolVersion = "7.6.1"
-    ignoreFailures = true
-    configFile = rootProject.file('./qa/checkstyle.xml')
-}
-
-spotbugs {
-    toolVersion = '3.1.3'
-    ignoreFailures = true
-}
-
-pmd {
-    rulePriority = 3
-    toolVersion = '5.5.4'
-    ignoreFailures = true
-    ruleSetFiles = files("./qa/pmd.xml")
-}
 
 if (OperatingSystem.current().isWindows()) {
     // https://stackoverflow.com/questions/40037487/the-filename-or-extension-is-too-long-error-using-gradle
@@ -113,12 +96,19 @@ if (OperatingSystem.current().isWindows()) {
 }
 
 test {
-    exclude '**/CucumberTest*'
+    systemProperty "spring.profiles.active", "test"
+    mkdir("src/test/features")
+    include '**/*UnitTest*'
+    include '**/*IntTest*'
 
     // uncomment if the tests reports are not generated
     // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
     // ignoreFailures true
-    reports.html.enabled = true
+    reports.html.enabled = false
+    testLogging {
+        exceptionFormat = 'full'
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+    }
 }
 
 task cucumberTest(type: Test) {
@@ -332,6 +322,28 @@ dependencies {
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 }
 
+checkstyle {
+    toolVersion = "7.6.1"
+    ignoreFailures = true
+    configFile = rootProject.file('./qa/checkstyle.xml')
+}
+
+findbugs {
+    toolVersion = '3.0.1'
+    ignoreFailures = true
+}
+
+pmd {
+    rulePriority = 3
+    toolVersion = '5.5.4'
+    ignoreFailures = true
+    ruleSetFiles = files("./qa/pmd.xml")
+}
+
+clean {
+    delete "target"
+}
+
 task cleanResources(type: Delete) {
     delete 'build/resources'
 }
@@ -344,6 +356,10 @@ task stage(dependsOn: 'bootWar') {
 }
 
 bootWar.dependsOn war
-compileJava.dependsOn processResources
+compileJava {
+    dependsOn processResources
+    // add method parameters names to .class (used by LEP scripts)
+    options.compilerArgs << '-parameters'
+}
 processResources.dependsOn cleanResources,bootBuildInfo
 bootBuildInfo.mustRunAfter cleanResources
