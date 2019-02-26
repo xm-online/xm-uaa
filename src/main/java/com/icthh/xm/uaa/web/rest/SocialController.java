@@ -67,7 +67,6 @@ public class SocialController {
                 request.getResponse().addHeader("X-ACTIVATION-CODE", answer.getActivationCode());
                 return redirect("/social-accept-connection");
             }
-
             return redirectOnError(providerId);
         } catch (Exception e) {
             return redirectOnError(providerId);
