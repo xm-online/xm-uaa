@@ -273,6 +273,7 @@ dependencies {
     }
     compile "io.springfox:springfox-bean-validators"
     compile "org.postgresql:postgresql"
+    compile "com.h2database:h2"
     liquibaseRuntime "org.postgresql:postgresql"
     compile "org.mapstruct:mapstruct-jdk8:${mapstruct_version}"
     compile "org.freemarker:freemarker:${freemarker_version}"
