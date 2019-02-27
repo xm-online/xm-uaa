@@ -62,8 +62,7 @@ bootWar {
 }
 
 war {
-    enabled = true
-    classifier = 'original'
+
 }
 
 springBoot {
@@ -187,9 +186,17 @@ liquibase {
     runList = project.ext.runList
 }
 
+group = 'com.icthh.xm.uaa'
+version = '0.0.1-SNAPSHOT'
+
+description = ''
+
 configurations {
     providedRuntime
     compile.exclude module: "spring-boot-starter-tomcat"
+    // netty's native is pulled by spring-cloud-starter-ribbon, but is useless unless you explicitly add the native binary dependency.
+    // Having it in the classpath without the binary can cause warnings
+    all*.exclude group: 'io.netty', module: 'netty-transport-native-epoll'
 }
 
 repositories {
