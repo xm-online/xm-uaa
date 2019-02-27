@@ -41,6 +41,7 @@ apply plugin: 'propdeps'
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'idea'
 apply plugin: 'checkstyle'
+apply plugin: 'findbugs'
 apply plugin: 'pmd'
 
 dependencyManagement {
