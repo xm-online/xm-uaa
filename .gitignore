@@ -79,6 +79,7 @@ out/
 ######################
 .gradle/
 /build/
+gradle-local.properties
 
 ######################
 # Package Files
@@ -115,7 +116,7 @@ Desktop.ini
 ######################
 /bin/
 /deploy/
-
+/out/
 ######################
 # Logs
 ######################
