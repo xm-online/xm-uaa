@@ -24,7 +24,6 @@ plugins {
     id "net.ltgt.apt" version "0.19"
     id "io.spring.dependency-management" version "1.0.6.RELEASE"
     id 'org.liquibase.gradle' version '2.0.1'
-    id "com.github.spotbugs" version "1.6.3"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
 }
 
