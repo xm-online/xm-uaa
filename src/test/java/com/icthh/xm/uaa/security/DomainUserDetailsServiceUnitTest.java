@@ -1,11 +1,6 @@
 package com.icthh.xm.uaa.security;
 
 import com.icthh.xm.commons.permission.constants.RoleConstant;
-import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.when;
-
 import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
@@ -20,6 +15,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.common.exceptions.InvalidGrantException;
 
 import java.util.Optional;
+
+import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
 public class DomainUserDetailsServiceUnitTest {
 

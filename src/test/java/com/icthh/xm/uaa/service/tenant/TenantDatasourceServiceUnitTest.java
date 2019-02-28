@@ -1,13 +1,7 @@
 package com.icthh.xm.uaa.service.tenant;
 
-import static com.icthh.xm.uaa.config.Constants.DDL_CREATE_SCHEMA;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
+import com.icthh.xm.commons.migration.db.tenant.DropSchemaResolver;
 import com.icthh.xm.uaa.UaaTestConstants;
-import com.icthh.xm.uaa.config.tenant.SchemaDropResolver;
 import liquibase.configuration.GlobalConfiguration;
 import liquibase.configuration.LiquibaseConfiguration;
 import org.junit.Before;
@@ -18,10 +12,16 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.core.io.ResourceLoader;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import javax.sql.DataSource;
+
+import static com.icthh.xm.uaa.config.Constants.DDL_CREATE_SCHEMA;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class TenantDatasourceServiceUnitTest {
 
@@ -36,7 +36,7 @@ public class TenantDatasourceServiceUnitTest {
     @Mock
     private ResourceLoader resourceLoader;
     @Mock
-    private SchemaDropResolver schemaDropResolver;
+    private DropSchemaResolver schemaDropResolver;
     @Mock
     private Connection connection;
     @Mock

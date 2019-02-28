@@ -3,7 +3,6 @@ package com.icthh.xm.uaa.social;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.Social;
 import org.springframework.social.oauth2.OAuth2Operations;
 import org.springframework.social.oauth2.OAuth2ServiceProvider;
-import org.springframework.social.oauth2.OAuth2Template;
 
 public class ConfigServiceProvider implements OAuth2ServiceProvider<ConfigOAuth2Api> {
 

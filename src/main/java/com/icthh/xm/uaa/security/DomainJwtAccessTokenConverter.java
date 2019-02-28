@@ -1,15 +1,5 @@
 package com.icthh.xm.uaa.security;
 
-import static com.icthh.xm.commons.tenant.TenantContextUtils.getRequiredTenantKeyValue;
-import static com.icthh.xm.uaa.config.Constants.AUTH_ADDITIONAL_DETAILS;
-import static com.icthh.xm.uaa.config.Constants.AUTH_LOGINS_KEY;
-import static com.icthh.xm.uaa.config.Constants.AUTH_ROLE_KEY;
-import static com.icthh.xm.uaa.config.Constants.AUTH_TENANT_KEY;
-import static com.icthh.xm.uaa.config.Constants.AUTH_USER_KEY;
-import static com.icthh.xm.uaa.config.Constants.CREATE_TOKEN_TIME;
-import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_OTP_CHANNEL_TYPE;
-import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_VERIFICATION_OTP_KEY;
-
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import org.apache.commons.collections.CollectionUtils;
@@ -22,6 +12,16 @@ import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenCo
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.icthh.xm.commons.tenant.TenantContextUtils.getRequiredTenantKeyValue;
+import static com.icthh.xm.uaa.config.Constants.AUTH_ADDITIONAL_DETAILS;
+import static com.icthh.xm.uaa.config.Constants.AUTH_LOGINS_KEY;
+import static com.icthh.xm.uaa.config.Constants.AUTH_ROLE_KEY;
+import static com.icthh.xm.uaa.config.Constants.AUTH_TENANT_KEY;
+import static com.icthh.xm.uaa.config.Constants.AUTH_USER_KEY;
+import static com.icthh.xm.uaa.config.Constants.CREATE_TOKEN_TIME;
+import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_OTP_CHANNEL_TYPE;
+import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_VERIFICATION_OTP_KEY;
 
 /**
  * Overrides to add and get token tenant.

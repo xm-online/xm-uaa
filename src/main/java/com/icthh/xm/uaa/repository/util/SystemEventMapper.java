@@ -6,19 +6,21 @@ import static com.icthh.xm.uaa.config.Constants.SYSTEM_EVENT_PROP_ROLE_KEY;
 
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.kafka.SystemEvent;
-import lombok.experimental.UtilityClass;
-import org.apache.commons.lang3.StringUtils;
 
 import java.time.Instant;
 import java.util.Map;
+
+import lombok.experimental.UtilityClass;
+import org.apache.commons.lang3.StringUtils;
 
 @UtilityClass
 public class SystemEventMapper {
 
     /**
      * Mapping system event to user.
+     *
      * @param event the system event.
-     * @param user the user.
+     * @param user  the user.
      */
     public static void toUser(SystemEvent event, User user) {
         Map<String, Object> data = event.getDataMap();

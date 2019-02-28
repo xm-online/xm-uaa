@@ -4,11 +4,12 @@ import com.icthh.xm.commons.permission.access.ResourceFactory;
 import com.icthh.xm.commons.permission.access.repository.ResourceRepository;
 import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
-import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.PostConstruct;
+
+import org.springframework.stereotype.Component;
 
 @Component
 public class UaaResourceFactory implements ResourceFactory {
@@ -33,7 +34,7 @@ public class UaaResourceFactory implements ResourceFactory {
         Object result = null;
         ResourceRepository resourceRepository = repositories.get(objectType);
         if (resourceRepository != null) {
-            result = resourceRepository.findById(resourceId);
+            result = resourceRepository.findResourceById(resourceId);
         }
         return result;
     }

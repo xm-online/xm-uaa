@@ -1,7 +1,5 @@
 package com.icthh.xm.uaa.service;
 
-import static org.apache.commons.lang.StringUtils.isBlank;
-
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
@@ -19,6 +17,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
 import java.util.Optional;
+
+import static org.apache.commons.lang.StringUtils.isBlank;
 
 @Slf4j
 @RequiredArgsConstructor

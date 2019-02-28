@@ -3,13 +3,14 @@ package com.icthh.xm.uaa.repository;
 import com.icthh.xm.commons.permission.repository.PermittedRepository;
 import com.icthh.xm.commons.permission.service.PermissionCheckService;
 import com.icthh.xm.uaa.domain.PersistentAuditEvent;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Repository;
 
 @Repository
 public class AuditEventPermittedRepository extends PermittedRepository {
@@ -20,9 +21,10 @@ public class AuditEventPermittedRepository extends PermittedRepository {
 
     /**
      * Find all permitted audit events between dates.
-     * @param fromDate the from date
-     * @param toDate the to date
-     * @param pageable the page info
+     *
+     * @param fromDate     the from date
+     * @param toDate       the to date
+     * @param pageable     the page info
      * @param privilegeKey the privilege key
      * @return permitted audit events
      */

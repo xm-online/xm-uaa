@@ -3,6 +3,23 @@ package com.icthh.xm.uaa.config;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.spring.config.TenantContextConfiguration;
 import com.icthh.xm.uaa.security.DomainJwtAccessTokenConverter;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,18 +35,12 @@ import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenCo
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.*;
-import java.security.*;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-
 /**
  * The {@link UaaAccessTokenConverterConfiguration} class.
  */
 @Slf4j
 @Configuration
-@Import( {
+@Import({
     TenantContextConfiguration.class,
     RestTemplateConfiguration.class
 })
@@ -51,7 +62,7 @@ public class UaaAccessTokenConverterConfiguration {
     }
 
     /**
-     * This bean generates an token enhancer, which manages the exchange between JWT acces tokens and Authentication
+     * This bean generates an token enhancer, which manages the exchange between JWT access tokens and Authentication
      * in both directions.
      *
      * @return an access token converter configured with the authorization server's public/private keys
@@ -93,9 +104,9 @@ public class UaaAccessTokenConverterConfiguration {
     private PrivateKey getPrivateKey() throws IOException, KeyStoreException, CertificateException,
         NoSuchAlgorithmException, UnrecoverableKeyException {
         log.info("Keystore location {}", keystoreFile);
-        InputStream stream = new ClassPathResource(keystoreFile).exists() ?
-            new ClassPathResource(keystoreFile).getInputStream() :
-            new FileInputStream(new File(keystoreFile));
+        InputStream stream = new ClassPathResource(keystoreFile).exists()
+            ? new ClassPathResource(keystoreFile).getInputStream()
+            : new FileInputStream(new File(keystoreFile));
         KeyStore store = KeyStore.getInstance(Constants.KEYSTORE_TYPE);
         store.load(stream, keystorePassword.toCharArray());
         return (PrivateKey) store.getKey("selfsigned", keystorePassword.toCharArray());

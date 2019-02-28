@@ -1,9 +1,5 @@
 package com.icthh.xm.uaa.security.oauth2.tfa;
 
-import static com.icthh.xm.uaa.config.Constants.REQ_ATTR_TFA_OTP_CHANNEL_TYPE;
-import static com.icthh.xm.uaa.config.Constants.REQ_ATTR_TFA_VERIFICATION_OTP_KEY;
-import static org.springframework.web.context.request.RequestAttributes.SCOPE_REQUEST;
-
 import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import org.apache.commons.lang3.StringUtils;
@@ -12,12 +8,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
+import java.io.IOException;
+
+import static com.icthh.xm.uaa.config.Constants.REQ_ATTR_TFA_OTP_CHANNEL_TYPE;
+import static com.icthh.xm.uaa.config.Constants.REQ_ATTR_TFA_VERIFICATION_OTP_KEY;
+import static org.springframework.web.context.request.RequestAttributes.SCOPE_REQUEST;
 
 /**
  * The {@link TfaOtpRequestFilter} class.

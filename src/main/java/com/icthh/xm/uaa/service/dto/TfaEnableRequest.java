@@ -1,18 +1,18 @@
 package com.icthh.xm.uaa.service.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 /**
  * The {@link TfaEnableRequest} class.
  */
-@AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
 @ToString

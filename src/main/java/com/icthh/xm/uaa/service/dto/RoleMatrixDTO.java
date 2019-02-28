@@ -1,15 +1,15 @@
 package com.icthh.xm.uaa.service.dto;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Set;
-import java.util.TreeSet;
-
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Set;
+import java.util.TreeSet;
 
 @Getter
 @Setter

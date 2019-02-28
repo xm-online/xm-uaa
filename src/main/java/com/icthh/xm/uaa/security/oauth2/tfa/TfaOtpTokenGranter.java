@@ -1,7 +1,5 @@
 package com.icthh.xm.uaa.security.oauth2.tfa;
 
-import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_VERIFICATION_OTP_KEY;
-
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.config.Constants;
@@ -28,6 +26,8 @@ import org.springframework.security.oauth2.provider.token.TokenStore;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+
+import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_VERIFICATION_OTP_KEY;
 
 /**
  * The {@link TfaOtpTokenGranter} class.

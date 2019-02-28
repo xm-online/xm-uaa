@@ -26,9 +26,9 @@ import org.springframework.security.core.userdetails.cache.NullUserCache;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.Assert;
 
+import javax.annotation.PostConstruct;
 import java.util.Collection;
 import java.util.Objects;
-import javax.annotation.PostConstruct;
 
 /**
  * The {@link TfaOtpAuthenticationProvider} class.

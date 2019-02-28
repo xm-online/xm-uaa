@@ -3,7 +3,7 @@ package com.icthh.xm.uaa.security;
 import org.springframework.security.core.AuthenticationException;
 
 /**
- * This exception is thrown in case of a user trying to authenticate without providing domain.
+ * This exception is thrown in case of a user trying to authenticate without providing com.icthh.xm.uaa.domain.
  */
 public class TenantNotProvidedException extends AuthenticationException {
 

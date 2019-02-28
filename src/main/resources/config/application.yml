@@ -4,8 +4,8 @@
 # This configuration will be overridden by the Spring profile you use,
 # for example application-dev.yml if you use the "dev" profile.
 #
-# More information on profiles: https://jhipster.github.io/profiles/
-# More information on configuration properties: https://jhipster.github.io/common-application-properties/
+# More information on profiles: https://www.jhipster.tech/profiles/
+# More information on configuration properties: https://www.jhipster.tech/common-application-properties/
 # ===================================================================
 
 # ===================================================================
@@ -15,14 +15,26 @@
 # ===================================================================
 
 management:
-    security:
-        roles: SUPER-ADMIN
-    context-path: /management
+    endpoints:
+        web:
+            base-path: /management
+            exposure:
+                include: ["configprops", "env", "health", "info", "threaddump", "logfile" ]
+    endpoint:
+        health:
+            show-details: when_authorized
+    info:
+        git:
+            mode: full
     health:
         mail:
             enabled: false # When using the MailService, configure an SMTP server and set this to true
+    metrics:
+        enabled: false # http://micrometer.io/ is disabled by default, as we use http://metrics.dropwizard.io/ instead
 
 spring:
+    autoconfigure:
+        exclude: org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration
     application:
         name: uaa
     cloud:
@@ -35,10 +47,13 @@ spring:
             discovery:
                 healthCheckPath: /management/health
                 instanceId: ${spring.application.name}:${spring.application.instance-id:${random.value}}
-    jackson:
-        serialization.write_dates_as_timestamps: false
+            config:
+                watch:
+                    enabled: false
     jpa:
         open-in-view: false
+        properties:
+            hibernate.jdbc.time_zone: UTC
         hibernate:
             ddl-auto: none
             naming:
@@ -50,7 +65,7 @@ spring:
         favicon:
             enabled: false
     thymeleaf:
-        mode: XHTML
+        mode: HTML
     mail:
         host: localhost
         port: 25
@@ -71,26 +86,31 @@ spring:
         producer:
             key-serializer: org.apache.kafka.common.serialization.StringSerializer
             value-serializer: org.apache.kafka.common.serialization.StringSerializer
-
+    liquibase:
+        default-schema: XM
 security:
     basic:
         enabled: false
     oauth2:
         resource:
             filter-order: 3
-liquibase:
-    default-schema: XM
 server:
-    session:
-        cookie:
-            http-only: true
+    servlet:
+        session:
+            cookie:
+                http-only: true
 
+# Properties to be exposed on the /info management endpoint
+info:
+    # Comma separated list of profiles that will trigger the ribbon to show
+    display-ribbon-on-profiles: "dev"
 
 # ===================================================================
 # JHipster specific properties
 #
-# Full reference is available at: https://jhipster.github.io/common-application-properties/
+# Full reference is available at: https://www.jhipster.tech/common-application-properties/
 # ===================================================================
+
 jhipster:
     async:
         core-pool-size: 2
@@ -99,9 +119,9 @@ jhipster:
     # By default CORS is disabled. Uncomment to enable.
     #cors:
         #allowed-origins: "*"
-        #allowed-methods: GET, PUT, POST, DELETE, OPTIONS
+        #allowed-methods: "*"
         #allowed-headers: "*"
-        #exposed-headers:
+        #exposed-headers: "Authorization,Link,X-Total-Count"
         #allow-credentials: true
         #max-age: 1800
     mail:
@@ -117,18 +137,11 @@ jhipster:
         contact-email:
         license:
         license-url:
-    social:
-        redirect-after-sign-in: "/"
-    ribbon:
-        display-on-active-profiles: dev
 
 xm-config:
     enabled: true
     xm-config-url: http://config
     kafka-config-topic: config_topic
-
-aspects:
-    rest-call-logging: true
 
 # ===================================================================
 # Application specific properties
@@ -136,7 +149,7 @@ aspects:
 # to have type-safe configuration, like in the JHipsterProperties above
 #
 # More documentation is available at:
-# https://jhipster.github.io/common-application-properties/
+# https://www.jhipster.tech/common-application-properties/
 # ===================================================================
 
 application:

@@ -5,6 +5,10 @@ import com.icthh.xm.uaa.config.audit.AuditEventConverter;
 import com.icthh.xm.uaa.domain.PersistentAuditEvent;
 import com.icthh.xm.uaa.repository.AuditEventPermittedRepository;
 import com.icthh.xm.uaa.repository.PersistenceAuditEventRepository;
+
+import java.time.Instant;
+import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.data.domain.Page;
@@ -12,13 +16,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.util.Optional;
-
 /**
  * Service for managing audit events.
- *
- * <p>This is the default implementation to support SpringBoot Actuator AuditEventRepository
+ * <p/>
+ * <p>
+ * This is the default implementation to support SpringBoot Actuator AuditEventRepository
+ * </p>
  */
 @Service
 @Transactional
@@ -42,7 +45,7 @@ public class AuditEventService {
     }
 
     public Optional<AuditEvent> find(Long id) {
-        return Optional.ofNullable(persistenceAuditEventRepository.findOne(id)).map
-            (auditEventConverter::convertToAuditEvent);
+        return persistenceAuditEventRepository.findById(id)
+            .map(auditEventConverter::convertToAuditEvent);
     }
 }

@@ -1,30 +1,11 @@
 package com.icthh.xm.uaa.web.filter;
 
-import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
-import static com.icthh.xm.uaa.config.Constants.AUTH_TENANT_KEY;
-import static com.icthh.xm.uaa.config.Constants.HEADER_DOMAIN;
-import static com.icthh.xm.uaa.config.Constants.HEADER_PORT;
-import static com.icthh.xm.uaa.config.Constants.HEADER_SCHEME;
-import static com.icthh.xm.uaa.config.Constants.HEADER_TENANT;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_PATTERN;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERR_TENANT_NOT_SUPPLIED;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERR_TENANT_SUSPENDED;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.TENANT_IS_SUSPENDED;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.TENANT_NOT_SUPPLIED;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
-
-import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.commons.config.client.repository.TenantListRepository;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.PrivilegedTenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
+import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.uaa.commons.XmPrivilegedRequestContext;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
@@ -39,13 +20,32 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 
+import javax.servlet.FilterChain;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import javax.servlet.FilterChain;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+
+import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
+import static com.icthh.xm.uaa.config.Constants.AUTH_TENANT_KEY;
+import static com.icthh.xm.uaa.config.Constants.HEADER_DOMAIN;
+import static com.icthh.xm.uaa.config.Constants.HEADER_PORT;
+import static com.icthh.xm.uaa.config.Constants.HEADER_SCHEME;
+import static com.icthh.xm.uaa.config.Constants.HEADER_TENANT;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_PATTERN;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERR_TENANT_NOT_SUPPLIED;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERR_TENANT_SUSPENDED;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.TENANT_IS_SUSPENDED;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.TENANT_NOT_SUPPLIED;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 public class ProxyFilterUnitTest {
 

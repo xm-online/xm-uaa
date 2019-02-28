@@ -1,7 +1,5 @@
 package com.icthh.xm.uaa.security.oauth2.otp;
 
-import static com.icthh.xm.uaa.config.Constants.REQ_ATTR_TFA_VERIFICATION_OTP_KEY;
-
 import com.icthh.xm.uaa.security.DomainUserDetails;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -10,6 +8,8 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
 import java.util.Objects;
+
+import static com.icthh.xm.uaa.config.Constants.REQ_ATTR_TFA_VERIFICATION_OTP_KEY;
 
 /**
  * The {@link DomainUserDetailsOtpStore} class.

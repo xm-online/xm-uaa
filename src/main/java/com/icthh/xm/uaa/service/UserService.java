@@ -21,9 +21,11 @@ import com.icthh.xm.uaa.repository.UserPermittedRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.security.TokenConstraintsService;
 import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
+
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.util.RandomUtil;
 import com.icthh.xm.uaa.util.OtpUtils;
+
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,6 +36,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -142,8 +145,7 @@ public class UserService {
      */
     @LogicExtensionPoint("UpdateUser")
     public Optional<UserDTO> updateUser(UserDTO updatedUser) {
-        return Optional.of(userRepository
-                               .findOne(updatedUser.getId()))
+        return userRepository.findById(updatedUser.getId())
             .map(user -> {
                 user.setFirstName(updatedUser.getFirstName());
                 user.setLastName(updatedUser.getLastName());
@@ -251,7 +253,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public User getUser(Long id) {
-        return userRepository.findOne(id);
+        return userRepository.findById(id).orElse(null);
     }
 
     @LogicExtensionPoint("SaveUser")
@@ -306,10 +308,8 @@ public class UserService {
     @Transactional
     public void enableTwoFactorAuth(Long userId, TfaOtpChannelSpec otpChannelSpec) {
         // Check is user exist
-        User user = userRepository.findOne(userId);
-        if (user == null) {
-            throw new EntityNotFoundException("User not found");
-        }
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         enableTwoFactorAuth(user, otpChannelSpec);
     }

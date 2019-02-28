@@ -1,19 +1,6 @@
 package com.icthh.xm.uaa.security;
 
-import static com.icthh.xm.uaa.config.Constants.AUTH_ROLE_KEY;
-import static com.icthh.xm.uaa.config.Constants.AUTH_TENANT_KEY;
-import static com.icthh.xm.uaa.config.Constants.AUTH_USER_KEY;
-import static com.icthh.xm.uaa.config.Constants.KEYSTORE_ALIAS;
-import static com.icthh.xm.uaa.config.Constants.KEYSTORE_PATH;
-import static com.icthh.xm.uaa.config.Constants.KEYSTORE_PSWRD;
-import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.collect.Lists;
 import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
@@ -26,7 +13,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -42,12 +29,21 @@ import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.security.oauth2.provider.token.store.KeyStoreKeyFactory;
 
 import java.security.KeyPair;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+
+import static com.icthh.xm.uaa.config.Constants.AUTH_ROLE_KEY;
+import static com.icthh.xm.uaa.config.Constants.AUTH_TENANT_KEY;
+import static com.icthh.xm.uaa.config.Constants.AUTH_USER_KEY;
+import static com.icthh.xm.uaa.config.Constants.KEYSTORE_ALIAS;
+import static com.icthh.xm.uaa.config.Constants.KEYSTORE_PATH;
+import static com.icthh.xm.uaa.config.Constants.KEYSTORE_PSWRD;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DomainTokenServicesUnitTest {
@@ -97,8 +93,6 @@ public class DomainTokenServicesUnitTest {
         when(tenantProperties.getSecurity()).thenReturn(security);
 
         when(applicationProperties.getSecurity()).thenReturn(appSecurity);
-        when(applicationProperties.getDefaultClientId()).thenReturn(new HashSet<>(asList("internal")));
-
 
         tokenServices = new DomainTokenServices();
         tokenServices.setTokenStore(tokenStore);

@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  * Used to register LEP interceptor (to be able to retrieve values from authContext.getDetialValue()).
@@ -14,7 +14,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 @RequiredArgsConstructor
 @Configuration
 @Import({XmMsWebConfiguration.class})
-public class WebMvcConfiguration extends WebMvcConfigurerAdapter {
+public class WebMvcConfiguration implements WebMvcConfigurer {
 
     private final LepInterceptor lepInterceptor;
 
@@ -22,5 +22,4 @@ public class WebMvcConfiguration extends WebMvcConfigurerAdapter {
     public void addInterceptors(final InterceptorRegistry registry) {
         registry.addInterceptor(lepInterceptor).addPathPatterns("/**");
     }
-
 }

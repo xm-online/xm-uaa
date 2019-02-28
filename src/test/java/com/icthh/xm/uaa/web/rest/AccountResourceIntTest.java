@@ -1,20 +1,5 @@
 package com.icthh.xm.uaa.web.rest;
 
-import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
-import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
-import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.i18n.error.web.ExceptionTranslator;
@@ -78,6 +63,22 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
+import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
+import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Test class for the AccountResource REST controller.
@@ -179,7 +180,7 @@ public class AccountResourceIntTest {
         properties.setRegistrationCaptchaPeriodSeconds(null);
         properties.setSecurity(security);
         tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
-                                          new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
+            new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
 
         MockitoAnnotations.initMocks(this);
         doNothing().when(mockMailService).sendActivationEmail(any(), anyString(), any(), anyString());
@@ -190,27 +191,27 @@ public class AccountResourceIntTest {
         when(registrationLogRepository.findOneByIpAddress(any())).thenReturn(Optional.empty());
 
         CaptchaService captchaService = new CaptchaService(applicationProperties, registrationLogRepository,
-                                                           tenantPropertiesService);
+            tenantPropertiesService);
 
         AccountResource accountResource = new AccountResource(userRepository,
-                                                              userLoginRepository,
-                                                              userService,
-                                                              accountService,
-                                                              profileEventProducer,
-                                                              captchaService,
-                                                              xmAuthenticationContextHolder,
-                                                              xmRequestContextHolder,
-                                                              tenantContextHolder, tenantPermissionService, accountMailService);
+            userLoginRepository,
+            userService,
+            accountService,
+            profileEventProducer,
+            captchaService,
+            xmAuthenticationContextHolder,
+            xmRequestContextHolder,
+            tenantContextHolder, tenantPermissionService, accountMailService);
 
         AccountResource accountUserMockResource = new AccountResource(userRepository,
-                                                                      userLoginRepository,
-                                                                      mockUserService,
-                                                                      accountService,
-                                                                      profileEventProducer,
-                                                                      captchaService,
-                                                                      xmAuthenticationContextHolder,
-                                                                      xmRequestContextHolder,
-                                                                      tenantContextHolder, tenantPermissionService, accountMailService);
+            userLoginRepository,
+            mockUserService,
+            accountService,
+            profileEventProducer,
+            captchaService,
+            xmAuthenticationContextHolder,
+            xmRequestContextHolder,
+            tenantContextHolder, tenantPermissionService, accountMailService);
 
         this.restMvc = MockMvcBuilders.standaloneSetup(accountResource)
             .setMessageConverters(httpMessageConverters).setControllerAdvice(exceptionTranslator)
@@ -250,7 +251,7 @@ public class AccountResourceIntTest {
     @Test
     public void testNonAuthenticatedUser() throws Exception {
         restUserMockMvc.perform(get("/api/authenticate")
-                                    .accept(MediaType.APPLICATION_JSON))
+            .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(content().string(""));
     }
@@ -258,11 +259,11 @@ public class AccountResourceIntTest {
     @Test
     public void testAuthenticatedUser() throws Exception {
         restUserMockMvc.perform(get("/api/authenticate")
-                                    .with(request -> {
-                                        request.setRemoteUser("test");
-                                        return request;
-                                    })
-                                    .accept(MediaType.APPLICATION_JSON))
+            .with(request -> {
+                request.setRemoteUser("test");
+                return request;
+            })
+            .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(content().string("test"));
     }
@@ -286,7 +287,7 @@ public class AccountResourceIntTest {
 
             try {
                 restUserMockMvc.perform(get("/api/account")
-                                            .accept(MediaType.APPLICATION_JSON))
+                    .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
                     .andExpect(jsonPath("$.firstName").value("john"))
@@ -308,7 +309,7 @@ public class AccountResourceIntTest {
         executeForUserKey(DEF_USER_KEY, () -> {
             try {
                 restUserMockMvc.perform(get("/api/account")
-                                            .accept(MediaType.APPLICATION_JSON))
+                    .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNotFound());
             } catch (Exception e) {
                 throw new IllegalStateException(e);
@@ -449,15 +450,15 @@ public class AccountResourceIntTest {
         loginNew.setTypeKey(UserLoginType.NICKNAME.getValue());
 
         ManagedUserVM duplicatedUser = new ManagedUserVM(validUser.getId(), validUser.getPassword(),
-                                                         validUser.getFirstName(), validUser.getLastName(),
-                                                         true, false,
-                                                         null, null,
-                                                         validUser.getImageUrl(), validUser.getLangKey(), validUser.getCreatedBy(),
-                                                         validUser.getCreatedDate(), validUser.getLastModifiedBy(), validUser.getLastModifiedDate(),
-                                                         validUser.getRoleKey(), "test",
-                                                         validUser.getAccessTokenValiditySeconds(), validUser.getRefreshTokenValiditySeconds(),
-                                                         validUser.getTfaAccessTokenValiditySeconds(),
-                                                         null, Arrays.asList(login, loginNew), false, null);
+            validUser.getFirstName(), validUser.getLastName(),
+            true, false,
+            null, null,
+            validUser.getImageUrl(), validUser.getLangKey(), validUser.getCreatedBy(),
+            validUser.getCreatedDate(), validUser.getLastModifiedBy(), validUser.getLastModifiedDate(),
+            validUser.getRoleKey(), "test",
+            validUser.getAccessTokenValiditySeconds(), validUser.getRefreshTokenValiditySeconds(),
+            validUser.getTfaAccessTokenValiditySeconds(),
+            null, Arrays.asList(login, loginNew), false, null);
 
         // Good user
         restMvc.perform(
@@ -528,8 +529,9 @@ public class AccountResourceIntTest {
         restMvc.perform(get("/api/activate?key={activationKey}", activationKey))
             .andExpect(status().isOk());
 
-        user = userRepository.findOne(user.getId());
-        assertThat(user.isActivated()).isTrue();
+        Optional<User> result = userRepository.findById(user.getId());
+        assertTrue(result.isPresent());
+        assertThat(result.get().isActivated()).isTrue();
     }
 
     @Test
@@ -585,7 +587,9 @@ public class AccountResourceIntTest {
                 throw new IllegalStateException(e);
             }
 
-            User updatedUser = userRepository.findOne(user.getId());
+            Optional<User> updatedUserOpt = userRepository.findById(user.getId());
+            assertTrue(updatedUserOpt.isPresent());
+            User updatedUser = updatedUserOpt.get();
             assertThat(updatedUser.getFirstName()).isEqualTo(userDTO.getFirstName());
             assertThat(updatedUser.getLastName()).isEqualTo(userDTO.getLastName());
             assertThat(updatedUser.getEmail()).isEqualTo(userDTO.getEmail());
@@ -640,7 +644,8 @@ public class AccountResourceIntTest {
                 null,                   // lastModifiedDate
                 RoleConstant.SUPER_ADMIN,
                 "test1",
-                null, null, null, null, Collections.singletonList(userLogin),
+                null, null, null, null,
+                Collections.singletonList(userLogin),
                 Collections.emptyList(), false, null);
 
             try {
@@ -653,7 +658,9 @@ public class AccountResourceIntTest {
                 throw new IllegalStateException(e);
             }
 
-            User updatedUser = userRepository.findOne(anotherUser.getId());
+            Optional<User> updatedUserOpt = userRepository.findById(anotherUser.getId());
+            assertTrue(updatedUserOpt.isPresent());
+            User updatedUser = updatedUserOpt.get();
             assertThat(updatedUser.getFirstName()).isNullOrEmpty();
             assertThat(updatedUser.getLastName()).isNullOrEmpty();
             assertThat(updatedUser.getImageUrl()).isNullOrEmpty();
@@ -799,7 +806,7 @@ public class AccountResourceIntTest {
         userRepository.saveAndFlush(user);
 
         restMvc.perform(post("/api/account/reset_password/init")
-                            .content("password-reset@example.com"))
+            .content("password-reset@example.com"))
             .andExpect(status().isOk());
     }
 

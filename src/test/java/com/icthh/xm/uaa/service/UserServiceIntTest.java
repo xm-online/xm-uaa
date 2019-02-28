@@ -1,15 +1,9 @@
 package com.icthh.xm.uaa.service;
 
-import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
-import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
-import static com.icthh.xm.commons.tenant.TenantContextUtils.buildTenant;
-import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
-import static org.assertj.core.api.Assertions.assertThat;
-
-import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.User;
@@ -31,6 +25,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
+
+import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
+import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
+import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
+import static com.icthh.xm.commons.tenant.TenantContextUtils.buildTenant;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test class for the UserResource REST controller.

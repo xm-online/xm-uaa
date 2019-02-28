@@ -2,8 +2,6 @@ package com.icthh.xm.uaa.repository;
 
 import com.icthh.xm.uaa.domain.PersistentAuditEvent;
 import com.icthh.xm.uaa.repository.projection.PrincipalProjection;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.Instant;

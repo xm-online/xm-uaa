@@ -14,7 +14,7 @@ import java.util.List;
  */
 @SuppressWarnings("unused")
 @Repository
-public interface ClientRepository extends JpaRepository<Client,Long>, ResourceRepository {
+public interface ClientRepository extends JpaRepository<Client, Long>, ResourceRepository {
 
     Client findOneByClientId(String clientId);
 
@@ -23,6 +23,4 @@ public interface ClientRepository extends JpaRepository<Client,Long>, ResourceRe
 
     List<Client> findByRoleKey(String roleKey);
 
-    @Override
-    Client findById(Object id);
 }

@@ -19,7 +19,6 @@ import com.icthh.xm.uaa.domain.SocialUserConnection;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
-import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.Social;
 import com.icthh.xm.uaa.repository.SocialUserConnectionRepository;
 import com.icthh.xm.uaa.repository.UserLoginRepository;

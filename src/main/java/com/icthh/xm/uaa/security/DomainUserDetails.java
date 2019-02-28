@@ -1,7 +1,5 @@
 package com.icthh.xm.uaa.security;
 
-import static java.util.Collections.emptyList;
-
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.service.dto.UserLoginDto;
 import lombok.Getter;
@@ -17,6 +15,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import static java.util.Collections.emptyList;
 
 @Getter
 public class DomainUserDetails extends User {

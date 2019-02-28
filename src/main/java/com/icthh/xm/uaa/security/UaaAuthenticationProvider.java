@@ -40,7 +40,7 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
 
         if (parts.size() > BigInteger.ONE.intValue()) {
             String domain = parts.getLast();
-            log.info("Ldap domain @{} for user {}", domain, principal);
+            log.info("Ldap com.icthh.xm.uaa.domain @{} for user {}", domain, principal);
 
             Optional<AuthenticationProvider> providerOpt = providerBuilder.build(domain);
             if (providerOpt.isPresent()) {

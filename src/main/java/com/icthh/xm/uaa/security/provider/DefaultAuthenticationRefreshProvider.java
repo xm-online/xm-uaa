@@ -1,9 +1,5 @@
 package com.icthh.xm.uaa.security.provider;
 
-import static com.icthh.xm.uaa.config.Constants.AUTH_LOGINS_KEY;
-import static com.icthh.xm.uaa.config.Constants.AUTH_TENANT_KEY;
-import static com.icthh.xm.uaa.config.Constants.AUTH_USER_KEY;
-
 import com.icthh.xm.uaa.security.AuthenticationRefreshProvider;
 import com.icthh.xm.uaa.security.DomainUserDetails;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -13,6 +9,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+
+import static com.icthh.xm.uaa.config.Constants.AUTH_LOGINS_KEY;
+import static com.icthh.xm.uaa.config.Constants.AUTH_TENANT_KEY;
+import static com.icthh.xm.uaa.config.Constants.AUTH_USER_KEY;
 
 @Component
 public class DefaultAuthenticationRefreshProvider implements AuthenticationRefreshProvider {

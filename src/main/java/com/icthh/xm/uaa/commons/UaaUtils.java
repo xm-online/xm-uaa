@@ -1,10 +1,11 @@
 package com.icthh.xm.uaa.commons;
 
 import com.icthh.xm.uaa.config.Constants;
-import lombok.experimental.UtilityClass;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.Objects;
+
+import lombok.experimental.UtilityClass;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * The {@link UaaUtils} class.

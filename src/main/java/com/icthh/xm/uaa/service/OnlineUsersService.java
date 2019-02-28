@@ -1,22 +1,19 @@
 package com.icthh.xm.uaa.service;
 
-import static com.icthh.xm.uaa.config.Constants.SUPER_TENANT;
 import static org.springframework.boot.actuate.security.AuthenticationAuditListener.AUTHENTICATION_SUCCESS;
 
-import com.icthh.xm.commons.tenant.TenantContextHolder;
-import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.repository.CustomAuditEventRepository;
 import com.icthh.xm.uaa.repository.projection.PrincipalProjection;
 import com.icthh.xm.uaa.security.TokenConstraintsService;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.actuate.audit.AuditEvent;
-import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.stream.Collectors;
+
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 /**
  * Service Implementation for managing online users.
@@ -26,7 +23,6 @@ import java.util.stream.Collectors;
 @Service
 public class OnlineUsersService {
 
-    private final TenantContextHolder tenantContextHolder;
     private final CustomAuditEventRepository auditEventRepository;
     private final TokenConstraintsService tokenConstraints;
 

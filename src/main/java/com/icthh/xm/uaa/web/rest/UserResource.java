@@ -2,7 +2,6 @@ package com.icthh.xm.uaa.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import com.icthh.xm.commons.exceptions.BusinessException;
-import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
@@ -14,7 +13,6 @@ import com.icthh.xm.uaa.service.dto.TfaEnableRequest;
 import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.dto.UserPublicDTO;
-import com.icthh.xm.uaa.web.constant.ErrorConstants;
 import com.icthh.xm.uaa.web.rest.util.HeaderUtil;
 import com.icthh.xm.uaa.web.rest.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -39,13 +37,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 
 import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
 

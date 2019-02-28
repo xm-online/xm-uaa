@@ -1,5 +1,13 @@
 package com.icthh.xm.uaa.repository.util;
 
+import com.icthh.xm.uaa.domain.User;
+import com.icthh.xm.uaa.domain.kafka.SystemEvent;
+import org.junit.Test;
+
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+
 import static com.icthh.xm.uaa.config.Constants.SYSTEM_EVENT_PROP_CREATED_DATE;
 import static com.icthh.xm.uaa.config.Constants.SYSTEM_EVENT_PROP_ID;
 import static com.icthh.xm.uaa.config.Constants.SYSTEM_EVENT_PROP_IMAGE_URL;
@@ -8,14 +16,6 @@ import static com.icthh.xm.uaa.config.Constants.SYSTEM_EVENT_PROP_NAME;
 import static com.icthh.xm.uaa.config.Constants.SYSTEM_EVENT_PROP_USER_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-
-import com.icthh.xm.uaa.domain.User;
-import com.icthh.xm.uaa.domain.kafka.SystemEvent;
-import org.junit.Test;
-
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
 
 public class SystemEventMapperUnitTest {
 

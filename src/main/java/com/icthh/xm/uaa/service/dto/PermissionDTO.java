@@ -1,10 +1,10 @@
 package com.icthh.xm.uaa.service.dto;
 
 import com.icthh.xm.commons.permission.domain.Permission;
+import lombok.Data;
+
 import java.util.Comparator;
 import java.util.Set;
-
-import lombok.Data;
 
 @Data
 public class PermissionDTO implements Comparable<PermissionDTO> {

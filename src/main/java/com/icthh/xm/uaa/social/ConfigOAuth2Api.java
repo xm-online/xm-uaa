@@ -1,6 +1,5 @@
 package com.icthh.xm.uaa.social;
 
-import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
 import static org.springframework.social.oauth2.TokenStrategy.AUTHORIZATION_HEADER;
 
 import com.icthh.xm.uaa.domain.properties.TenantProperties.Social;

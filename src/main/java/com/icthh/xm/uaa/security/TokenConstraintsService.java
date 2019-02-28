@@ -1,8 +1,5 @@
 package com.icthh.xm.uaa.security;
 
-import static java.util.Optional.ofNullable;
-import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
-
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
@@ -16,6 +13,9 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+
+import static java.util.Optional.ofNullable;
+import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 
 /**
  * The {@link TokenConstraintsService} class.

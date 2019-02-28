@@ -71,7 +71,7 @@ public class ClientService {
      * @return the persisted entity
      */
     public Client updateClient(ClientDTO updatedClient) {
-        return Optional.of(clientRepository.findOne(updatedClient.getId())).map(client -> {
+        return clientRepository.findById(updatedClient.getId()).map(client -> {
             String newClientSecret = updatedClient.getClientSecret();
             if (!PSWRD_MASK.equals(newClientSecret)) {
                 if (newClientSecret == null) {
@@ -88,9 +88,9 @@ public class ClientService {
     }
 
     /**
-     *  Get all the clients.
+     * Get all the clients.
      *
-     *  @return the list of entities
+     * @return the list of entities
      */
     @Transactional(readOnly = true)
     @FindWithPermission("CLIENT.GET_LIST")
@@ -100,27 +100,25 @@ public class ClientService {
     }
 
     /**
-     *  Get one client by id.
+     * Get one client by id.
      *
-     *  @param id the id of the entity
-     *  @return the entity
+     * @param id the id of the entity
+     * @return the entity
      */
     @Transactional(readOnly = true)
     public Optional<Client> findOne(Long id) {
-        Client result = clientRepository.findOne(id);
-        if (result != null) {
-            result.setClientSecret(PSWRD_MASK);
-        }
-        return Optional.ofNullable(result);
+        Optional<Client> result = clientRepository.findById(id);
+        result.ifPresent(client -> client.setClientSecret(PSWRD_MASK));
+        return result;
     }
 
     /**
-     *  Delete the  client by id.
+     * Delete the  client by id.
      *
-     *  @param id the id of the entity
+     * @param id the id of the entity
      */
     public void delete(Long id) {
-        clientRepository.delete(id);
+        clientRepository.deleteById(id);
     }
 
     @IgnoreLogginAspect

@@ -1,9 +1,5 @@
 package com.icthh.xm.uaa.service;
 
-import static com.icthh.xm.commons.tenant.TenantContextUtils.buildTenant;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.boot.actuate.security.AuthenticationAuditListener.AUTHENTICATION_SUCCESS;
-
 import com.icthh.xm.commons.tenant.PrivilegedTenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
@@ -11,7 +7,6 @@ import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.repository.CustomAuditEventRepository;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +20,10 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+
+import static com.icthh.xm.commons.tenant.TenantContextUtils.buildTenant;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.boot.actuate.security.AuthenticationAuditListener.AUTHENTICATION_SUCCESS;
 
 /**
  * Test class for the UserResource REST controller.

@@ -2,6 +2,9 @@ package com.icthh.xm.uaa.config;
 
 import com.icthh.xm.uaa.security.UaaAuthenticationProvider;
 import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpAuthenticationProvider;
+
+import javax.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,8 +19,6 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.data.repository.query.SecurityEvaluationContextExtension;
-
-import javax.annotation.PostConstruct;
 
 @Configuration
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
@@ -38,8 +39,7 @@ public class UaaWebSecurityConfiguration extends WebSecurityConfigurerAdapter {
                                        UserDetailsService userDetailsService,
                                        AuthenticationManagerBuilder authenticationManagerBuilder,
                                        @Qualifier("uaaAuthenticationProvider") UaaAuthenticationProvider uaaAuthenticationProvider,
-                                       TfaOtpAuthenticationProvider tfaOtpAuthenticationProvider
-    ) {
+                                       TfaOtpAuthenticationProvider tfaOtpAuthenticationProvider) {
         this.passwordEncoder = passwordEncoder;
         this.userDetailsService = userDetailsService;
         this.authenticationManagerBuilder = authenticationManagerBuilder;

@@ -12,6 +12,17 @@ import com.icthh.xm.uaa.security.provider.DefaultAuthenticationRefreshProvider;
 import com.icthh.xm.uaa.service.OnlineUsersService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import io.github.jhipster.config.JHipsterProperties;
+
+import java.io.IOException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import javax.servlet.http.HttpServletResponse;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -43,21 +54,11 @@ import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.CorsFilter;
 
-import java.io.IOException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import javax.servlet.http.HttpServletResponse;
-
 @RequiredArgsConstructor
 @Configuration
 @EnableAuthorizationServer
 @EnableWebSecurity
-@Import( {
+@Import({
     UserAuthPasswordEncoderConfiguration.class,
     UaaAccessTokenConverterConfiguration.class,
     TfaOtpConfiguration.class
@@ -69,15 +70,14 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
     public static class ResourceServerConfiguration extends ResourceServerConfigurerAdapter {
 
         private final TokenStore tokenStore;
-        private final JHipsterProperties jHipsterProperties;
         private final CorsFilter corsFilter;
-
 
         @Override
         public void configure(HttpSecurity http) throws Exception {
             http
                 .exceptionHandling()
-                .authenticationEntryPoint((request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                .authenticationEntryPoint((request, response, authException)
+                    -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
                 .and()
                 .csrf()
                 .disable()
@@ -120,10 +120,8 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
 
     private final PasswordEncoder passwordEncoder;
     private final TenantContextHolder tenantContextHolder;
-    private final JHipsterProperties jHipsterProperties;
     private final DefaultAuthenticationRefreshProvider defaultAuthenticationRefreshProvider;
     private final TenantPropertiesService tenantPropertiesService;
-    private final OnlineUsersService onlineUsersService;
     private final ClientDetailsService clientDetailsService;
     private final JwtTokenStore tokenStore;
     private final JwtAccessTokenConverter jwtAccessTokenConverter;
@@ -134,7 +132,6 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
 
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-
         clients.withClientDetails(clientDetailsService);
     }
 
@@ -150,11 +147,11 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
     private TokenGranter tokenGranter(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         List<TokenGranter> granters = new ArrayList<>(Collections.singletonList(endpoints.getTokenGranter()));
         TfaOtpTokenGranter tfaOtpTokenGranter = new TfaOtpTokenGranter(tenantContextHolder,
-                                                                       tokenServices(),
-                                                                       clientDetailsService,
-                                                                       endpoints.getOAuth2RequestFactory(),
-                                                                       tokenStore,
-                                                                       authenticationManager);
+            tokenServices(),
+            clientDetailsService,
+            endpoints.getOAuth2RequestFactory(),
+            tokenStore,
+            authenticationManager);
         granters.add(tfaOtpTokenGranter);
         return new CompositeTokenGranter(granters);
     }
@@ -195,5 +192,4 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
         provider.setPasswordEncoder(passwordEncoder);
         return provider;
     }
-
 }

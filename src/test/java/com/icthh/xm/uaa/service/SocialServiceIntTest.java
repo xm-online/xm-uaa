@@ -81,27 +81,27 @@ public class SocialServiceIntTest {
     private SocialService socialService;
 
     @Mock
-    private  SocialUserConnectionRepository socialRepository;
+    private SocialUserConnectionRepository socialRepository;
     @Mock
-    private  PasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder;
     @Mock
-    private  UserRepository userRepository;
+    private UserRepository userRepository;
     @Mock
-    private  AccountMailService accountMailService;
+    private AccountMailService accountMailService;
 
-    private  UserDetailsService userDetailsService;
+    private UserDetailsService userDetailsService;
     @Mock
-    private  TenantPropertiesService tenantPropertiesService;
+    private TenantPropertiesService tenantPropertiesService;
 
-    private  DomainTokenServices tokenServices;
+    private DomainTokenServices tokenServices;
     @Mock
-    private  UserLoginRepository userLoginRepository;
+    private UserLoginRepository userLoginRepository;
 
-    private  SocialUserInfoMapper socialUserInfoMapper = new SocialUserInfoMapper();
+    private SocialUserInfoMapper socialUserInfoMapper = new SocialUserInfoMapper();
     @Mock
-    private  XmAuthenticationContextHolder xmAuthenticationContextHolder;
+    private XmAuthenticationContextHolder xmAuthenticationContextHolder;
     @Mock
-    private  XmRequestContextHolder xmRequestContextHolder;
+    private XmRequestContextHolder xmRequestContextHolder;
     @Mock
     private TenantContextHolder tenantContextHolder;
 
@@ -214,12 +214,14 @@ public class SocialServiceIntTest {
 
         mockTenant();
 
-        SocialLoginAnswer socialLoginAnswer = socialService.acceptSocialLoginUser("P_ID", "activationCode");
+        SocialLoginAnswer socialLoginAnswer = socialService.acceptSocialLoginUser("P_ID",
+            "activationCode");
 
         Assert.assertEquals(socialLoginAnswer.getAnswerType(), SING_IN);
 
         assertJwtToken(socialLoginAnswer, "test@email.com",
-                       asList(login("LOGIN.EMAIL", "test@email.com"), login("LOGIN.MSISDN", "380930912700")));
+                       asList(login("LOGIN.EMAIL", "test@email.com"),
+                           login("LOGIN.MSISDN", "380930912700")));
     }
 
     private void assertJwtToken(SocialLoginAnswer socialLoginAnswer, String userName,

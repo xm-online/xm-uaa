@@ -1,17 +1,5 @@
 package com.icthh.xm.uaa.service.mail;
 
-import static com.google.common.collect.ImmutableMap.of;
-import static com.icthh.xm.uaa.config.Constants.TRANSLATION_KEY;
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyMap;
-import static java.util.Locale.ENGLISH;
-import static java.util.Locale.FRANCE;
-import static java.util.Locale.forLanguageTag;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import com.icthh.xm.commons.i18n.spring.service.LocalizationMessageService;
 import com.icthh.xm.commons.tenant.PrivilegedTenantContext;
@@ -25,7 +13,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.MessageSource;
 import org.springframework.mail.javamail.JavaMailSender;
 
@@ -33,7 +21,18 @@ import javax.mail.Message;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.util.HashMap;
-import java.util.Locale;
+
+import static com.google.common.collect.ImmutableMap.of;
+import static com.icthh.xm.uaa.config.Constants.TRANSLATION_KEY;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyMap;
+import static java.util.Locale.ENGLISH;
+import static java.util.Locale.FRANCE;
+import static java.util.Locale.forLanguageTag;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MailServiceUnitTest {
@@ -184,9 +183,6 @@ public class MailServiceUnitTest {
     @Test
     @SneakyThrows
     public void ifInConfigNoTranslationKeyReturnByLocale() {
-        when(localizationMessageService.getMessage("tr subject key")).thenReturn("subject value");
-        when(localizationMessageService.getMessage("tr from key")).thenReturn("fromvalue (From value caption)");
-
         when(tenantConfigService.getConfig()).thenReturn(
             of(MAIL_SETTINGS, asList(of(
                 TEMPLATE_NAME, EMAIL_TEMPLATE,
@@ -207,9 +203,6 @@ public class MailServiceUnitTest {
     @Test
     @SneakyThrows
     public void ifInConfigNoTranslationKeyAndNoTranslationsByLocaleReturnEn() {
-        when(localizationMessageService.getMessage("tr subject key")).thenReturn("subject value");
-        when(localizationMessageService.getMessage("tr from key")).thenReturn("fromvalue (From value caption)");
-
         when(tenantConfigService.getConfig()).thenReturn(
             of(MAIL_SETTINGS, asList(of(
                 TEMPLATE_NAME, EMAIL_TEMPLATE,

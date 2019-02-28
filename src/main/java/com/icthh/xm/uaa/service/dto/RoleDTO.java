@@ -4,11 +4,10 @@ import com.icthh.xm.commons.permission.domain.Role;
 
 import java.util.Collection;
 import java.util.List;
+import javax.validation.constraints.NotEmpty;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.validator.constraints.NotBlank;
-import org.hibernate.validator.constraints.NotEmpty;
 
 @Getter
 @Setter
@@ -42,15 +41,15 @@ public class RoleDTO {
     @Override
     public String toString() {
         return "RoleDTO{" +
-               "roleKey='" + roleKey + '\'' +
-               ", basedOn='" + basedOn + '\'' +
-               ", description='" + description + '\'' +
-               ", createdDate='" + createdDate + '\'' +
-               ", createdBy='" + createdBy + '\'' +
-               ", updatedDate='" + updatedDate + '\'' +
-               ", updatedBy='" + updatedBy + '\'' +
-               ", permissions.size=" + (permissions != null ? permissions.size() : null) +
-               ", env=" + env +
-               '}';
+            "roleKey='" + roleKey + '\'' +
+            ", basedOn='" + basedOn + '\'' +
+            ", description='" + description + '\'' +
+            ", createdDate='" + createdDate + '\'' +
+            ", createdBy='" + createdBy + '\'' +
+            ", updatedDate='" + updatedDate + '\'' +
+            ", updatedBy='" + updatedBy + '\'' +
+            ", permissions.size=" + (permissions != null ? permissions.size() : null) +
+            ", env=" + env +
+            '}';
     }
 }

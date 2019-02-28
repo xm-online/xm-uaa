@@ -1,17 +1,20 @@
 package com.icthh.xm.uaa.config;
 
 import com.icthh.xm.commons.lep.TenantScriptStorage;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.List;
 import java.util.Set;
 
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
 /**
- * Properties specific to JHipster.
- *
- * <p>Properties are configured in the application.yml file.
+ * Properties specific to Uaa.
+ * <p>
+ * Properties are configured in the application.yml file.
+ * </p>
+ * See {@link io.github.jhipster.config.JHipsterProperties} for a good example.
  */
 @Getter
 @Setter

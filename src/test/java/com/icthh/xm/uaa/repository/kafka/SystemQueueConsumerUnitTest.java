@@ -1,16 +1,10 @@
 package com.icthh.xm.uaa.repository.kafka;
 
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.commons.security.XmAuthenticationContext;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.PrivilegedTenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +16,12 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Optional;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @Slf4j
 public class SystemQueueConsumerUnitTest {
@@ -96,23 +96,23 @@ public class SystemQueueConsumerUnitTest {
     public void updateProfile() {
         when(authContext.getLogin()).thenReturn(Optional.empty());
         when(userService.getUser(USER_KEY)).thenReturn(new User());
-        doNothing().when(userService).saveUser(anyObject());
+        doNothing().when(userService).saveUser(any());
 
         consumer.consumeEvent(new ConsumerRecord<>("test", 0, 0, "", UPDATE_ACCOUNT_EVENT));
 
         verify(userService).getUser(USER_KEY);
-        verify(userService).saveUser(anyObject());
+        verify(userService).saveUser(any());
     }
 
     @Test
     public void updateNotExistsProfile() {
         when(authContext.getLogin()).thenReturn(Optional.empty());
         when(userService.getUser(USER_KEY)).thenReturn(null);
-        doNothing().when(userService).saveUser(anyObject());
+        doNothing().when(userService).saveUser(any());
         consumer.consumeEvent(new ConsumerRecord<>("test", 0, 0, "", UPDATE_ACCOUNT_EVENT));
 
         verify(userService).getUser(USER_KEY);
-        verify(userService, times(0)).saveUser(anyObject());
+        verify(userService, times(0)).saveUser(any());
     }
 
 }

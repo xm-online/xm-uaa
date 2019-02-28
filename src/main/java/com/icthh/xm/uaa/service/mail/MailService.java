@@ -20,9 +20,20 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import io.github.jhipster.config.JHipsterProperties;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import javax.annotation.Resource;
+import javax.mail.internet.MimeMessage;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.CharEncoding;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
@@ -32,15 +43,6 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import javax.annotation.Resource;
-import javax.mail.internet.MimeMessage;
 
 /**
  * Service for sending emails.
@@ -232,13 +234,13 @@ public class MailService {
                                       String from,
                                       Map<String, Object> objectModel) {
         selfReference.sendEmailFromTemplateAsync(tenantContextHolder.getContext().getTenantKey().get(),
-                                                 user,
-                                                 templateName,
-                                                 subject,
-                                                 email,
-                                                 from,
-                                                 objectModel,
-                                                 MdcUtils.getRid());
+            user,
+            templateName,
+            subject,
+            email,
+            from,
+            objectModel,
+            MdcUtils.getRid());
     }
 
     @Async
@@ -288,9 +290,9 @@ public class MailService {
                                        Map<String, Object> objectModel) {
         if (email == null) {
             log.warn("Can't send email on null address for tenant: {}, user key: {}, email template: {}",
-                     tenantKey.getValue(),
-                     user.getUserKey(),
-                     templateName);
+                tenantKey.getValue(),
+                user.getUserKey(),
+                templateName);
             return;
         }
 
@@ -329,10 +331,10 @@ public class MailService {
         setLocale(locale);
 
         String result = Optional.ofNullable(settings)
-            .filter(List.class::isInstance).map(it -> (List<Object>)it)
+            .filter(List.class::isInstance).map(it -> (List<Object>) it)
             .flatMap(mailSettings ->
                 mailSettings.stream()
-                    .filter(Map.class::isInstance).map(it -> (Map<String, Object>)it)
+                    .filter(Map.class::isInstance).map(it -> (Map<String, Object>) it)
                     // find by templateName
                     .filter(it -> templateName.equals(it.get(TEMPLATE_NAME)))
                     .findFirst()
@@ -340,7 +342,7 @@ public class MailService {
                     .filter(it -> it.containsKey(key))
                     .map(it -> it.get(key))
                     // get localized name
-                    .filter(Map.class::isInstance).map(it -> (Map<String, String>)it)
+                    .filter(Map.class::isInstance).map(it -> (Map<String, String>) it)
                     .flatMap(this::getI18nName)
             ).orElse(defaultValue);
 
@@ -363,12 +365,13 @@ public class MailService {
     // package level for testing
     void sendEmail(String to, String subject, String content, String from) {
         log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}' and content={}",
-                  false, true, to, subject, content);
+            false, true, to, subject, content);
 
         // Prepare message using a Spring helper
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
         try {
-            MimeMessageHelper message = new MimeMessageHelper(mimeMessage, false, CharEncoding.UTF_8);
+            MimeMessageHelper message = new MimeMessageHelper(mimeMessage,
+                false, StandardCharsets.UTF_8.name());
             message.setTo(to);
             message.setFrom(from);
             message.setSubject(subject);

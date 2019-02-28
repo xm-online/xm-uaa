@@ -7,10 +7,12 @@ import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
 import com.icthh.xm.commons.config.client.repository.TenantListRepository;
 import com.icthh.xm.commons.migration.db.XmMultiTenantSpringLiquibase;
 import com.icthh.xm.commons.migration.db.XmSpringLiquibase;
+
 import com.icthh.xm.uaa.util.DatabaseUtil;
 import io.github.jhipster.config.JHipsterConstants;
 
 import java.sql.SQLException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,11 +30,13 @@ import org.hibernate.engine.jdbc.connections.spi.MultiTenantConnectionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateSettings;
 import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Profile;
+
 import org.springframework.core.env.Environment;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -47,9 +51,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 public class DatabaseConfiguration {
 
-    /** The application properties. */
-    private ApplicationProperties applicationProperties;
-
     private final Logger log = LoggerFactory.getLogger(DatabaseConfiguration.class);
 
     private static final String JPA_PACKAGES = "com.icthh.xm.uaa.domain";
@@ -57,6 +58,7 @@ public class DatabaseConfiguration {
     private final Environment env;
     private final JpaProperties jpaProperties;
     private final TenantListRepository tenantListRepository;
+    private ApplicationProperties applicationProperties;
 
     public DatabaseConfiguration(Environment env,
                                  JpaProperties jpaProperties,
@@ -163,7 +165,7 @@ public class DatabaseConfiguration {
         MultiTenantConnectionProvider multiTenantConnectionProviderImpl,
         CurrentTenantIdentifierResolver currentTenantIdentifierResolverImpl) {
         Map<String, Object> properties = new HashMap<>();
-        properties.putAll(jpaProperties.getHibernateProperties(dataSource));
+        properties.putAll(jpaProperties.getHibernateProperties(new HibernateSettings()));
         properties.put(org.hibernate.cfg.Environment.MULTI_TENANT, MultiTenancyStrategy.SCHEMA);
         properties
             .put(org.hibernate.cfg.Environment.MULTI_TENANT_CONNECTION_PROVIDER, multiTenantConnectionProviderImpl);

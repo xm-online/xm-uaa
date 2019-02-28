@@ -6,13 +6,6 @@ import com.icthh.xm.commons.permission.inspector.PrivilegeInspector;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.repository.kafka.SystemQueueConsumer;
 import com.icthh.xm.uaa.repository.kafka.SystemTopicConsumer;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 import com.icthh.xm.uaa.service.EnvironmentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +20,12 @@ import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.MessageListener;
 import org.springframework.kafka.listener.config.ContainerProperties;
 import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor

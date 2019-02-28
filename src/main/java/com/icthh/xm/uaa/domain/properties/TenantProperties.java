@@ -1,17 +1,13 @@
 package com.icthh.xm.uaa.domain.properties;
 
-import static java.util.Optional.ofNullable;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
-import com.google.common.base.Objects;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.security.ldap.Type;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,6 +19,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static java.util.Optional.ofNullable;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)

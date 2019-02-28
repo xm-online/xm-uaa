@@ -1,14 +1,5 @@
 package com.icthh.xm.uaa.cucumber.stepdefs;
 
-import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
-import static com.icthh.xm.uaa.config.Constants.HEADER_TENANT;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.icthh.xm.uaa.security.DomainUserDetails;
 import cucumber.api.java.Before;
 import cucumber.api.java.en.Then;
@@ -23,6 +14,15 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.util.Collections;
+
+import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
+import static com.icthh.xm.uaa.config.Constants.HEADER_TENANT;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class UserStepDefs extends StepDefs {
 

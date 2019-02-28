@@ -1,11 +1,5 @@
 package com.icthh.xm.uaa.service.mail;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import com.icthh.xm.commons.i18n.spring.service.LocalizationMessageService;
 import com.icthh.xm.commons.logging.util.MdcUtils;
@@ -35,9 +29,15 @@ import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.mail.internet.MimeMessage;
 import java.util.HashMap;
 import java.util.Map;
-import javax.mail.internet.MimeMessage;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {

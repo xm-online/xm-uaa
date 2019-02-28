@@ -63,6 +63,7 @@
     <logger name="sun.rmi.transport" level="WARN"/>
     <logger name="org.reflections" level="INFO"/>
     <logger name="com.netflix.loadbalancer" level="INFO"/>
+    <logger name="org.apache.kafka.clients" level="ERROR"/>
 
     <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
         <resetJUL>true</resetJUL>

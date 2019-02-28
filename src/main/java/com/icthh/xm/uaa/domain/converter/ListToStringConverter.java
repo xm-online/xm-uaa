@@ -1,7 +1,5 @@
 package com.icthh.xm.uaa.domain.converter;
 
-import static java.util.Collections.emptyList;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,10 +10,9 @@ import org.apache.commons.lang3.StringUtils;
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
+import static java.util.Collections.emptyList;
 
 @Slf4j
 @Converter

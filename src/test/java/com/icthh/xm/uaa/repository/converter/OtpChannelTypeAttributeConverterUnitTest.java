@@ -1,9 +1,9 @@
 package com.icthh.xm.uaa.repository.converter;
 
-import static org.junit.Assert.assertNull;
-
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import org.junit.Test;
+
+import static org.junit.Assert.assertNull;
 
 /**
  * The {@link OtpChannelTypeAttributeConverterUnitTest} class.

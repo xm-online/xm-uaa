@@ -2,13 +2,8 @@ package com.icthh.xm.uaa.security;
 
 import org.junit.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-
-import java.util.ArrayList;
-import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

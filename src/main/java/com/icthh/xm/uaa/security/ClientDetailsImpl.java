@@ -1,8 +1,5 @@
 package com.icthh.xm.uaa.security;
 
-import static java.util.Collections.emptySet;
-import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
-
 import com.icthh.xm.uaa.domain.Client;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -14,6 +11,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import static java.util.Collections.emptySet;
+import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 
 public class ClientDetailsImpl implements ClientDetails {
 

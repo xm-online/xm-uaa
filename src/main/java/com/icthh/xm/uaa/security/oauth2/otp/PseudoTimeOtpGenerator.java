@@ -1,12 +1,13 @@
 package com.icthh.xm.uaa.security.oauth2.otp;
 
 import com.icthh.xm.uaa.security.DomainUserDetails;
+
+import java.util.Objects;
+
 import org.jboss.aerogear.security.otp.Totp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
-
-import java.util.Objects;
 
 /**
  * The {@link PseudoTimeOtpGenerator} class.
@@ -30,8 +31,8 @@ public class PseudoTimeOtpGenerator implements OtpGenerator {
         Objects.requireNonNull(principal, "principal can't be null");
         if (!(principal instanceof DomainUserDetails)) {
             throw new IllegalArgumentException("Unsupported authentication principal type, expected: "
-                                                   + DomainUserDetails.class.getSimpleName() + ", actual: "
-                                                   + principal.getClass().getCanonicalName()
+                + DomainUserDetails.class.getSimpleName() + ", actual: "
+                + principal.getClass().getCanonicalName()
             );
         }
 

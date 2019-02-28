@@ -1,10 +1,5 @@
 package com.icthh.xm.uaa.web.rest;
 
-import static org.springframework.boot.actuate.security.AuthenticationAuditListener.AUTHENTICATION_SUCCESS;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.icthh.xm.commons.i18n.error.web.ExceptionTranslator;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
@@ -29,6 +24,11 @@ import java.sql.Date;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+
+import static org.springframework.boot.actuate.security.AuthenticationAuditListener.AUTHENTICATION_SUCCESS;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Test class for the ClientResource REST controller.
@@ -66,8 +66,12 @@ public class OnlineUsersResourceIntTest {
     public void getAllOnlineUsers() throws Exception {
         // Initialize the database
         auditEventRepository.add(new AuditEvent("user1", AUTHENTICATION_SUCCESS));
-        auditEventRepository.add(new AuditEvent(Date.from(Instant.now().minus(1, ChronoUnit.DAYS)), "user2", AUTHENTICATION_SUCCESS, Collections
-            .emptyMap()));
+        auditEventRepository.add(new AuditEvent(
+            Instant.now().minus(1, ChronoUnit.DAYS),
+            "user2",
+            AUTHENTICATION_SUCCESS,
+            Collections
+                .emptyMap()));
 
         // Get all the clientList
         restClientMockMvc.perform(get("/api/onlineUsers"))

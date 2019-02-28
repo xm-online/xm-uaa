@@ -1,23 +1,5 @@
 package com.icthh.xm.uaa.web.rest;
 
-import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
-import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
-import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_SUPER_ADMIN_FORBIDDEN_OPERATION;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.hasItem;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.icthh.xm.commons.i18n.error.web.ExceptionTranslator;
 import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
@@ -61,9 +43,33 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.util.*;
 import javax.persistence.EntityManager;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
+import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
+import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_SUPER_ADMIN_FORBIDDEN_OPERATION;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Test class for the UserResource REST controller.
@@ -164,9 +170,9 @@ public class UserResourceIntTest {
 
         doNothing().when(profileEventProducer).send(any());
         UserResource userResource = new UserResource(userLoginRepository,
-                                                     mailService,
-                                                     userService,
-                                                     profileEventProducer);
+            mailService,
+            userService,
+            profileEventProducer);
         this.restUserMockMvc = MockMvcBuilders.standaloneSetup(userResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)
@@ -241,8 +247,8 @@ public class UserResourceIntTest {
             ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLogin), false, null);
 
         restUserMockMvc.perform(post("/api/users")
-                                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
-                                    .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
             .andExpect(status().isCreated());
 
         // Validate the User in the database
@@ -282,8 +288,8 @@ public class UserResourceIntTest {
 
         // An entity with an existing ID cannot be created, so this API call must fail
         restUserMockMvc.perform(post("/api/users")
-                                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
-                                    .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
             .andExpect(status().isBadRequest())
             .andExpect(MockMvcResultMatchers.header().string("X-uaaApp-error", "error.idexists"));
 
@@ -322,8 +328,8 @@ public class UserResourceIntTest {
 
         // SUPER-ADMIN entity cannot be created, so this API call must fail
         restUserMockMvc.perform(post("/api/users")
-                .contentType(TestUtil.APPLICATION_JSON_UTF8)
-                .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.error").value(ERROR_SUPER_ADMIN_FORBIDDEN_OPERATION));
 
@@ -361,8 +367,8 @@ public class UserResourceIntTest {
 
         // Create the User
         restUserMockMvc.perform(post("/api/users")
-                                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
-                                    .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
             .andExpect(status().isBadRequest());
 
         // Validate the User in the database
@@ -381,7 +387,7 @@ public class UserResourceIntTest {
 
         // Get all the users
         restUserMockMvc.perform(get("/api/users?sort=id,desc")
-                                    .accept(MediaType.APPLICATION_JSON))
+            .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].userKey").value(hasItem(beforeKey)))
@@ -441,7 +447,9 @@ public class UserResourceIntTest {
         int databaseSizeBeforeUpdate = userRepository.findAll().size();
 
         // Update the user
-        User updatedUser = userRepository.findOne(user.getId());
+        Optional<User> updatedUserOpt = userRepository.findById(user.getId());
+        assertTrue(updatedUserOpt.isPresent());
+        User updatedUser = updatedUserOpt.get();
 
         UserLogin userLogin = new UserLogin();
         userLogin.setLogin("test");
@@ -464,8 +472,8 @@ public class UserResourceIntTest {
             ROLE_USER, "testUserKey", null, null, null, null, Collections.singletonList(userLogin), false, null);
 
         restUserMockMvc.perform(put("/api/users")
-                                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
-                                    .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
             .andExpect(status().isOk());
 
         // Validate the User in the database
@@ -486,7 +494,9 @@ public class UserResourceIntTest {
         int databaseSizeBeforeUpdate = userRepository.findAll().size();
 
         // Update the user
-        User updatedUser = userRepository.findOne(user.getId());
+        Optional<User> updatedUserOpt = userRepository.findById(user.getId());
+        assertTrue(updatedUserOpt.isPresent());
+        User updatedUser = updatedUserOpt.get();
 
         UserLogin userLoginNew = new UserLogin();
         userLoginNew.setLogin("testMail3");
@@ -509,8 +519,8 @@ public class UserResourceIntTest {
             ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLoginNew), false, null);
 
         restUserMockMvc.perform(put("/api/users")
-                                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
-                                    .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
             .andExpect(status().isOk());
 
         // Validate the User in the database
@@ -549,7 +559,9 @@ public class UserResourceIntTest {
         userRepository.saveAndFlush(anotherUser);
 
         // Update the user
-        User updatedUser = userRepository.findOne(user.getId());
+        Optional<User> updatedUserOpt = userRepository.findById(user.getId());
+        assertTrue(updatedUserOpt.isPresent());
+        User updatedUser = updatedUserOpt.get();
 
         UserLogin userLoginNew = new UserLogin();
         userLoginNew.setLogin("testMail");
@@ -572,8 +584,8 @@ public class UserResourceIntTest {
             ROLE_USER, "testNew", null, null, null, null, Collections.singletonList(userLoginNew), false, null);
 
         restUserMockMvc.perform(put("/api/users/logins")
-                                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
-                                    .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
             .andExpect(status().isBadRequest());
     }
 
@@ -615,7 +627,9 @@ public class UserResourceIntTest {
         userRepository.saveAndFlush(user);
 
         // Update the user
-        User updatedUser = userRepository.findOne(user.getId());
+        Optional<User> updatedUserOpt = userRepository.findById(user.getId());
+        assertTrue(updatedUserOpt.isPresent());
+        User updatedUser = updatedUserOpt.get();
 
         UserLogin userLoginNew = new UserLogin();
         userLoginNew.setLogin("testMail3");
@@ -638,12 +652,14 @@ public class UserResourceIntTest {
             updatedUser.getUserKey(), RoleConstant.SUPER_ADMIN, null, null, null, null, Collections.singletonList(userLoginNew), false, null);
 
         restUserMockMvc.perform(put("/api/users/logins")
-                                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
-                                    .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
             .andExpect(status().isOk());
 
         // Validate the User in the database
-        User result = userRepository.findOne(user.getId());
+        Optional<User> resultOpt = userRepository.findById(user.getId());
+        assertTrue(resultOpt.isPresent());
+        User result = resultOpt.get();
         assertThat(result.getFirstName()).isEqualTo(DEFAULT_FIRSTNAME);
         assertThat(result.getLastName()).isEqualTo(DEFAULT_LASTNAME);
         assertThat(result.getImageUrl()).isEqualTo(DEFAULT_IMAGEURL);
@@ -664,7 +680,7 @@ public class UserResourceIntTest {
 
         // Delete the user
         restUserMockMvc.perform(delete("/api/users/{userKey}", user.getUserKey())
-                                    .accept(TestUtil.APPLICATION_JSON_UTF8))
+            .accept(TestUtil.APPLICATION_JSON_UTF8))
             .andExpect(status().isOk());
 
         // Validate the database is empty
@@ -683,7 +699,7 @@ public class UserResourceIntTest {
 
         // Delete the user
         restUserMockMvc.perform(delete("/api/users/{userKey}", user.getUserKey())
-                                    .accept(TestUtil.APPLICATION_JSON_UTF8))
+            .accept(TestUtil.APPLICATION_JSON_UTF8))
             .andExpect(status().isBadRequest());
 
         // Validate the database is empty

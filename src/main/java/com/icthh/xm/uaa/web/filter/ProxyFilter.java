@@ -1,31 +1,11 @@
 package com.icthh.xm.uaa.web.filter;
 
-import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
-import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
-import static com.icthh.xm.uaa.config.Constants.AUTH_TENANT_KEY;
-import static com.icthh.xm.uaa.config.Constants.AUTH_USERNAME;
-import static com.icthh.xm.uaa.config.Constants.AUTH_USER_NAME;
-import static com.icthh.xm.uaa.config.Constants.HEADER_DOMAIN;
-import static com.icthh.xm.uaa.config.Constants.HEADER_PORT;
-import static com.icthh.xm.uaa.config.Constants.HEADER_SCHEME;
-import static com.icthh.xm.uaa.config.Constants.HEADER_TENANT;
-import static com.icthh.xm.uaa.config.Constants.HEADER_WEBAPP_URL;
-import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_DOMAIN;
-import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_PORT;
-import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_PROTOCOL;
-import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_WEB_APP;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_PATTERN;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERR_TENANT_NOT_SUPPLIED;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERR_TENANT_SUSPENDED;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.TENANT_IS_SUSPENDED;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.TENANT_NOT_SUPPLIED;
-
-import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.commons.config.client.repository.TenantListRepository;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
+import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.uaa.commons.XmPrivilegedRequestContext;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
@@ -45,8 +25,6 @@ import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 
-import java.io.IOException;
-import java.util.List;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -55,6 +33,28 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
+
+import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
+import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
+import static com.icthh.xm.uaa.config.Constants.AUTH_TENANT_KEY;
+import static com.icthh.xm.uaa.config.Constants.AUTH_USERNAME;
+import static com.icthh.xm.uaa.config.Constants.AUTH_USER_NAME;
+import static com.icthh.xm.uaa.config.Constants.HEADER_DOMAIN;
+import static com.icthh.xm.uaa.config.Constants.HEADER_PORT;
+import static com.icthh.xm.uaa.config.Constants.HEADER_SCHEME;
+import static com.icthh.xm.uaa.config.Constants.HEADER_TENANT;
+import static com.icthh.xm.uaa.config.Constants.HEADER_WEBAPP_URL;
+import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_DOMAIN;
+import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_PORT;
+import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_PROTOCOL;
+import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_WEB_APP;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_PATTERN;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERR_TENANT_NOT_SUPPLIED;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERR_TENANT_SUSPENDED;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.TENANT_IS_SUSPENDED;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.TENANT_NOT_SUPPLIED;
 
 /**
  * Init context for request.

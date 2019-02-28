@@ -1,10 +1,10 @@
 package com.icthh.xm.uaa.service.dto;
 
 import com.icthh.xm.uaa.domain.UserLogin;
-import lombok.*;
-import org.hibernate.validator.constraints.NotBlank;
-
-import javax.persistence.Column;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @AllArgsConstructor
 @NoArgsConstructor

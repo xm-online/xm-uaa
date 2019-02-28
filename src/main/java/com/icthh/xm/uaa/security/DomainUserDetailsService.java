@@ -1,7 +1,5 @@
 package com.icthh.xm.uaa.security;
 
-import static java.util.stream.Collectors.toList;
-
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
@@ -19,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * Authenticate a user from the database.

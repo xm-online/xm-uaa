@@ -4,7 +4,6 @@ import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpGenerator;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
-import com.icthh.xm.uaa.service.OnlineUsersService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.authentication.AuthenticationManager;

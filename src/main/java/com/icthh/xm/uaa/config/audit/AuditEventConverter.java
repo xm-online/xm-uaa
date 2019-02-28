@@ -2,11 +2,16 @@ package com.icthh.xm.uaa.config.audit;
 
 import com.icthh.xm.uaa.domain.PersistentAuditEvent;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Component;
-
-import java.util.*;
 
 @Component
 public class AuditEventConverter {
@@ -35,7 +40,10 @@ public class AuditEventConverter {
      * @return the converted list.
      */
     public AuditEvent convertToAuditEvent(PersistentAuditEvent persistentAuditEvent) {
-        return new AuditEvent(Date.from(persistentAuditEvent.getAuditEventDate()), persistentAuditEvent.getPrincipal(),
+        if (persistentAuditEvent == null) {
+            return null;
+        }
+        return new AuditEvent(persistentAuditEvent.getAuditEventDate(), persistentAuditEvent.getPrincipal(),
             persistentAuditEvent.getAuditEventType(), convertDataToObjects(persistentAuditEvent.getData()));
     }
 
@@ -49,7 +57,9 @@ public class AuditEventConverter {
         Map<String, Object> results = new HashMap<>();
 
         if (data != null) {
-            data.forEach(results::put);
+            for (Map.Entry<String, String> entry : data.entrySet()) {
+                results.put(entry.getKey(), entry.getValue());
+            }
         }
         return results;
     }
@@ -66,21 +76,16 @@ public class AuditEventConverter {
 
         if (data != null) {
             for (Map.Entry<String, Object> entry : data.entrySet()) {
-                Object object = entry.getValue();
-
                 // Extract the data that will be saved.
-                if (object instanceof WebAuthenticationDetails) {
-                    WebAuthenticationDetails authenticationDetails = (WebAuthenticationDetails) object;
+                if (entry.getValue() instanceof WebAuthenticationDetails) {
+                    WebAuthenticationDetails authenticationDetails = (WebAuthenticationDetails) entry.getValue();
                     results.put("remoteAddress", authenticationDetails.getRemoteAddress());
                     results.put("sessionId", authenticationDetails.getSessionId());
-                } else if (object != null) {
-                    results.put(entry.getKey(), object.toString());
                 } else {
-                    results.put(entry.getKey(), "null");
+                    results.put(entry.getKey(), Objects.toString(entry.getValue()));
                 }
             }
         }
-
         return results;
     }
 }

@@ -1,12 +1,10 @@
 package com.icthh.xm.uaa.lep;
 
-import static com.icthh.xm.uaa.lep.XmUaaLepConstants.*;
-
-import com.icthh.xm.lep.api.ScopedContext;
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
-import com.icthh.xm.commons.lep.spring.SpringLepProcessingApplicationListener;
 import com.icthh.xm.commons.lep.commons.CommonsExecutor;
 import com.icthh.xm.commons.lep.commons.CommonsService;
+import com.icthh.xm.commons.lep.spring.SpringLepProcessingApplicationListener;
+import com.icthh.xm.lep.api.ScopedContext;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
 import com.icthh.xm.uaa.service.AccountService;
 import com.icthh.xm.uaa.service.UserLoginService;
@@ -17,6 +15,17 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_KEY_COMMONS;
+import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_KEY_SERVICES;
+import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_KEY_TEMPLATES;
+import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_SUB_KEY_PROFILE_EVEBT_PRODUCER_SERVICE;
+import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_SUB_KEY_SERVICE_ACCOUNT;
+import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_SUB_KEY_SERVICE_MAIL;
+import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_SUB_KEY_SERVICE_TENANT_CONFIG_SERVICE;
+import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_SUB_KEY_SERVICE_USER;
+import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_SUB_KEY_SERVICE_USER_LOGIN_SERVICE;
+import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_SUB_KEY_TEMPLATE_REST;
 
 /**
  * The {@link XmUaaLepProcessingApplicationListener} class.
@@ -38,7 +47,7 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
     @Override
     protected void bindExecutionContext(final ScopedContext executionContext) {
 
-        // services 
+        // services
         Map<String, Object> services = new HashMap<>();
 
         services.put(BINDING_SUB_KEY_SERVICE_ACCOUNT, accountService);

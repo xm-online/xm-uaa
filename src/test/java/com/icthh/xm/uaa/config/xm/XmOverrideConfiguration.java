@@ -41,9 +41,9 @@ public class XmOverrideConfiguration {
     public RestTemplate loadBalancedRestTemplate(RestTemplateCustomizer customizer) {
         RestTemplate template = Mockito.mock(RestTemplate.class);
         Mockito.when(template.exchange(Mockito.anyString(),
-                                       Mockito.anyObject(),
-                                       Mockito.anyObject(),
-                                       Mockito.eq(String.class)))
+            Mockito.any(),
+            Mockito.any(),
+            Mockito.eq(String.class)))
             .thenReturn(new ResponseEntity<>(BODY, HttpStatus.OK));
         return template;
     }

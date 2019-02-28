@@ -1,10 +1,5 @@
 package com.icthh.xm.uaa.util;
 
-import java.nio.charset.Charset;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.List;
-import javax.net.ssl.SSLContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
@@ -16,6 +11,12 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
+
+import javax.net.ssl.SSLContext;
+import java.nio.charset.Charset;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 public final class TemplateUtil {

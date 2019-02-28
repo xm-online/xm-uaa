@@ -1,7 +1,5 @@
 package com.icthh.xm.uaa.config;
 
-import static org.mockito.Mockito.*;
-
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
 import com.icthh.xm.commons.config.client.repository.TenantListRepository;
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
@@ -10,6 +8,11 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.HashSet;
 import java.util.Set;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @Configuration
 public class TenantConfigMockConfiguration {

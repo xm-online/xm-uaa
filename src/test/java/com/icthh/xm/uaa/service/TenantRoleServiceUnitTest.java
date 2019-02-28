@@ -1,14 +1,5 @@
 package com.icthh.xm.uaa.service;
 
-import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.junit.Assert.*;
-
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
 import com.icthh.xm.commons.permission.config.PermissionProperties;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
@@ -32,6 +23,17 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  *

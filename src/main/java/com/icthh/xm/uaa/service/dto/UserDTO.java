@@ -6,11 +6,6 @@ import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.util.OtpUtils;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
-import org.hibernate.validator.constraints.NotEmpty;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -18,7 +13,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 /**
  * A DTO representing a user, with his authorities.
@@ -53,7 +54,7 @@ public class UserDTO {
     private OtpChannelType tfaOtpChannelType;
 
     /**
-     *  Current user TFA channel. Can be null. Use as read only!
+     * Current user TFA channel. Can be null. Use as read only!
      */
     private TfaOtpChannelSpec tfaOtpChannelSpec;
 
@@ -102,28 +103,28 @@ public class UserDTO {
      */
     public UserDTO(User user) {
         this(user.getId(),
-             user.getFirstName(),
-             user.getLastName(),
-             user.getImageUrl(),
-             user.isActivated(),
-             user.isTfaEnabled(),
-             user.getTfaOtpChannelType(),
-             null,
-             user.getLangKey(),
-             user.getCreatedBy(),
-             user.getCreatedDate(),
-             user.getLastModifiedBy(),
-             user.getLastModifiedDate(),
-             user.getUserKey(),
-             user.getRoleKey(),
-             user.getAccessTokenValiditySeconds(),
-             user.getRefreshTokenValiditySeconds(),
-             user.getTfaAccessTokenValiditySeconds(),
-             user.getData(),
-             user.getLogins(),
-             new ArrayList<>(),
-             user.isAutoLogoutEnabled(),
-             user.getAutoLogoutTimeoutSeconds()
+            user.getFirstName(),
+            user.getLastName(),
+            user.getImageUrl(),
+            user.isActivated(),
+            user.isTfaEnabled(),
+            user.getTfaOtpChannelType(),
+            null,
+            user.getLangKey(),
+            user.getCreatedBy(),
+            user.getCreatedDate(),
+            user.getLastModifiedBy(),
+            user.getLastModifiedDate(),
+            user.getUserKey(),
+            user.getRoleKey(),
+            user.getAccessTokenValiditySeconds(),
+            user.getRefreshTokenValiditySeconds(),
+            user.getTfaAccessTokenValiditySeconds(),
+            user.getData(),
+            user.getLogins(),
+            new ArrayList<>(),
+            user.isAutoLogoutEnabled(),
+            user.getAutoLogoutTimeoutSeconds()
         );
         OtpUtils.enrichTfaOtpChannelSpec(this);
     }

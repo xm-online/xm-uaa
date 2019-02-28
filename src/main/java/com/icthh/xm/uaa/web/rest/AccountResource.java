@@ -1,7 +1,5 @@
 package com.icthh.xm.uaa.web.rest;
 
-import static com.icthh.xm.uaa.config.Constants.LOGIN_IS_USED_ERROR_TEXT;
-
 import com.codahale.metrics.annotation.Timed;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
@@ -44,13 +42,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+
+import static com.icthh.xm.uaa.config.Constants.LOGIN_IS_USED_ERROR_TEXT;
 
 /**
  * REST controller for managing the current user's account.
