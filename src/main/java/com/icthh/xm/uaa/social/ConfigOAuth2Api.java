@@ -1,17 +1,16 @@
 package com.icthh.xm.uaa.social;
 
+import static org.springframework.social.oauth2.TokenStrategy.AUTHORIZATION_HEADER;
+
 import com.icthh.xm.uaa.domain.properties.TenantProperties.Social;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.UserInfoMapping;
+import java.util.Map;
+import java.util.function.BiFunction;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.social.ApiBinding;
 import org.springframework.social.connect.UserProfile;
 import org.springframework.social.oauth2.AbstractOAuth2ApiBinding;
 import org.springframework.social.oauth2.TokenStrategy;
-
-import java.util.Map;
-import java.util.function.BiFunction;
-
-import static org.springframework.social.oauth2.TokenStrategy.AUTHORIZATION_HEADER;
 
 @Slf4j
 public class ConfigOAuth2Api extends AbstractOAuth2ApiBinding implements ApiBinding {
