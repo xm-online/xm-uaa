@@ -177,7 +177,7 @@ public class UserService {
     }
 
     /**
-     * Blocks user account. Throws BusinessException.ERROR_USER_BLOCK_HIMSELF for self-block
+     * Activates user account. Throws BusinessException.ERROR_USER_BLOCK_HIMSELF for self-block
      * @param userKey - user key
      * @return - user data
      */
