@@ -1,9 +1,10 @@
 package com.icthh.xm.uaa.service;
 
 import static com.icthh.xm.uaa.service.util.RandomUtil.generateActivationKey;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_DELETE_HIMSELF;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.*;
 import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
 
+import com.google.common.base.Preconditions;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
@@ -138,7 +139,7 @@ public class UserService {
 
 
     /**
-     * Update all information for a specific user, and return the modified user.
+     * Update all information without and ROLE, ACTIVATED state.
      *
      * @param updatedUser user to update
      * @return updated user
@@ -147,18 +148,61 @@ public class UserService {
     public Optional<UserDTO> updateUser(UserDTO updatedUser) {
         return userRepository.findById(updatedUser.getId())
             .map(user -> {
+                //use blockUserAccount/activateUserAccount
+                user.setActivated(user.isActivated());
+                //use changeUserRole
+                user.setRoleKey(user.getRoleKey());
                 user.setFirstName(updatedUser.getFirstName());
                 user.setLastName(updatedUser.getLastName());
                 user.setLangKey(updatedUser.getLangKey());
                 user.setImageUrl(updatedUser.getImageUrl());
-                user.setActivated(updatedUser.isActivated());
-                if (StringUtils.isNoneBlank(updatedUser.getRoleKey())) {
-                    user.setRoleKey(updatedUser.getRoleKey());
-                }
                 user.setData(updatedUser.getData());
                 user.setAccessTokenValiditySeconds(updatedUser.getAccessTokenValiditySeconds());
                 user.setRefreshTokenValiditySeconds(updatedUser.getRefreshTokenValiditySeconds());
                 return updateUserAutoLogoutSettings(updatedUser, user);
+            })
+            .map(UserDTO::new);
+    }
+
+    /**
+     * Blocks user account. Throws BusinessException.ERROR_USER_BLOCK_HIMSELF for self-block
+     * @param userKey - user key
+     * @return - user data
+     */
+    public Optional<UserDTO> blockUserAccount(String userKey) {
+        if (xmAuthenticationContextHolder.getContext().getRequiredUserKey().equals(userKey)) {
+            throw new BusinessException(ERROR_USER_BLOCK_HIMSELF, "Forbidden to block himself");
+        }
+        return changeUserAccountState(userKey, Boolean.FALSE);
+    }
+
+    /**
+     * Blocks user account. Throws BusinessException.ERROR_USER_BLOCK_HIMSELF for self-block
+     * @param userKey - user key
+     * @return - user data
+     */
+    public Optional<UserDTO> activateUserAccount(String userKey) {
+        if (xmAuthenticationContextHolder.getContext().getRequiredUserKey().equals(userKey)) {
+            throw new BusinessException(ERROR_USER_ACTIVATES_HIMSELF, "Forbidden to activate himself");
+        }
+        return changeUserAccountState(userKey, Boolean.TRUE);
+    }
+
+    /**
+     * Changes role for current user account with some restrictions.
+     * 1. It is impossible to set EMPTY role
+     * 2. It is impossible to change role for X to SUPER_ADMIN
+     * 3. It is impossible to change role for SUPER_ADMIN to X
+     * @param updatedUser - new user settings
+     * @return updated user
+     */
+    public Optional<UserDTO> changeUserRole(final UserDTO updatedUser) {
+        Preconditions.checkArgument(StringUtils.isNotEmpty(updatedUser.getRoleKey()),"No roleKey provided");
+        return userRepository.findById(updatedUser.getId())
+            .map(user -> {
+                assertNotSuperAdmin(user.getRoleKey());
+                user.setRoleKey(updatedUser.getRoleKey());
+                return user;
             })
             .map(UserDTO::new);
     }
@@ -408,6 +452,16 @@ public class UserService {
 
 
         return result;
+    }
+
+    private Optional<UserDTO> changeUserAccountState(String userKey, boolean isActivated) {
+        return userRepository
+            .findOneByUserKey(userKey)
+            .map(user -> {
+                user.setActivated(isActivated);
+                return user;
+            })
+            .map(UserDTO::new);
     }
 
 }
