@@ -35,14 +35,16 @@ public class DomainUserDetailsService implements UserDetailsService {
     @Transactional
     @IgnoreLogginAspect
     public DomainUserDetails loadUserByUsername(final String login) {
-        log.debug("Authenticating {}", login);
+        final String lowerLogin = login.toLowerCase();
+        log.debug("Authenticating {} -> {}", login, lowerLogin);
         TenantKey tenantKey = tenantContextHolder.getContext().getTenantKey()
             .orElseThrow(() -> new TenantNotProvidedException("Tenant not provided for authentication"));
 
-        return userLoginRepository.findOneByLogin(login).map(userLogin -> {
+
+        return userLoginRepository.findOneByLogin(lowerLogin).map(userLogin -> {
             User user = userLogin.getUser();
             if (!user.isActivated()) {
-                throw new InvalidGrantException("User " + login + " was not activated");
+                throw new InvalidGrantException("User " + lowerLogin + " was not activated");
             }
 
             // get user login's
@@ -55,7 +57,7 @@ public class DomainUserDetailsService implements UserDetailsService {
             SimpleGrantedAuthority authority = new SimpleGrantedAuthority(user.getRoleKey());
             List<SimpleGrantedAuthority> authorities = Collections.singletonList(authority);
 
-            return new DomainUserDetails(login,
+            return new DomainUserDetails(lowerLogin,
                                          user.getPassword(),
                                          authorities,
                                          tenantKey.getValue(),
@@ -70,7 +72,7 @@ public class DomainUserDetailsService implements UserDetailsService {
                                          user.getAutoLogoutTimeoutSeconds(),
                                          logins);
         }).orElseThrow(
-            () -> new UsernameNotFoundException("User " + login
+            () -> new UsernameNotFoundException("User " + lowerLogin
                                                     + " was not found for tenant " + tenantKey.getValue()));
     }
 
