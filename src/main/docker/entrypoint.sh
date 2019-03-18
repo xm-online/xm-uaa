@@ -1,16 +1,25 @@
-#!/usr/bin/env bash
-secrets=`ls /run/secrets/ 2>/dev/null |egrep -v '.*_FILE$'`
-for s in $secrets
-do
-    echo "set env $s"
-    export "$s"="$(cat /run/secrets/$s)"
-done
+#!/bin/bash
+set -e
+if [ -d "/run/secrets" ]
+then
+    secrets=`ls /run/secrets/ 2>/dev/null |egrep -v '.*_FILE$'`
+    for s in $secrets
+    do
+        echo "set env $s"
+        export "$s"="$(cat /run/secrets/$s)"
+    done
+fi
 
-if [ -n "${APPLICATION_DATASOURCE_EXTERNAL_DRIVER}" ]; then
-    echo "Found external database driver ${APPLICATION_DATASOURCE_EXTERNAL_DRIVER} app.war will be modified"
+if [ -n "${APPLICATION_EXTERNAL_CLASSPATH}" ]; then
+    echo "
+    Found external application classpath ${APPLICATION_EXTERNAL_CLASSPATH}
+    app.war will be modified
+    Next libs found in external classpath:
+    $(ls ${APPLICATION_EXTERNAL_CLASSPATH})
+    "
     mkdir /tmp/app
     unzip -qq app.war -d /tmp/app
-    cp ${APPLICATION_DATASOURCE_EXTERNAL_DRIVER} /tmp/app/WEB-INF/lib
+    cp -vR ${APPLICATION_EXTERNAL_CLASSPATH}/* /tmp/app/WEB-INF/lib
     cd /tmp/app
     zip -r -0 -q - . > /app.war
     rm -rf /tmp/app
