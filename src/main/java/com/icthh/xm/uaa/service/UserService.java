@@ -177,7 +177,7 @@ public class UserService {
             }
         }
 
-        dstUser.setAutoLogoutEnabled(srcDTO.isTfaEnabled());
+        dstUser.setAutoLogoutEnabled(srcDTO.isAutoLogoutEnabled());
         dstUser.setAutoLogoutTimeoutSeconds(srcAutoLogoutTimeoutSeconds);
         return dstUser;
     }
