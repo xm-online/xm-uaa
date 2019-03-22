@@ -1,5 +1,7 @@
 package com.icthh.xm.uaa.web.rest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.i18n.error.web.ExceptionTranslator;
 import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
@@ -12,14 +14,17 @@ import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
+import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserMailService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.mapper.UserMapper;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -105,6 +110,9 @@ public class UserResourceIntTest {
 
     private static final String ROLE_USER = "ROLE_USER";
 
+    private static final boolean AUTO_LOGOUT_ENABLED = true;
+    private static final int AUTO_LOGOUT_TIME = 10;
+
     @Autowired
     private UserLoginRepository userLoginRepository;
 
@@ -138,6 +146,9 @@ public class UserResourceIntTest {
     @Autowired
     private XmRequestContextHolder xmRequestContextHolder;
 
+    @Autowired
+    private TenantPropertiesService tenantPropertiesService;
+
     @Mock
     private ProfileEventProducer profileEventProducer;
 
@@ -163,10 +174,18 @@ public class UserResourceIntTest {
 
     }
 
+    @SneakyThrows
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
         TenantContextUtils.setTenant(tenantContextHolder, DEFAULT_TENANT_KEY_VALUE);
+
+        TenantProperties properties = new TenantProperties();
+        TenantProperties.Security security = new TenantProperties.Security();
+        security.setDefaultUserRole(ROLE_USER);
+        properties.setSecurity(security);
+        tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
+            new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
 
         doNothing().when(profileEventProducer).send(any());
         UserResource userResource = new UserResource(userLoginRepository,
@@ -469,7 +488,9 @@ public class UserResourceIntTest {
             updatedUser.getCreatedDate(),
             updatedUser.getLastModifiedBy(),
             updatedUser.getLastModifiedDate(),
-            ROLE_USER, "testUserKey", null, null, null, null, Collections.singletonList(userLogin), false, null);
+            ROLE_USER, "testUserKey", null, null, null, null, Collections.singletonList(userLogin),
+            AUTO_LOGOUT_ENABLED,
+            AUTO_LOGOUT_TIME);
 
         restUserMockMvc.perform(put("/api/users")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -484,6 +505,8 @@ public class UserResourceIntTest {
         assertThat(testUser.getLastName()).isEqualTo(UPDATED_LASTNAME);
         assertThat(testUser.getImageUrl()).isEqualTo(UPDATED_IMAGEURL);
         assertThat(testUser.getLangKey()).isEqualTo(UPDATED_LANGKEY);
+        assertThat(testUser.isAutoLogoutEnabled()).isEqualTo(AUTO_LOGOUT_ENABLED);
+        assertThat(testUser.getAutoLogoutTimeoutSeconds()).isEqualTo(AUTO_LOGOUT_TIME);
     }
 
     @Test
