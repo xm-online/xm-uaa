@@ -263,7 +263,9 @@ public class UserResourceIntTest {
             null,
             null,
             null,
-            ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLogin), false, null);
+            ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLogin),
+            AUTO_LOGOUT_ENABLED,
+            AUTO_LOGOUT_TIME);
 
         restUserMockMvc.perform(post("/api/users")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -278,6 +280,8 @@ public class UserResourceIntTest {
         assertThat(testUser.getLastName()).isEqualTo(DEFAULT_LASTNAME);
         assertThat(testUser.getImageUrl()).isEqualTo(DEFAULT_IMAGEURL);
         assertThat(testUser.getLangKey()).isEqualTo(DEFAULT_LANGKEY);
+        assertThat(testUser.isAutoLogoutEnabled()).isEqualTo(AUTO_LOGOUT_ENABLED);
+        assertThat(testUser.getAutoLogoutTimeoutSeconds()).isEqualTo(AUTO_LOGOUT_TIME);
     }
 
     @Test
