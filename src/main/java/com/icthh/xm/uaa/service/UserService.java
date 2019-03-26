@@ -167,7 +167,7 @@ public class UserService {
     User updateUserAutoLogoutSettings(UserDTO srcDTO, User dstUser) {
         Integer srcAutoLogoutTimeoutSeconds = srcDTO.getAutoLogoutTimeoutSeconds();
         if (srcAutoLogoutTimeoutSeconds != null) {
-            int accessTokenValiditySeconds = tokenConstraints.getAccessTokenValiditySeconds(dstUser.getAutoLogoutTimeoutSeconds());
+            int accessTokenValiditySeconds = tokenConstraints.getAccessTokenValiditySeconds(dstUser.getAccessTokenValiditySeconds());
             if (srcAutoLogoutTimeoutSeconds > accessTokenValiditySeconds) {
                 srcAutoLogoutTimeoutSeconds = accessTokenValiditySeconds;
             }
