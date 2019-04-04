@@ -131,7 +131,7 @@ public class UserResource {
      */
     @PutMapping("/users")
     @Timed
-    @PreAuthorize("hasPermission({'id': #user.userKey, 'newUser': #user}, 'user', 'USER.UPDATE')")
+    @PreAuthorize("hasPermission({'userKey': #user.userKey, 'newUser': #user}, 'user', 'USER.UPDATE')")
     public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody UserDTO user) {
         assertNotSuperAdmin(user);
         Optional<UserDTO> updatedUser = userService.updateUser(user);
