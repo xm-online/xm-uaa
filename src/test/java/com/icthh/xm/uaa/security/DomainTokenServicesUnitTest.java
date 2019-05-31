@@ -5,9 +5,11 @@ import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.config.ApplicationProperties;
+import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.security.provider.DefaultAuthenticationRefreshProvider;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
+import com.icthh.xm.uaa.service.UserService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -42,7 +45,10 @@ import static com.icthh.xm.uaa.config.Constants.KEYSTORE_PATH;
 import static com.icthh.xm.uaa.config.Constants.KEYSTORE_PSWRD;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -68,10 +74,17 @@ public class DomainTokenServicesUnitTest {
     private TenantContext tenantContext;
     @Mock
     private ClientDetailsService clientDetailsService;
+    @Mock
+    private UserService userService;
+    @Mock
+    private AuthenticationManager authenticationManager;
+    @Mock
+    private DefaultAuthenticationRefreshProvider authenticationRefreshProvider;
 
     @InjectMocks
     private TokenConstraintsService tokenConstraintsService;
 
+    @InjectMocks
     private DomainTokenServices tokenServices;
 
     @Before
@@ -100,8 +113,8 @@ public class DomainTokenServicesUnitTest {
         tokenServices.setTenantPropertiesService(tenantPropertiesService);
         tokenServices.setTenantContextHolder(tenantContextHolder);
         tokenServices.setTokenConstraintsService(tokenConstraintsService);
-        tokenServices.setAuthenticationRefreshProvider(new DefaultAuthenticationRefreshProvider());
-
+        tokenServices.setAuthenticationRefreshProvider(authenticationRefreshProvider);
+        tokenServices.setUserService(userService);
     }
 
     @Test
@@ -127,6 +140,15 @@ public class DomainTokenServicesUnitTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testRefreshToken() throws Exception {
+        when(userService.findOneByLogin(LOGIN)).thenAnswer(invocation -> {
+            User user = new User();
+            user.setActivated(true); // user is active
+            user.setUserKey(USER_KEY);
+            return Optional.of(user);
+        });
+
+        when(authenticationRefreshProvider.refresh(any(OAuth2Authentication.class))).thenCallRealMethod();
+
         OAuth2AccessToken accessToken = tokenServices.createAccessToken(createAuthentication(LOGIN, TENANT, ROLE));
 
         assertNotNull(accessToken);
@@ -153,6 +175,37 @@ public class DomainTokenServicesUnitTest {
         assertEquals(CLIENT, auth.getOAuth2Request().getClientId());
         assertEquals(TENANT, ((Map<String, String>) auth.getDetails()).get(AUTH_TENANT_KEY));
         assertEquals(USER_KEY, ((Map<String, String>) auth.getDetails()).get(AUTH_USER_KEY));
+    }
+
+    @Test
+    public void testRefreshTokenForDeactivatedUser() throws Exception {
+        when(userService.findOneByLogin(LOGIN)).thenAnswer(invocation -> {
+            User user = new User();
+            user.setActivated(false); // user is deactivated
+            user.setUserKey(USER_KEY);
+            return Optional.of(user);
+        });
+
+        OAuth2AccessToken accessToken = tokenServices.createAccessToken(createAuthentication(LOGIN, TENANT, ROLE));
+
+        assertNotNull(accessToken);
+        assertNotNull(accessToken.getRefreshToken());
+        assertNotNull(accessToken.getRefreshToken().getValue());
+
+        Map<String, String> params = new HashMap<>();
+        params.put("grant_type", "refresh_token");
+        params.put("refresh_token", accessToken.getRefreshToken().getValue());
+
+        TokenRequest tokenRequest = new TokenRequest(params, CLIENT, null, "refresh_token");
+        try {
+            tokenServices.refreshAccessToken(accessToken.getRefreshToken().getValue(), tokenRequest);
+            fail("Expected UserNotActivatedException to be thrown");
+        } catch (UserNotActivatedException e) {
+            // ignore
+        }
+
+        verifyNoMoreInteractions(authenticationManager);
+        verifyNoMoreInteractions(authenticationRefreshProvider);
     }
 
     private OAuth2Authentication createAuthentication(String username, String tenant, String role) {

@@ -9,9 +9,8 @@ import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
 import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpTokenGranter;
 import com.icthh.xm.uaa.security.provider.DefaultAuthenticationRefreshProvider;
-import com.icthh.xm.uaa.service.OnlineUsersService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
-import io.github.jhipster.config.JHipsterProperties;
+import com.icthh.xm.uaa.service.UserService;
 
 import java.io.IOException;
 import java.security.KeyStoreException;
@@ -129,6 +128,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
     private final OtpStore otpStore;
     private final OtpSendStrategy otpSendStrategy;
     private final TokenConstraintsService tokenConstraintsService;
+    private final UserService userService;
 
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
@@ -170,6 +170,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
         tokenServices.setTenantPropertiesService(tenantPropertiesService);
         tokenServices.setTenantContextHolder(tenantContextHolder);
         tokenServices.setTokenConstraintsService(tokenConstraintsService);
+        tokenServices.setUserService(userService);
         // OTP settings
         tokenServices.setOtpGenerator(otpGenerator);
         tokenServices.setOtpStore(otpStore);
