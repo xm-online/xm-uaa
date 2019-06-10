@@ -58,8 +58,8 @@ public class TenantService {
 
         try {
             tenantListRepository.addTenant(tenant);
-            databaseService.create(tenant);
-            databaseService.migrate(tenant);
+            databaseService.create(tenant.toLowerCase());
+            databaseService.migrate(tenant.toLowerCase());
             addUaaSpecification(tenant);
             addLoginsSpecification(tenant);
             addRoleSpecification(tenant);

@@ -66,7 +66,7 @@ public class TenantDatabaseService {
             liquibase.setDataSource(dataSource);
             liquibase.setChangeLog(CHANGE_LOG_PATH);
             liquibase.setContexts(liquibaseProperties.getContexts());
-            liquibase.setDefaultSchema(tenantKey.toLowerCase());
+            liquibase.setDefaultSchema(tenantKey);
             liquibase.setDropFirst(liquibaseProperties.isDropFirst());
             liquibase.setChangeLogParameters(DatabaseUtil.defaultParams(tenantKey));
             liquibase.setShouldRun(true);
