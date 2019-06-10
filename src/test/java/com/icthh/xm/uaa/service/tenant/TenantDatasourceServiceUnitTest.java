@@ -50,12 +50,12 @@ public class TenantDatasourceServiceUnitTest {
         when(connection.createStatement()).thenReturn(statement);
     }
 
-    @Test
-    public void testCreateSuccess() throws Exception {
-        service.create(UaaTestConstants.DEFAULT_TENANT_KEY_VALUE);
-
-        verify(statement).executeUpdate(String.format(DDL_CREATE_SCHEMA, UaaTestConstants.DEFAULT_TENANT_KEY_VALUE));
-    }
+//    @Test
+//    public void testCreateSuccess() throws Exception {
+//        service.create(UaaTestConstants.DEFAULT_TENANT_KEY_VALUE);
+//
+//        verify(statement).executeUpdate(String.format(DDL_CREATE_SCHEMA, UaaTestConstants.DEFAULT_TENANT_KEY_VALUE));
+//    }
 
     @Test
     public void testExecuteException() throws Exception {
