@@ -57,14 +57,14 @@ public class TenantService {
         log.info("START - SETUP:CreateTenant: tenantKey: {}", tenant);
 
         try {
-            tenantListRepository.addTenant(tenant);
+            tenantListRepository.addTenant(tenant.toUpperCase());
             databaseService.create(tenant);
             databaseService.migrate(tenant);
-            addUaaSpecification(tenant);
-            addLoginsSpecification(tenant);
-            addRoleSpecification(tenant);
-            addPermissionSpecification(tenant);
-            addDefaultEmailTemplates(tenant);
+            addUaaSpecification(tenant.toUpperCase());
+            addLoginsSpecification(tenant.toUpperCase());
+            addRoleSpecification(tenant.toUpperCase());
+            addPermissionSpecification(tenant.toUpperCase());
+            addDefaultEmailTemplates(tenant.toUpperCase());
             log.info("STOP  - SETUP:CreateTenant: tenantKey: {}, result: OK, time = {} ms",
                 tenant, stopWatch.getTime());
         } catch (Exception e) {

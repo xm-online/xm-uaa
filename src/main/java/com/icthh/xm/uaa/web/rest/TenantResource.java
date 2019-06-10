@@ -24,7 +24,7 @@ public class TenantResource implements TenantsApiDelegate {
     @Transactional
     @PreAuthorize("hasPermission({'tenant':#tenant}, 'UAA.TENANT.CREATE')")
     public ResponseEntity<Void> addTenant(Tenant tenant) {
-        tenantService.createTenant(tenant.getTenantKey().toUpperCase());
+        tenantService.createTenant(tenant.getTenantKey());
         return ResponseEntity.ok().build();
     }
 
