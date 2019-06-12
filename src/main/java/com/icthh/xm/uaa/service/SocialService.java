@@ -256,9 +256,9 @@ public class SocialService {
 
         log.info("Create user {}", newUser);
 
-        User user = userRepository.save(newUser);
-        accountMailService.sendSocialRegistrationValidationEmail(user, providerId);
-        return user;
+        newUser = userRepository.save(newUser);
+        accountMailService.sendSocialRegistrationValidationEmail(newUser, providerId);
+        return newUser;
     }
 
     private User getUser(String userKey) {
