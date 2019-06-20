@@ -20,3 +20,8 @@ ldap:
     attribute:
       firstName: givenName
       lastName: sn
+publicSettings:
+    passwordSettings:
+        minLength: 2
+        maxLength: 10
+        pattern: (?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}
