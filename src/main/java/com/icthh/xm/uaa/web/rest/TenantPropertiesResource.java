@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
+import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.web.rest.vm.UaaValidationVM;
 import io.swagger.annotations.Api;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -63,4 +65,13 @@ public class TenantPropertiesResource {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping(value = "/uaa/properties/settings-public")
+    @ApiOperation(value = "Get uaa public settings", response = PublicSettings.class)
+    @ApiResponses(value = {
+        @ApiResponse(code = 200, message = "Uaa public setting", response = PublicSettings.class),
+        @ApiResponse(code = 500, message = "Internal server error")})
+    @Timed
+    public PublicSettings getUaaPublicSettings() {
+        return tenantPropertiesService.getTenantProps().getPublicSettings();
+    }
 }

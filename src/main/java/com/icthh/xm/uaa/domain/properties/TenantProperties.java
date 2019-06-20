@@ -73,6 +73,21 @@ public class TenantProperties {
         }
     }
 
+    private PublicSettings publicSettings;
+
+    @Data
+    public static class PublicSettings {
+
+        private PasswordSettings passwordSettings;
+
+        @Data
+        public static class PasswordSettings {
+            private byte minLength;
+            private byte maxLength;
+            private String pattern;
+        }
+    }
+
     @JsonProperty("social")
     private List<Social> social;
 
