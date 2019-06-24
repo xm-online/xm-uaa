@@ -1,9 +1,17 @@
 package com.icthh.xm.uaa.security;
 
+import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
+import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.security.ldap.LdapAuthenticationProviderBuilder;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
+import com.icthh.xm.uaa.service.UserService;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
@@ -15,8 +23,6 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Optional;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 
 import static com.icthh.xm.uaa.config.Constants.AUTH_USERNAME_DOMAIN_SEPARATOR;
 
@@ -27,15 +33,18 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
 
     private final AuthenticationProvider defaultProvider;
     private final LdapAuthenticationProviderBuilder providerBuilder;
-    private final UserDetailsService userDetailsService;
+    private final UserService userService;
+    private final TenantPropertiesService tenantPropertiesService;
 
     public UaaAuthenticationProvider(@Qualifier("daoAuthenticationProvider")
                                      @Lazy AuthenticationProvider defaultProvider,
                                      LdapAuthenticationProviderBuilder providerBuilder,
-                                     UserDetailsService userDetailsService) {
+                                     UserService userService,
+                                     TenantPropertiesService tenantPropertiesService) {
         this.defaultProvider = defaultProvider;
         this.providerBuilder = providerBuilder;
-        this.userDetailsService = userDetailsService;
+        this.userService = userService;
+        this.tenantPropertiesService = tenantPropertiesService;
     }
 
     private AuthenticationProvider getProvider(Authentication authentication) {
@@ -62,10 +71,19 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
     @LogicExtensionPoint(value = "Authenticate")
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        UserDetails userDetails = userDetailsService.loadUserByUsername(authentication.getName());
-
         Authentication result = getProvider(authentication).authenticate(authentication);
         log.info("authenticated: {}, role: {}, {}",result.isAuthenticated(), result.getAuthorities(), result.getPrincipal());
+        DomainUserDetails domainUserDetails = (DomainUserDetails) result.getPrincipal();
+        User user = userService.getUser(domainUserDetails.getUserKey());
+        LocalDate updatePasswordDate = LocalDate.from(user.getUpdatePasswordDate());
+        Integer expirationPeriod = tenantPropertiesService.getTenantProps().getPasswordExpirationPeriod();
+        LocalDate currentDate = LocalDate.now();
+        log.info("check password expiration, passwordUpdate: {}, currentDate: {}, expirationPeriod: {}",
+            updatePasswordDate, currentDate, expirationPeriod);
+        if (updatePasswordDate.plus(expirationPeriod, ChronoUnit.DAYS).isAfter(currentDate)) {
+            throw new BusinessException("Password expiration period is over, please change password");
+        }
+
         return result;
     }
 

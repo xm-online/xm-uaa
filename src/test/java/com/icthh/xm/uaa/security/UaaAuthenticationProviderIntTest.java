@@ -90,6 +90,9 @@ public class UaaAuthenticationProviderIntTest {
     @Autowired
     private TenantContextHolder tenantContextHolder;
 
+    @Autowired
+    private TenantPropertiesService tenantPropertiesService;
+
     private UaaAuthenticationProvider uaaAuthenticationProvider;
 
     @Rule
@@ -118,7 +121,10 @@ public class UaaAuthenticationProviderIntTest {
         LdapAuthenticationProviderBuilder providerBuilder =
             new LdapAuthenticationProviderBuilder(tenantPropertiesService, userDetailsService, userService);
 
-        uaaAuthenticationProvider = new UaaAuthenticationProvider(daoAuthenticationProvider, providerBuilder);
+        uaaAuthenticationProvider = new UaaAuthenticationProvider(daoAuthenticationProvider,
+                                                                  providerBuilder,
+                                                                  userService,
+                                                                  tenantPropertiesService);
 
         lepManager.beginThreadContext(ctx -> {
             ctx.setValue(THREAD_CONTEXT_KEY_TENANT_CONTEXT, tenantContextHolder.getContext());

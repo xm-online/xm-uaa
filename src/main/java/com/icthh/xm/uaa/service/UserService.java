@@ -85,6 +85,7 @@ public class UserService {
                 user.setPassword(passwordEncoder.encode(newPassword));
                 user.setResetKey(null);
                 user.setResetDate(null);
+                user.setUpdatePasswordDate(Instant.now());
                 return user;
             })
             .orElseThrow(() -> new BusinessException("error.reset.code.used", "Reset code used"));
@@ -132,6 +133,7 @@ public class UserService {
         newUser.setLogins(user.getLogins());
         newUser.getLogins().forEach(userLogin -> userLogin.setUser(newUser));
         newUser.setData(user.getData());
+        newUser.setUpdatePasswordDate(Instant.now());
 
         return userRepository.save(updateUserAutoLogoutSettings(user, newUser));
     }
