@@ -1,4 +1,4 @@
-package com.icthh.xm.ms.entity.service.impl;
+package com.icthh.xm.uaa.service;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -8,29 +8,34 @@ import com.icthh.xm.commons.scheduler.domain.ScheduledEvent;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.lep.api.LepManager;
-import com.icthh.xm.ms.entity.AbstractSpringBootTest;
-import com.icthh.xm.ms.entity.service.FunctionExecutorService;
-import com.icthh.xm.ms.entity.service.SchedulerHandler;
+import com.icthh.xm.uaa.UaaApp;
+import com.icthh.xm.uaa.config.LepConfiguration;
+import com.icthh.xm.uaa.config.SecurityBeanOverrideConfiguration;
+import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
-
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import org.springframework.test.context.junit4.SpringRunner;
 
 @Slf4j
-public class SchedulerIntTest extends AbstractSpringBootTest {
-
-    @Autowired
-    private FunctionExecutorService functionService;
-
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {
+    UaaApp.class,
+    XmOverrideConfiguration.class,
+    LepConfiguration.class
+})
+public class SchedulerServiceIntTest {
 
     @Autowired
     private TenantContextHolder tenantContextHolder;
@@ -54,8 +59,8 @@ public class SchedulerIntTest extends AbstractSpringBootTest {
     }
 
     void initLeps() {
-        leps.onRefresh("/config/tenants/RESINTTEST/entity/lep/scheduler/SchedulerEvent$$TEST_TYPE_KEY$$around.groovy",
-            loadFile("config/testlep/SchedulerEvent$$TEST_TYPE_KEY$$around.groovy"));
+        leps.onRefresh("/config/tenants/XM/uaa/lep/scheduler/SchedulerEvent$$TEST_TYPE_KEY$$around.groovy",
+            loadFile("/config/tenants/XM/uaa/lep/scheduler/SchedulerEvent$$TEST_TYPE_KEY$$around.groovy"));
     }
 
     @SneakyThrows
@@ -74,7 +79,7 @@ public class SchedulerIntTest extends AbstractSpringBootTest {
         Map<String, Object> data =  new HashMap<>();
         data.put("countCallEventHandler", 0);
         scheduledEvent.setData(data);
-        schedulerHandler.onEvent(scheduledEvent, "RESINTTEST");
+        schedulerHandler.onEvent(scheduledEvent, "XM");
 
         assertThat(scheduledEvent.getData().get("countCallEventHandler")).isEqualTo(1);
     }
@@ -88,7 +93,7 @@ public class SchedulerIntTest extends AbstractSpringBootTest {
         Map<String, Object> data =  new HashMap<>();
         data.put("countCallEventHandler", 0);
         scheduledEvent.setData(data);
-        schedulerHandler.onEvent(scheduledEvent, "TEST");
+        schedulerHandler.onEvent(scheduledEvent, "DEMO");
 
         assertThat(scheduledEvent.getData().get("countCallEventHandler")).isEqualTo(0);
         assertThat(scheduledEvent.getData().get("scheduledEvent")).isNull();
@@ -103,7 +108,7 @@ public class SchedulerIntTest extends AbstractSpringBootTest {
         Map<String, Object> data =  new HashMap<>();
         data.put("countCallEventHandler", 0);
         scheduledEvent.setData(data);
-        schedulerHandler.onEvent(scheduledEvent, "RESINTTEST");
+        schedulerHandler.onEvent(scheduledEvent, "XM");
 
         assertThat(scheduledEvent.getData().get("countCallEventHandler")).isEqualTo(0);
         assertThat(scheduledEvent.getData().get("scheduledEvent")).isNull();
