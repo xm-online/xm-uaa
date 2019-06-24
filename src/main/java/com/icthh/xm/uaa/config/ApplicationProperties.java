@@ -41,6 +41,7 @@ public class ApplicationProperties {
     private String emailPathPattern;
     private boolean timelinesEnabled;
     private String dbSchemaSuffix;
+    private boolean schedulerEnabled;
 
     @Getter
     @Setter
