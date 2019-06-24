@@ -68,9 +68,10 @@ public class TenantPropertiesResource {
     @GetMapping(value = "/uaa/properties/settings-public")
     @ApiOperation(value = "Get uaa public settings", response = PublicSettings.class)
     @ApiResponses(value = {
-        @ApiResponse(code = 200, message = "Uaa public setting", response = PublicSettings.class),
+        @ApiResponse(code = 200, message = "Uaa public settings", response = PublicSettings.class),
         @ApiResponse(code = 500, message = "Internal server error")})
     @Timed
+    @PreAuthorize("hasPermission(null, 'UAA.TENANT.PROPERTIES.PUBLIC.GET')")
     public PublicSettings getUaaPublicSettings() {
         return tenantPropertiesService.getTenantProps().getPublicSettings();
     }

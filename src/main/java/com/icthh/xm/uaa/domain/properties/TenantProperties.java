@@ -85,6 +85,7 @@ public class TenantProperties {
             private byte minLength;
             private byte maxLength;
             private String pattern;
+            private String patternMessage;
         }
     }
 
