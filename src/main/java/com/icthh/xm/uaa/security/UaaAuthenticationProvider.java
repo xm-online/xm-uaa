@@ -15,6 +15,8 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Optional;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
 import static com.icthh.xm.uaa.config.Constants.AUTH_USERNAME_DOMAIN_SEPARATOR;
 
@@ -25,12 +27,15 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
 
     private final AuthenticationProvider defaultProvider;
     private final LdapAuthenticationProviderBuilder providerBuilder;
+    private final UserDetailsService userDetailsService;
 
     public UaaAuthenticationProvider(@Qualifier("daoAuthenticationProvider")
                                      @Lazy AuthenticationProvider defaultProvider,
-                                     LdapAuthenticationProviderBuilder providerBuilder) {
+                                     LdapAuthenticationProviderBuilder providerBuilder,
+                                     UserDetailsService userDetailsService) {
         this.defaultProvider = defaultProvider;
         this.providerBuilder = providerBuilder;
+        this.userDetailsService = userDetailsService;
     }
 
     private AuthenticationProvider getProvider(Authentication authentication) {
@@ -57,6 +62,8 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
     @LogicExtensionPoint(value = "Authenticate")
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+        UserDetails userDetails = userDetailsService.loadUserByUsername(authentication.getName());
+
         Authentication result = getProvider(authentication).authenticate(authentication);
         log.info("authenticated: {}, role: {}, {}",result.isAuthenticated(), result.getAuthorities(), result.getPrincipal());
         return result;
