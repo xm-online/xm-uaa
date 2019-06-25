@@ -133,6 +133,9 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "auto_logout_timeout")
     private Integer autoLogoutTimeoutSeconds;
 
+    @Column(name = "update_password_date")
+    private Instant updatePasswordDate;
+
     // TODO refactor, put EMAIL type to configuration
     public String getEmail() {
         return getLogins().stream().filter(userLogin -> UserLoginType.EMAIL.getValue().equals(userLogin.getTypeKey()))
@@ -177,6 +180,7 @@ public class User extends AbstractAuditingEntity implements Serializable {
             + ", langKey='" + langKey + '\''
             + ", activationKey='" + activationKey + '\''
             + ", roleKey='" + roleKey + '\''
+            + ", updatePasswordDate='" + updatePasswordDate + '\''
             + "}";
     }
 }

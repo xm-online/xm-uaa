@@ -191,4 +191,7 @@ public class TenantProperties {
             private Map<String, String> mapping;
         }
     }
+
+    @JsonProperty("passwordExpirationPeriod")
+    private Integer passwordExpirationPeriod = -1;
 }

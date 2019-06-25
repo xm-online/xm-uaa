@@ -13,6 +13,8 @@ import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.security.ldap.LdapAuthenticationProviderBuilder;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -118,7 +120,10 @@ public class UaaAuthenticationProviderIntTest {
         LdapAuthenticationProviderBuilder providerBuilder =
             new LdapAuthenticationProviderBuilder(tenantPropertiesService, userDetailsService, userService);
 
-        uaaAuthenticationProvider = new UaaAuthenticationProvider(daoAuthenticationProvider, providerBuilder);
+        uaaAuthenticationProvider = new UaaAuthenticationProvider(daoAuthenticationProvider,
+                                                                  providerBuilder,
+                                                                  userService,
+                                                                  tenantPropertiesService);
 
         lepManager.beginThreadContext(ctx -> {
             ctx.setValue(THREAD_CONTEXT_KEY_TENANT_CONTEXT, tenantContextHolder.getContext());
@@ -141,6 +146,20 @@ public class UaaAuthenticationProviderIntTest {
             new UsernamePasswordAuthenticationToken(TEST_USER, TEST_PASSWORD));
 
         commonAsserts(TEST_USER, DEFAULT_USER_ROLE_KEY, authentication);
+    }
+
+    @Test
+    public void testCheckPasswordExpirationSuccess() {
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_USER, TEST_PASSWORD);
+        Authentication authentication = uaaAuthenticationProvider.authenticate(token);
+
+        DomainUserDetails domainUserDetails = (DomainUserDetails) authentication.getPrincipal();
+        User user = userService.getUser(domainUserDetails.getUserKey());
+        //passwordExpirationPeriod = 90 days
+        user.setUpdatePasswordDate(Instant.now().minus(89, ChronoUnit.DAYS));
+        userService.saveUser(user);
+
+        uaaAuthenticationProvider.authenticate(token);
     }
 
     @Test

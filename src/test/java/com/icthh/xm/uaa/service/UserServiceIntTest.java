@@ -11,6 +11,7 @@ import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.service.util.RandomUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,6 +32,8 @@ import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CON
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
 import static com.icthh.xm.commons.tenant.TenantContextUtils.buildTenant;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 /**
  * Test class for the UserResource REST controller.
@@ -202,11 +205,15 @@ public class UserServiceIntTest {
         user.setResetKey(resetKey);
         userRepository.save(user);
 
+        assertNull(user.getUpdatePasswordDate());
+
         userService.completePasswordReset("johndoe2", user.getResetKey());
 
         assertThat(user.getResetDate()).isNull();
         assertThat(user.getResetKey()).isNull();
         assertThat(user.getPassword()).isNotEqualTo(oldPassword);
+
+        assertNotNull(user.getUpdatePasswordDate());
 
         userRepository.delete(user);
     }
