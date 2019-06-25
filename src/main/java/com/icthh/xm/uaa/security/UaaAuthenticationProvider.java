@@ -10,6 +10,7 @@ import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -81,7 +82,10 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
         LocalDate currentDate = LocalDate.now();
         log.info("check password expiration, passwordUpdate: {}, currentDate: {}, expirationPeriod: {}",
             updatePasswordDate, currentDate, expirationPeriod);
-        if (updatePasswordDate.plus(expirationPeriod, ChronoUnit.DAYS).isAfter(currentDate)) {
+        Period period = Period.between(currentDate, updatePasswordDate);
+        int days = period.getDays();
+
+        if (days > expirationPeriod && expirationPeriod != -1) {
             throw new BusinessException("Password expiration period is over, please change password");
         }
 
