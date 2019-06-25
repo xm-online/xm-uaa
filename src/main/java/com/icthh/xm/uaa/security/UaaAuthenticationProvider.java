@@ -1,6 +1,8 @@
 package com.icthh.xm.uaa.security;
 
-import com.icthh.xm.commons.exceptions.BusinessException;
+import static com.icthh.xm.uaa.config.Constants.AUTH_USERNAME_DOMAIN_SEPARATOR;
+import static java.time.ZoneOffset.UTC;
+
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
@@ -8,25 +10,19 @@ import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.security.ldap.LdapAuthenticationProviderBuilder;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
-import java.time.Instant;
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.Period;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.Optional;
-
-import static com.icthh.xm.uaa.config.Constants.AUTH_USERNAME_DOMAIN_SEPARATOR;
-import static java.time.ZoneOffset.UTC;
 
 @Slf4j
 @IgnoreLogginAspect
@@ -75,21 +71,24 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         Authentication result = getProvider(authentication).authenticate(authentication);
         log.info("authenticated: {}, role: {}, {}",result.isAuthenticated(), result.getAuthorities(), result.getPrincipal());
-        DomainUserDetails domainUserDetails = (DomainUserDetails) result.getPrincipal();
+        checkPasswordExpiration(result);
+
+        return result;
+    }
+
+    private void checkPasswordExpiration(Authentication authentication) {
+        DomainUserDetails domainUserDetails = (DomainUserDetails) authentication.getPrincipal();
         User user = userService.getUser(domainUserDetails.getUserKey());
         LocalDate updatePasswordDate = user.getUpdatePasswordDate().atZone(UTC).toLocalDate();
         Integer expirationPeriod = tenantPropertiesService.getTenantProps().getPasswordExpirationPeriod();
         LocalDate currentDate = LocalDate.now();
-        log.info("check password expiration, passwordUpdate: {}, currentDate: {}, expirationPeriod: {}",
+        log.info("check password expiration, passwordUpdateDate: {}, currentDate: {}, expirationPeriod: {}",
             updatePasswordDate, currentDate, expirationPeriod);
         Period period = Period.between(currentDate, updatePasswordDate);
-        int days = period.getDays();
 
-        if (days > expirationPeriod && expirationPeriod != -1) {
-            throw new BusinessException("Password expiration period is over, please change password");
+        if (period.getDays() > expirationPeriod && expirationPeriod > 0) {
+            throw new CredentialsExpiredException("Password expiration period is over, please change password");
         }
-
-        return result;
     }
 
     /**
