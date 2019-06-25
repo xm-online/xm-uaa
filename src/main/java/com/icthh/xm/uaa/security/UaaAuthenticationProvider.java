@@ -25,6 +25,7 @@ import java.util.LinkedList;
 import java.util.Optional;
 
 import static com.icthh.xm.uaa.config.Constants.AUTH_USERNAME_DOMAIN_SEPARATOR;
+import static java.time.ZoneOffset.UTC;
 
 @Slf4j
 @IgnoreLogginAspect
@@ -75,7 +76,7 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
         log.info("authenticated: {}, role: {}, {}",result.isAuthenticated(), result.getAuthorities(), result.getPrincipal());
         DomainUserDetails domainUserDetails = (DomainUserDetails) result.getPrincipal();
         User user = userService.getUser(domainUserDetails.getUserKey());
-        LocalDate updatePasswordDate = LocalDate.from(user.getUpdatePasswordDate());
+        LocalDate updatePasswordDate = user.getUpdatePasswordDate().atZone(UTC).toLocalDate();
         Integer expirationPeriod = tenantPropertiesService.getTenantProps().getPasswordExpirationPeriod();
         LocalDate currentDate = LocalDate.now();
         log.info("check password expiration, passwordUpdate: {}, currentDate: {}, expirationPeriod: {}",
