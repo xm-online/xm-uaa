@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.security;
 
 import static com.icthh.xm.uaa.config.Constants.AUTH_USERNAME_DOMAIN_SEPARATOR;
 import static java.time.ZoneOffset.UTC;
+import static java.time.temporal.ChronoUnit.DAYS;
 
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
@@ -12,7 +13,6 @@ import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
 import java.math.BigInteger;
 import java.time.LocalDate;
-import java.time.Period;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Optional;
@@ -84,9 +84,9 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
         LocalDate currentDate = LocalDate.now();
         log.info("check password expiration, passwordUpdateDate: {}, currentDate: {}, expirationPeriod: {}",
             updatePasswordDate, currentDate, expirationPeriod);
-        Period period = Period.between(currentDate, updatePasswordDate);
 
-        if (period.getDays() > expirationPeriod && expirationPeriod > 0) {
+        long period =  DAYS.between(updatePasswordDate, currentDate);
+        if (period > expirationPeriod && expirationPeriod > 0) {
             throw new CredentialsExpiredException("Password expiration period is over, please change password");
         }
     }

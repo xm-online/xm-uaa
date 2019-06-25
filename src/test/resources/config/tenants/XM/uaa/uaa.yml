@@ -20,3 +20,4 @@ ldap:
     attribute:
       firstName: givenName
       lastName: sn
+passwordExpirationPeriod: 90

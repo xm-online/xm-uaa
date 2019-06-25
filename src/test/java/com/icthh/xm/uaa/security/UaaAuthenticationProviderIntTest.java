@@ -13,6 +13,9 @@ import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.security.ldap.LdapAuthenticationProviderBuilder;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -23,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
+import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.Authentication;
@@ -48,6 +52,7 @@ import static org.mockito.Mockito.when;
     UaaApp.class,
     XmOverrideConfiguration.class
 })
+@Slf4j
 public class UaaAuthenticationProviderIntTest {
 
     private static final String TENANT = "XM";
@@ -90,7 +95,6 @@ public class UaaAuthenticationProviderIntTest {
     @Autowired
     private TenantContextHolder tenantContextHolder;
 
-    @Autowired
     private TenantPropertiesService tenantPropertiesService;
 
     private UaaAuthenticationProvider uaaAuthenticationProvider;
@@ -113,7 +117,7 @@ public class UaaAuthenticationProviderIntTest {
         MockitoAnnotations.initMocks(this);
         TenantContextUtils.setTenant(tenantContextHolder, TENANT);
 
-        TenantPropertiesService tenantPropertiesService = mock(TenantPropertiesService.class);
+        tenantPropertiesService = mock(TenantPropertiesService.class);
         String conf = StreamUtils.copyToString(spec.getInputStream(), Charset.defaultCharset());
         TenantProperties tenantProperties = mapper.readValue(conf, TenantProperties.class);
         when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProperties);
@@ -147,6 +151,30 @@ public class UaaAuthenticationProviderIntTest {
             new UsernamePasswordAuthenticationToken(TEST_USER, TEST_PASSWORD));
 
         commonAsserts(TEST_USER, DEFAULT_USER_ROLE_KEY, authentication);
+    }
+
+    @Test
+    public void testCheckPasswordExpirationSuccess() {
+        //passwordExpirationPeriod = 90 days
+        testCheckPasswordExpiration(89);
+    }
+
+    @Test(expected = CredentialsExpiredException.class)
+    public void testCheckPasswordExpirationFailed() {
+        //passwordExpirationPeriod = 90 days
+        testCheckPasswordExpiration(91);
+    }
+
+    private void testCheckPasswordExpiration(int days) {
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_USER, TEST_PASSWORD);
+        Authentication authentication = uaaAuthenticationProvider.authenticate(token);
+
+        DomainUserDetails domainUserDetails = (DomainUserDetails) authentication.getPrincipal();
+        User user = userService.getUser(domainUserDetails.getUserKey());
+        user.setUpdatePasswordDate(Instant.now().minus(days, ChronoUnit.DAYS));
+        userService.saveUser(user);
+
+        uaaAuthenticationProvider.authenticate(token);
     }
 
     @Test
