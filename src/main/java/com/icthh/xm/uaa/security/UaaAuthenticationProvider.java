@@ -84,7 +84,6 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
         LocalDate currentDate = LocalDate.now();
         log.info("check password expiration, passwordUpdateDate: {}, currentDate: {}, expirationPeriod: {}",
             updatePasswordDate, currentDate, expirationPeriod);
-
         long period =  DAYS.between(updatePasswordDate, currentDate);
         if (period > expirationPeriod && expirationPeriod > 0) {
             throw new CredentialsExpiredException("Password expiration period is over, please change password");
