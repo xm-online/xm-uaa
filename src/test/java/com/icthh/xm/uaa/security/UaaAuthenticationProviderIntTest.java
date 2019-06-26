@@ -25,11 +25,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
+import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.transaction.BeforeTransaction;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StreamUtils;
 import org.zapodot.junit.ldap.EmbeddedLdapRule;
 import org.zapodot.junit.ldap.EmbeddedLdapRuleBuilder;
@@ -149,15 +151,26 @@ public class UaaAuthenticationProviderIntTest {
     }
 
     @Test
+    @Transactional
     public void testCheckPasswordExpirationSuccess() {
+        //passwordExpirationPeriod = 90 days
+        checkPasswordExpiration(89);
+    }
+
+    @Test(expected = CredentialsExpiredException.class)
+    @Transactional
+    public void testCheckPasswordExpirationFailed() {
+        //passwordExpirationPeriod = 90 days
+        checkPasswordExpiration(91);
+    }
+
+    private void checkPasswordExpiration(int days) {
         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_USER, TEST_PASSWORD);
         Authentication authentication = uaaAuthenticationProvider.authenticate(token);
 
         DomainUserDetails domainUserDetails = (DomainUserDetails) authentication.getPrincipal();
         User user = userService.getUser(domainUserDetails.getUserKey());
-        //passwordExpirationPeriod = 90 days
-        user.setUpdatePasswordDate(Instant.now().minus(89, ChronoUnit.DAYS));
-        userService.saveUser(user);
+        user.setUpdatePasswordDate(Instant.now().minus(days, ChronoUnit.DAYS));
 
         uaaAuthenticationProvider.authenticate(token);
     }
