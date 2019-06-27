@@ -82,10 +82,11 @@ public class TenantProperties {
 
         @Data
         public static class PasswordSettings {
-            private byte minLength;
-            private byte maxLength;
+            private byte minLength = 0;
+            private byte maxLength = Byte.MAX_VALUE;
             private String pattern;
             private String patternMessage;
+            private boolean enableBackEndValidation = false;
         }
     }
 

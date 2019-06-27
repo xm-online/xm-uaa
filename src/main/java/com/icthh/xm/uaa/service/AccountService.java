@@ -50,6 +50,7 @@ public class AccountService {
     @Transactional
     @LogicExtensionPoint("Register")
     public User register(ManagedUserVM user, String ipAddress) {
+        userService.validatePassword(user.getPassword());
         String encryptedPassword = passwordEncoder.encode(user.getPassword());
 
         User newUser = new User();
@@ -140,6 +141,7 @@ public class AccountService {
      */
     @LogicExtensionPoint("ChangePassword")
     public UserDTO changePassword(ChangePasswordVM password) {
+        userService.validatePassword(password.getNewPassword());
         Optional<User> userOpt = userRepository.findOneByUserKey(getRequiredUserKey());
         if (!userOpt.isPresent()) {
             throw new EntityNotFoundException("User not found");
