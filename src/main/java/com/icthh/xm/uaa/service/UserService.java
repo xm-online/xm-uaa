@@ -3,10 +3,9 @@ package com.icthh.xm.uaa.service;
 import static com.icthh.xm.uaa.service.util.RandomUtil.generateActivationKey;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_DELETE_HIMSELF;
 import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
-import static java.util.Optional.empty;
-import static java.util.Optional.of;
-import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+
 
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
@@ -20,6 +19,7 @@ import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings;
+import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings.PasswordSettings;
 import com.icthh.xm.uaa.repository.SocialUserConnectionRepository;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserPermittedRepository;
@@ -247,7 +247,7 @@ public class UserService {
     public Optional<User> findOneWithLoginsByUserKey(String userKey) {
         if (StringUtils.isBlank(userKey)) {
             log.warn("User key is empty");
-            return empty();
+            return Optional.empty();
         }
         return userRepository.findOneWithLoginsByUserKey(userKey);
     }
@@ -286,7 +286,7 @@ public class UserService {
     }
 
     private User checkResetKey(User user) {
-        Long resetKeyLifeTime = ofNullable(tenantPropertiesService.getTenantProps().getResetKeyLifeTime())
+        Long resetKeyLifeTime = Optional.ofNullable(tenantPropertiesService.getTenantProps().getResetKeyLifeTime())
             .orElse(DEFAULT_RESET_KEY_LIFETIME);
         if (isKeyExpired(user, resetKeyLifeTime)) {
             throw new BusinessException("error.reset.code.expired", "Reset code expired");
@@ -426,37 +426,50 @@ public class UserService {
 
     @LogicExtensionPoint("ValidatePassword")
     public void validatePassword(String password) throws BusinessException {
-        Optional<PublicSettings> publicSettings = ofNullable(tenantPropertiesService.getTenantProps()
-                                                                                    .getPublicSettings());
-        publicSettings.ifPresent(settings ->
-            ofNullable(settings.getPasswordSettings()).ifPresent(passwordSettings ->
-                of(passwordSettings.isEnableBackEndValidation()).ifPresent(enableBackEndValidation -> {
-                    if (!enableBackEndValidation) {
-                        return;
-                    }
+        PublicSettings publicSettings = tenantPropertiesService.getTenantProps()
+                                                                .getPublicSettings();
+        if (publicSettings == null) {
+            return;
+        }
 
-                    if (password.length() < passwordSettings.getMinLength()) {
-                        throw new BusinessException("password.validation.failed",
-                                                    "password length is less than the minimum");
-                    }
+        PasswordSettings passwordSettings = publicSettings.getPasswordSettings();
+        if (passwordSettings == null || !passwordSettings.isEnableBackEndValidation()) {
+            return;
+        }
 
-                    if (password.length() > passwordSettings.getMaxLength()) {
-                        throw new BusinessException("password.validation.failed",
-                                                    "password length is greater than the maximum");
-                    }
+        validatePasswordPattern(password, passwordSettings);
+        validatePasswordMinLength(password, passwordSettings);
+        validatePasswordMaxLength(password, passwordSettings);
+    }
 
-                    ofNullable(passwordSettings.getPattern()).ifPresent(passwordPattern -> {
-                        Pattern pattern = Pattern.compile(passwordPattern);
-                        Matcher matcher = pattern.matcher(password);
-                        if (!matcher.matches()) {
-                            String patternErrorMessage = "password doesn't match regex";
-                            if (isNotEmpty(passwordSettings.getPatternMessage())) {
-                                patternErrorMessage = passwordSettings.getPatternMessage();
-                            }
-                            throw new BusinessException("password.validation.failed", patternErrorMessage);
-                        }
-                    });
-                })));
+    private void validatePasswordPattern(String password, PasswordSettings passwordSettings) {
+        if (isEmpty(passwordSettings.getPattern())) {
+            return;
+        }
+
+        Pattern pattern = Pattern.compile(passwordSettings.getPattern());
+        Matcher matcher = pattern.matcher(password);
+        if (!matcher.matches()) {
+            String patternErrorMessage = "password doesn't match regex";
+            if (isNotEmpty(passwordSettings.getPatternMessage())) {
+                patternErrorMessage = passwordSettings.getPatternMessage();
+            }
+            throw new BusinessException("password.validation.failed", patternErrorMessage);
+        }
+    }
+
+    private void validatePasswordMinLength(String password, PasswordSettings passwordSettings) {
+        if (password.length() < passwordSettings.getMinLength()) {
+            throw new BusinessException("password.validation.failed",
+                                        "password length is less than the minimum");
+        }
+    }
+
+    private void validatePasswordMaxLength(String password, PasswordSettings passwordSettings) {
+        if (password.length() > passwordSettings.getMaxLength()) {
+            throw new BusinessException("password.validation.failed",
+                                        "password length is greater than the maximum");
+        }
     }
 
 }
