@@ -16,7 +16,7 @@ public class SchedulerService {
 
     @LogicExtensionPoint(value = "SchedulerEvent", resolver = SchedulerEventTypeKeyResolver.class)
     public void onEvent(ScheduledEvent scheduledEvent) {
-        log.error("No handlers for event {} found", scheduledEvent);
+        log.error("No handlers found for event: {}", scheduledEvent);
     }
 
 }

@@ -29,10 +29,11 @@ public class SchedulerHandler implements SchedulerEventHandler {
     public void onEvent(ScheduledEvent scheduledEvent, String tenant) {
         try {
             init(tenant);
-            log.info("Receive event {} {}", scheduledEvent, tenant);
+            log.info("Receive event for tenant: {} with content: {}", tenant, scheduledEvent);
             schedulerService.onEvent(scheduledEvent);
             schedulerMetricsSet.onSuccess();
         } catch (Throwable e) {
+            log.error("Error process event for tenant: "+ tenant + " with content: "+ scheduledEvent, e);
             schedulerMetricsSet.onError();
             throw e;
         } finally {

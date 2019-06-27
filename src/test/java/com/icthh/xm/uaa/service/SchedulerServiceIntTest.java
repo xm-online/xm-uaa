@@ -10,7 +10,6 @@ import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.LepConfiguration;
-import com.icthh.xm.uaa.config.SecurityBeanOverrideConfiguration;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -19,6 +18,7 @@ import java.util.UUID;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,6 +37,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 })
 public class SchedulerServiceIntTest {
 
+    private static final String LEP_PATH = "/config/tenants/XM/uaa/lep/scheduler"
+                                           + "/SchedulerEvent$$TEST_TYPE_KEY$$around.groovy";
+
     @Autowired
     private TenantContextHolder tenantContextHolder;
 
@@ -52,15 +55,15 @@ public class SchedulerServiceIntTest {
     @Autowired
     private SchedulerHandler schedulerHandler;
 
-    @SneakyThrows
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
+        leps.onRefresh(LEP_PATH, loadFile(LEP_PATH));
     }
 
-    void initLeps() {
-        leps.onRefresh("/config/tenants/XM/uaa/lep/scheduler/SchedulerEvent$$TEST_TYPE_KEY$$around.groovy",
-            loadFile("/config/tenants/XM/uaa/lep/scheduler/SchedulerEvent$$TEST_TYPE_KEY$$around.groovy"));
+    @After
+    public void finalize() {
+        leps.onRefresh(LEP_PATH, null);
     }
 
     @SneakyThrows
@@ -72,11 +75,10 @@ public class SchedulerServiceIntTest {
     @Test
     @SneakyThrows
     public void testCallLepOnEvent() {
-        initLeps();
         ScheduledEvent scheduledEvent = new ScheduledEvent();
         scheduledEvent.setTypeKey("TEST_TYPE_KEY");
         scheduledEvent.setKey(UUID.randomUUID().toString());
-        Map<String, Object> data =  new HashMap<>();
+        Map<String, Object> data = new HashMap<>();
         data.put("countCallEventHandler", 0);
         scheduledEvent.setData(data);
         schedulerHandler.onEvent(scheduledEvent, "XM");
@@ -86,11 +88,10 @@ public class SchedulerServiceIntTest {
 
     @Test
     public void testOtherTenantOnEvent() {
-        initLeps();
         ScheduledEvent scheduledEvent = new ScheduledEvent();
         scheduledEvent.setTypeKey("TEST_TYPE_KEY");
         scheduledEvent.setKey(UUID.randomUUID().toString());
-        Map<String, Object> data =  new HashMap<>();
+        Map<String, Object> data = new HashMap<>();
         data.put("countCallEventHandler", 0);
         scheduledEvent.setData(data);
         schedulerHandler.onEvent(scheduledEvent, "DEMO");
@@ -101,11 +102,10 @@ public class SchedulerServiceIntTest {
 
     @Test
     public void testOtherTypeKeyOnEvent() {
-        initLeps();
         ScheduledEvent scheduledEvent = new ScheduledEvent();
         scheduledEvent.setTypeKey("OTHER_TEST_TYPE_KEY");
         scheduledEvent.setKey(UUID.randomUUID().toString());
-        Map<String, Object> data =  new HashMap<>();
+        Map<String, Object> data = new HashMap<>();
         data.put("countCallEventHandler", 0);
         scheduledEvent.setData(data);
         schedulerHandler.onEvent(scheduledEvent, "XM");
