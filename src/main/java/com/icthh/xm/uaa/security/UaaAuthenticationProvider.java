@@ -77,16 +77,18 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
     }
 
     private void checkPasswordExpiration(Authentication authentication) {
-        DomainUserDetails domainUserDetails = (DomainUserDetails) authentication.getPrincipal();
-        User user = userService.getUser(domainUserDetails.getUserKey());
-        LocalDate updatePasswordDate = user.getUpdatePasswordDate().atZone(UTC).toLocalDate();
-        Integer expirationPeriod = tenantPropertiesService.getTenantProps().getPasswordExpirationPeriod();
-        LocalDate currentDate = LocalDate.now();
-        log.info("check password expiration, passwordUpdateDate: {}, currentDate: {}, expirationPeriod: {}",
-            updatePasswordDate, currentDate, expirationPeriod);
-        long period =  DAYS.between(updatePasswordDate, currentDate);
-        if (period > expirationPeriod && expirationPeriod > 0) {
-            throw new CredentialsExpiredException("Password expiration period is over, please change password");
+        Integer expirationPeriod = tenantPropertiesService.getTenantProps().getSecurity().getPasswordExpirationPeriod();
+        if (expirationPeriod > 0) {
+            DomainUserDetails domainUserDetails = (DomainUserDetails) authentication.getPrincipal();
+            User user = userService.getUser(domainUserDetails.getUserKey());
+            LocalDate updatePasswordDate = user.getUpdatePasswordDate().atZone(UTC).toLocalDate();
+            LocalDate currentDate = LocalDate.now();
+            log.info("check password expiration, passwordUpdateDate: {}, currentDate: {}, expirationPeriod: {}",
+                updatePasswordDate, currentDate, expirationPeriod);
+            long period = DAYS.between(updatePasswordDate, currentDate);
+            if (period > expirationPeriod) {
+                throw new CredentialsExpiredException("Password expiration period is over, please change password");
+            }
         }
     }
 

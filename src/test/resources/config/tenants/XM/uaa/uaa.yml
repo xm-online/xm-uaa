@@ -3,6 +3,7 @@ security:
     defaultUserRole: ROLE_USER
     accessTokenValiditySeconds:
     refreshTokenValiditySeconds:
+    passwordExpirationPeriod: 90
 registrationCaptchaPeriodSeconds: 21600
 ldap:
   - domain: xm.com
@@ -20,4 +21,4 @@ ldap:
     attribute:
       firstName: givenName
       lastName: sn
-passwordExpirationPeriod: 90
+
