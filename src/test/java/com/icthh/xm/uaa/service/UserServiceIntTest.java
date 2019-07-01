@@ -314,29 +314,4 @@ public class UserServiceIntTest {
         userService.validatePassword("password");
     }
 
-    @SneakyThrows
-    @Test
-    public void passwordValidationPatternMessageTest() {
-        String patternMessage = "password must contain one digit, one upper case letter, "
-                                + "one lower case letter and one special symbol (“!#$”)";
-
-        exception.expect(BusinessException.class);
-        exception.expectMessage(patternMessage);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        TenantProperties tenantProperties = new TenantProperties();
-        PublicSettings publicSettings = new PublicSettings();
-        PasswordSettings passwordSettings = new PasswordSettings();
-        passwordSettings.setEnableBackEndValidation(true);
-        passwordSettings.setPattern("((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!#$]).{6,15})");
-        passwordSettings.setPatternMessage(patternMessage);
-        publicSettings.setPasswordSettings(passwordSettings);
-        tenantProperties.setPublicSettings(publicSettings);
-
-        tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
-            objectMapper.writeValueAsString(tenantProperties));
-
-        userService.validatePassword("password");
-    }
-
 }

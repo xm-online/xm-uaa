@@ -71,7 +71,6 @@ public class TenantPropertiesResource {
         @ApiResponse(code = 200, message = "Uaa public settings", response = PublicSettings.class),
         @ApiResponse(code = 500, message = "Internal server error")})
     @Timed
-    @PreAuthorize("hasPermission(null, 'UAA.TENANT.PROPERTIES.PUBLIC.GET')")
     public PublicSettings getUaaPublicSettings() {
         return tenantPropertiesService.getTenantProps().getPublicSettings();
     }
