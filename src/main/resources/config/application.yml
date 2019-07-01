@@ -50,6 +50,10 @@ spring:
             config:
                 watch:
                     enabled: false
+        stream:
+            kafka:
+                binder:
+                    health-timeout: 5 # kafkaHealthCheck timeout when scheduler-enabled: true, in seconds
     jpa:
         open-in-view: false
         properties:
@@ -153,6 +157,7 @@ xm-config:
 # ===================================================================
 
 application:
+    scheduler-enabled: false
     tenant-properties-path-pattern: /config/tenants/{tenantName}/uaa/${application.tenant-properties-name}
     tenant-properties-name: uaa.yml
     tenant-login-properties-path-pattern: /config/tenants/{tenantName}/uaa/${application.tenant-login-properties-name}

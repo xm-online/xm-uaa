@@ -302,6 +302,7 @@ dependencies {
     compile "com.icthh.xm.commons:xm-commons-permission:${xm_commons_version}"
     compile "com.icthh.xm.commons:xm-commons-timeline:${xm_commons_version}"
     compile "com.icthh.xm.commons:xm-commons-metric:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-scheduler:${xm_commons_version}"
 
     // groovy
     compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.4.5'

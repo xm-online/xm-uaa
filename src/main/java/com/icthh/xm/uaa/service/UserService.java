@@ -3,9 +3,8 @@ package com.icthh.xm.uaa.service;
 import static com.icthh.xm.uaa.service.util.RandomUtil.generateActivationKey;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_DELETE_HIMSELF;
 import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
-
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
@@ -91,6 +90,7 @@ public class UserService {
                 user.setPassword(passwordEncoder.encode(newPassword));
                 user.setResetKey(null);
                 user.setResetDate(null);
+                user.setUpdatePasswordDate(Instant.now());
                 return user;
             })
             .orElseThrow(() -> new BusinessException("error.reset.code.used", "Reset code used"));
@@ -138,6 +138,7 @@ public class UserService {
         newUser.setLogins(user.getLogins());
         newUser.getLogins().forEach(userLogin -> userLogin.setUser(newUser));
         newUser.setData(user.getData());
+        newUser.setUpdatePasswordDate(Instant.now());
 
         return userRepository.save(updateUserAutoLogoutSettings(user, newUser));
     }

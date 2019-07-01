@@ -13,6 +13,8 @@ import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.security.ldap.LdapAuthenticationProviderBuilder;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -23,11 +25,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
+import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.transaction.BeforeTransaction;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StreamUtils;
 import org.zapodot.junit.ldap.EmbeddedLdapRule;
 import org.zapodot.junit.ldap.EmbeddedLdapRuleBuilder;
@@ -118,7 +122,10 @@ public class UaaAuthenticationProviderIntTest {
         LdapAuthenticationProviderBuilder providerBuilder =
             new LdapAuthenticationProviderBuilder(tenantPropertiesService, userDetailsService, userService);
 
-        uaaAuthenticationProvider = new UaaAuthenticationProvider(daoAuthenticationProvider, providerBuilder);
+        uaaAuthenticationProvider = new UaaAuthenticationProvider(daoAuthenticationProvider,
+                                                                  providerBuilder,
+                                                                  userService,
+                                                                  tenantPropertiesService);
 
         lepManager.beginThreadContext(ctx -> {
             ctx.setValue(THREAD_CONTEXT_KEY_TENANT_CONTEXT, tenantContextHolder.getContext());
@@ -141,6 +148,31 @@ public class UaaAuthenticationProviderIntTest {
             new UsernamePasswordAuthenticationToken(TEST_USER, TEST_PASSWORD));
 
         commonAsserts(TEST_USER, DEFAULT_USER_ROLE_KEY, authentication);
+    }
+
+    @Test
+    @Transactional
+    public void testCheckPasswordExpirationSuccess() {
+        //passwordExpirationPeriod = 90 days
+        checkPasswordExpiration(89);
+    }
+
+    @Test(expected = CredentialsExpiredException.class)
+    @Transactional
+    public void testCheckPasswordExpirationFailed() {
+        //passwordExpirationPeriod = 90 days
+        checkPasswordExpiration(91);
+    }
+
+    private void checkPasswordExpiration(int days) {
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_USER, TEST_PASSWORD);
+        Authentication authentication = uaaAuthenticationProvider.authenticate(token);
+
+        DomainUserDetails domainUserDetails = (DomainUserDetails) authentication.getPrincipal();
+        User user = userService.getUser(domainUserDetails.getUserKey());
+        user.setUpdatePasswordDate(Instant.now().minus(days, ChronoUnit.DAYS));
+
+        uaaAuthenticationProvider.authenticate(token);
     }
 
     @Test

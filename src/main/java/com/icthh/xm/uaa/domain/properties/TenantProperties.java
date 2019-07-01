@@ -62,6 +62,9 @@ public class TenantProperties {
         @JsonProperty("defaultClientSecret")
         private String defaultClientSecret;
 
+        @JsonProperty("passwordExpirationPeriod")
+        private Integer passwordExpirationPeriod = -1;
+
         @JsonSetter("accessTokenValiditySeconds")
         public void setAccessTokenValiditySeconds(Integer accessTokenValiditySeconds) {
             this.accessTokenValiditySeconds = accessTokenValiditySeconds;
@@ -192,4 +195,5 @@ public class TenantProperties {
             private Map<String, String> mapping;
         }
     }
+
 }
