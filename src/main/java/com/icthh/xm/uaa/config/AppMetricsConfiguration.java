@@ -23,15 +23,21 @@ import org.springframework.context.annotation.Configuration;
 @EnableMetrics(proxyTargetClass = true)
 public class AppMetricsConfiguration extends MetricsConfigurerAdapter implements ServletContextInitializer {
 
-    private final MetricRegistry metricRegistry;
+    private static final String SCHEDULER = "scheduler";
 
+    private final MetricRegistry metricRegistry;
     private final JHipsterProperties jhipsterProperties;
+    private final SchedulerMetricsSet schedulerMetricsSet;
 
     private HikariDataSource hikariDataSource;
 
-    public AppMetricsConfiguration(MetricRegistry metricRegistry, JHipsterProperties jhipsterProperties) {
+    public AppMetricsConfiguration(MetricRegistry metricRegistry,
+                                  JHipsterProperties jhipsterProperties,
+                                  SchedulerMetricsSet schedulerMetricsSet) {
+
         this.metricRegistry = metricRegistry;
         this.jhipsterProperties = jhipsterProperties;
+        this.schedulerMetricsSet = schedulerMetricsSet;
     }
 
     @Autowired(required = false)
@@ -47,6 +53,8 @@ public class AppMetricsConfiguration extends MetricsConfigurerAdapter implements
             hikariDataSource.setMetricsTrackerFactory(null);
             hikariDataSource.setMetricRegistry(metricRegistry);
         }
+
+        metricRegistry.register(SCHEDULER, schedulerMetricsSet);
     }
 
     @Override
