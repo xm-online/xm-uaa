@@ -6,6 +6,8 @@ import static com.icthh.xm.commons.tenant.TenantContextUtils.buildTenant;
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.exceptions.BusinessException;
@@ -212,11 +214,15 @@ public class UserServiceIntTest {
         user.setResetKey(resetKey);
         userRepository.save(user);
 
+        assertNull(user.getUpdatePasswordDate());
+
         userService.completePasswordReset("johndoe2", user.getResetKey());
 
         assertThat(user.getResetDate()).isNull();
         assertThat(user.getResetKey()).isNull();
         assertThat(user.getPassword()).isNotEqualTo(oldPassword);
+
+        assertNotNull(user.getUpdatePasswordDate());
 
         userRepository.delete(user);
     }
