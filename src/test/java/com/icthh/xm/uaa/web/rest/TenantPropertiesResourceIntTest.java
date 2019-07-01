@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.web.rest;
 
+import static com.google.common.collect.ImmutableMap.of;
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -58,7 +59,7 @@ public class TenantPropertiesResourceIntTest {
         passwordSettings.setMaxLength(Byte.valueOf(PASSWORD_MAX_LENGTH));
         passwordSettings.setMinLength(Byte.valueOf(PASSWORD_MIN_LENGTH));
         passwordSettings.setPattern(PASSWORD_PATTERN);
-        passwordSettings.setPatternMessage(PATTERN_MESSAGE);
+        passwordSettings.setPatternMessage(of("en", PATTERN_MESSAGE));
         publicSettings.setPasswordSettings(passwordSettings);
         properties.setPublicSettings(publicSettings);
 
@@ -78,7 +79,7 @@ public class TenantPropertiesResourceIntTest {
             .andExpect(jsonPath("$.passwordSettings.maxLength").value(PASSWORD_MAX_LENGTH))
             .andExpect(jsonPath("$.passwordSettings.minLength").value(PASSWORD_MIN_LENGTH))
             .andExpect(jsonPath("$.passwordSettings.pattern").value(PASSWORD_PATTERN))
-            .andExpect(jsonPath("$.passwordSettings.patternMessage").value(PATTERN_MESSAGE));
+            .andExpect(jsonPath("$.passwordSettings.patternMessage.en").value(PATTERN_MESSAGE));
     }
 
 }

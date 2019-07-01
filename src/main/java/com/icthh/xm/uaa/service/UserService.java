@@ -450,11 +450,8 @@ public class UserService {
         Pattern pattern = Pattern.compile(passwordSettings.getPattern());
         Matcher matcher = pattern.matcher(password);
         if (!matcher.matches()) {
-            String patternErrorMessage = "password doesn't match regex";
-            if (isNotEmpty(passwordSettings.getPatternMessage())) {
-                patternErrorMessage = passwordSettings.getPatternMessage();
-            }
-            throw new BusinessException("password.validation.failed", patternErrorMessage);
+            throw new BusinessException("password.validation.failed",
+                                        "password doesn't match regex");
         }
     }
 
