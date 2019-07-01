@@ -3,6 +3,8 @@ package com.icthh.xm.uaa.service;
 import static com.icthh.xm.uaa.service.util.RandomUtil.generateActivationKey;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_DELETE_HIMSELF;
 import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
@@ -15,17 +17,17 @@ import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
+import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings;
+import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings.PasswordSettings;
 import com.icthh.xm.uaa.repository.SocialUserConnectionRepository;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserPermittedRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.security.TokenConstraintsService;
 import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
-
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.util.RandomUtil;
 import com.icthh.xm.uaa.util.OtpUtils;
-
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,12 +38,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -79,6 +83,7 @@ public class UserService {
     @LoggingAspectConfig(inputExcludeParams = "newPassword")
     @LogicExtensionPoint("CompletePasswordReset")
     public User completePasswordReset(String newPassword, String key) {
+        validatePassword(newPassword);
         return userRepository.findOneByResetKey(key)
             .map(this::checkResetKey)
             .map(user -> {
@@ -410,6 +415,62 @@ public class UserService {
 
 
         return result;
+    }
+
+    public List<User> findAll(Specification<User> specification) {
+        return userRepository.findAll(specification);
+    }
+
+    public Page<User> findAll(Specification<User> specification, Pageable pageable) {
+        return userRepository.findAll(specification, pageable);
+    }
+
+    @LogicExtensionPoint("ValidatePassword")
+    public void validatePassword(String password) throws BusinessException {
+        PublicSettings publicSettings = tenantPropertiesService.getTenantProps()
+                                                                .getPublicSettings();
+        if (publicSettings == null) {
+            return;
+        }
+
+        PasswordSettings passwordSettings = publicSettings.getPasswordSettings();
+        if (passwordSettings == null || !passwordSettings.isEnableBackEndValidation()) {
+            return;
+        }
+
+        validatePasswordPattern(password, passwordSettings);
+        validatePasswordMinLength(password, passwordSettings);
+        validatePasswordMaxLength(password, passwordSettings);
+    }
+
+    private void validatePasswordPattern(String password, PasswordSettings passwordSettings) {
+        if (isEmpty(passwordSettings.getPattern())) {
+            return;
+        }
+
+        Pattern pattern = Pattern.compile(passwordSettings.getPattern());
+        Matcher matcher = pattern.matcher(password);
+        if (!matcher.matches()) {
+            String patternErrorMessage = "password doesn't match regex";
+            if (isNotEmpty(passwordSettings.getPatternMessage())) {
+                patternErrorMessage = passwordSettings.getPatternMessage();
+            }
+            throw new BusinessException("password.validation.failed", patternErrorMessage);
+        }
+    }
+
+    private void validatePasswordMinLength(String password, PasswordSettings passwordSettings) {
+        if (password.length() < passwordSettings.getMinLength()) {
+            throw new BusinessException("password.validation.failed",
+                                        "password length is less than the minimum");
+        }
+    }
+
+    private void validatePasswordMaxLength(String password, PasswordSettings passwordSettings) {
+        if (password.length() > passwordSettings.getMaxLength()) {
+            throw new BusinessException("password.validation.failed",
+                                        "password length is greater than the maximum");
+        }
     }
 
 }

@@ -1,5 +1,13 @@
 package com.icthh.xm.uaa.service;
 
+import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
+import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
+import static com.icthh.xm.commons.tenant.TenantContextUtils.buildTenant;
+import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
@@ -9,12 +17,17 @@ import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
+import com.icthh.xm.uaa.domain.properties.TenantProperties;
+import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings;
+import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings.PasswordSettings;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.service.util.RandomUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -65,6 +78,9 @@ public class UserServiceIntTest {
 
     @Autowired
     private XmAuthenticationContextHolder xmAuthenticationContextHolder;
+
+    @Rule
+    public ExpectedException exception = ExpectedException.none();
 
     @BeforeTransaction
     public void beforeTransaction() {
@@ -217,4 +233,117 @@ public class UserServiceIntTest {
 
         userRepository.delete(user);
     }
+
+    @SneakyThrows
+    @Test
+    public void passwordValidationSuccessTest() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        TenantProperties tenantProperties = new TenantProperties();
+        PublicSettings publicSettings = new PublicSettings();
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setEnableBackEndValidation(true);
+        passwordSettings.setMinLength((byte) 4);
+        passwordSettings.setMaxLength((byte) 10);
+        passwordSettings.setPattern("^.{3,11}$");
+        publicSettings.setPasswordSettings(passwordSettings);
+        tenantProperties.setPublicSettings(publicSettings);
+
+        tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
+            objectMapper.writeValueAsString(tenantProperties));
+
+        userService.validatePassword("password");
+    }
+
+    @SneakyThrows
+    @Test
+    public void passwordValidationMinLengthTest() {
+        exception.expect(BusinessException.class);
+        exception.expectMessage("password length is less than the minimum");
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        TenantProperties tenantProperties = new TenantProperties();
+        PublicSettings publicSettings = new PublicSettings();
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setEnableBackEndValidation(true);
+        passwordSettings.setMinLength((byte) 9);
+        publicSettings.setPasswordSettings(passwordSettings);
+        tenantProperties.setPublicSettings(publicSettings);
+
+        tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
+            objectMapper.writeValueAsString(tenantProperties));
+
+        assertThatCode(() -> userService.validatePassword("password1")).doesNotThrowAnyException();
+        userService.validatePassword("password");
+    }
+
+    @SneakyThrows
+    @Test
+    public void passwordValidationMaxLengthTest() {
+        exception.expect(BusinessException.class);
+        exception.expectMessage("password length is greater than the maximum");
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        TenantProperties tenantProperties = new TenantProperties();
+        PublicSettings publicSettings = new PublicSettings();
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setEnableBackEndValidation(true);
+        passwordSettings.setMaxLength((byte) 7);
+        publicSettings.setPasswordSettings(passwordSettings);
+        tenantProperties.setPublicSettings(publicSettings);
+
+        tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
+            objectMapper.writeValueAsString(tenantProperties));
+
+        assertThatCode(() -> userService.validatePassword("passwor")).doesNotThrowAnyException();
+        userService.validatePassword("password");
+
+    }
+
+    @SneakyThrows
+    @Test
+    public void passwordValidationPatternTest() {
+        exception.expect(BusinessException.class);
+        exception.expectMessage("password doesn't match regex");
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        TenantProperties tenantProperties = new TenantProperties();
+        PublicSettings publicSettings = new PublicSettings();
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setEnableBackEndValidation(true);
+        passwordSettings.setPattern("((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!#$]).{6,15})");
+        publicSettings.setPasswordSettings(passwordSettings);
+        tenantProperties.setPublicSettings(publicSettings);
+
+        tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
+            objectMapper.writeValueAsString(tenantProperties));
+
+        assertThatCode(() -> userService.validatePassword("Password5!")).doesNotThrowAnyException();
+        userService.validatePassword("password");
+    }
+
+    @SneakyThrows
+    @Test
+    public void passwordValidationPatternMessageTest() {
+        String patternMessage = "password must contain one digit, one upper case letter, "
+                                + "one lower case letter and one special symbol (“!#$”)";
+
+        exception.expect(BusinessException.class);
+        exception.expectMessage(patternMessage);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        TenantProperties tenantProperties = new TenantProperties();
+        PublicSettings publicSettings = new PublicSettings();
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setEnableBackEndValidation(true);
+        passwordSettings.setPattern("((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!#$]).{6,15})");
+        passwordSettings.setPatternMessage(patternMessage);
+        publicSettings.setPasswordSettings(passwordSettings);
+        tenantProperties.setPublicSettings(publicSettings);
+
+        tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
+            objectMapper.writeValueAsString(tenantProperties));
+
+        userService.validatePassword("password");
+    }
+
 }
