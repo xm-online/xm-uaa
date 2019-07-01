@@ -62,7 +62,7 @@ public class SchedulerServiceIntTest {
     }
 
     @After
-    public void finalize() {
+    public void destroy() {
         leps.onRefresh(LEP_PATH, null);
     }
 
