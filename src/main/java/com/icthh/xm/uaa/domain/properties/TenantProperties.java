@@ -85,7 +85,7 @@ public class TenantProperties {
             private int minLength = 0;
             private int maxLength = Byte.MAX_VALUE;
             private String pattern;
-            private String patternMessage;
+            private Map<String, String> patternMessage;
             private boolean enableBackEndValidation = false;
         }
     }
