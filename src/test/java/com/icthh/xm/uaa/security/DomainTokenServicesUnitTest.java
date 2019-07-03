@@ -225,7 +225,7 @@ public class DomainTokenServicesUnitTest {
     }
 
     private OAuth2Authentication createAuthentication(String username, String tenant, String role) {
-        return createAuthentication(username, tenant, role);
+        return createAuthentication(null, username, tenant, role);
     }
 
     private OAuth2Authentication createAuthentication(Map<String, String> requestParams, String username, String tenant, String role) {

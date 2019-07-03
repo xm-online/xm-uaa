@@ -234,7 +234,6 @@ public class SocialServiceIntTest {
         jwt.put("scope", asList("openid"));
         jwt.put("role_key", "ROLE_USER");
         jwt.put("user_key", "USER_KEY");
-        jwt.put("additionalDetails", emptyMap());
         jwt.put("logins", logins);
         jwt.put("authorities", asList("ROLE_USER"));
         jwt.put("tenant", "TEST_T");
