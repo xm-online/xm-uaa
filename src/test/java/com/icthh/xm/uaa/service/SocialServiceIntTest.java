@@ -39,6 +39,7 @@ import com.icthh.xm.uaa.repository.SocialUserConnectionRepository;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.security.DomainJwtAccessTokenConverter;
+import com.icthh.xm.uaa.security.DomainJwtAccessTokenDetailsPostProcessor;
 import com.icthh.xm.uaa.security.DomainTokenServices;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.security.TokenConstraintsService;
@@ -118,7 +119,9 @@ public class SocialServiceIntTest {
         MockitoAnnotations.initMocks(this);
         userDetailsService = new DomainUserDetailsService(userLoginRepository, tenantContextHolder);
         tokenServices = new DomainTokenServices();
-        DomainJwtAccessTokenConverter accessTokenEnhancer = new DomainJwtAccessTokenConverter(tenantContextHolder);
+        DomainJwtAccessTokenDetailsPostProcessor processor = new DomainJwtAccessTokenDetailsPostProcessor();
+        DomainJwtAccessTokenConverter accessTokenEnhancer = new DomainJwtAccessTokenConverter(tenantContextHolder,
+                                                                                              processor);
         tokenServices.setTokenStore(new JwtTokenStore(accessTokenEnhancer));
         tokenServices.setTokenConstraintsService(mock(TokenConstraintsService.class));
         tokenServices.setTokenEnhancer(accessTokenEnhancer);
