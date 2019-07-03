@@ -1,18 +1,5 @@
 package com.icthh.xm.uaa.security;
 
-import com.icthh.xm.commons.tenant.TenantContextHolder;
-import com.icthh.xm.uaa.domain.OtpChannelType;
-import org.apache.commons.collections.CollectionUtils;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
-import org.springframework.security.oauth2.common.OAuth2AccessToken;
-import org.springframework.security.oauth2.provider.OAuth2Authentication;
-import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
 import static com.icthh.xm.commons.tenant.TenantContextUtils.getRequiredTenantKeyValue;
 import static com.icthh.xm.uaa.config.Constants.AUTH_ADDITIONAL_DETAILS;
 import static com.icthh.xm.uaa.config.Constants.AUTH_LOGINS_KEY;
@@ -22,17 +9,29 @@ import static com.icthh.xm.uaa.config.Constants.AUTH_USER_KEY;
 import static com.icthh.xm.uaa.config.Constants.CREATE_TOKEN_TIME;
 import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_OTP_CHANNEL_TYPE;
 import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_VERIFICATION_OTP_KEY;
+import static org.apache.commons.collections.MapUtils.isNotEmpty;
+
+import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.uaa.domain.OtpChannelType;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections.CollectionUtils;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
+import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 
 /**
  * Overrides to add and get token tenant.
  */
+@RequiredArgsConstructor
 public class DomainJwtAccessTokenConverter extends JwtAccessTokenConverter {
 
     private final TenantContextHolder tenantContextHolder;
-
-    public DomainJwtAccessTokenConverter(TenantContextHolder tenantContextHolder) {
-        this.tenantContextHolder = tenantContextHolder;
-    }
+    private final DomainJwtAccessTokenDetailsPostProcessor tokenDetailsProcessor;
 
     @Override
     public OAuth2AccessToken enhance(OAuth2AccessToken accessToken, OAuth2Authentication authentication) {
@@ -53,6 +52,8 @@ public class DomainJwtAccessTokenConverter extends JwtAccessTokenConverter {
         final Object principal = authentication.getPrincipal();
         details.put(AUTH_TENANT_KEY, getRequiredTenantKeyValue(tenantContextHolder));
 
+        tokenDetailsProcessor.processJwtAccessTokenDetails(authentication, details);
+
         if (principal instanceof DomainUserDetails) {
             final DomainUserDetails userDetails = (DomainUserDetails) principal;
 
@@ -69,9 +70,12 @@ public class DomainJwtAccessTokenConverter extends JwtAccessTokenConverter {
             } else {
                 details.put(AUTH_LOGINS_KEY, userDetails.getLogins());
                 details.put(AUTH_ROLE_KEY, getOptionalRoleKey(userDetails.getAuthorities()));
-                details.put(AUTH_ADDITIONAL_DETAILS, userDetails.getAdditionalDetails());
+                if (isNotEmpty(userDetails.getAdditionalDetails())) {
+                    details.putIfAbsent(AUTH_ADDITIONAL_DETAILS, new HashMap<>());
+                    Map<String, Object> additionalDetails = (Map<String, Object>) details.get(AUTH_ADDITIONAL_DETAILS);
+                    additionalDetails.putAll(userDetails.getAdditionalDetails());
+                }
             }
-
         }
     }
 

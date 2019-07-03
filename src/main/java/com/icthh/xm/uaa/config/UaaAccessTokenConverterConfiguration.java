@@ -4,6 +4,7 @@ import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.spring.config.TenantContextConfiguration;
 import com.icthh.xm.uaa.security.DomainJwtAccessTokenConverter;
 
+import com.icthh.xm.uaa.security.DomainJwtAccessTokenDetailsPostProcessor;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,6 +21,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -68,8 +70,8 @@ public class UaaAccessTokenConverterConfiguration {
      * @return an access token converter configured with the authorization server's public/private keys
      */
     @Bean
-    public JwtAccessTokenConverter jwtAccessTokenConverter() throws IOException, KeyStoreException,
-        CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException {
+    @SneakyThrows
+    public JwtAccessTokenConverter jwtAccessTokenConverter(DomainJwtAccessTokenDetailsPostProcessor tokenDetailsProcessor) {
 
         // get public key
         final PublicKey publicKey = getKeyFromConfigServer(keyUriRestTemplate);
@@ -80,7 +82,8 @@ public class UaaAccessTokenConverterConfiguration {
         // build key pair
         KeyPair keyPair = new KeyPair(publicKey, privateKey);
 
-        DomainJwtAccessTokenConverter accessTokenConverter = new DomainJwtAccessTokenConverter(tenantContextHolder);
+        DomainJwtAccessTokenConverter accessTokenConverter = new DomainJwtAccessTokenConverter(tenantContextHolder,
+                                                                                               tokenDetailsProcessor);
         accessTokenConverter.setKeyPair(keyPair);
         return accessTokenConverter;
     }
@@ -116,8 +119,8 @@ public class UaaAccessTokenConverterConfiguration {
      * Apply the token converter (and enhancer) for token store.
      */
     @Bean
-    public JwtTokenStore tokenStore() throws Exception {
-        return new JwtTokenStore(jwtAccessTokenConverter());
+    public JwtTokenStore tokenStore(JwtAccessTokenConverter jwtAccessTokenConverter) throws Exception {
+        return new JwtTokenStore(jwtAccessTokenConverter);
     }
 
 }
