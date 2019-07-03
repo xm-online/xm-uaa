@@ -9,7 +9,6 @@ import static com.icthh.xm.uaa.config.Constants.AUTH_USER_KEY;
 import static com.icthh.xm.uaa.config.Constants.CREATE_TOKEN_TIME;
 import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_OTP_CHANNEL_TYPE;
 import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_VERIFICATION_OTP_KEY;
-import static java.util.Optional.ofNullable;
 import static org.apache.commons.collections.MapUtils.isNotEmpty;
 
 import com.icthh.xm.commons.tenant.TenantContextHolder;
@@ -32,7 +31,7 @@ import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenCo
 public class DomainJwtAccessTokenConverter extends JwtAccessTokenConverter {
 
     private final TenantContextHolder tenantContextHolder;
-    private final DomainJwtAccessTokenDetailsPostProcessor tokenDetailsProcesso;
+    private final DomainJwtAccessTokenDetailsPostProcessor tokenDetailsProcessor;
 
     @Override
     public OAuth2AccessToken enhance(OAuth2AccessToken accessToken, OAuth2Authentication authentication) {
@@ -53,7 +52,7 @@ public class DomainJwtAccessTokenConverter extends JwtAccessTokenConverter {
         final Object principal = authentication.getPrincipal();
         details.put(AUTH_TENANT_KEY, getRequiredTenantKeyValue(tenantContextHolder));
 
-        tokenDetailsProcesso.processJwtAccessTokenDetails(authentication, details);
+        tokenDetailsProcessor.processJwtAccessTokenDetails(authentication, details);
 
         if (principal instanceof DomainUserDetails) {
             final DomainUserDetails userDetails = (DomainUserDetails) principal;
