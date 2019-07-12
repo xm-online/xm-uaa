@@ -29,6 +29,7 @@ public class ManagedUserVM extends UserDTO {
     @Setter
     private String password;
 
+    @Setter
     @Getter
     private String captcha;
 

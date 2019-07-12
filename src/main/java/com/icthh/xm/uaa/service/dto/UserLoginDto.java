@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.service.dto;
 
 import com.icthh.xm.uaa.domain.UserLogin;
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -10,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Getter
 @EqualsAndHashCode
-public class UserLoginDto {
+public class UserLoginDto implements Serializable {
 
     private String typeKey;
     private String stateKey;

@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -48,19 +49,16 @@ import org.springframework.web.client.RestTemplate;
 })
 public class UaaAccessTokenConverterConfiguration {
 
-    @Value("${application.keystore-file:keystore.p12}")
-    private String keystoreFile;
-
-    @Value("${application.keystore-password:password}")
-    private String keystorePassword;
-
     private final RestTemplate keyUriRestTemplate;
     private final TenantContextHolder tenantContextHolder;
+    private final ApplicationProperties applicationProperties;
 
     public UaaAccessTokenConverterConfiguration(TenantContextHolder tenantContextHolder,
-                                                @Qualifier("loadBalancedRestTemplate") RestTemplate keyUriRestTemplate) {
+                                                @Qualifier("loadBalancedRestTemplate") RestTemplate keyUriRestTemplate,
+                                                ApplicationProperties applicationProperties) {
         this.tenantContextHolder = tenantContextHolder;
         this.keyUriRestTemplate = keyUriRestTemplate;
+        this.applicationProperties = applicationProperties;
     }
 
     /**
@@ -88,7 +86,8 @@ public class UaaAccessTokenConverterConfiguration {
         return accessTokenConverter;
     }
 
-    private static PublicKey getKeyFromConfigServer(RestTemplate keyUriRestTemplate) throws CertificateException {
+    private static PublicKey getKeyFromConfigServer(RestTemplate keyUriRestTemplate)
+        throws CertificateException, IOException {
         HttpEntity<Void> request = new HttpEntity<>(new HttpHeaders());
         String content = keyUriRestTemplate
             .exchange("http://config/api/token_key", HttpMethod.GET, request, String.class).getBody();
@@ -97,22 +96,24 @@ public class UaaAccessTokenConverterConfiguration {
             throw new CertificateException("Received empty public key from config.");
         }
 
-        InputStream tokenKeyInputStream = new ByteArrayInputStream(content.getBytes());
-
-        CertificateFactory factory = CertificateFactory.getInstance(Constants.CERTIFICATE);
-        X509Certificate certificate = (X509Certificate) factory.generateCertificate(tokenKeyInputStream);
-        return certificate.getPublicKey();
+        try (InputStream tokenKeyInputStream = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8))) {
+            CertificateFactory factory = CertificateFactory.getInstance(Constants.CERTIFICATE);
+            X509Certificate certificate = (X509Certificate) factory.generateCertificate(tokenKeyInputStream);
+            return certificate.getPublicKey();
+        }
     }
 
     private PrivateKey getPrivateKey() throws IOException, KeyStoreException, CertificateException,
         NoSuchAlgorithmException, UnrecoverableKeyException {
-        log.info("Keystore location {}", keystoreFile);
-        InputStream stream = new ClassPathResource(keystoreFile).exists()
-            ? new ClassPathResource(keystoreFile).getInputStream()
-            : new FileInputStream(new File(keystoreFile));
-        KeyStore store = KeyStore.getInstance(Constants.KEYSTORE_TYPE);
-        store.load(stream, keystorePassword.toCharArray());
-        return (PrivateKey) store.getKey("selfsigned", keystorePassword.toCharArray());
+        log.info("Keystore location {}", applicationProperties.getKeystoreFile());
+        try (InputStream stream = new ClassPathResource(applicationProperties.getKeystoreFile()).exists()
+            ? new ClassPathResource(applicationProperties.getKeystoreFile()).getInputStream()
+            : new FileInputStream(new File(applicationProperties.getKeystoreFile()))) {
+            KeyStore store = KeyStore.getInstance(Constants.KEYSTORE_TYPE);
+            store.load(stream, applicationProperties.getKeystorePassword().toCharArray());
+            return (PrivateKey) store.getKey("selfsigned",
+                                             applicationProperties.getKeystorePassword().toCharArray());
+        }
     }
 
     /**

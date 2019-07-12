@@ -462,7 +462,6 @@ public class TenantRoleService {
             existingPermissions.get(permissionDto.getMsName()).putIfAbsent(permissionDto.getRoleKey(),
                             new TreeSet<>());
             Permission permission = PermissionDomainMapper.permissionDtoToPermission(permissionDto);
-            existingPermissions.get(permissionDto.getMsName()).get(permissionDto.getRoleKey());
             // needed explicitly delete old permission
             existingPermissions.get(permissionDto.getMsName()).get(permissionDto.getRoleKey()).remove(permission);
             existingPermissions.get(permissionDto.getMsName()).get(permissionDto.getRoleKey()).add(permission);

@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.security.oauth2.tfa;
 
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -60,7 +61,7 @@ public class TfaOtpAuthenticationToken extends AbstractAuthenticationToken {
 
     @AllArgsConstructor
     @Getter
-    public static class OtpCredentials implements CredentialsContainer {
+    public static class OtpCredentials implements CredentialsContainer, Serializable {
 
         private String otp;
         private String encodedOtp;
