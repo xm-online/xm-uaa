@@ -85,6 +85,7 @@ public class TfaOtpTokenGranter extends AbstractTokenGranter {
         } catch (AccountStatusException | BadCredentialsException e) {
             // AccountStatusException: covers expired, locked, disabled cases (mentioned in section 5.2, draft 31)
             // BadCredentialsException: If the username/password are wrong the spec says we should send 400/invalid grant
+            logger.error("authentication error: {}", e);
             throw new InvalidGrantException(e.getMessage());
         }
 

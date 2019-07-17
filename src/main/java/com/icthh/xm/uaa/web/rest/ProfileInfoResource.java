@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import lombok.Getter;
 import org.springframework.core.env.Environment;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,11 +35,7 @@ public class ProfileInfoResource {
     }
 
     private String getRibbonEnv(String[] activeProfiles) {
-        String[] displayOnActiveProfiles = {};
-        if (displayOnActiveProfiles == null) {
-            return null;
-        }
-        List<String> ribbonProfiles = new ArrayList<>(Arrays.asList(displayOnActiveProfiles));
+        List<String> ribbonProfiles = new ArrayList<>();
         List<String> springBootProfiles = Arrays.asList(activeProfiles);
         ribbonProfiles.retainAll(springBootProfiles);
         if (!ribbonProfiles.isEmpty()) {
@@ -47,19 +44,17 @@ public class ProfileInfoResource {
         return null;
     }
 
-    class ProfileInfoVM {
+    static class ProfileInfoVM {
 
+        @Getter
         private String[] activeProfiles;
 
+        @Getter
         private String ribbonEnv;
 
         ProfileInfoVM(String[] activeProfiles, String ribbonEnv) {
             this.activeProfiles = activeProfiles;
             this.ribbonEnv = ribbonEnv;
-        }
-
-        public String[] getActiveProfiles() {
-            return activeProfiles;
         }
     }
 }
