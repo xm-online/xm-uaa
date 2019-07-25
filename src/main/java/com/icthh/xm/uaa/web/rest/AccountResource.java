@@ -214,7 +214,7 @@ public class AccountResource {
      */
     @PutMapping("/account/logins")
     @Timed
-    @PreAuthorize("hasPermission({'id': #user.userKey, 'newUser': #user}, 'user', 'ACCOUNT.LOGIN.UPDATE')")
+    @PreAuthorize("hasPermission({'userKey': #user.userKey, 'newUser': #user}, 'user', 'ACCOUNT.LOGIN.UPDATE')")
     public ResponseEntity<UserDTO> updateUserLogins(@Valid @RequestBody UserDTO user) {
         user.getLogins().forEach(
             userLogin -> userLoginRepository.findOneByLoginIgnoreCaseAndUserIdNot(
