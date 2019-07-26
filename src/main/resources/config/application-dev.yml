@@ -95,7 +95,7 @@ spring:
             discovery:
                 enabled: true
     kafka:
-        bootstrap-servers: localhost:9092
+        bootstrap-servers: localhost:9093
 
 server:
     port: 9999
