@@ -21,9 +21,10 @@ public class CutDomainAuthenticationProviderDecorator implements AuthenticationP
         String name = authentication.getName();
         Object credentials = authentication.getCredentials();
 
-        if (conf.getUseNameWithoutDomain()) {
+        if (conf.getUseNameWithoutDomain() && name.contains(AUTH_USERNAME_DOMAIN_SEPARATOR)) {
             LinkedList<String> parts = new LinkedList<>(asList(name.split(AUTH_USERNAME_DOMAIN_SEPARATOR)));
-            name = parts.getFirst();
+            String domain = parts.getLast();
+            name = name.substring(0, name.length() - domain.length() - AUTH_USERNAME_DOMAIN_SEPARATOR.length());
         }
 
         return authenticationProvider.authenticate(new UsernamePasswordAuthenticationToken(name, credentials));

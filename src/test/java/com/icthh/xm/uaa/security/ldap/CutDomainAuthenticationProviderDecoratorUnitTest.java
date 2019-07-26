@@ -33,6 +33,13 @@ public class CutDomainAuthenticationProviderDecoratorUnitTest {
     }
 
     @Test
+    public void checkPosibilityToUseEmailWithLoginByAd() {
+        when(conf.getUseNameWithoutDomain()).thenReturn(true);
+        authenticationProviderDecorator.authenticate(new UsernamePasswordAuthenticationToken("name@mail.com@domain", "password"));
+        verify(authenticationProvider).authenticate(new UsernamePasswordAuthenticationToken("name@mail.com", "password"));
+    }
+
+    @Test
     public void noErrosWhenLoginWithoutDomain() {
         when(conf.getUseNameWithoutDomain()).thenReturn(true);
         authenticationProviderDecorator.authenticate(new UsernamePasswordAuthenticationToken("name", "password"));
