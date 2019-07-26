@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.security.ldap;
 
 import static com.icthh.xm.uaa.config.Constants.AUTH_USERNAME_DOMAIN_SEPARATOR;
+import static java.lang.Boolean.TRUE;
 import static java.util.Arrays.asList;
 
 import com.icthh.xm.uaa.domain.properties.TenantProperties.Ldap;
@@ -21,7 +22,7 @@ public class CutDomainAuthenticationProviderDecorator implements AuthenticationP
         String name = authentication.getName();
         Object credentials = authentication.getCredentials();
 
-        if (conf.getUseNameWithoutDomain() && name.contains(AUTH_USERNAME_DOMAIN_SEPARATOR)) {
+        if (TRUE.equals(conf.getUseNameWithoutDomain()) && name.contains(AUTH_USERNAME_DOMAIN_SEPARATOR)) {
             LinkedList<String> parts = new LinkedList<>(asList(name.split(AUTH_USERNAME_DOMAIN_SEPARATOR)));
             String domain = parts.getLast();
             name = name.substring(0, name.length() - domain.length() - AUTH_USERNAME_DOMAIN_SEPARATOR.length());
