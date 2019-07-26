@@ -52,4 +52,5 @@ public class CutDomainAuthenticationProviderDecoratorUnitTest {
         authenticationProviderDecorator.authenticate(new UsernamePasswordAuthenticationToken("name@domain", "password"));
         verify(authenticationProvider).authenticate(new UsernamePasswordAuthenticationToken("name@domain", "password"));
     }
+
 }
