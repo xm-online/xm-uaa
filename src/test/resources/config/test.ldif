@@ -90,3 +90,4 @@ givenName: Test
 shadowExpire: -1
 sn: User
 uid: system
+userPassword: test
