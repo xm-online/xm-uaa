@@ -1,14 +1,14 @@
 package com.icthh.xm.uaa.security.ldap;
 
+import static org.apache.commons.lang.StringUtils.isNotBlank;
+
 import com.icthh.xm.uaa.domain.properties.TenantProperties.Ldap;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -87,7 +87,7 @@ public class LdapAuthenticationProviderBuilder {
         ldapAuthenticationProvider.setUserDetailsContextMapper(
             new UaaLdapUserDetailsContextMapper(userDetailsService, userService, conf));
 
-        return ldapAuthenticationProvider;
+        return new CutDomainAuthenticationProviderDecorator(ldapAuthenticationProvider, conf);
     }
 
     private AuthenticationProvider buildAdAuthProvier(Ldap conf) {
@@ -97,6 +97,10 @@ public class LdapAuthenticationProviderBuilder {
         adLdapAuthenticationProvider.setUserDetailsContextMapper(
             new UaaLdapUserDetailsContextMapper(userDetailsService, userService, conf));
 
-        return adLdapAuthenticationProvider;
+        if (isNotBlank(conf.getSearchFields())) {
+            adLdapAuthenticationProvider.setSearchFilter(conf.getSearchFields());
+        }
+
+        return new CutDomainAuthenticationProviderDecorator(adLdapAuthenticationProvider, conf);
     }
 }

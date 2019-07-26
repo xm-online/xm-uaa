@@ -173,6 +173,8 @@ public class TenantProperties {
         private Boolean groupSearchSubtree;
         private String userDnPattern;
         private Role role = new Role();
+        private String searchFields;
+        private Boolean useNameWithoutDomain;
         private Attribute attribute = new Attribute();
 
         @Getter

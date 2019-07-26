@@ -91,3 +91,16 @@ shadowExpire: -1
 sn: User
 uid: system
 userPassword: test
+
+dn: uid=Test login by sAMAccountName,ou=Users,dc=xm,dc=com
+objectClass: user
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: Test login by sAMAccountName
+displayName: Test login by sAMAccountName
+givenName: Test-sAMAccountName
+shadowExpire: -1
+sAMAccountName: sAMAccountNameTest
+userPrincipalName: sAMAccountNameTest@SOME-OTHER-DOMAIN
+userPassword: test
