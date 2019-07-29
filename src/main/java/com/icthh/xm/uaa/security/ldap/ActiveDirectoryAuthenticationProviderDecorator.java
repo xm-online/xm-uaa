@@ -1,5 +1,7 @@
 package com.icthh.xm.uaa.security.ldap;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import java.util.Hashtable;
 import javax.naming.Context;
@@ -23,9 +25,13 @@ public class ActiveDirectoryAuthenticationProviderDecorator implements Authentic
 
     @Override
     public Authentication authenticate(Authentication authentication) {
-        String username = findUserPrincipalName(authentication.getName());
-        Object credentials = authentication.getCredentials();
-        return authenticationProvider.authenticate(new UsernamePasswordAuthenticationToken(username, credentials));
+        if (isNotBlank(ldap.getAuthField())) {
+            String username = findUserPrincipalName(authentication.getName());
+            Object credentials = authentication.getCredentials();
+            return authenticationProvider.authenticate(new UsernamePasswordAuthenticationToken(username, credentials));
+        } else {
+            authenticationProvider.authenticate(authentication);
+        }
     }
 
     @Override
