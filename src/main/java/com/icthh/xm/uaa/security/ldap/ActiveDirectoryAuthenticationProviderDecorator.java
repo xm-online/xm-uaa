@@ -30,7 +30,7 @@ public class ActiveDirectoryAuthenticationProviderDecorator implements Authentic
             Object credentials = authentication.getCredentials();
             return authenticationProvider.authenticate(new UsernamePasswordAuthenticationToken(username, credentials));
         } else {
-            authenticationProvider.authenticate(authentication);
+            return authenticationProvider.authenticate(authentication);
         }
     }
 
