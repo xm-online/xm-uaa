@@ -175,6 +175,7 @@ public class TenantProperties {
         private Role role = new Role();
         private String searchFields;
         private Boolean useNameWithoutDomain;
+        private String authField;
         private Attribute attribute = new Attribute();
 
         @Getter
