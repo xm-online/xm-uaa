@@ -101,6 +101,7 @@ public class LdapAuthenticationProviderBuilder {
             adLdapAuthenticationProvider.setSearchFilter(conf.getSearchFields());
         }
 
-        return new CutDomainAuthenticationProviderDecorator(adLdapAuthenticationProvider, conf);
+        return new CutDomainAuthenticationProviderDecorator(
+            new ActiveDirectoryAuthenticationProviderDecorator(adLdapAuthenticationProvider, conf), conf);
     }
 }
