@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.security.ldap;
 
 import static org.apache.commons.lang.StringUtils.isNotBlank;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import com.icthh.xm.uaa.domain.properties.TenantProperties.Ldap;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
@@ -97,7 +98,7 @@ public class LdapAuthenticationProviderBuilder {
         adLdapAuthenticationProvider.setUserDetailsContextMapper(
             new UaaLdapUserDetailsContextMapper(userDetailsService, userService, conf));
 
-        if (isNotBlank(conf.getSearchFields())) {
+        if (isNotBlank(conf.getSearchFields()) && isBlank(conf.getAuthField())) {
             adLdapAuthenticationProvider.setSearchFilter(conf.getSearchFields());
         }
 
