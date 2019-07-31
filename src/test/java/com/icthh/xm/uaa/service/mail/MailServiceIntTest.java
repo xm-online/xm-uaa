@@ -3,6 +3,7 @@ package com.icthh.xm.uaa.service.mail;
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import com.icthh.xm.commons.i18n.spring.service.LocalizationMessageService;
 import com.icthh.xm.commons.logging.util.MdcUtils;
+import com.icthh.xm.commons.mail.provider.MailProviderService;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.commons.tenant.TenantKey;
@@ -20,6 +21,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 @RunWith(SpringRunner.class)
@@ -46,7 +50,6 @@ import static org.mockito.Mockito.verify;
 })
 public class MailServiceIntTest {
 
-    private static final String DEFAULT_DOMAIN = "xm.local";
     private static final TenantKey TEST_TENANT_KEY = TenantKey.valueOf("test");
     private static final String EMAIL_FROM = "test@xm-online.com";
     private static final String EMAIL_SUFFIX = "@xm-online.com";
@@ -69,18 +72,22 @@ public class MailServiceIntTest {
     @Autowired
     private TenantContextHolder tenantContextHolder;
 
+    @Mock
     @Autowired
     private TenantConfigService tenantConfigService;
 
     @Autowired
     private LocalizationMessageService localizationMessageService;
 
+    private JavaMailSenderImpl javaMailSender = spy(JavaMailSenderImpl.class);
+
     @Spy
-    private JavaMailSenderImpl javaMailSender;
+    private MailProviderService mailProviderService = new MailProviderService(javaMailSender);
 
     @Captor
     private ArgumentCaptor messageCaptor;
 
+    @InjectMocks
     private MailService mailService;
 
     @Before
@@ -95,7 +102,7 @@ public class MailServiceIntTest {
 
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
-        mailService = new MailService(jHipsterProperties, javaMailSender, messageSource,
+        mailService = new MailService(jHipsterProperties, mailProviderService, messageSource,
                                       tenantEmailTemplateService, freeMarker, tenantContextHolder,
                                       tenantConfigService, localizationMessageService);
     }
@@ -108,7 +115,11 @@ public class MailServiceIntTest {
 
     @Test
     public void testSendEmail() throws Exception {
-        mailService.sendEmail("john.doe@example.com", "testSubject", "testContent", TEST_TENANT_KEY.getValue() + EMAIL_SUFFIX);
+        mailService.sendEmail("john.doe@example.com",
+                              "testSubject",
+                              "testContent",
+                              TEST_TENANT_KEY.getValue() + EMAIL_SUFFIX,
+                              javaMailSender);
         verify(javaMailSender).send((MimeMessage) messageCaptor.capture());
         MimeMessage message = (MimeMessage) messageCaptor.getValue();
         assertThat(message.getSubject()).isEqualTo("testSubject");
@@ -121,7 +132,8 @@ public class MailServiceIntTest {
 
     @Test
     public void testSendHtmlEmail() throws Exception {
-        mailService.sendEmail("john.doe@example.com", "testSubject", "testContent", "test@xm-online.com");
+        mailService.sendEmail("john.doe@example.com", "testSubject", "testContent", "test@xm-online.com",
+                              javaMailSender);
         verify(javaMailSender).send((MimeMessage) messageCaptor.capture());
         MimeMessage message = (MimeMessage) messageCaptor.getValue();
         assertThat(message.getSubject()).isEqualTo("testSubject");
@@ -234,9 +246,13 @@ public class MailServiceIntTest {
     }
 
     @Test
-    public void testSendEmailWithException() throws Exception {
+    public void testSendEmailWithException() {
         doThrow(MailSendException.class).when(javaMailSender).send(any(MimeMessage.class));
-        mailService.sendEmail("john.doe@example.com", "testSubject", "testContent", TEST_TENANT_KEY.getValue() + EMAIL_SUFFIX);
+        mailService.sendEmail("john.doe@example.com",
+                              "testSubject",
+                              "testContent",
+                              TEST_TENANT_KEY.getValue() + EMAIL_SUFFIX,
+                              javaMailSender);
     }
 
 }
