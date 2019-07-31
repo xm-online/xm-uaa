@@ -64,8 +64,8 @@ public class TenantPropertiesResourceIntTest {
         TenantProperties properties = new TenantProperties();
         PublicSettings publicSettings = new PublicSettings();
         PasswordSettings passwordSettings = new PasswordSettings();
-        passwordSettings.setMaxLength(Byte.valueOf(PASSWORD_MAX_LENGTH));
-        passwordSettings.setMinLength(Byte.valueOf(PASSWORD_MIN_LENGTH));
+        passwordSettings.setMaxLength(Byte.parseByte(PASSWORD_MAX_LENGTH));
+        passwordSettings.setMinLength(Byte.parseByte(PASSWORD_MIN_LENGTH));
         passwordSettings.setPattern(PASSWORD_PATTERN);
         passwordSettings.setPatternMessage(of("en", PATTERN_MESSAGE));
         publicSettings.setPasswordSettings(passwordSettings);
