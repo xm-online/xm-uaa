@@ -9,6 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.i18n.error.web.ExceptionTranslator;
+import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
@@ -48,11 +50,17 @@ public class TenantPropertiesResourceIntTest {
     @Autowired
     private ExceptionTranslator exceptionTranslator;
 
+    @Autowired
+    private TenantContextHolder tenantContextHolder;
+
     private MockMvc restMvc;
 
     @Before
     @SneakyThrows
     public void setup() {
+
+        TenantContextUtils.setTenant(tenantContextHolder, DEFAULT_TENANT_KEY_VALUE);
+
         TenantProperties properties = new TenantProperties();
         PublicSettings publicSettings = new PublicSettings();
         PasswordSettings passwordSettings = new PasswordSettings();
