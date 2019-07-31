@@ -59,8 +59,7 @@ public class LogsResourceIntTest {
     }
 
     @After
-    @Override
-    public void finalize() {
+    public void destroy() {
         tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
     }
 

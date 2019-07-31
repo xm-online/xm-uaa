@@ -63,8 +63,7 @@ public class ProfileInfoResourceIntTest {
     }
 
     @After
-    @Override
-    public void finalize() {
+    public void destroy() {
         tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
     }
 

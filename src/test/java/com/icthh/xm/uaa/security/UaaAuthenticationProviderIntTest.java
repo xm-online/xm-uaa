@@ -134,8 +134,7 @@ public class UaaAuthenticationProviderIntTest {
     }
 
     @After
-    @Override
-    public void finalize() {
+    public void destroy() {
         lepManager.endThreadContext();
     }
 
