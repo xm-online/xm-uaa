@@ -41,6 +41,9 @@ public class ApplicationProperties {
     private String emailPathPattern;
     private boolean timelinesEnabled;
     private String dbSchemaSuffix;
+    private boolean schedulerEnabled;
+    private String keystoreFile;
+    private String keystorePassword;
 
     @Getter
     @Setter

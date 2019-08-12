@@ -1,17 +1,15 @@
 package com.icthh.xm.uaa.service.tenant;
 
+import static com.icthh.xm.commons.tenant.TenantContextUtils.assertTenantKeyValid;
 import static com.icthh.xm.uaa.config.Constants.CHANGE_LOG_PATH;
 import static org.apache.commons.lang3.time.StopWatch.createStarted;
 
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
-
 import com.icthh.xm.commons.migration.db.tenant.DropSchemaResolver;
 import com.icthh.xm.uaa.util.DatabaseUtil;
-
 import java.sql.Connection;
 import java.sql.Statement;
 import javax.sql.DataSource;
-
 import liquibase.integration.spring.SpringLiquibase;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -62,6 +60,7 @@ public class TenantDatabaseService {
         final StopWatch stopWatch = createStarted();
         try {
             log.info("START - SETUP:CreateTenant:liquibase tenantKey: {}", tenantKey);
+            assertTenantKeyValid(tenantKey);
             SpringLiquibase liquibase = new SpringLiquibase();
             liquibase.setResourceLoader(resourceLoader);
             liquibase.setDataSource(dataSource);
@@ -90,8 +89,9 @@ public class TenantDatabaseService {
     public void drop(String tenantKey) {
         StopWatch stopWatch = createStarted();
         log.info("START - SETUP:DeleteTenant:schema tenantKey: {}", tenantKey);
+        assertTenantKeyValid(tenantKey);
         try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement()) {
+            Statement statement = connection.createStatement()) {
             statement.executeUpdate(String.format(schemaDropResolver.getSchemaDropCommand(), tenantKey));
             log.info("STOP  - SETUP:DeleteTenant:schema tenantKey: {}, result: OK, time = {} ms",
                 tenantKey, stopWatch.getTime());

@@ -1,5 +1,7 @@
 package com.icthh.xm.uaa.web.rest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.i18n.error.web.ExceptionTranslator;
 import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
@@ -12,14 +14,17 @@ import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
+import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserMailService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.mapper.UserMapper;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -55,7 +60,7 @@ import java.util.UUID;
 import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
 import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_SUPER_ADMIN_FORBIDDEN_OPERATION;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.junit.Assert.assertTrue;
@@ -105,6 +110,9 @@ public class UserResourceIntTest {
 
     private static final String ROLE_USER = "ROLE_USER";
 
+    private static final boolean AUTO_LOGOUT_ENABLED = true;
+    private static final int AUTO_LOGOUT_TIME = 10;
+
     @Autowired
     private UserLoginRepository userLoginRepository;
 
@@ -138,6 +146,9 @@ public class UserResourceIntTest {
     @Autowired
     private XmRequestContextHolder xmRequestContextHolder;
 
+    @Autowired
+    private TenantPropertiesService tenantPropertiesService;
+
     @Mock
     private ProfileEventProducer profileEventProducer;
 
@@ -163,10 +174,18 @@ public class UserResourceIntTest {
 
     }
 
+    @SneakyThrows
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
         TenantContextUtils.setTenant(tenantContextHolder, DEFAULT_TENANT_KEY_VALUE);
+
+        TenantProperties properties = new TenantProperties();
+        TenantProperties.Security security = new TenantProperties.Security();
+        security.setDefaultUserRole(ROLE_USER);
+        properties.setSecurity(security);
+        tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
+            new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
 
         doNothing().when(profileEventProducer).send(any());
         UserResource userResource = new UserResource(userLoginRepository,
@@ -184,8 +203,7 @@ public class UserResourceIntTest {
     }
 
     @After
-    @Override
-    public void finalize() {
+    public void destroy() {
         tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
         lepManager.endThreadContext();
     }
@@ -244,7 +262,9 @@ public class UserResourceIntTest {
             null,
             null,
             null,
-            ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLogin), false, null);
+            ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLogin),
+            AUTO_LOGOUT_ENABLED,
+            AUTO_LOGOUT_TIME);
 
         restUserMockMvc.perform(post("/api/users")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -259,6 +279,8 @@ public class UserResourceIntTest {
         assertThat(testUser.getLastName()).isEqualTo(DEFAULT_LASTNAME);
         assertThat(testUser.getImageUrl()).isEqualTo(DEFAULT_IMAGEURL);
         assertThat(testUser.getLangKey()).isEqualTo(DEFAULT_LANGKEY);
+        assertThat(testUser.isAutoLogoutEnabled()).isEqualTo(AUTO_LOGOUT_ENABLED);
+        assertThat(testUser.getAutoLogoutTimeoutSeconds()).isEqualTo(AUTO_LOGOUT_TIME);
     }
 
     @Test
@@ -459,7 +481,8 @@ public class UserResourceIntTest {
             UPDATED_PASSWORD,
             UPDATED_FIRSTNAME,
             UPDATED_LASTNAME,
-            updatedUser.isActivated(),
+            //invert user state
+            !updatedUser.isActivated(),
             updatedUser.isTfaEnabled(),
             updatedUser.getTfaOtpChannelType(),
             null,
@@ -469,7 +492,11 @@ public class UserResourceIntTest {
             updatedUser.getCreatedDate(),
             updatedUser.getLastModifiedBy(),
             updatedUser.getLastModifiedDate(),
-            ROLE_USER, "testUserKey", null, null, null, null, Collections.singletonList(userLogin), false, null);
+            "testUserKey",
+            //change user role
+            ROLE_USER + "XXX", null, null, null, null, Collections.singletonList(userLogin),
+            AUTO_LOGOUT_ENABLED,
+            AUTO_LOGOUT_TIME);
 
         restUserMockMvc.perform(put("/api/users")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -484,6 +511,12 @@ public class UserResourceIntTest {
         assertThat(testUser.getLastName()).isEqualTo(UPDATED_LASTNAME);
         assertThat(testUser.getImageUrl()).isEqualTo(UPDATED_IMAGEURL);
         assertThat(testUser.getLangKey()).isEqualTo(UPDATED_LANGKEY);
+        assertThat(testUser.isAutoLogoutEnabled()).isEqualTo(AUTO_LOGOUT_ENABLED);
+        assertThat(testUser.getAutoLogoutTimeoutSeconds()).isEqualTo(AUTO_LOGOUT_TIME);
+        //ASSERT THAT STATE IS NOT CHANGED
+        assertThat(testUser.isActivated()).isEqualTo(updatedUser.isActivated());
+        //ASSERT THAT ROLE IS NOT CHANGED
+        assertThat(testUser.getRoleKey()).isEqualTo(ROLE_USER);
     }
 
     @Test
@@ -725,6 +758,95 @@ public class UserResourceIntTest {
         // Validate that super-admin wasn't deleted
         List<User> userList = userRepository.findAll();
         assertThat(userList).hasSize(databaseSizeBeforeDelete);
+    }
+
+    @Test
+    @Transactional
+    public void shouldForbidBlockHimself() throws Exception {
+        initSecurityContextWithUserKey(superAdminUser.getUserKey());
+
+        // Initialize the database
+        userRepository.saveAndFlush(superAdminUser);
+        int databaseSizeBeforeDelete = userRepository.findAll().size();
+
+        // Delete the user
+        restUserMockMvc.perform(put("/api/users/{userKey}/block", superAdminUser.getUserKey())
+            .accept(TestUtil.APPLICATION_JSON_UTF8))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value(ERROR_USER_BLOCK_HIMSELF));
+
+        // Validate that super-admin wasn't deleted
+        List<User> userList = userRepository.findAll();
+        assertThat(userList).hasSize(databaseSizeBeforeDelete);
+    }
+
+    @Test
+    @Transactional
+    public void shouldAllowBlockOther() throws Exception {
+        initSecurityContextWithUserKey(superAdminUser.getUserKey());
+
+        // Initialize the database
+        userRepository.saveAndFlush(user);
+
+        Optional<User> resultOpt = userRepository.findById(user.getId());
+        assertTrue(resultOpt.isPresent());
+        User result = resultOpt.get();
+        assertThat(result.isActivated()).isEqualTo(Boolean.TRUE);
+
+        // Delete the user
+        restUserMockMvc.perform(put("/api/users/{userKey}/block", user.getUserKey())
+            .accept(TestUtil.APPLICATION_JSON_UTF8))
+            .andExpect(status().isOk());
+
+        resultOpt = userRepository.findById(user.getId());
+        assertTrue(resultOpt.isPresent());
+        result = resultOpt.get();
+        assertThat(result.isActivated()).isEqualTo(Boolean.FALSE);
+    }
+
+    @Test
+    @Transactional
+    public void forbidActivateHimself() throws Exception {
+        initSecurityContextWithUserKey(superAdminUser.getUserKey());
+
+        // Initialize the database
+        userRepository.saveAndFlush(superAdminUser);
+        int databaseSizeBeforeDelete = userRepository.findAll().size();
+
+        // Delete the user
+        restUserMockMvc.perform(put("/api/users/{userKey}/activate", superAdminUser.getUserKey())
+            .accept(TestUtil.APPLICATION_JSON_UTF8))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value(ERROR_USER_ACTIVATES_HIMSELF));
+
+        // Validate that super-admin wasn't deleted
+        List<User> userList = userRepository.findAll();
+        assertThat(userList).hasSize(databaseSizeBeforeDelete);
+    }
+
+    @Test
+    @Transactional
+    public void shouldAllowActivateOther() throws Exception {
+        initSecurityContextWithUserKey(superAdminUser.getUserKey());
+
+        // Initialize the database
+        user.setActivated(false);
+        userRepository.saveAndFlush(user);
+
+        Optional<User> resultOpt = userRepository.findById(user.getId());
+        assertTrue(resultOpt.isPresent());
+        User result = resultOpt.get();
+        assertThat(result.isActivated()).isEqualTo(Boolean.FALSE);
+
+        // Delete the user
+        restUserMockMvc.perform(put("/api/users/{userKey}/activate", user.getUserKey())
+            .accept(TestUtil.APPLICATION_JSON_UTF8))
+            .andExpect(status().isOk());
+
+        resultOpt = userRepository.findById(user.getId());
+        assertTrue(resultOpt.isPresent());
+        result = resultOpt.get();
+        assertThat(result.isActivated()).isEqualTo(Boolean.TRUE);
     }
 
     @Test

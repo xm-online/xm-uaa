@@ -10,15 +10,11 @@ import com.icthh.xm.uaa.security.TokenConstraintsService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.BDDMockito;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import javax.xml.transform.Result;
 import java.time.Instant;
-import java.time.temporal.TemporalUnit;
 import java.util.Optional;
 
 import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
@@ -60,6 +56,7 @@ public class UserServiceUnitTest {
     @Test
     public void testCompletePasswordResetError() {
         given(userRepository.findOneByResetKey(USER_KEY)).willReturn(Optional.empty());
+        given(tenantPropertiesService.getTenantProps()).willReturn(new TenantProperties());
         assertThatThrownBy(() -> {
             service.completePasswordReset("123",USER_KEY);
         }).hasMessage("Reset code used");
@@ -90,7 +87,7 @@ public class UserServiceUnitTest {
     }
 
     @Test
-    public void testBlockSelfUserAccount() {
+    public void shouldForbidToBlockSelfAccount() {
         given(xmAuthenticationContextHolder.getContext()).willReturn(getDummyCTX());
         assertThatThrownBy(() -> {
             service.blockUserAccount(USER_KEY);
@@ -99,7 +96,7 @@ public class UserServiceUnitTest {
     }
 
     @Test
-    public void testBlockUserAccount() {
+    public void shouldBlockAccount() {
         User d = createUser(USER_KEY+"1", "X");
         given(xmAuthenticationContextHolder.getContext()).willReturn(getDummyCTX());
         given(userRepository.findOneByUserKey(d.getUserKey())).willReturn(Optional.of(d));
@@ -111,7 +108,7 @@ public class UserServiceUnitTest {
     }
 
     @Test
-    public void testActivateSelfUserAccount() {
+    public void shouldForbidToActivateSelfAccount() {
         given(xmAuthenticationContextHolder.getContext()).willReturn(getDummyCTX());
         assertThatThrownBy(() -> {
             service.activateUserAccount(USER_KEY);
@@ -120,7 +117,7 @@ public class UserServiceUnitTest {
     }
 
     @Test
-    public void testActivateUserAccount() {
+    public void shouldChangeAccountState() {
         User d = createUser(USER_KEY+"1", "X");
         d.setActivated(Boolean.FALSE);
         given(xmAuthenticationContextHolder.getContext()).willReturn(getDummyCTX());
@@ -133,7 +130,7 @@ public class UserServiceUnitTest {
     }
 
     @Test
-    public void testChangeRoleWillFailIfRoleCodeIsEmptyOrNull() {
+    public void shouldFailIfRoleCodeIsEmptyOrNull() {
         UserDTO userDTO = new UserDTO();
         userDTO.setRoleKey(null);
         assertThatThrownBy(() -> {
@@ -146,7 +143,7 @@ public class UserServiceUnitTest {
     }
 
     @Test
-    public void testChangeRoleWillFailForSuperAdmin() {
+    public void shouldFailForSuperAdmin() {
         UserDTO userDTO = new UserDTO();
         userDTO.setRoleKey("X");
         userDTO.setId(ID);
@@ -157,7 +154,7 @@ public class UserServiceUnitTest {
     }
 
     @Test
-    public void testChangeRole() {
+    public void shouldChangeUserRole() {
         UserDTO userDTO = new UserDTO();
         userDTO.setRoleKey("X");
         userDTO.setId(ID);

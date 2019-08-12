@@ -1,15 +1,15 @@
 package com.icthh.xm.uaa.util;
 
-import lombok.experimental.UtilityClass;
+import static com.icthh.xm.commons.tenant.TenantContextUtils.assertTenantKeyValid;
+import static com.icthh.xm.uaa.config.Constants.DDL_CREATE_SCHEMA;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.icthh.xm.uaa.config.Constants.DDL_CREATE_SCHEMA;
+import javax.sql.DataSource;
+import lombok.experimental.UtilityClass;
 
 /**
  * Utility for database operations.
@@ -27,6 +27,7 @@ public final class DatabaseUtil {
      * @param name       schema name
      */
     public static void createSchema(DataSource dataSource, String name) {
+        assertTenantKeyValid(name);
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement()) {
             statement.executeUpdate(String.format(DDL_CREATE_SCHEMA, name));

@@ -12,6 +12,7 @@ import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import com.icthh.xm.commons.i18n.spring.service.LocalizationMessageService;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.logging.util.MdcUtils;
+import com.icthh.xm.commons.mail.provider.MailProviderService;
 import com.icthh.xm.commons.tenant.PlainTenant;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
@@ -64,7 +65,7 @@ public class MailService {
     private static final String TENANT_KEY_VALUE = "tenant";
 
     private final JHipsterProperties jHipsterProperties;
-    private final JavaMailSender javaMailSender;
+    private final MailProviderService mailProviderService;
     private final MessageSource messageSource;
     private final TenantEmailTemplateService tenantEmailTemplateService;
     private final Configuration freeMarker;
@@ -310,8 +311,8 @@ public class MailService {
                 email,
                 resolve(SUBJECT, subject, templateName, locale),
                 content,
-                resolve(FROM, from, templateName, locale)
-            );
+                resolve(FROM, from, templateName, locale),
+                mailProviderService.getJavaMailSender(tenantKey.getValue()));
         } catch (TemplateException e) {
             throw new IllegalStateException("Mail template rendering failed");
         } catch (IOException e) {
@@ -363,7 +364,7 @@ public class MailService {
     }
 
     // package level for testing
-    void sendEmail(String to, String subject, String content, String from) {
+    void sendEmail(String to, String subject, String content, String from, JavaMailSender javaMailSender) {
         log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}' and content={}",
             false, true, to, subject, content);
 

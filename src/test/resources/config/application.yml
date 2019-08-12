@@ -131,3 +131,5 @@ application:
     client-grant-types: client_credentials, refresh_token, password
     client-scope: openid
     default-client-id:
+    keystore-file: keystore.p12
+    keystore-password: password

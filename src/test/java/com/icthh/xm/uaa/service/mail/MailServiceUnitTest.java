@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.service.mail;
 
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import com.icthh.xm.commons.i18n.spring.service.LocalizationMessageService;
+import com.icthh.xm.commons.mail.provider.MailProviderService;
 import com.icthh.xm.commons.tenant.PrivilegedTenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
@@ -24,8 +25,8 @@ import java.util.HashMap;
 
 import static com.google.common.collect.ImmutableMap.of;
 import static com.icthh.xm.uaa.config.Constants.TRANSLATION_KEY;
-import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonList;
 import static java.util.Locale.ENGLISH;
 import static java.util.Locale.FRANCE;
 import static java.util.Locale.forLanguageTag;
@@ -52,8 +53,11 @@ public class MailServiceUnitTest {
     @InjectMocks
     private MailService mailService;
 
-    @Mock
-    private JavaMailSender javaMailSender;
+    private JavaMailSender javaMailSender = mock(JavaMailSender.class);
+
+    @Spy
+    private MailProviderService mailProviderService = new MailProviderService(javaMailSender);
+
     @Mock
     private TenantEmailTemplateService tenantEmailTemplateService;
     @Spy
@@ -123,7 +127,7 @@ public class MailServiceUnitTest {
     @SneakyThrows
     public void ifInConfigNoTemplateReturnDefault() {
         when(tenantConfigService.getConfig()).thenReturn(
-            of(MAIL_SETTINGS, asList(of(
+            of(MAIL_SETTINGS, singletonList(of(
                 TEMPLATE_NAME, "OTHER_TEMPLATE",
                 SUBJECT, of(ENGLISH.getLanguage(), "otherSubject"),
                 FROM, of(ENGLISH.getLanguage(), "otherFrom")
@@ -143,7 +147,7 @@ public class MailServiceUnitTest {
     @SneakyThrows
     public void ifInConfigNoFieldReturnDefault() {
         when(tenantConfigService.getConfig()).thenReturn(
-            of(MAIL_SETTINGS, asList(of(
+            of(MAIL_SETTINGS, singletonList(of(
                 TEMPLATE_NAME, EMAIL_TEMPLATE
             )))
         );
@@ -164,7 +168,7 @@ public class MailServiceUnitTest {
         when(localizationMessageService.getMessage("tr from key")).thenReturn("fromvalue (From value caption)");
 
         when(tenantConfigService.getConfig()).thenReturn(
-            of(MAIL_SETTINGS, asList(of(
+            of(MAIL_SETTINGS, singletonList(of(
                 TEMPLATE_NAME, EMAIL_TEMPLATE,
                 SUBJECT, of(TRANSLATION_KEY, "tr subject key", ENGLISH.getLanguage(), "en subject", FRANCE.getLanguage(), "fr subject"),
                 FROM, of(TRANSLATION_KEY, "tr from key", ENGLISH.getLanguage(), "en from", FRANCE.getLanguage(), "frfrom")
@@ -184,7 +188,7 @@ public class MailServiceUnitTest {
     @SneakyThrows
     public void ifInConfigNoTranslationKeyReturnByLocale() {
         when(tenantConfigService.getConfig()).thenReturn(
-            of(MAIL_SETTINGS, asList(of(
+            of(MAIL_SETTINGS, singletonList(of(
                 TEMPLATE_NAME, EMAIL_TEMPLATE,
                 SUBJECT, of(ENGLISH.getLanguage(), "en subject", FRANCE.getLanguage(), "fr subject"),
                 FROM, of(ENGLISH.getLanguage(), "en from", FRANCE.getLanguage(), "frfrom")
@@ -204,7 +208,7 @@ public class MailServiceUnitTest {
     @SneakyThrows
     public void ifInConfigNoTranslationKeyAndNoTranslationsByLocaleReturnEn() {
         when(tenantConfigService.getConfig()).thenReturn(
-            of(MAIL_SETTINGS, asList(of(
+            of(MAIL_SETTINGS, singletonList(of(
                 TEMPLATE_NAME, EMAIL_TEMPLATE,
                 SUBJECT, of(ENGLISH.getLanguage(), "en subject"),
                 FROM, of(ENGLISH.getLanguage(), "enfrom")
@@ -224,7 +228,7 @@ public class MailServiceUnitTest {
     @SneakyThrows
     public void testSubjectConfiguration() {
         when(tenantConfigService.getConfig()).thenReturn(
-            of(MAIL_SETTINGS, asList(of(
+            of(MAIL_SETTINGS, singletonList(of(
                 TEMPLATE_NAME, "EMAIL_TEMPLATE",
                 SUBJECT, of(FRANCE.getLanguage(), "otherSubject")
             )))
@@ -243,7 +247,7 @@ public class MailServiceUnitTest {
     @SneakyThrows
     public void testFromConfiguration() {
         when(tenantConfigService.getConfig()).thenReturn(
-            of(MAIL_SETTINGS, asList(of(
+            of(MAIL_SETTINGS, singletonList(of(
                 TEMPLATE_NAME, "EMAIL_TEMPLATE",
                 FROM, of(FRANCE.getLanguage(), "otherFrom@yopmail.com (France caption)")
             )))
@@ -262,7 +266,7 @@ public class MailServiceUnitTest {
     @SneakyThrows
     public void testSubjectAndFromConfiguration() {
         when(tenantConfigService.getConfig()).thenReturn(
-            of(MAIL_SETTINGS, asList(of(
+            of(MAIL_SETTINGS, singletonList(of(
                 TEMPLATE_NAME, "EMAIL_TEMPLATE",
                 SUBJECT, of(FRANCE.getLanguage(), "otherSubject"),
                 FROM, of(FRANCE.getLanguage(), "otherFrom@yopmail.com (France caption)")

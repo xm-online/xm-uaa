@@ -62,6 +62,9 @@ public class TenantProperties {
         @JsonProperty("defaultClientSecret")
         private String defaultClientSecret;
 
+        @JsonProperty("passwordExpirationPeriod")
+        private Integer passwordExpirationPeriod = -1;
+
         @JsonSetter("accessTokenValiditySeconds")
         public void setAccessTokenValiditySeconds(Integer accessTokenValiditySeconds) {
             this.accessTokenValiditySeconds = accessTokenValiditySeconds;
@@ -70,6 +73,23 @@ public class TenantProperties {
         @JsonSetter("refreshTokenValiditySeconds")
         public void setRefreshTokenValiditySeconds(Integer refreshTokenValiditySeconds) {
             this.refreshTokenValiditySeconds = refreshTokenValiditySeconds;
+        }
+    }
+
+    private PublicSettings publicSettings;
+
+    @Data
+    public static class PublicSettings {
+
+        private PasswordSettings passwordSettings;
+
+        @Data
+        public static class PasswordSettings {
+            private int minLength = 0;
+            private int maxLength = Byte.MAX_VALUE;
+            private String pattern;
+            private Map<String, String> patternMessage;
+            private boolean enableBackEndValidation = false;
         }
     }
 
@@ -153,6 +173,9 @@ public class TenantProperties {
         private Boolean groupSearchSubtree;
         private String userDnPattern;
         private Role role = new Role();
+        private String searchFields;
+        private Boolean useNameWithoutDomain;
+        private String authField;
         private Attribute attribute = new Attribute();
 
         @Getter
@@ -175,4 +198,5 @@ public class TenantProperties {
             private Map<String, String> mapping;
         }
     }
+
 }

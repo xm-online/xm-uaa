@@ -1,10 +1,12 @@
 package com.icthh.xm.uaa.security;
 
 import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpGenerator;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
+import com.icthh.xm.uaa.service.UserService;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
@@ -18,6 +20,7 @@ import org.springframework.security.oauth2.common.OAuth2RefreshToken;
 import org.springframework.security.oauth2.common.exceptions.InvalidGrantException;
 import org.springframework.security.oauth2.common.exceptions.InvalidScopeException;
 import org.springframework.security.oauth2.common.exceptions.InvalidTokenException;
+import org.springframework.security.oauth2.common.exceptions.UserDeniedAuthorizationException;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.security.oauth2.provider.TokenRequest;
@@ -51,6 +54,7 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
     private OtpSendStrategy otpSendStrategy;
     private OtpStore otpStore;
     private TokenConstraintsService tokenConstraints;
+    private UserService userService;
 
     /**
      * Initialize these token services. If no random generator is set, one will be created.
@@ -61,6 +65,7 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         Assert.notNull(otpGenerator, "otpGenerator must be set");
         Assert.notNull(otpSendStrategy, "otpSendStrategy must be set");
         Assert.notNull(otpStore, "otpStore must be set");
+        Assert.notNull(userService, "userService must be set");
     }
 
     private boolean isTfaEnabled(OAuth2Authentication authentication) {
@@ -176,6 +181,8 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
 
         OAuth2Authentication authentication = tokenStore.readAuthenticationForRefreshToken(refreshToken);
 
+        verifyUserIsActivated(authentication);
+
         if (this.authenticationManager != null && !authentication.isClientOnly()) {
             // The client has already been authenticated, but the user authentication might be old now, so give it a
             // chance to re-authenticate.
@@ -218,6 +225,26 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
             tokenStore.storeRefreshToken(accessToken.getRefreshToken(), authentication);
         }
         return accessToken;
+    }
+
+    /**
+     * Ensures that {@code user} by {@link Authentication#getPrincipal()} is activated
+     *
+     * @param authentication the authentication token
+     * @throws InvalidTokenException            in case the authentication token is invalid
+     * @throws UserDeniedAuthorizationException in case {@code user} not exist or not activated
+     * @see User#isActivated()
+     */
+    private void verifyUserIsActivated(Authentication authentication) {
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof String)) {
+            throw new InvalidTokenException("Invalid principal");
+        }
+        String userLogin = (String) principal;
+        boolean isActivated = userService.findOneByLogin(userLogin).map(User::isActivated).orElse(false);
+        if (!isActivated) {
+            throw new UserNotActivatedException("User was not activated");
+        }
     }
 
     @Override
@@ -385,4 +412,7 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         this.tokenConstraints = tokenConstraints;
     }
 
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
 }

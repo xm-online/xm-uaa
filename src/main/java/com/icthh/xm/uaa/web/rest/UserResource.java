@@ -134,7 +134,7 @@ public class UserResource {
      */
     @PutMapping("/users")
     @Timed
-    @PreAuthorize("hasPermission({'id': #user.userKey, 'newUser': #user}, 'user', 'USER.UPDATE')")
+    @PreAuthorize("hasPermission({'userKey': #user.userKey, 'newUser': #user}, 'user', 'USER.UPDATE')")
     public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody UserDTO user) {
         assertNotSuperAdmin(user);
         Optional<UserDTO> updatedUser = userService.updateUser(user);
@@ -176,7 +176,7 @@ public class UserResource {
     }
 
     /**
-     * PUT  /users/role : Unblock user account
+     * PUT  /users/role : change role key for user account
      *
      * @param user container with new role
      * @return the ResponseEntity with status 200 (OK) and with body the updated user
@@ -203,7 +203,7 @@ public class UserResource {
      */
     @PutMapping("/users/logins")
     @Timed
-    @PreAuthorize("hasPermission({'id': #user.userKey, 'newUser': #user}, 'user', 'USER.LOGIN.UPDATE')")
+    @PreAuthorize("hasPermission({'userKey': #user.userKey, 'newUser': #user}, 'user', 'USER.LOGIN.UPDATE')")
     public ResponseEntity<UserDTO> updateUserLogins(@Valid @RequestBody UserDTO user) {
         user.getLogins().forEach(userLogin ->
                                      userLoginRepository.findOneByLoginIgnoreCaseAndUserIdNot(userLogin.getLogin(), user.getId())
@@ -282,7 +282,7 @@ public class UserResource {
      */
     @DeleteMapping("/users/{userKey}")
     @Timed
-    @PreAuthorize("hasPermission({'id':#userKey}, 'user', 'USER.DELETE')")
+    @PreAuthorize("hasPermission({'userKey':#userKey}, 'user', 'USER.DELETE')")
     public ResponseEntity<Void> deleteUser(@PathVariable String userKey) {
         userService.deleteUser(userKey);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert("userManagement.deleted", userKey)).build();
@@ -297,7 +297,7 @@ public class UserResource {
      */
     @PostMapping(path = "/users/{userKey}/tfa_enable")
     @Timed
-    @PreAuthorize("hasPermission({'id':#userKey}, 'user', 'USER.TFA.ENABLE')")
+    @PreAuthorize("hasPermission({'userKey':#userKey}, 'user', 'USER.TFA.ENABLE')")
     public ResponseEntity<Void> enableTwoFactorAuth(@PathVariable String userKey,
                                                     @Valid @NotNull @RequestBody TfaEnableRequest request) {
         userService.enableTwoFactorAuth(userKey, request.getOtpChannelSpec());
@@ -311,7 +311,7 @@ public class UserResource {
      */
     @PostMapping(path = "/users/{userKey}/tfa_disable")
     @Timed
-    @PreAuthorize("hasPermission({'id':#userKey}, 'user', 'USER.TFA.DISABLE')")
+    @PreAuthorize("hasPermission({'userKey':#userKey}, 'user', 'USER.TFA.DISABLE')")
     public ResponseEntity<Void> disableTwoFactorAuth(@PathVariable String userKey) {
         userService.disableTwoFactorAuth(userKey);
         return new ResponseEntity<>(HttpStatus.OK);

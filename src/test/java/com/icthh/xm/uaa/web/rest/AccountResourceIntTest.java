@@ -242,8 +242,7 @@ public class AccountResourceIntTest {
     }
 
     @After
-    @Override
-    public void finalize() {
+    public void destroy() {
         tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
         lepManager.endThreadContext();
     }
