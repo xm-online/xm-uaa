@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.service;
 
 import com.icthh.xm.commons.security.XmAuthenticationContext;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
+import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
@@ -69,7 +70,7 @@ public class UserServiceUnitTest {
         given(userRepository.findOneByResetKey(USER_KEY)).willReturn(Optional.of(u));
         given(tenantPropertiesService.getTenantProps()).willReturn(new TenantProperties());
         given(passwordEncoder.encode("123")).willReturn("321");
-        User nu = service.completePasswordReset("123",USER_KEY);
+        User nu = service.completePasswordReset("123", USER_KEY);
         assertThat(u.getUserKey()).isEqualTo(nu.getUserKey());
         assertThat(nu.getResetDate()).isNull();
         assertThat(nu.getResetKey()).isNull();
@@ -82,7 +83,7 @@ public class UserServiceUnitTest {
         given(userRepository.findOneByResetKey(USER_KEY)).willReturn(Optional.of(u));
         given(tenantPropertiesService.getTenantProps()).willReturn(new TenantProperties());
         assertThatThrownBy(() -> {
-            service.completePasswordReset("123",USER_KEY);
+            service.completePasswordReset("123", USER_KEY);
         }).hasMessage("Reset code expired");
     }
 
@@ -165,7 +166,7 @@ public class UserServiceUnitTest {
     }
 
     @Test
-    public void testUpdateUser() {
+    public void shouldUpdateRoleAndStateIfStrictUserManagementFalse() {
 
         UserDTO newUser = new UserDTO();
         newUser.setId(ID);
@@ -193,6 +194,7 @@ public class UserServiceUnitTest {
 
         given(userRepository.findById(ID)).willReturn(Optional.of(oldUser));
         given(tokenConstraintsService.getAccessTokenValiditySeconds(oldUser.getAccessTokenValiditySeconds())).willReturn(10);
+        given(tenantPropertiesService.getApplicationProperties()).willReturn(new ApplicationProperties());
 
         UserDTO result = service.updateUser(newUser).get();
         assertThat(result).isNotNull();
@@ -202,8 +204,54 @@ public class UserServiceUnitTest {
         assertThat(result.getLangKey()).isEqualTo(newUser.getLangKey());
 
         assertThat(result.getCreatedBy()).isEqualTo(oldUser.getCreatedBy());
-        assertThat(result.getRoleKey()).isEqualTo(oldUser.getRoleKey());
-        assertThat(result.isActivated()).isEqualTo(oldUser.isActivated());
+        assertThat(result.getRoleKey()).isEqualTo("ROLEX");
+        assertThat(result.isActivated()).isEqualTo(Boolean.FALSE);
+
+    }
+
+    @Test
+    public void shouldNotUpdateRoleAndStateIfStrictUserManagementTrue() {
+
+        UserDTO newUser = new UserDTO();
+        newUser.setId(ID);
+        newUser.setUserKey("USERX");
+        newUser.setRoleKey("ROLEX");
+        newUser.setFirstName("fn");
+        newUser.setLastName("ln");
+        newUser.setCreatedBy("cb");
+        newUser.setImageUrl("newUrl");
+        newUser.setLangKey("XXXX");
+        newUser.setAccessTokenValiditySeconds(100);
+        newUser.setAutoLogoutTimeoutSeconds(200);
+        newUser.setActivated(Boolean.FALSE);
+
+        User oldUser = createUser("USERX", "Y");
+        oldUser.setFirstName("fn1");
+        oldUser.setLastName("ln1");
+        oldUser.setCreatedBy("cb!!!");
+        oldUser.setImageUrl("oldUrl");
+        oldUser.setActivationKey("oldKey");
+        oldUser.setAccessTokenValiditySeconds(1000);
+        oldUser.setAutoLogoutTimeoutSeconds(2000);
+        oldUser.setResetDate(null);
+        oldUser.setActivated(Boolean.TRUE);
+
+        given(userRepository.findById(ID)).willReturn(Optional.of(oldUser));
+        given(tokenConstraintsService.getAccessTokenValiditySeconds(oldUser.getAccessTokenValiditySeconds())).willReturn(10);
+        ApplicationProperties ap = new ApplicationProperties();
+        ap.setStrictUserManagement(true);
+        given(tenantPropertiesService.getApplicationProperties()).willReturn(ap);
+
+        UserDTO result = service.updateUser(newUser).get();
+        assertThat(result).isNotNull();
+        assertThat(result.getFirstName()).isEqualTo(newUser.getFirstName());
+        assertThat(result.getLastName()).isEqualTo(newUser.getLastName());
+        assertThat(result.getImageUrl()).isEqualTo(newUser.getImageUrl());
+        assertThat(result.getLangKey()).isEqualTo(newUser.getLangKey());
+
+        assertThat(result.getCreatedBy()).isEqualTo(oldUser.getCreatedBy());
+        assertThat(result.getRoleKey()).isEqualTo("Y");
+        assertThat(result.isActivated()).isEqualTo(Boolean.TRUE);
 
     }
 

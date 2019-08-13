@@ -1,4 +1,5 @@
 ---
+strictUserManagement: true
 security:
     defaultUserRole: ROLE_USER
     accessTokenValiditySeconds:

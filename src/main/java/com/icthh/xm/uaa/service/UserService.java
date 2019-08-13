@@ -153,20 +153,8 @@ public class UserService {
     @LogicExtensionPoint("UpdateUser")
     public Optional<UserDTO> updateUser(UserDTO updatedUser) {
         return userRepository.findById(updatedUser.getId())
-            .map(user -> {
-                //use blockUserAccount/activateUserAccount
-                user.setActivated(user.isActivated());
-                //use changeUserRole
-                user.setRoleKey(user.getRoleKey());
-                user.setFirstName(updatedUser.getFirstName());
-                user.setLastName(updatedUser.getLastName());
-                user.setLangKey(updatedUser.getLangKey());
-                user.setImageUrl(updatedUser.getImageUrl());
-                user.setData(updatedUser.getData());
-                user.setAccessTokenValiditySeconds(updatedUser.getAccessTokenValiditySeconds());
-                user.setRefreshTokenValiditySeconds(updatedUser.getRefreshTokenValiditySeconds());
-                return updateUserAutoLogoutSettings(updatedUser, user);
-            })
+            .map(user -> mergeUserData(updatedUser, user))
+            .map(user -> updateUserAutoLogoutSettings(updatedUser, user))
             .map(UserDTO::new);
     }
 
@@ -214,25 +202,6 @@ public class UserService {
                 return user;
             })
             .map(UserDTO::new);
-    }
-
-    // dstUser need to have logout timeout data
-    User updateUserAutoLogoutSettings(UserDTO srcDTO, User dstUser) {
-        Integer srcAutoLogoutTimeoutSeconds = srcDTO.getAutoLogoutTimeoutSeconds();
-        if (srcAutoLogoutTimeoutSeconds != null) {
-            int accessTokenValiditySeconds = tokenConstraints.getAccessTokenValiditySeconds(dstUser.getAccessTokenValiditySeconds());
-            if (srcAutoLogoutTimeoutSeconds > accessTokenValiditySeconds) {
-                srcAutoLogoutTimeoutSeconds = accessTokenValiditySeconds;
-            }
-
-            if (srcAutoLogoutTimeoutSeconds <= 0) {
-                srcAutoLogoutTimeoutSeconds = null;
-            }
-        }
-
-        dstUser.setAutoLogoutEnabled(srcDTO.isAutoLogoutEnabled());
-        dstUser.setAutoLogoutTimeoutSeconds(srcAutoLogoutTimeoutSeconds);
-        return dstUser;
     }
 
     /**
@@ -429,11 +398,6 @@ public class UserService {
         userRepository.save(user);
     }
 
-    private static Optional<List<OtpChannelType>> getUserLoginOtpChannelTypes(UserLogin userLogin) {
-        UserLoginType loginType = OtpUtils.getRequiredLoginType(userLogin.getTypeKey());
-        return OtpUtils.getSupportedOtpChannelTypes(loginType);
-    }
-
     public Map<OtpChannelType, List<TfaOtpChannelSpec>> getTfaAvailableOtpChannelSpecs(String userKey) {
         User user = userRepository.findOneWithLoginsByUserKey(userKey).orElseThrow(
             () -> new EntityNotFoundException("User not found")
@@ -444,7 +408,8 @@ public class UserService {
         Map<OtpChannelType, List<TfaOtpChannelSpec>> result = new HashMap<>();
         for (UserLogin userLogin : user.getLogins()) {
             // is channel type supported by current login type
-            Optional<List<OtpChannelType>> userOtpChannelTypes = getUserLoginOtpChannelTypes(userLogin);
+            UserLoginType loginType = OtpUtils.getRequiredLoginType(userLogin.getTypeKey());
+            Optional<List<OtpChannelType>> userOtpChannelTypes = OtpUtils.getSupportedOtpChannelTypes(loginType);
             if (!userOtpChannelTypes.isPresent()) {
                 continue;
             }
@@ -464,11 +429,17 @@ public class UserService {
     }
 
 
-    private Optional<UserDTO> changeUserAccountState(String userKey, boolean isActivated) {
+    /**
+     * Changes user account state. Method is private by design.
+     * @param userKey user key
+     * @param newState new state (true = active)
+     * @return Optional<UserDTO>
+     */
+    private Optional<UserDTO> changeUserAccountState(String userKey, boolean newState) {
         return userRepository
             .findOneByUserKey(userKey)
             .map(user -> {
-                user.setActivated(isActivated);
+                user.setActivated(newState);
                 return user;
             })
             .map(UserDTO::new);
@@ -525,6 +496,62 @@ public class UserService {
             throw new BusinessException("password.validation.failed",
                                         "password length is greater than the maximum");
         }
+    }
+
+    protected User mergeUserData(UserDTO srcDTO, User dstUser) {
+
+        //if isStrictUserManagement do not change role
+        if (Boolean.TRUE.equals(tenantPropertiesService.getApplicationProperties().isStrictUserManagement())) {
+            //use original user state
+            dstUser.setActivated(dstUser.isActivated());
+            //use original user role
+            dstUser.setRoleKey(dstUser.getRoleKey());
+        } else {
+
+            //role update case
+            if (!StringUtils.equals(dstUser.getRoleKey(), srcDTO.getRoleKey())) {
+                if (StringUtils.isEmpty(srcDTO.getRoleKey())) {
+                    log.warn("Role is empty and will not be allied to user");
+                } else {
+                    log.warn("Role [{}] will be allied to user.id={}. Evaluate strictUserManagement as option", srcDTO.getRoleKey(), dstUser.getId());
+                    dstUser.setRoleKey(srcDTO.getRoleKey());
+                }
+            }
+
+            if (dstUser.isActivated() != srcDTO.isActivated()) {
+                log.warn("State isActivated=[{}] will be allied to user.id={}. Evaluate strictUserManagement as option", srcDTO.isActivated(), dstUser.getId());
+                dstUser.setActivated(srcDTO.isActivated());
+            }
+
+        }
+
+        dstUser.setFirstName(srcDTO.getFirstName());
+        dstUser.setLastName(srcDTO.getLastName());
+        dstUser.setLangKey(srcDTO.getLangKey());
+        dstUser.setImageUrl(srcDTO.getImageUrl());
+        dstUser.setData(srcDTO.getData());
+        dstUser.setAccessTokenValiditySeconds(srcDTO.getAccessTokenValiditySeconds());
+        dstUser.setRefreshTokenValiditySeconds(srcDTO.getRefreshTokenValiditySeconds());
+        return  dstUser;
+    }
+
+    // dstUser need to have logout timeout data
+    protected User updateUserAutoLogoutSettings(UserDTO srcDTO, User dstUser) {
+        Integer srcAutoLogoutTimeoutSeconds = srcDTO.getAutoLogoutTimeoutSeconds();
+        if (srcAutoLogoutTimeoutSeconds != null) {
+            int accessTokenValiditySeconds = tokenConstraints.getAccessTokenValiditySeconds(dstUser.getAccessTokenValiditySeconds());
+            if (srcAutoLogoutTimeoutSeconds > accessTokenValiditySeconds) {
+                srcAutoLogoutTimeoutSeconds = accessTokenValiditySeconds;
+            }
+
+            if (srcAutoLogoutTimeoutSeconds <= 0) {
+                srcAutoLogoutTimeoutSeconds = null;
+            }
+        }
+
+        dstUser.setAutoLogoutEnabled(srcDTO.isAutoLogoutEnabled());
+        dstUser.setAutoLogoutTimeoutSeconds(srcAutoLogoutTimeoutSeconds);
+        return dstUser;
     }
 
 }

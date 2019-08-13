@@ -513,10 +513,10 @@ public class UserResourceIntTest {
         assertThat(testUser.getLangKey()).isEqualTo(UPDATED_LANGKEY);
         assertThat(testUser.isAutoLogoutEnabled()).isEqualTo(AUTO_LOGOUT_ENABLED);
         assertThat(testUser.getAutoLogoutTimeoutSeconds()).isEqualTo(AUTO_LOGOUT_TIME);
-        //ASSERT THAT STATE IS NOT CHANGED
-        assertThat(testUser.isActivated()).isEqualTo(updatedUser.isActivated());
-        //ASSERT THAT ROLE IS NOT CHANGED
-        assertThat(testUser.getRoleKey()).isEqualTo(ROLE_USER);
+        //ASSERT THAT STATE IS CHANGED
+        assertThat(testUser.isActivated()).isEqualTo(managedUserVM.isActivated());
+        //ASSERT THAT ROLE IS CHANGED
+        assertThat(testUser.getRoleKey()).isEqualTo(managedUserVM.getRoleKey());
     }
 
     @Test
