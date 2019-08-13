@@ -175,6 +175,7 @@ public class UserService {
      * @param userKey - user key
      * @return - user data
      */
+    @LogicExtensionPoint("BlockUserAccount")
     public Optional<UserDTO> blockUserAccount(String userKey) {
         if (xmAuthenticationContextHolder.getContext().getRequiredUserKey().equals(userKey)) {
             throw new BusinessException(ERROR_USER_BLOCK_HIMSELF, "Forbidden to block himself");
@@ -187,6 +188,7 @@ public class UserService {
      * @param userKey - user key
      * @return - user data
      */
+    @LogicExtensionPoint("ActivateUserAccount")
     public Optional<UserDTO> activateUserAccount(String userKey) {
         if (xmAuthenticationContextHolder.getContext().getRequiredUserKey().equals(userKey)) {
             throw new BusinessException(ERROR_USER_ACTIVATES_HIMSELF, "Forbidden to activate himself");
@@ -202,6 +204,7 @@ public class UserService {
      * @param updatedUser - new user settings
      * @return updated user
      */
+    @LogicExtensionPoint("ChangeUserRole")
     public Optional<UserDTO> changeUserRole(final UserDTO updatedUser) {
         Preconditions.checkArgument(StringUtils.isNotEmpty(updatedUser.getRoleKey()),"No roleKey provided");
         return userRepository.findById(updatedUser.getId())
