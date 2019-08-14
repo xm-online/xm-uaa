@@ -93,4 +93,8 @@ public class TenantPropertiesService implements RefreshableConfiguration {
         }
     }
 
+    public ApplicationProperties getApplicationProperties() {
+        return applicationProperties;
+    }
+
 }

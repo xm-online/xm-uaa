@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.base.Preconditions;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.domain.OtpChannelType;
@@ -19,6 +20,7 @@ import io.github.jhipster.web.util.ResponseUtil;
 import io.swagger.annotations.ApiParam;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
@@ -38,6 +40,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -135,11 +138,60 @@ public class UserResource {
     public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody UserDTO user) {
         assertNotSuperAdmin(user);
         Optional<UserDTO> updatedUser = userService.updateUser(user);
-        updatedUser.ifPresent(userDTO -> produceEvent(userDTO, Constants.UPDATE_PROFILE_EVENT_TYPE));
+        updatedUser.ifPresent(this::produceUpdateEvent);
         return ResponseUtil.wrapOrNotFound(updatedUser,
                                            HeaderUtil.createAlert("userManagement.updated", user.getUserKey()));
     }
 
+    /**
+     * PUT  /users/{userKey}/block : Blocks user account
+     *
+     * @param userKey the user to block
+     * @return the ResponseEntity with status 200 (OK) and with body the updated user
+     */
+    @PutMapping("/users/{userKey}/block")
+    @Timed
+    @PreAuthorize("hasPermission('USER.BLOCK')")
+    public ResponseEntity<UserDTO> blockUser(@NotEmpty @PathVariable String userKey) {
+        Optional<UserDTO> updatedUser = userService.blockUserAccount(userKey);
+        updatedUser.ifPresent(this::produceUpdateEvent);
+        return ResponseUtil.wrapOrNotFound(updatedUser,
+            HeaderUtil.createAlert("userManagement.blocked", userKey));
+    }
+
+    /**
+     * PUT  /users/{userKey}/unblock : Unblock user account
+     *
+     * @param userKey the user to unblock
+     * @return the ResponseEntity with status 200 (OK) and with body the updated user
+     */
+    @PutMapping("/users/{userKey}/activate")
+    @Timed
+    @PreAuthorize("hasPermission('USER.UNBLOCK')")
+    public ResponseEntity<UserDTO> unblockUser(@NotEmpty @PathVariable String userKey) {
+        Optional<UserDTO> updatedUser = userService.activateUserAccount(userKey);
+        updatedUser.ifPresent(this::produceUpdateEvent);
+        return ResponseUtil.wrapOrNotFound(updatedUser,
+            HeaderUtil.createAlert("userManagement.unblocked", userKey));
+    }
+
+    /**
+     * PUT  /users/role : change role key for user account
+     *
+     * @param user container with new role
+     * @return the ResponseEntity with status 200 (OK) and with body the updated user
+     */
+    @PutMapping("/users/role")
+    @Timed
+    @PreAuthorize("hasPermission({'id': #user.userKey, 'newUser': #user}, 'user', 'USER.CHANGE.ROLE')")
+    public ResponseEntity<UserDTO> changeRoleKey(@Valid @RequestBody UserDTO user) {
+        Preconditions.checkArgument(StringUtils.isNotEmpty(user.getRoleKey()));
+        assertNotSuperAdmin(user.getRoleKey());
+        Optional<UserDTO> updatedUser = userService.changeUserRole(user);
+        updatedUser.ifPresent(this::produceUpdateEvent);
+        return ResponseUtil.wrapOrNotFound(updatedUser,
+            HeaderUtil.createAlert("userManagement.role.changed", user.getUserKey()));
+    }
 
     /**
      * PUT /user/logins : Updates an existing User logins.
@@ -236,11 +288,6 @@ public class UserResource {
         return ResponseEntity.ok().headers(HeaderUtil.createAlert("userManagement.deleted", userKey)).build();
     }
 
-    private void produceEvent(UserDTO userDto, String eventType) {
-        String content = profileEventProducer.createEventJson(userDto, eventType);
-        profileEventProducer.send(content);
-    }
-
     /**
      * POST /users/:userKey/tfa_enable : enable TFA for User with "userKey".
      *
@@ -280,6 +327,15 @@ public class UserResource {
         }
 
         return ResponseEntity.ok().body(channelSpecs);
+    }
+
+    private void produceEvent(UserDTO userDto, String eventType) {
+        String content = profileEventProducer.createEventJson(userDto, eventType);
+        profileEventProducer.send(content);
+    }
+
+    private void produceUpdateEvent(UserDTO userDTO) {
+        produceEvent(userDTO, Constants.UPDATE_PROFILE_EVENT_TYPE);
     }
 
 }

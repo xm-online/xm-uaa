@@ -1,11 +1,11 @@
 package com.icthh.xm.uaa.service;
 
 import static com.icthh.xm.uaa.service.util.RandomUtil.generateActivationKey;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_DELETE_HIMSELF;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.*;
 import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
+import com.google.common.base.Preconditions;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
@@ -145,7 +145,7 @@ public class UserService {
 
 
     /**
-     * Update all information for a specific user, and return the modified user.
+     * Update all information EXCEPT and [ROLE, STATE].
      *
      * @param updatedUser user to update
      * @return updated user
@@ -153,40 +153,55 @@ public class UserService {
     @LogicExtensionPoint("UpdateUser")
     public Optional<UserDTO> updateUser(UserDTO updatedUser) {
         return userRepository.findById(updatedUser.getId())
-            .map(user -> {
-                user.setFirstName(updatedUser.getFirstName());
-                user.setLastName(updatedUser.getLastName());
-                user.setLangKey(updatedUser.getLangKey());
-                user.setImageUrl(updatedUser.getImageUrl());
-                user.setActivated(updatedUser.isActivated());
-                if (StringUtils.isNoneBlank(updatedUser.getRoleKey())) {
-                    user.setRoleKey(updatedUser.getRoleKey());
-                }
-                user.setData(updatedUser.getData());
-                user.setAccessTokenValiditySeconds(updatedUser.getAccessTokenValiditySeconds());
-                user.setRefreshTokenValiditySeconds(updatedUser.getRefreshTokenValiditySeconds());
-                return updateUserAutoLogoutSettings(updatedUser, user);
-            })
+            .map(user -> mergeUserData(updatedUser, user))
+            .map(user -> updateUserAutoLogoutSettings(updatedUser, user))
             .map(UserDTO::new);
     }
 
-    // dstUser need to have logout timeout data
-    User updateUserAutoLogoutSettings(UserDTO srcDTO, User dstUser) {
-        Integer srcAutoLogoutTimeoutSeconds = srcDTO.getAutoLogoutTimeoutSeconds();
-        if (srcAutoLogoutTimeoutSeconds != null) {
-            int accessTokenValiditySeconds = tokenConstraints.getAccessTokenValiditySeconds(dstUser.getAccessTokenValiditySeconds());
-            if (srcAutoLogoutTimeoutSeconds > accessTokenValiditySeconds) {
-                srcAutoLogoutTimeoutSeconds = accessTokenValiditySeconds;
-            }
-
-            if (srcAutoLogoutTimeoutSeconds <= 0) {
-                srcAutoLogoutTimeoutSeconds = null;
-            }
+    /**
+     * Blocks user account. Throws BusinessException.ERROR_USER_BLOCK_HIMSELF for self-block
+     * @param userKey - user key
+     * @return - user data
+     */
+    @LogicExtensionPoint("BlockUserAccount")
+    public Optional<UserDTO> blockUserAccount(String userKey) {
+        if (xmAuthenticationContextHolder.getContext().getRequiredUserKey().equals(userKey)) {
+            throw new BusinessException(ERROR_USER_BLOCK_HIMSELF, "Forbidden to block himself");
         }
+        return changeUserAccountState(userKey, Boolean.FALSE);
+    }
 
-        dstUser.setAutoLogoutEnabled(srcDTO.isAutoLogoutEnabled());
-        dstUser.setAutoLogoutTimeoutSeconds(srcAutoLogoutTimeoutSeconds);
-        return dstUser;
+    /**
+     * Activates user account. Throws BusinessException.ERROR_USER_BLOCK_HIMSELF for self-block
+     * @param userKey - user key
+     * @return - user data
+     */
+    @LogicExtensionPoint("ActivateUserAccount")
+    public Optional<UserDTO> activateUserAccount(String userKey) {
+        if (xmAuthenticationContextHolder.getContext().getRequiredUserKey().equals(userKey)) {
+            throw new BusinessException(ERROR_USER_ACTIVATES_HIMSELF, "Forbidden to activate himself");
+        }
+        return changeUserAccountState(userKey, Boolean.TRUE);
+    }
+
+    /**
+     * Changes role for current user account with some restrictions.
+     * 1. It is impossible to set EMPTY role
+     * 2. It is impossible to change role for X to SUPER_ADMIN
+     * 3. It is impossible to change role for SUPER_ADMIN to X
+     * @param updatedUser - new user settings
+     * @return updated user
+     */
+    @LogicExtensionPoint("ChangeUserRole")
+    public Optional<UserDTO> changeUserRole(final UserDTO updatedUser) {
+        Preconditions.checkArgument(StringUtils.isNotEmpty(updatedUser.getRoleKey()), "No roleKey provided");
+        return userRepository.findById(updatedUser.getId())
+            .map(user -> {
+                assertNotSuperAdmin(user.getRoleKey());
+                user.setRoleKey(updatedUser.getRoleKey());
+                return user;
+            })
+            .map(UserDTO::new);
     }
 
     /**
@@ -383,11 +398,6 @@ public class UserService {
         userRepository.save(user);
     }
 
-    private static Optional<List<OtpChannelType>> getUserLoginOtpChannelTypes(UserLogin userLogin) {
-        UserLoginType loginType = OtpUtils.getRequiredLoginType(userLogin.getTypeKey());
-        return OtpUtils.getSupportedOtpChannelTypes(loginType);
-    }
-
     public Map<OtpChannelType, List<TfaOtpChannelSpec>> getTfaAvailableOtpChannelSpecs(String userKey) {
         User user = userRepository.findOneWithLoginsByUserKey(userKey).orElseThrow(
             () -> new EntityNotFoundException("User not found")
@@ -398,7 +408,8 @@ public class UserService {
         Map<OtpChannelType, List<TfaOtpChannelSpec>> result = new HashMap<>();
         for (UserLogin userLogin : user.getLogins()) {
             // is channel type supported by current login type
-            Optional<List<OtpChannelType>> userOtpChannelTypes = getUserLoginOtpChannelTypes(userLogin);
+            UserLoginType loginType = OtpUtils.getRequiredLoginType(userLogin.getTypeKey());
+            Optional<List<OtpChannelType>> userOtpChannelTypes = OtpUtils.getSupportedOtpChannelTypes(loginType);
             if (!userOtpChannelTypes.isPresent()) {
                 continue;
             }
@@ -415,6 +426,23 @@ public class UserService {
 
 
         return result;
+    }
+
+
+    /**
+     * Changes user account state. Method is private by design.
+     * @param userKey user key
+     * @param newState new state (true = active)
+     * @return Optional<UserDTO>
+     */
+    private Optional<UserDTO> changeUserAccountState(String userKey, boolean newState) {
+        return userRepository
+            .findOneByUserKey(userKey)
+            .map(user -> {
+                user.setActivated(newState);
+                return user;
+            })
+            .map(UserDTO::new);
     }
 
     public List<User> findAll(Specification<User> specification) {
@@ -468,6 +496,62 @@ public class UserService {
             throw new BusinessException("password.validation.failed",
                                         "password length is greater than the maximum");
         }
+    }
+
+    protected User mergeUserData(UserDTO srcDTO, User dstUser) {
+
+        //if isStrictUserManagement do not change role
+        if (tenantPropertiesService.getTenantProps().isStrictUserManagement()) {
+            //use original user state
+            dstUser.setActivated(dstUser.isActivated());
+            //use original user role
+            dstUser.setRoleKey(dstUser.getRoleKey());
+        } else {
+
+            //role update case
+            if (!StringUtils.equals(dstUser.getRoleKey(), srcDTO.getRoleKey())) {
+                if (StringUtils.isEmpty(srcDTO.getRoleKey())) {
+                    log.warn("Role is empty and will not be allied to user");
+                } else {
+                    log.warn("Role [{}] will be allied to user.id={}. Evaluate strictUserManagement as option", srcDTO.getRoleKey(), dstUser.getId());
+                    dstUser.setRoleKey(srcDTO.getRoleKey());
+                }
+            }
+
+            if (dstUser.isActivated() != srcDTO.isActivated()) {
+                log.warn("State isActivated=[{}] will be allied to user.id={}. Evaluate strictUserManagement as option", srcDTO.isActivated(), dstUser.getId());
+                dstUser.setActivated(srcDTO.isActivated());
+            }
+
+        }
+
+        dstUser.setFirstName(srcDTO.getFirstName());
+        dstUser.setLastName(srcDTO.getLastName());
+        dstUser.setLangKey(srcDTO.getLangKey());
+        dstUser.setImageUrl(srcDTO.getImageUrl());
+        dstUser.setData(srcDTO.getData());
+        dstUser.setAccessTokenValiditySeconds(srcDTO.getAccessTokenValiditySeconds());
+        dstUser.setRefreshTokenValiditySeconds(srcDTO.getRefreshTokenValiditySeconds());
+        return  dstUser;
+    }
+
+    // dstUser need to have logout timeout data
+    protected User updateUserAutoLogoutSettings(UserDTO srcDTO, User dstUser) {
+        Integer srcAutoLogoutTimeoutSeconds = srcDTO.getAutoLogoutTimeoutSeconds();
+        if (srcAutoLogoutTimeoutSeconds != null) {
+            int accessTokenValiditySeconds = tokenConstraints.getAccessTokenValiditySeconds(dstUser.getAccessTokenValiditySeconds());
+            if (srcAutoLogoutTimeoutSeconds > accessTokenValiditySeconds) {
+                srcAutoLogoutTimeoutSeconds = accessTokenValiditySeconds;
+            }
+
+            if (srcAutoLogoutTimeoutSeconds <= 0) {
+                srcAutoLogoutTimeoutSeconds = null;
+            }
+        }
+
+        dstUser.setAutoLogoutEnabled(srcDTO.isAutoLogoutEnabled());
+        dstUser.setAutoLogoutTimeoutSeconds(srcAutoLogoutTimeoutSeconds);
+        return dstUser;
     }
 
 }

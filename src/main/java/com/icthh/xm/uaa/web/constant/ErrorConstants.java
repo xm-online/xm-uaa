@@ -17,6 +17,8 @@ public class ErrorConstants {
     public static final String ERROR_FORBIDDEN_ROLE = "error.role.forbidden";
 
     public static final String ERROR_USER_DELETE_HIMSELF = "error.user.delete.himself";
+    public static final String ERROR_USER_BLOCK_HIMSELF = "error.user.block.himself";
+    public static final String ERROR_USER_ACTIVATES_HIMSELF = "error.user.activate.himself";
 
     public static final String ERROR_SUPER_ADMIN_FORBIDDEN_OPERATION = "error.super-admin.forbidden-operation";
 }
