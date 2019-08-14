@@ -2,7 +2,6 @@ package com.icthh.xm.uaa.service;
 
 import com.icthh.xm.commons.security.XmAuthenticationContext;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
-import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
@@ -194,7 +193,7 @@ public class UserServiceUnitTest {
 
         given(userRepository.findById(ID)).willReturn(Optional.of(oldUser));
         given(tokenConstraintsService.getAccessTokenValiditySeconds(oldUser.getAccessTokenValiditySeconds())).willReturn(10);
-        given(tenantPropertiesService.getApplicationProperties()).willReturn(new ApplicationProperties());
+        given(tenantPropertiesService.getTenantProps()).willReturn(new TenantProperties());
 
         UserDTO result = service.updateUser(newUser).get();
         assertThat(result).isNotNull();
@@ -238,9 +237,9 @@ public class UserServiceUnitTest {
 
         given(userRepository.findById(ID)).willReturn(Optional.of(oldUser));
         given(tokenConstraintsService.getAccessTokenValiditySeconds(oldUser.getAccessTokenValiditySeconds())).willReturn(10);
-        ApplicationProperties ap = new ApplicationProperties();
-        ap.setStrictUserManagement(true);
-        given(tenantPropertiesService.getApplicationProperties()).willReturn(ap);
+        TenantProperties tp = new TenantProperties();
+        tp.setStrictUserManagement(true);
+        given(tenantPropertiesService.getTenantProps()).willReturn(tp);
 
         UserDTO result = service.updateUser(newUser).get();
         assertThat(result).isNotNull();

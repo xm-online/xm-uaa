@@ -194,7 +194,7 @@ public class UserService {
      */
     @LogicExtensionPoint("ChangeUserRole")
     public Optional<UserDTO> changeUserRole(final UserDTO updatedUser) {
-        Preconditions.checkArgument(StringUtils.isNotEmpty(updatedUser.getRoleKey()),"No roleKey provided");
+        Preconditions.checkArgument(StringUtils.isNotEmpty(updatedUser.getRoleKey()), "No roleKey provided");
         return userRepository.findById(updatedUser.getId())
             .map(user -> {
                 assertNotSuperAdmin(user.getRoleKey());
@@ -501,7 +501,7 @@ public class UserService {
     protected User mergeUserData(UserDTO srcDTO, User dstUser) {
 
         //if isStrictUserManagement do not change role
-        if (Boolean.TRUE.equals(tenantPropertiesService.getApplicationProperties().isStrictUserManagement())) {
+        if (tenantPropertiesService.getTenantProps().isStrictUserManagement()) {
             //use original user state
             dstUser.setActivated(dstUser.isActivated());
             //use original user role

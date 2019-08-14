@@ -30,6 +30,14 @@ import static java.util.Optional.ofNullable;
 @ToString
 public class TenantProperties {
 
+    /**
+     * This flag disables RoleUpdate and StateUpdate by UserUpdateAction.
+     * If strictUserManagement no changes to Role or State will be applied
+     * If !strictUserManagement log.warn will be written but changes will be applied
+     */
+    @JsonProperty("strictUserManagement")
+    private boolean strictUserManagement;
+
     @JsonProperty("security")
     private Security security;
 

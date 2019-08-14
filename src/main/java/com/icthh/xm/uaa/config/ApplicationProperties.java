@@ -45,13 +45,6 @@ public class ApplicationProperties {
     private String keystoreFile;
     private String keystorePassword;
 
-    /**
-     * This flag disables RoleUpdate and StateUpdate by UserUpdateAction.
-     * If strictUserManagement no changes to Role or State will be applied
-     * If !strictUserManagement log.warn will be written but changes will be applied
-     */
-    private boolean strictUserManagement;
-
     @Getter
     @Setter
     private static class Retry {
