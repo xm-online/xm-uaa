@@ -5,10 +5,10 @@ import static com.icthh.xm.uaa.social.SocialLoginAnswer.AnswerType.REGISTERED;
 import static com.icthh.xm.uaa.social.SocialLoginAnswer.AnswerType.SING_IN;
 import static com.icthh.xm.uaa.utils.DeepReflectionEquals.deepRefEq;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonList;
 import static java.util.Optional.empty;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.refEq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -76,8 +76,8 @@ import org.springframework.web.client.support.RestGatewaySupport;
 public class SocialServiceIntTest {
 
     private static final String MOCK_ACCESS_TOKEN = "MOCK_ACCESS_TOKEN";
-    public static final String PROVIDER_ID = "P_ID";
-    public static final String PROVIDER_USER_ID = "123";
+    private static final String PROVIDER_ID = "P_ID";
+    private static final String PROVIDER_USER_ID = "123";
 
     private SocialService socialService;
 
@@ -107,12 +107,10 @@ public class SocialServiceIntTest {
     private TenantContextHolder tenantContextHolder;
 
     private MockRestServiceServer oAuth2TemplateMockServer;
-    List<Consumer<?>> oAuth2RestMoks = new ArrayList<>();
+    private List<Consumer<?>> oAuth2RestMoks = new ArrayList<>();
 
     private MockRestServiceServer apiMockSserver;
-    List<Consumer<?>> apiRestMoks = new ArrayList<>();
-
-    private static final String ROLE_USER = "ROLE_USER";
+    private List<Consumer<?>> apiRestMoks = new ArrayList<>();
 
     @Before
     public void setup() {
@@ -231,11 +229,11 @@ public class SocialServiceIntTest {
                                 List<Map<String, Object>> logins) throws java.io.IOException {
         Map<String, Object> jwt = new HashMap<>();
         jwt.put("user_name", userName);
-        jwt.put("scope", asList("openid"));
+        jwt.put("scope", singletonList("openid"));
         jwt.put("role_key", "ROLE_USER");
         jwt.put("user_key", "USER_KEY");
         jwt.put("logins", logins);
-        jwt.put("authorities", asList("ROLE_USER"));
+        jwt.put("authorities", singletonList("ROLE_USER"));
         jwt.put("tenant", "TEST_T");
         jwt.put("client_id", "webapp");
 
@@ -315,7 +313,7 @@ public class SocialServiceIntTest {
         number.setTypeKey(UserLoginType.MSISDN.getValue());
         number.setUser(user);
         number.setLogin("380930912700");
-        user.setLogins(asList(number));
+        user.setLogins(singletonList(number));
 
         when(userRepository.findOneByUserKey("USER_KEY")).thenReturn(Optional.of(user));
         when(userLoginRepository.findOneByLoginIgnoreCase("380930912700")).thenReturn(empty());
@@ -332,16 +330,17 @@ public class SocialServiceIntTest {
         verify(userRepository).save(deepRefEq(user, "userKey", "tfaOtpSecret", "createdDate", "lastModifiedDate"));
         verify(socialRepository).save(refEq(userConnection, "activationCode"));
         Assert.assertEquals(socialLoginAnswer.getAnswerType(), REGISTERED);
-        assertJwtToken(socialLoginAnswer, "380930912700", asList(login("LOGIN.MSISDN", "380930912700")));
+        assertJwtToken(socialLoginAnswer, "380930912700", singletonList(login("LOGIN.MSISDN", "380930912700")));
     }
 
     private void mockRequestToken() {
-        oAuth2RestMoks.add(r -> {
-            oAuth2TemplateMockServer.expect(once(), requestTo("http://ATU"))
-                                    .andExpect(method(HttpMethod.POST))
-                                    .andExpect(content().string("client_id=CI&client_secret=CS&code=activationCode&redirect_uri=http%3A%2F%2Fdomainname%3A0987%2Fuaa%2Fsocial%2Fsignin%2FP_ID&grant_type=authorization_code"))
-                                    .andRespond(withSuccess("{\"access_token\": \"" + MOCK_ACCESS_TOKEN + "\"}", MediaType.APPLICATION_JSON));
-        });
+        oAuth2RestMoks.add(r -> oAuth2TemplateMockServer
+            .expect(once(), requestTo("http://ATU"))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(content().string(
+                "client_id=CI&client_secret=CS&code=activationCode&redirect_uri=http%3A%2F%2Fdomainname%3A0987%2Fuaa"
+                + "%2Fsocial%2Fsignin%2FP_ID&grant_type=authorization_code"))
+            .andRespond(withSuccess("{\"access_token\": \"" + MOCK_ACCESS_TOKEN + "\"}", MediaType.APPLICATION_JSON)));
     }
 
     private User createMockUser() {
@@ -417,7 +416,7 @@ public class SocialServiceIntTest {
         TenantProperties tenantProperties = new TenantProperties();
         when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProperties);
         Social social = new Social();
-        tenantProperties.setSocial(asList(social));
+        tenantProperties.setSocial(singletonList(social));
         social.setAccessTokenUrl("http://ATU");
         social.setAuthorizeUrl("http://AU");
         social.setClientId("CI");
@@ -437,25 +436,6 @@ public class SocialServiceIntTest {
         TenantProperties.Security security = new TenantProperties.Security();
         security.setDefaultUserRole("ROLE_USER");
         tenantProperties.setSecurity(security);
-    }
-
-    private User createExistingUser(String email,
-                                    String firstName,
-                                    String lastName,
-                                    String imageUrl) {
-        User user = new User();
-        user.setUserKey("test");
-        user.setRoleKey(ROLE_USER);
-        user.setPassword("password");
-        user.setFirstName(firstName);
-        user.setLastName(lastName);
-        user.setImageUrl(imageUrl);
-        UserLogin userLogin = new UserLogin();
-        userLogin.setLogin(email);
-        userLogin.setUser(user);
-        userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
-        user.getLogins().add(userLogin);
-        return user;
     }
 }
 
