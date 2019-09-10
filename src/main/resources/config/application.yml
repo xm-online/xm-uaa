@@ -90,8 +90,13 @@ spring:
         producer:
             key-serializer: org.apache.kafka.common.serialization.StringSerializer
             value-serializer: org.apache.kafka.common.serialization.StringSerializer
+            properties:
+                max.block.ms: 10000
     liquibase:
         default-schema: XM
+        change-log: classpath:config/liquibase/master.xml
+        parameters:
+            tenant.defaultLang: en
 security:
     basic:
         enabled: false

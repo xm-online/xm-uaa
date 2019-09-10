@@ -64,7 +64,18 @@ spring:
     thymeleaf:
         mode: HTML
 
-
+    kafka:
+        consumer:
+            group-id: uaa
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        listener:
+            concurrency: 16
+        producer:
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.apache.kafka.common.serialization.StringSerializer
+            properties:
+                max.block.ms: 10000
 server:
     port: 10344
     address: localhost
