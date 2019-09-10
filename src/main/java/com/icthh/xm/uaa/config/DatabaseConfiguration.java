@@ -8,7 +8,7 @@ import com.icthh.xm.commons.config.client.repository.TenantListRepository;
 import com.icthh.xm.commons.migration.db.XmMultiTenantSpringLiquibase;
 import com.icthh.xm.commons.migration.db.XmSpringLiquibase;
 
-import com.icthh.xm.uaa.util.DatabaseUtil;
+import com.icthh.xm.commons.migration.db.util.DatabaseUtil;
 import io.github.jhipster.config.JHipsterConstants;
 
 import java.sql.SQLException;
@@ -91,45 +91,47 @@ public class DatabaseConfiguration {
         liquibase.setContexts(liquibaseProperties.getContexts());
         liquibase.setDefaultSchema(liquibaseProperties.getDefaultSchema());
         liquibase.setDropFirst(liquibaseProperties.isDropFirst());
+        liquibase.setChangeLogParameters(liquibaseProperties.getParameters());
         if (env.acceptsProfiles(JHipsterConstants.SPRING_PROFILE_NO_LIQUIBASE)) {
             liquibase.setShouldRun(false);
         } else {
             liquibase.setShouldRun(liquibaseProperties.isEnabled());
-            log.debug("Configuring Liquibase");
+            log.info("Configuring Liquibase");
         }
-        liquibase.setChangeLogParameters(DatabaseUtil.defaultParams(liquibaseProperties.getDefaultSchema()));
         return liquibase;
     }
 
     @Bean
     @DependsOn("liquibase")
-    public MultiTenantSpringLiquibase multiTenantLiquibase(
-        DataSource dataSource,
-        LiquibaseProperties liquibaseProperties) {
+    public MultiTenantSpringLiquibase multiTenantLiquibase(DataSource dataSource,
+                                                           LiquibaseProperties liquibaseProperties) {
+        List<String> schemas = getSchemas();
         MultiTenantSpringLiquibase liquibase = new XmMultiTenantSpringLiquibase();
         liquibase.setDataSource(dataSource);
         liquibase.setChangeLog(CHANGE_LOG_PATH);
         liquibase.setContexts(liquibaseProperties.getContexts());
         liquibase.setDefaultSchema(liquibaseProperties.getDefaultSchema());
         liquibase.setDropFirst(liquibaseProperties.isDropFirst());
-        liquibase.setSchemas(getSchemas());
+        liquibase.setSchemas(schemas);
+        liquibase.setParameters(liquibaseProperties.getParameters());
         if (env.acceptsProfiles(JHipsterConstants.SPRING_PROFILE_NO_LIQUIBASE)) {
             liquibase.setShouldRun(false);
         } else {
             liquibase.setShouldRun(liquibaseProperties.isEnabled());
-            log.debug("Configuring Liquibase");
+            log.info("Configuring multi-tenant Liquibase for [{}] schemas", schemas.size());
         }
-        liquibase.setParameters(DatabaseUtil.defaultParams(liquibaseProperties.getDefaultSchema()));
         return liquibase;
     }
 
     private void createSchemas(DataSource dataSource) {
         if (jpaProperties.getProperties().containsKey(DB_SCHEMA_CREATETION_ENABLED)
-            && !Boolean.valueOf(jpaProperties.getProperties().get(DB_SCHEMA_CREATETION_ENABLED))) {
+            && !Boolean.parseBoolean(jpaProperties.getProperties().get(DB_SCHEMA_CREATETION_ENABLED))) {
             log.info("Schema creation for {} jpa provider is disabled", jpaProperties.getDatabase());
             return;
         }
-        for (String schema : getSchemas()) {
+        List<String> schemas = getSchemas();
+        log.info("Create [{}] schemas for all tenants before liquibase migration", schemas.size());
+        for (String schema : schemas) {
             try {
                 DatabaseUtil.createSchema(dataSource, schema);
             } catch (Exception e) {
@@ -160,17 +162,15 @@ public class DatabaseConfiguration {
     }
 
     @Bean
-    public LocalContainerEntityManagerFactoryBean entityManagerFactory(
-        DataSource dataSource,
-        MultiTenantConnectionProvider multiTenantConnectionProviderImpl,
-        CurrentTenantIdentifierResolver currentTenantIdentifierResolverImpl) {
-        Map<String, Object> properties = new HashMap<>();
-        properties.putAll(jpaProperties.getHibernateProperties(new HibernateSettings()));
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource,
+                                                                       MultiTenantConnectionProvider multiTenantConnectionProviderImpl,
+                                                                       CurrentTenantIdentifierResolver currentTenantIdentifierResolverImpl) {
+        Map<String, Object> properties = new HashMap<>(jpaProperties.getHibernateProperties(new HibernateSettings()));
         properties.put(org.hibernate.cfg.Environment.MULTI_TENANT, MultiTenancyStrategy.SCHEMA);
-        properties
-            .put(org.hibernate.cfg.Environment.MULTI_TENANT_CONNECTION_PROVIDER, multiTenantConnectionProviderImpl);
-        properties
-            .put(org.hibernate.cfg.Environment.MULTI_TENANT_IDENTIFIER_RESOLVER, currentTenantIdentifierResolverImpl);
+        properties.put(org.hibernate.cfg.Environment.MULTI_TENANT_CONNECTION_PROVIDER,
+                       multiTenantConnectionProviderImpl);
+        properties.put(org.hibernate.cfg.Environment.MULTI_TENANT_IDENTIFIER_RESOLVER,
+                       currentTenantIdentifierResolverImpl);
 
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource);
