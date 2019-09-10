@@ -54,6 +54,9 @@ spring:
             hibernate.jdbc.time_zone: UTC
     liquibase:
         contexts: test
+        change-log: classpath:config/liquibase/master.xml
+        parameters:
+            tenant.defaultLang: en
     mail:
         host: localhost
     messages:
