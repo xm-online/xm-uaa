@@ -86,10 +86,10 @@ public class TenantManagerConfiguration {
             .configuration(of().path(permissionProperties.getPermissionsSpecPath())
                                .content(getEmptyYml())
                                .build())
-            .configuration(of().path(toFullPath(applicationProperties.getTenantPropertiesName()))
+            .configuration(of().path(applicationProperties.getTenantPropertiesPathPattern())
                                .content(readResource(DEFAULT_CONFIG_PATH))
                                .build())
-            .configuration(of().path(toFullPath(applicationProperties.getTenantLoginPropertiesName()))
+            .configuration(of().path(applicationProperties.getTenantLoginPropertiesPathPattern())
                                .content(readResource(DEFAULT_LOGINS_CONFIG_PATH))
                                .build())
             .configurations(emailConfigs)
@@ -97,6 +97,10 @@ public class TenantManagerConfiguration {
 
         log.info("Configured tenant config provisioner: {}", provisioner);
         return provisioner;
+    }
+
+    String getApplicationName() {
+        return applicationName;
     }
 
     private Predicate<Resource> pathIsExpected() {
@@ -139,7 +143,7 @@ public class TenantManagerConfiguration {
     }
 
     private String toFullPath(String path) {
-        return prependTenantPath(Paths.get(applicationName, path).toString());
+        return prependTenantPath(Paths.get(getApplicationName(), path).toString());
     }
 
 }
