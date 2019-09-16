@@ -3,7 +3,9 @@ package com.icthh.xm.uaa.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
+import com.icthh.xm.commons.config.domain.Configuration;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.permission.config.PermissionProperties;
 import com.icthh.xm.commons.permission.constants.RoleConstant;
@@ -75,6 +77,7 @@ public class TenantRoleService {
     private final TenantContextHolder tenantContextHolder;
     private final XmAuthenticationContextHolder xmAuthenticationContextHolder;
     private final EnvironmentService environmentService;
+    private final CommonConfigRepository commonConfigRepository;
 
     /**
      * Get roles properties.
@@ -95,7 +98,7 @@ public class TenantRoleService {
     }
 
     private Map<String, Set<Privilege>> getPrivileges() {
-        String privilegesFile = getConfigContent(permissionProperties.getPrivilegesSpecPath()).orElse("");
+        String privilegesFile = getCommonConfigContent(permissionProperties.getPrivilegesSpecPath()).orElse("");
         return StringUtils.isBlank(privilegesFile) ? new TreeMap<>() : PrivilegeMapper
                         .ymlToPrivileges(privilegesFile);
     }
@@ -183,11 +186,11 @@ public class TenantRoleService {
 
         Map<String, Permission> permissions = PermissionMapper.ymlToPermissions(permissionsFile);
 
-        return permissions.entrySet().stream()
-            .map(Map.Entry::getValue)
-            .filter(perm -> roleKey.equals(perm.getRoleKey()))
-            .map(PermissionDTO::new)
-            .collect(Collectors.toList());
+        return permissions.values()
+                          .stream()
+                          .filter(perm -> roleKey.equals(perm.getRoleKey()))
+                          .map(PermissionDTO::new)
+                          .collect(Collectors.toList());
     }
 
     /**
@@ -360,7 +363,7 @@ public class TenantRoleService {
         roleMatrix.getPermissions().stream()
             .filter(it -> customPrivilegeKeys.contains(it.getPrivilegeKey())).forEach(it -> {
             if (it.getPermissionType() == SYSTEM) {
-                log.error("Custom privilege {} try to override system privilege, and ignored");
+                log.error("Custom privilege {} try to override system privilege, and ignored", it.getPrivilegeKey());
             } else {
                 it.setPermissionType(TENANT);
             }
@@ -489,5 +492,12 @@ public class TenantRoleService {
         }
 
         return Optional.ofNullable(config);
+    }
+
+    private Optional<String> getCommonConfigContent(String configPath) {
+        return commonConfigRepository.getConfig(null, Collections.singletonList(configPath))
+                                     .values().stream()
+                                     .map(Configuration::getContent)
+                                     .findFirst();
     }
 }

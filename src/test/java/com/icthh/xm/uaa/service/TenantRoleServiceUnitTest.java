@@ -1,6 +1,21 @@
 package com.icthh.xm.uaa.service;
 
+import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
+import static java.util.Collections.singletonList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
+import com.icthh.xm.commons.config.domain.Configuration;
 import com.icthh.xm.commons.permission.config.PermissionProperties;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContext;
@@ -21,19 +36,10 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  *
@@ -48,6 +54,9 @@ public class TenantRoleServiceUnitTest {
 
     @Mock
     TenantConfigRepository tenantConfigRepository;
+
+    @Mock
+    CommonConfigRepository commonConfigRepository;
 
     @Mock
     PermissionProperties permissionProperties;
@@ -148,7 +157,7 @@ public class TenantRoleServiceUnitTest {
     @Test
     public void testGetRole() {
 
-        String privilegesPath = "/api/config/tenants/privileges.yml";
+        String privilegesPath = "/config/tenants/privileges.yml";
         String rolesPath = "/api/config/tenants/{tenantName}/roles.yml";
         String permissionsPath = "/api/config/tenants/{tenantName}/permissions.yml";
 
@@ -157,35 +166,36 @@ public class TenantRoleServiceUnitTest {
         // no configs
         when(tenantConfigRepository.getConfigFullPath(TENANT, rolesPath)).thenReturn("");
         when(tenantConfigRepository.getConfigFullPath(TENANT, permissionsPath)).thenReturn("");
-        when(tenantConfigRepository.getConfigFullPath(TENANT, privilegesPath)).thenReturn("");
+        when(commonConfigRepository.getConfig(isNull(), eq(singletonList(privilegesPath))))
+            .thenReturn(getSingleConfigMap(privilegesPath));
         assertFalse(tenantRoleService.getRole(roleKey).isPresent());
 
         // privileges.yml exists
         when(tenantConfigRepository.getConfigFullPath(TENANT, rolesPath)).thenReturn("");
         when(tenantConfigRepository.getConfigFullPath(TENANT, permissionsPath)).thenReturn("");
-        when(tenantConfigRepository.getConfigFullPath(TENANT, privilegesPath))
-            .thenReturn(readConfigFile("/config/tenants/privileges.yml"));
+        when(commonConfigRepository.getConfig(isNull(), eq(singletonList(privilegesPath))))
+            .thenReturn(getSingleConfigMap(privilegesPath, readConfigFile("/config/tenants/privileges.yml")));
         assertFalse(tenantRoleService.getRole(roleKey).isPresent());
 
         // roles.yml and privileges.yml exist
         when(tenantConfigRepository.getConfigFullPath(TENANT, rolesPath))
             .thenReturn(readConfigFile("/config/tenants/XM/roles.yml"));
         when(tenantConfigRepository.getConfigFullPath(TENANT, permissionsPath)).thenReturn("");
-        when(tenantConfigRepository.getConfigFullPath(TENANT, privilegesPath))
-            .thenReturn(readConfigFile("/config/tenants/privileges.yml"));
+        when(commonConfigRepository.getConfig(isNull(), eq(singletonList(privilegesPath))))
+            .thenReturn(getSingleConfigMap(privilegesPath, readConfigFile("/config/tenants/privileges.yml")));
         Optional<RoleDTO> role = tenantRoleService.getRole(roleKey);
         log.info("ROLE DTO = {}", role);
         assertTrue(role.isPresent());
         assertEquals("ROLE_ADMIN", role.get().getRoleKey());
         assertTrue(role.get().getPermissions().stream().noneMatch(PermissionDTO::isEnabled));
 
-        // roles, provileges and permittions exists
+        // roles, privileges and permissions exists
         when(tenantConfigRepository.getConfigFullPath(TENANT, rolesPath))
             .thenReturn(readConfigFile("/config/tenants/XM/roles.yml"));
         when(tenantConfigRepository.getConfigFullPath(TENANT, permissionsPath))
             .thenReturn(readConfigFile("/config/tenants/XM/permissions.yml"));
-        when(tenantConfigRepository.getConfigFullPath(TENANT, privilegesPath))
-            .thenReturn(readConfigFile("/config/tenants/privileges.yml"));
+        when(commonConfigRepository.getConfig(isNull(), eq(singletonList(privilegesPath))))
+            .thenReturn(getSingleConfigMap(privilegesPath, readConfigFile("/config/tenants/privileges.yml")));
         role = tenantRoleService.getRole(roleKey);
         log.info("ROLE DTO = {}", role);
         assertTrue(role.isPresent());
@@ -195,6 +205,18 @@ public class TenantRoleServiceUnitTest {
         assertTrue(role.get().getPermissions().stream().noneMatch(p -> p.getPrivilegeKey().equals("MISSING.PRIVILEGE")
                                                                       && !p.isEnabled()));
 
+    }
+
+    private Map<String, Configuration> getSingleConfigMap(final String path) {
+        return getSingleConfigMap(path, "");
+    }
+    private Map<String, Configuration> getSingleConfigMap(String path, String content) {
+        Map<String, Configuration> privilegesMap = new HashMap<>();
+        privilegesMap.put(path, Configuration.of()
+                                                       .path(path)
+                                                       .content(content)
+                                                       .build());
+        return privilegesMap;
     }
 
     private String readConfigFile(String path) {
