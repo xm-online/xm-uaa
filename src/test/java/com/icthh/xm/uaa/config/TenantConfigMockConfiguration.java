@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.config;
 
+import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
 import com.icthh.xm.commons.config.client.repository.TenantListRepository;
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
@@ -35,12 +36,16 @@ public class TenantConfigMockConfiguration {
 
     @Bean
     public TenantConfigRepository tenantConfigRepository() {
-        TenantConfigRepository tenantConfigRepository = mock(TenantConfigRepository.class);
-        return  tenantConfigRepository;
+        return mock(TenantConfigRepository.class);
     }
 
     @Bean
     public TenantConfigService tenantConfigService() {
         return mock(TenantConfigService.class);
+    }
+
+    @Bean
+    public CommonConfigRepository commonConfigRepository(){
+        return mock(CommonConfigRepository.class);
     }
 }
