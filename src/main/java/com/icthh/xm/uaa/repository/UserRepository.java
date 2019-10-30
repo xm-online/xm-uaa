@@ -23,6 +23,8 @@ public interface UserRepository extends JpaRepository<User, Long>, ResourceRepos
 
     Optional<User> findOneByResetKey(String resetKey);
 
+    Optional<User> findOneByAcceptTocOneTimeToken(String acceptTocOneTimeToken);
+
     @EntityGraph(attributePaths = "logins")
     Optional<User> findOneWithLoginsByUserKey(String userKey);
 
