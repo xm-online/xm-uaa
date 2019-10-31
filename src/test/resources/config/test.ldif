@@ -28,7 +28,6 @@ objectClass: groupOfNames
 objectClass: top
 cn: role-admin
 member: uid=test-two-roles,ou=Users,dc=xm,dc=com
-member: uid=test-admin,ou=Users,dc=xm,dc=com
 
 dn: cn=role-unknown,ou=group1,ou=Groups,dc=xm,dc=com
 objectClass: groupOfNames
