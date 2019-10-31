@@ -92,6 +92,19 @@ sn: User
 uid: test-user
 userPassword: test
 
+dn: uid=test-admin,ou=Users,dc=xm,dc=com
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+objectClass: inetLocalMailRecipient
+cn: role-admin
+displayName: Test User
+givenName: Test
+shadowExpire: -1
+sn: User
+uid: test-admin
+userPassword: test
+
 dn: uid=system,ou=Users,dc=xm,dc=com
 objectClass: inetOrgPerson
 objectClass: posixAccount

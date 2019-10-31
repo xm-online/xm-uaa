@@ -75,6 +75,7 @@ public class UaaAuthenticationProviderIntTest {
     private static final String DEFAULT_ROLE_KEY = "ROLE-DEFAULT-USER";
     private static final String DEFAULT_USER_ROLE_KEY = "ROLE-USER";
     private static final String DEFAULT_ADMIN_ROLE_KEY = "SUPER-ADMIN";
+    public static final String TEST_ADMIN = "test-admin";
 
     private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
@@ -243,6 +244,14 @@ public class UaaAuthenticationProviderIntTest {
         tenantProperties.setPublicSettings(new PublicSettings());
         tenantProperties.getPublicSettings().setTermsOfConditionsEnabled(true);
         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_LOGIN, TEST_PASSWORD);
+        uaaAuthenticationProvider.authenticate(token);
+    }
+
+    @Test
+    public void checkTermsOfConditionsNotRequiredForSuperAdmin() {
+        tenantProperties.setPublicSettings(new PublicSettings());
+        tenantProperties.getPublicSettings().setTermsOfConditionsEnabled(true);
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_ADMIN, TEST_PASSWORD);
         uaaAuthenticationProvider.authenticate(token);
     }
 

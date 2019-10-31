@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.security;
 
+import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
 import static com.icthh.xm.uaa.config.Constants.AUTH_USERNAME_DOMAIN_SEPARATOR;
 import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.DAYS;
@@ -96,7 +97,7 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
 
     @LogicExtensionPoint(value = "IsTermsOfConditionsAccepted")
     public boolean isTermsOfConditionsAccepted(User user) {
-        return user.getAcceptTocTime() != null;
+        return user.getAcceptTocTime() != null && !SUPER_ADMIN.equals(user.getRoleKey());
     }
 
     private void checkPasswordExpiration(Authentication authentication) {
