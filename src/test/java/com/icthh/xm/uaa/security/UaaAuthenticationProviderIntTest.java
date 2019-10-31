@@ -67,6 +67,8 @@ public class UaaAuthenticationProviderIntTest {
     private static final String TEST_USER_UNKNOWN_ROLE = "test-unknown-role@xm.com";
     private static final String TEST_USER_MANY_ROLE = "test-two-roles@xm.com";
 
+    private static final String TEST_LOGIN = "test-user@xm.com";
+
     private static final String DEFAULT_FIRSTNAME = "Test";
     private static final String DEFAULT_LASTNAME = "User";
 
@@ -169,7 +171,7 @@ public class UaaAuthenticationProviderIntTest {
     }
 
     private void checkPasswordExpiration(int days) {
-        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_USER, TEST_PASSWORD);
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_LOGIN, TEST_PASSWORD);
         Authentication authentication = uaaAuthenticationProvider.authenticate(token);
 
         DomainUserDetails domainUserDetails = (DomainUserDetails) authentication.getPrincipal();
@@ -230,7 +232,7 @@ public class UaaAuthenticationProviderIntTest {
 
     @Test
     public void checkTermsOfConditionsNotRequired() {
-        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_USER, TEST_PASSWORD);
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_LOGIN, TEST_PASSWORD);
         Authentication authentication = uaaAuthenticationProvider.authenticate(token);
         assertTrue(authentication.isAuthenticated());
         assertFalse(authentication.getAuthorities().isEmpty());
@@ -240,7 +242,7 @@ public class UaaAuthenticationProviderIntTest {
     public void checkTermsOfConditionsRequired() {
         tenantProperties.setPublicSettings(new PublicSettings());
         tenantProperties.getPublicSettings().setTermsOfConditionsEnabled(true);
-        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_USER, TEST_PASSWORD);
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_LOGIN, TEST_PASSWORD);
         uaaAuthenticationProvider.authenticate(token);
     }
 
@@ -248,7 +250,7 @@ public class UaaAuthenticationProviderIntTest {
     public void checkTermsOfConditionsAccept() {
         tenantProperties.setPublicSettings(new PublicSettings());
         tenantProperties.getPublicSettings().setTermsOfConditionsEnabled(true);
-        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_USER, TEST_PASSWORD);
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_LOGIN, TEST_PASSWORD);
         String tofToken = null;
         try {
             uaaAuthenticationProvider.authenticate(token);
@@ -257,9 +259,9 @@ public class UaaAuthenticationProviderIntTest {
             tofToken = ex.getOneTimeToken();
         }
         assertNotNull("Token for accept terms of condition is null", tofToken);
-        assertNull(userService.findOneByLogin(TEST_USER).get().getAcceptTocTime());
+        assertNull(userService.findOneByLogin(TEST_LOGIN).get().getAcceptTocTime());
         userService.acceptTermsOfConditions(tofToken);
-        Instant testTime = userService.findOneByLogin(TEST_USER).get().getAcceptTocTime();
+        Instant testTime = userService.findOneByLogin(TEST_LOGIN).get().getAcceptTocTime();
         assertNotNull(testTime);
         assertTrue(Instant.now().getEpochSecond() - testTime.getEpochSecond() <= 1);
 
