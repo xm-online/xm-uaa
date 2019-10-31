@@ -28,6 +28,7 @@ objectClass: groupOfNames
 objectClass: top
 cn: role-admin
 member: uid=test-two-roles,ou=Users,dc=xm,dc=com
+member: uid=test-admin,ou=Users,dc=xm,dc=com
 
 dn: cn=role-unknown,ou=group1,ou=Groups,dc=xm,dc=com
 objectClass: groupOfNames
@@ -90,19 +91,6 @@ givenName: Test
 shadowExpire: -1
 sn: User
 uid: test-user
-userPassword: test
-
-dn: uid=test-admin,ou=Users,dc=xm,dc=com
-objectClass: inetOrgPerson
-objectClass: posixAccount
-objectClass: shadowAccount
-objectClass: inetLocalMailRecipient
-cn: role-admin
-displayName: Test User
-givenName: Test
-shadowExpire: -1
-sn: User
-uid: test-admin
 userPassword: test
 
 dn: uid=system,ou=Users,dc=xm,dc=com

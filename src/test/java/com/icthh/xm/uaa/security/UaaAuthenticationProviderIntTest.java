@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.security;
 
 import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_AUTH_CONTEXT;
 import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
+import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -75,7 +76,7 @@ public class UaaAuthenticationProviderIntTest {
     private static final String DEFAULT_ROLE_KEY = "ROLE-DEFAULT-USER";
     private static final String DEFAULT_USER_ROLE_KEY = "ROLE-USER";
     private static final String DEFAULT_ADMIN_ROLE_KEY = "SUPER-ADMIN";
-    public static final String TEST_ADMIN = "test-admin";
+    private static final String TEST_ADMIN = "test-admin@xm.com";
 
     private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
@@ -251,8 +252,10 @@ public class UaaAuthenticationProviderIntTest {
     public void checkTermsOfConditionsNotRequiredForSuperAdmin() {
         tenantProperties.setPublicSettings(new PublicSettings());
         tenantProperties.getPublicSettings().setTermsOfConditionsEnabled(true);
-        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_ADMIN, TEST_PASSWORD);
-        uaaAuthenticationProvider.authenticate(token);
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_USER_MANY_ROLE, TEST_PASSWORD);
+        Authentication authentication = uaaAuthenticationProvider.authenticate(token);
+        assertTrue(authentication.isAuthenticated());
+        assertFalse(authentication.getAuthorities().isEmpty());
     }
 
     @Test

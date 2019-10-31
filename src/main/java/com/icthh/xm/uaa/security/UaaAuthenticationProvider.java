@@ -89,7 +89,7 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
         }
 
         User user = getUser(authentication);
-        if (!isTermsOfConditionsAccepted(user)) {
+        if (!isTermsOfConditionsAccepted(user) && !SUPER_ADMIN.equals(user.getRoleKey())) {
             User userWithUpdatedToken = userService.updateAcceptTermsOfConditionsToken(user);
             throw new NeedTermsOfConditionsException(userWithUpdatedToken.getAcceptTocOneTimeToken());
         }
@@ -97,7 +97,7 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
 
     @LogicExtensionPoint(value = "IsTermsOfConditionsAccepted")
     public boolean isTermsOfConditionsAccepted(User user) {
-        return user.getAcceptTocTime() != null && !SUPER_ADMIN.equals(user.getRoleKey());
+        return user.getAcceptTocTime() != null;
     }
 
     private void checkPasswordExpiration(Authentication authentication) {
