@@ -1,5 +1,16 @@
 package com.icthh.xm.uaa.security;
 
+import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_AUTH_CONTEXT;
+import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
@@ -10,11 +21,14 @@ import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
+import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings;
 import com.icthh.xm.uaa.security.ldap.LdapAuthenticationProviderBuilder;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
+import java.nio.charset.Charset;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -36,17 +50,6 @@ import org.springframework.util.StreamUtils;
 import org.zapodot.junit.ldap.EmbeddedLdapRule;
 import org.zapodot.junit.ldap.EmbeddedLdapRuleBuilder;
 
-import java.nio.charset.Charset;
-import java.util.Optional;
-
-import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_AUTH_CONTEXT;
-import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {
     UaaApp.class,
@@ -63,6 +66,8 @@ public class UaaAuthenticationProviderIntTest {
     private static final String TEST_USER = "test@xm.com";
     private static final String TEST_USER_UNKNOWN_ROLE = "test-unknown-role@xm.com";
     private static final String TEST_USER_MANY_ROLE = "test-two-roles@xm.com";
+
+    private static final String TEST_LOGIN = "test-user@xm.com";
 
     private static final String DEFAULT_FIRSTNAME = "Test";
     private static final String DEFAULT_LASTNAME = "User";
@@ -96,6 +101,8 @@ public class UaaAuthenticationProviderIntTest {
 
     private UaaAuthenticationProvider uaaAuthenticationProvider;
 
+    private TenantProperties tenantProperties;
+
     @Rule
     public EmbeddedLdapRule embeddedLdapRule = EmbeddedLdapRuleBuilder
         .newInstance()
@@ -116,7 +123,7 @@ public class UaaAuthenticationProviderIntTest {
 
         TenantPropertiesService tenantPropertiesService = mock(TenantPropertiesService.class);
         String conf = StreamUtils.copyToString(spec.getInputStream(), Charset.defaultCharset());
-        TenantProperties tenantProperties = mapper.readValue(conf, TenantProperties.class);
+        tenantProperties = mapper.readValue(conf, TenantProperties.class);
         when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProperties);
 
         LdapAuthenticationProviderBuilder providerBuilder =
@@ -164,7 +171,7 @@ public class UaaAuthenticationProviderIntTest {
     }
 
     private void checkPasswordExpiration(int days) {
-        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_USER, TEST_PASSWORD);
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_LOGIN, TEST_PASSWORD);
         Authentication authentication = uaaAuthenticationProvider.authenticate(token);
 
         DomainUserDetails domainUserDetails = (DomainUserDetails) authentication.getPrincipal();
@@ -222,4 +229,45 @@ public class UaaAuthenticationProviderIntTest {
         assertFalse(newUser.getLogins().isEmpty());
         assertEquals(newUser.getLogins().iterator().next().getLogin(), login);
     }
+
+    @Test
+    public void checkTermsOfConditionsNotRequired() {
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_LOGIN, TEST_PASSWORD);
+        Authentication authentication = uaaAuthenticationProvider.authenticate(token);
+        assertTrue(authentication.isAuthenticated());
+        assertFalse(authentication.getAuthorities().isEmpty());
+    }
+
+    @Test(expected = NeedTermsOfConditionsException.class)
+    public void checkTermsOfConditionsRequired() {
+        tenantProperties.setPublicSettings(new PublicSettings());
+        tenantProperties.getPublicSettings().setTermsOfConditionsEnabled(true);
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_LOGIN, TEST_PASSWORD);
+        uaaAuthenticationProvider.authenticate(token);
+    }
+
+    @Test
+    public void checkTermsOfConditionsAccept() {
+        tenantProperties.setPublicSettings(new PublicSettings());
+        tenantProperties.getPublicSettings().setTermsOfConditionsEnabled(true);
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_LOGIN, TEST_PASSWORD);
+        String tofToken = null;
+        try {
+            uaaAuthenticationProvider.authenticate(token);
+            fail("Terms of conditions required");
+        } catch (NeedTermsOfConditionsException ex) {
+            tofToken = ex.getOneTimeToken();
+        }
+        assertNotNull("Token for accept terms of condition is null", tofToken);
+        assertNull(userService.findOneByLogin(TEST_LOGIN).get().getAcceptTocTime());
+        userService.acceptTermsOfConditions(tofToken);
+        Instant testTime = userService.findOneByLogin(TEST_LOGIN).get().getAcceptTocTime();
+        assertNotNull(testTime);
+        assertTrue(Instant.now().getEpochSecond() - testTime.getEpochSecond() <= 1);
+
+        Authentication authentication = uaaAuthenticationProvider.authenticate(token);
+        assertTrue(authentication.isAuthenticated());
+        assertFalse(authentication.getAuthorities().isEmpty());
+    }
+
 }

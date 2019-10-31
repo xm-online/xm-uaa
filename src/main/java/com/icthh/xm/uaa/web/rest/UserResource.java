@@ -329,6 +329,13 @@ public class UserResource {
         return ResponseEntity.ok().body(channelSpecs);
     }
 
+    @PostMapping(path = "/users/accept-terms-of-conditions/{tocOneTimeToken}")
+    @Timed
+    public ResponseEntity<Void> acceptTermsOfConditions(@PathVariable String tocOneTimeToken) {
+        userService.acceptTermsOfConditions(tocOneTimeToken);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
     private void produceEvent(UserDTO userDto, String eventType) {
         String content = profileEventProducer.createEventJson(userDto, eventType);
         profileEventProducer.send(content);

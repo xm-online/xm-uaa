@@ -79,6 +79,19 @@ sn: User
 uid: test-unknown-role
 userPassword: test
 
+dn: uid=test-user,ou=Users,dc=xm,dc=com
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+objectClass: inetLocalMailRecipient
+cn: test-user
+displayName: Test User
+givenName: Test
+shadowExpire: -1
+sn: User
+uid: test-user
+userPassword: test
+
 dn: uid=system,ou=Users,dc=xm,dc=com
 objectClass: inetOrgPerson
 objectClass: posixAccount

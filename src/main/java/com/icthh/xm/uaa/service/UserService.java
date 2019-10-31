@@ -1,9 +1,13 @@
 package com.icthh.xm.uaa.service;
 
 import static com.icthh.xm.uaa.service.util.RandomUtil.generateActivationKey;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.*;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_ACTIVATES_HIMSELF;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_BLOCK_HIMSELF;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_DELETE_HIMSELF;
 import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
+import static java.util.UUID.randomUUID;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
 
 import com.google.common.base.Preconditions;
 import com.icthh.xm.commons.exceptions.BusinessException;
@@ -94,6 +98,17 @@ public class UserService {
                 return user;
             })
             .orElseThrow(() -> new BusinessException("error.reset.code.used", "Reset code used"));
+    }
+
+    @LogicExtensionPoint("AcceptTermsOfConditions")
+    public User acceptTermsOfConditions(String acceptTocOneTimeToken) {
+        return userRepository.findOneByAcceptTocOneTimeToken(acceptTocOneTimeToken)
+            .map(user -> {
+                user.setAcceptTocTime(Instant.now());
+                user.setAcceptTocOneTimeToken(null);
+                return user;
+            })
+            .orElseThrow(() -> new BusinessException("error.invalid.accept.terms.token", "Invalid token for accept terms fo conditions"));
     }
 
     /**
@@ -552,6 +567,13 @@ public class UserService {
         dstUser.setAutoLogoutEnabled(srcDTO.isAutoLogoutEnabled());
         dstUser.setAutoLogoutTimeoutSeconds(srcAutoLogoutTimeoutSeconds);
         return dstUser;
+    }
+
+    @Transactional(propagation = REQUIRES_NEW)
+    public User updateAcceptTermsOfConditionsToken(User user) {
+        String token = randomUUID().toString();
+        user.setAcceptTocOneTimeToken(token);
+        return userRepository.save(user);
     }
 
 }

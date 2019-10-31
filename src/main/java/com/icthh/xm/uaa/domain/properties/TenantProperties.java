@@ -1,5 +1,8 @@
 package com.icthh.xm.uaa.domain.properties;
 
+import static java.lang.Boolean.TRUE;
+import static java.util.Optional.ofNullable;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -7,20 +10,17 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.security.ldap.Type;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static java.util.Optional.ofNullable;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -91,6 +91,8 @@ public class TenantProperties {
 
         private PasswordSettings passwordSettings;
 
+        private Boolean termsOfConditionsEnabled;
+
         @Data
         public static class PasswordSettings {
             private int minLength = 0;
@@ -98,6 +100,10 @@ public class TenantProperties {
             private String pattern;
             private Map<String, String> patternMessage;
             private boolean enableBackEndValidation = false;
+        }
+
+        public Boolean isTermsOfConditionsEnabled() {
+            return TRUE.equals(termsOfConditionsEnabled);
         }
     }
 

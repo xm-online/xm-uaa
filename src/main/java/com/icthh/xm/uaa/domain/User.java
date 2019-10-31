@@ -136,6 +136,12 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "update_password_date")
     private Instant updatePasswordDate;
 
+    @Column(name = "accept_toc_time")
+    private Instant acceptTocTime;
+
+    @Column(name = "toc_one_time_token")
+    private String acceptTocOneTimeToken;
+
     // TODO refactor, put EMAIL type to configuration
     public String getEmail() {
         return getLogins().stream().filter(userLogin -> UserLoginType.EMAIL.getValue().equals(userLogin.getTypeKey()))
