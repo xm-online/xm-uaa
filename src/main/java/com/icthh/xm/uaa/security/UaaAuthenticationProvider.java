@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.security;
 
+import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
 import static com.icthh.xm.uaa.config.Constants.AUTH_USERNAME_DOMAIN_SEPARATOR;
 import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.DAYS;
@@ -88,7 +89,7 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
         }
 
         User user = getUser(authentication);
-        if (!isTermsOfConditionsAccepted(user)) {
+        if (!isTermsOfConditionsAccepted(user) && !SUPER_ADMIN.equals(user.getRoleKey())) {
             User userWithUpdatedToken = userService.updateAcceptTermsOfConditionsToken(user);
             throw new NeedTermsOfConditionsException(userWithUpdatedToken.getAcceptTocOneTimeToken());
         }
