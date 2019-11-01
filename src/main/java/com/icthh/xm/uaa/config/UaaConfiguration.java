@@ -99,6 +99,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
                 .antMatchers("/api/account/reset_password/finish").permitAll()
                 .antMatchers("/api/account/reset_activation_key").permitAll()
                 .antMatchers("/api/profile-info").permitAll()
+                .antMatchers("/api/users/accept-terms-of-conditions/*").permitAll()
                 .antMatchers("/api/**").authenticated()
                 .antMatchers("/management/health").permitAll()
                 .antMatchers("/management/**").hasAuthority(RoleConstant.SUPER_ADMIN)
