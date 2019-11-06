@@ -91,6 +91,8 @@ public class UserDTO {
 
     private Integer autoLogoutTimeoutSeconds;
 
+    private Instant acceptTocTime;
+
     @SuppressWarnings("unused")
     public UserDTO() {
         // Empty constructor needed for Jackson.
@@ -124,7 +126,8 @@ public class UserDTO {
             user.getLogins(),
             new ArrayList<>(),
             user.isAutoLogoutEnabled(),
-            user.getAutoLogoutTimeoutSeconds()
+            user.getAutoLogoutTimeoutSeconds(),
+            user.getAcceptTocTime()
         );
         OtpUtils.enrichTfaOtpChannelSpec(this);
     }

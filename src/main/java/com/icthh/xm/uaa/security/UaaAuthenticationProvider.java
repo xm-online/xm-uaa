@@ -21,7 +21,9 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Optional;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -39,6 +41,8 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
     private final LdapAuthenticationProviderBuilder providerBuilder;
     private final UserService userService;
     private final TenantPropertiesService tenantPropertiesService;
+    @Setter(onMethod = @__(@Autowired))
+    private UaaAuthenticationProvider self;
 
     public UaaAuthenticationProvider(@Qualifier("daoAuthenticationProvider")
                                      @Lazy AuthenticationProvider defaultProvider,
@@ -89,7 +93,7 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
         }
 
         User user = getUser(authentication);
-        if (!isTermsOfConditionsAccepted(user) && !SUPER_ADMIN.equals(user.getRoleKey())) {
+        if (!self.isTermsOfConditionsAccepted(user) && !SUPER_ADMIN.equals(user.getRoleKey())) {
             User userWithUpdatedToken = userService.updateAcceptTermsOfConditionsToken(user);
             throw new NeedTermsOfConditionsException(userWithUpdatedToken.getAcceptTocOneTimeToken());
         }
