@@ -135,7 +135,7 @@ public class UaaAuthenticationProviderIntTest {
                                                                   providerBuilder,
                                                                   userService,
                                                                   tenantPropertiesService);
-
+        uaaAuthenticationProvider.setSelf(uaaAuthenticationProvider);
         lepManager.beginThreadContext(ctx -> {
             ctx.setValue(THREAD_CONTEXT_KEY_TENANT_CONTEXT, tenantContextHolder.getContext());
             ctx.setValue(THREAD_CONTEXT_KEY_AUTH_CONTEXT, authContextHolder.getContext());

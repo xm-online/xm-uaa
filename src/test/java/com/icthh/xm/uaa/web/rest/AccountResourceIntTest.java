@@ -338,7 +338,7 @@ public class AccountResourceIntTest {
             null,                   // lastModifiedBy
             null,                   // lastModifiedDate
             ROLE_USER, "test",
-            null, null, null, null, Collections.singletonList(login), false, null);
+            null, null, null, null, Collections.singletonList(login), false, null, null);
 
         restMvc.perform(
             post("/api/register")
@@ -372,7 +372,7 @@ public class AccountResourceIntTest {
             null,                   // lastModifiedBy
             null,                   // lastModifiedDate
             ROLE_USER, "test",
-            null, null, null, null, Collections.singletonList(login), false, null);
+            null, null, null, null, Collections.singletonList(login), false, null, null);
 
         restUserMockMvc.perform(
             post("/api/register")
@@ -406,7 +406,7 @@ public class AccountResourceIntTest {
             null,                   // lastModifiedBy
             null,                   // lastModifiedDate
             ROLE_USER, "test",
-            null, null, null, null, Collections.singletonList(login), false, null);
+            null, null, null, null, Collections.singletonList(login), false, null, null);
 
         restUserMockMvc.perform(
             post("/api/register")
@@ -441,7 +441,7 @@ public class AccountResourceIntTest {
             null,                   // lastModifiedBy
             null,                   // lastModifiedDate
             ROLE_USER, "test",
-            null, null, null, null, Collections.singletonList(login), false, null);
+            null, null, null, null, Collections.singletonList(login), false, null, null);
 
         // Duplicate login, different login
         UserLogin loginNew = new UserLogin();
@@ -457,7 +457,7 @@ public class AccountResourceIntTest {
             validUser.getRoleKey(), "test",
             validUser.getAccessTokenValiditySeconds(), validUser.getRefreshTokenValiditySeconds(),
             validUser.getTfaAccessTokenValiditySeconds(),
-            null, Arrays.asList(login, loginNew), false, null);
+            null, Arrays.asList(login, loginNew), false, null, null);
 
         // Good user
         restMvc.perform(
@@ -499,7 +499,7 @@ public class AccountResourceIntTest {
             null,                   // lastModifiedBy
             null,                   // lastModifiedDate
             RoleConstant.SUPER_ADMIN, "test",
-            null, null, null, null, Collections.singletonList(login), false, null);
+            null, null, null, null, Collections.singletonList(login), false, null, null);
 
         restMvc.perform(
             post("/api/register")
@@ -574,7 +574,7 @@ public class AccountResourceIntTest {
                 null,                   // lastModifiedDate
                 RoleConstant.SUPER_ADMIN, "test",
                 null, null, null, null, Collections.singletonList(userLogin),
-                Collections.emptyList(), false, null);
+                Collections.emptyList(), false, null, null);
 
             try {
                 restMvc.perform(
@@ -645,7 +645,7 @@ public class AccountResourceIntTest {
                 "test1",
                 null, null, null, null,
                 Collections.singletonList(userLogin),
-                Collections.emptyList(), false, null);
+                Collections.emptyList(), false, null, null);
 
             try {
                 restMvc.perform(
