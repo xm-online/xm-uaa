@@ -264,7 +264,8 @@ public class UserResourceIntTest {
             null,
             ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLogin),
             AUTO_LOGOUT_ENABLED,
-            AUTO_LOGOUT_TIME);
+            AUTO_LOGOUT_TIME,
+            null);
 
         restUserMockMvc.perform(post("/api/users")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -306,7 +307,7 @@ public class UserResourceIntTest {
             null,
             null,
             null,
-            ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLogin), false, null);
+            ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLogin), false, null, null);
 
         // An entity with an existing ID cannot be created, so this API call must fail
         restUserMockMvc.perform(post("/api/users")
@@ -345,7 +346,7 @@ public class UserResourceIntTest {
             null,
             null,
             null,
-            "test", RoleConstant.SUPER_ADMIN, null, null, null, null, Collections.singletonList(userLogin), false, null);
+            "test", RoleConstant.SUPER_ADMIN, null, null, null, null, Collections.singletonList(userLogin), false, null, null);
 
 
         // SUPER-ADMIN entity cannot be created, so this API call must fail
@@ -385,7 +386,7 @@ public class UserResourceIntTest {
             null,
             null,
             null,
-            ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLogin), false, null);
+            ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLogin), false, null, null);
 
         // Create the User
         restUserMockMvc.perform(post("/api/users")
@@ -496,7 +497,8 @@ public class UserResourceIntTest {
             //change user role
             ROLE_USER + "XXX", null, null, null, null, Collections.singletonList(userLogin),
             AUTO_LOGOUT_ENABLED,
-            AUTO_LOGOUT_TIME);
+            AUTO_LOGOUT_TIME,
+            null);
 
         restUserMockMvc.perform(put("/api/users")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -549,7 +551,7 @@ public class UserResourceIntTest {
             updatedUser.getCreatedDate(),
             updatedUser.getLastModifiedBy(),
             updatedUser.getLastModifiedDate(),
-            ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLoginNew), false, null);
+            ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLoginNew), false, null, null);
 
         restUserMockMvc.perform(put("/api/users")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -614,7 +616,7 @@ public class UserResourceIntTest {
             updatedUser.getCreatedDate(),
             updatedUser.getLastModifiedBy(),
             updatedUser.getLastModifiedDate(),
-            ROLE_USER, "testNew", null, null, null, null, Collections.singletonList(userLoginNew), false, null);
+            ROLE_USER, "testNew", null, null, null, null, Collections.singletonList(userLoginNew), false, null, null);
 
         restUserMockMvc.perform(put("/api/users/logins")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -643,7 +645,8 @@ public class UserResourceIntTest {
             null,
             null,
             null,
-            "test", RoleConstant.SUPER_ADMIN, null, null, null, null, Collections.singletonList(userLogin), false, null);
+            "test", RoleConstant.SUPER_ADMIN, null, null, null, null, Collections.singletonList(userLogin), false, null,
+            null);
 
         restUserMockMvc.perform(put("/api/users")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -682,7 +685,8 @@ public class UserResourceIntTest {
             updatedUser.getCreatedDate(),
             updatedUser.getLastModifiedBy(),
             updatedUser.getLastModifiedDate(),
-            updatedUser.getUserKey(), RoleConstant.SUPER_ADMIN, null, null, null, null, Collections.singletonList(userLoginNew), false, null);
+            updatedUser.getUserKey(), RoleConstant.SUPER_ADMIN, null, null, null, null, Collections.singletonList(userLoginNew), false, null,
+            null);
 
         restUserMockMvc.perform(put("/api/users/logins")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -880,7 +884,8 @@ public class UserResourceIntTest {
             null,
             DEFAULT_LOGIN,
             null,
-            "test", "testRoleKey", null, null, null, null, null, null, false, null);
+            "test", "testRoleKey", null, null, null, null, null, null, false, null,
+            null);
         User user = userMapper.userDTOToUser(userDTO);
         assertThat(user.getId()).isEqualTo(DEFAULT_ID);
         assertThat(user.getFirstName()).isEqualTo(DEFAULT_FIRSTNAME);

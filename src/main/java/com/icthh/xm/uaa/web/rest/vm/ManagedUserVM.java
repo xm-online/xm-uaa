@@ -87,7 +87,8 @@ public class ManagedUserVM extends UserDTO {
                          Map<String, Object> data,
                          List<UserLogin> logins,
                          boolean autoLogoutEnabled,
-                         Integer autoLogoutTimeoutSeconds) {
+                         Integer autoLogoutTimeoutSeconds,
+                         Instant acceptTocTime) {
 
         super(id,
             firstName,
@@ -111,7 +112,8 @@ public class ManagedUserVM extends UserDTO {
             logins,
             null,
             autoLogoutEnabled,
-            autoLogoutTimeoutSeconds);
+            autoLogoutTimeoutSeconds,
+            acceptTocTime);
         this.password = password;
     }
 

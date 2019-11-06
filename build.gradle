@@ -103,7 +103,7 @@ test {
     // uncomment if the tests reports are not generated
     // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
     // ignoreFailures true
-    reports.html.enabled = false
+    reports.html.enabled = true
     testLogging {
         exceptionFormat = 'full'
         events "passed", "skipped", "failed", "standardOut", "standardError"
