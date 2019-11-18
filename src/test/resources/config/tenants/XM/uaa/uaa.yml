@@ -21,4 +21,12 @@ ldap:
     attribute:
       firstName: givenName
       lastName: sn
+ldapSearchTemplates:
+    - templateKey: test_template
+      query: '{0}=test*'
+      domain: xm.com
+      params:
+        - uid
+      attributeNames:
+        - uid
 

@@ -171,7 +171,10 @@ public class TenantProperties {
     @JsonProperty("ldap")
     private List<Ldap> ldap = new ArrayList<>();
 
-    @Getter
+    @JsonProperty("ldapSearchTemplates")
+    private List<LdapSearchTemplate> ldapSearchTemplates = new ArrayList<>();
+
+    @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @ToString(exclude = "systemPassword")
@@ -211,6 +214,15 @@ public class TenantProperties {
             private String defaultRole;
             private Map<String, String> mapping;
         }
+    }
+
+    @Data
+    public static class LdapSearchTemplate {
+        private String templateKey;
+        private String query;
+        private String domain;
+        private Object[] params;
+        private String[] attributeNames;
     }
 
 }
