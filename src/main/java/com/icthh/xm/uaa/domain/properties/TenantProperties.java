@@ -221,7 +221,6 @@ public class TenantProperties {
         private String templateKey;
         private String query;
         private String domain;
-        private Object[] params;
         private String[] attributeNames;
     }
 

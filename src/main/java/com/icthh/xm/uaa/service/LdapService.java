@@ -2,7 +2,9 @@ package com.icthh.xm.uaa.service;
 
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
+import com.icthh.xm.uaa.domain.TemplateParams;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
+import com.icthh.xm.uaa.lep.keyresolver.LdapSearchByTemplateKeyResolver;
 import lombok.AllArgsConstructor;
 import org.springframework.security.ldap.DefaultSpringSecurityContextSource;
 import org.springframework.security.ldap.SpringSecurityLdapTemplate;
@@ -20,9 +22,13 @@ public class LdapService {
 
     private TenantPropertiesService tenantPropertiesService;
 
-    @LogicExtensionPoint("SearchByTemplate")
+    @LogicExtensionPoint(value = "SearchByTemplate", resolver = LdapSearchByTemplateKeyResolver.class)
     @Transactional(readOnly = true)
-    public Set<Map<String, List<String>>> searchByTemplate(String ldapDomain, String templateKey) {
+    public Set<Map<String, List<String>>> searchByTemplate(String templateKey,
+                                                           TemplateParams templateParams) {
+
+        Object[] params = templateParams.getTemplateParams().toArray();
+
         List<TenantProperties.LdapSearchTemplate> searchTemplates = tenantPropertiesService.getTenantProps()
                                                                                            .getLdapSearchTemplates();
 
@@ -33,13 +39,13 @@ public class LdapService {
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Search template with templateKey: " + templateKey + " not found"));
 
-        TenantProperties.Ldap ldap = foundLdap(ldapDomain);
+        TenantProperties.Ldap ldap = foundLdap(searchTemplate.getDomain());
 
         SpringSecurityLdapTemplate springSecurityLdapTemplate = getSpringSecurityLdapTemplate(ldap);
 
         return springSecurityLdapTemplate.searchForMultipleAttributeValues(ldap.getProviderUrl(),
                                                                            searchTemplate.getQuery(),
-                                                                           searchTemplate.getParams(),
+                                                                           params,
                                                                            searchTemplate.getAttributeNames());
     }
 

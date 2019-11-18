@@ -1,10 +1,13 @@
 package com.icthh.xm.uaa.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import com.icthh.xm.uaa.domain.TemplateParams;
 import com.icthh.xm.uaa.service.LdapService;
 import io.github.jhipster.web.util.ResponseUtil;
+import io.swagger.annotations.ApiParam;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,9 +28,10 @@ public class LdapResource {
 
     @GetMapping("/ldap/_search-with-template")
     @Timed
-    public ResponseEntity searchByTemplate(@NotEmpty @RequestParam String ldapDomain,
-                                           @NotEmpty @RequestParam String templateKey) {
-        Set<Map<String, List<String>>> result = ldapService.searchByTemplate(ldapDomain, templateKey);
+    @PreAuthorize("hasPermission(null, 'LDAP.SEARCH')")
+    public ResponseEntity searchByTemplate(@NotEmpty @RequestParam String templateKey,
+                                           @ApiParam TemplateParams templateParams) {
+        Set<Map<String, List<String>>> result = ldapService.searchByTemplate(templateKey, templateParams);
         return ResponseUtil.wrapOrNotFound(Optional.of(result));
     }
 }

@@ -23,10 +23,8 @@ ldap:
       lastName: sn
 ldapSearchTemplates:
     - templateKey: test_template
-      query: '{0}=test*'
+      query: 'uid={0}'
       domain: xm.com
-      params:
-        - uid
       attributeNames:
         - uid
 

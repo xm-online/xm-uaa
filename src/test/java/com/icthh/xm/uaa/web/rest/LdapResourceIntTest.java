@@ -43,14 +43,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     UaaApp.class,
     XmOverrideConfiguration.class
 })
-@WithMockUser(authorities = {"ADMIN"})
+@WithMockUser(authorities = {"SUPER-ADMIN"})
 public class LdapResourceIntTest {
 
     private static final String TENANT = "XM";
     private static final String BASE_DN = "dc=xm,dc=com";
     private static final String TEST_LDIF = "config/test.ldif";
     private static final int LDAP_SERVER_PORT = 1389;
-    private static final String LDAP_DOMAIN = "xm.com";
     private static final String LDAP_SEARCH_TEMPLATE = "test_template";
 
     @Autowired
@@ -119,8 +118,8 @@ public class LdapResourceIntTest {
     @Test
     @SneakyThrows
     public void searchTemplateTest() {
-        restMockMvc.perform(get("/api/ldap/_search-with-template?ldapDomain=" + LDAP_DOMAIN
-            +"&templateKey="+ LDAP_SEARCH_TEMPLATE))
+        restMockMvc.perform(get("/api/ldap/_search-with-template?templateKey="+ LDAP_SEARCH_TEMPLATE
+            +"&templateParams=test"))
             .andExpect(status().isOk());
     }
 
