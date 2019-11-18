@@ -8,7 +8,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.DoubleStream;
 
 @Repository
 public class UserPermittedRepository extends PermittedRepository {
@@ -34,5 +36,11 @@ public class UserPermittedRepository extends PermittedRepository {
 
     private Class<User> getType() {
         return User.class;
+    }
+
+    public Page<User> findAllByUserKeys(Pageable pageable, List<String> userKeys, String privilegeKey) {
+        String whereCondition = "userKey in :userKeys";
+        Map<String, Object> conditionParams = Collections.singletonMap("userKeys", userKeys);
+        return findByCondition(whereCondition, conditionParams, pageable, getType(), privilegeKey);
     }
 }

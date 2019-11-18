@@ -576,4 +576,9 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    @Transactional(readOnly = true)
+    @FindWithPermission("USER.GET_LIST")
+    public Page<UserDTO> getUsersByKeys(Pageable pageable, List<String> userKeys, String privilegeKey) {
+        return userPermittedRepository.findAllByUserKeys(pageable, userKeys, privilegeKey).map(UserDTO::new);
+    }
 }

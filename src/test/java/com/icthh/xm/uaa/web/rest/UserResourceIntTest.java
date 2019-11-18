@@ -49,6 +49,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
@@ -62,7 +63,7 @@ import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CON
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -402,6 +403,29 @@ public class UserResourceIntTest {
     @Test
     @Transactional
     public void getAllUsers() throws Exception {
+        // Initialize the database
+
+        String userKey1 = userRepository.saveAndFlush(user).getUserKey();
+        User entity = createEntity(ROLE_USER);
+        entity.getLogins().get(0).setLogin("test2");
+        String userKey2 = userRepository.saveAndFlush(entity).getUserKey();
+
+        // Get all the users
+        restUserMockMvc.perform(get("/api/users/by/keys?sort=id,desc&userKeys="+userKey1+","+userKey2)
+            .accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+            .andExpect(jsonPath("$.[*].userKey").value(hasItem(userKey1)))
+            .andExpect(jsonPath("$.[*].firstName").value(hasItem(DEFAULT_FIRSTNAME)))
+            .andExpect(jsonPath("$.[*].lastName").value(hasItem(DEFAULT_LASTNAME)))
+            .andExpect(jsonPath("$.[*].logins[0].login").value(hasItems("test2", "test")))
+            .andExpect(jsonPath("$.[*].imageUrl").value(hasItem(DEFAULT_IMAGEURL)))
+            .andExpect(jsonPath("$.[*].langKey").value(hasItem(DEFAULT_LANGKEY)))
+            .andExpect(jsonPath("$", hasSize(2)));
+    }
+    @Test
+    @Transactional
+    public void getUsersByKeys() throws Exception {
         // Initialize the database
 
         String beforeKey = user.getUserKey();

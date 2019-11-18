@@ -234,6 +234,23 @@ public class UserResource {
     }
 
     /**
+     * GET  /users/by/keys : get users by keys.
+     *
+     * @param pageable the pagination information
+     * @return the ResponseEntity with status 200 (OK) and with body of users
+     */
+    @GetMapping("/users/by/keys")
+    @Timed
+    public ResponseEntity<List<UserDTO>> getUsersByKeys(
+        @ApiParam Pageable pageable,
+        @RequestParam List<String> userKeys) {
+        final Page<UserDTO> page = userService.getUsersByKeys(pageable, userKeys, null);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/users");
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+
+    /**
      * GET  /users/:userKey : get the "userKey" user.
      *
      * @param userKey the userKey of the user to find
