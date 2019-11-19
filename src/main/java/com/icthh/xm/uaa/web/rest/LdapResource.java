@@ -28,7 +28,7 @@ public class LdapResource {
 
     @GetMapping("/ldap/_search-with-template")
     @Timed
-    @PreAuthorize("hasPermission(null, 'LDAP.SEARCH')")
+    @PreAuthorize("hasPermission({'templateKey': #templateKey}, 'LDAP.SEARCH')")
     public ResponseEntity searchByTemplate(@NotEmpty @RequestParam String templateKey,
                                            @ApiParam TemplateParams templateParams) {
         Set<Map<String, List<String>>> result = ldapService.searchByTemplate(templateKey, templateParams);
