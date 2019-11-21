@@ -13,6 +13,7 @@ ldap:
     groupSearchBase: ou=Groups,dc=xm,dc=com
     groupSearchSubtree: true
     userDnPattern: uid={0},ou=Users,dc=xm,dc=com
+    rootDn: ldap://localhost:1389
     role:
       defaultRole: ROLE-DEFAULT-USER
       mapping:

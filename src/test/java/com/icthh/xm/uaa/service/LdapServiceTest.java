@@ -10,6 +10,7 @@ import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.TemplateParams;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
+import com.icthh.xm.uaa.service.exceptions.LdapServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Rule;
@@ -120,6 +121,11 @@ public class LdapServiceTest {
 
         Set<Map<String, List<String>>> result = ldapService.searchByTemplate(LDAP_SEARCH_TEMPLATE, templateParams);
         assertEquals(0, result.size());
+    }
+
+    @Test(expected = LdapServiceException.class)
+    public void searchWithoutTemplateParams() {
+        Set<Map<String, List<String>>> result = ldapService.searchByTemplate(LDAP_SEARCH_TEMPLATE, null);
     }
 
     private TemplateParams getTemplateParams(String parameter) {

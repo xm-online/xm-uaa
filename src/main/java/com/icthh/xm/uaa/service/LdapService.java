@@ -5,6 +5,7 @@ import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.uaa.domain.TemplateParams;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.lep.keyresolver.LdapSearchByTemplateKeyResolver;
+import com.icthh.xm.uaa.service.exceptions.LdapServiceException;
 import lombok.AllArgsConstructor;
 import org.springframework.security.ldap.DefaultSpringSecurityContextSource;
 import org.springframework.security.ldap.SpringSecurityLdapTemplate;
@@ -14,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static java.util.Objects.isNull;
 
 @LepService(group = "service.ldap")
 @Service
@@ -27,6 +30,10 @@ public class LdapService {
     public Set<Map<String, List<String>>> searchByTemplate(String templateKey,
                                                            TemplateParams templateParams) {
 
+        if (isNull(templateParams) || isNull(templateParams.getTemplateParams())) {
+            throw new LdapServiceException("error.template.params.empty", "Template params is empty");
+        }
+
         Object[] params = templateParams.getTemplateParams().toArray();
 
         List<TenantProperties.LdapSearchTemplate> searchTemplates = tenantPropertiesService.getTenantProps()
@@ -37,13 +44,16 @@ public class LdapService {
             .stream()
             .filter(template -> templateKey.equals(template.getTemplateKey()))
             .findFirst()
-            .orElseThrow(() -> new RuntimeException("Search template with templateKey: " + templateKey + " not found"));
+            .orElseThrow(() -> new LdapServiceException(
+                "error.templateKey.not.found",
+                "Search template with templateKey: " + templateKey + " not found")
+            );
 
         TenantProperties.Ldap ldap = foundLdap(searchTemplate.getDomain());
 
         SpringSecurityLdapTemplate springSecurityLdapTemplate = getSpringSecurityLdapTemplate(ldap);
 
-        return springSecurityLdapTemplate.searchForMultipleAttributeValues(ldap.getProviderUrl(),
+        return springSecurityLdapTemplate.searchForMultipleAttributeValues(ldap.getRootDn(),
                                                                            searchTemplate.getQuery(),
                                                                            params,
                                                                            searchTemplate.getAttributeNames());
@@ -65,6 +75,9 @@ public class LdapService {
             .stream()
             .filter(ldap -> ldapDomain.equals(ldap.getDomain()))
             .findFirst()
-            .orElseThrow(() -> new RuntimeException("Ldap with domain: " + ldapDomain + " not found"));
+            .orElseThrow(() -> new LdapServiceException(
+                "error.ldap.domain.not.found",
+                "Ldap with domain: " + ldapDomain + " not found")
+            );
     }
 }
