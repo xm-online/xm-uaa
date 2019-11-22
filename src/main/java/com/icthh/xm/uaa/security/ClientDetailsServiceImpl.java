@@ -8,6 +8,7 @@ import com.icthh.xm.uaa.service.ClientService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.provider.ClientDetails;
@@ -30,6 +31,7 @@ public class ClientDetailsServiceImpl implements ClientDetailsService {
     private final TenantPropertiesService tenantPropertiesService;
 
     @Override
+    @Cacheable(cacheManager = "requestScopedCacheManager", cacheNames = "default")
     public ClientDetails loadClientByClientId(String clientId) throws ClientRegistrationException {
 
         log.info("Load client with clientId={}", clientId);
