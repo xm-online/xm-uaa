@@ -2,7 +2,9 @@ package com.icthh.xm.uaa.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import com.icthh.xm.uaa.domain.Client;
+import com.icthh.xm.uaa.service.ClientQueryService;
 import com.icthh.xm.uaa.service.ClientService;
+import com.icthh.xm.uaa.service.dto.ClientCriteria;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
 import com.icthh.xm.uaa.web.rest.util.HeaderUtil;
 import com.icthh.xm.uaa.web.rest.util.PaginationUtil;
@@ -40,12 +42,15 @@ public class ClientResource {
 
     private final ClientService clientService;
     private final ClientResource clientResource;
+    private final ClientQueryService clientQueryService;
 
     public ClientResource(
-                    ClientService clientService,
-                    @Lazy ClientResource clientResource) {
+                  ClientService clientService,
+                  @Lazy ClientResource clientResource,
+                  ClientQueryService clientQueryService) {
         this.clientService = clientService;
         this.clientResource = clientResource;
+        this.clientQueryService = clientQueryService;
     }
 
     /**
@@ -129,5 +134,18 @@ public class ClientResource {
     public ResponseEntity<Void> deleteClient(@PathVariable Long id) {
         clientService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+    }
+
+    /**
+     * GET  /clients : get all the clients.
+     *
+     * @return the ResponseEntity with status 200 (OK) and the list of clients in body
+     */
+    @GetMapping("/clients")
+    @Timed
+    public ResponseEntity<List<ClientDTO>> getAllClients(ClientCriteria clientCriteria, Pageable pageable) {
+        Page<ClientDTO> page = clientQueryService.findByCriteria(clientCriteria, pageable).map(ClientDTO::new);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/clients");
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 }
