@@ -32,7 +32,7 @@ public class Client extends AbstractAuditingEntity implements Serializable {
     @SequenceGenerator(name = "sequenceGenerator")
     private Long id;
 
-    @Column(name = "client_id")
+    @Column(name = "client_id", unique = true)
     private String clientId;
 
     @Column(name = "client_secret")
