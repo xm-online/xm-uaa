@@ -404,7 +404,7 @@ public class ClientResourceIntTest {
         getUserByLoginContainsMatcher(DEFAULT_CLIENT_ID.substring(DEFAULT_CLIENT_ID.length() - 2));
 
         restClientMockMvc.perform(get("/api/clients/clientid-contains?clientId=www"))
-          //    .andDo(print())
+              .andDo(print())
               .andExpect(status().isOk())
               .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
               .andExpect(content().json("[]"));

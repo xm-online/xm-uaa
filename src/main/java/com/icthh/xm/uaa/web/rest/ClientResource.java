@@ -4,14 +4,12 @@ import com.codahale.metrics.annotation.Timed;
 import com.icthh.xm.uaa.domain.Client;
 import com.icthh.xm.uaa.service.ClientService;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
-import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.web.rest.util.HeaderUtil;
 import com.icthh.xm.uaa.web.rest.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import io.swagger.annotations.ApiParam;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -45,8 +43,8 @@ public class ClientResource {
     private final ClientResource clientResource;
 
     public ClientResource(
-                  ClientService clientService,
-                  @Lazy ClientResource clientResource) {
+                    ClientService clientService,
+                    @Lazy ClientResource clientResource) {
         this.clientService = clientService;
         this.clientResource = clientResource;
     }
