@@ -44,6 +44,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -484,6 +485,12 @@ public class UserService {
         validatePasswordPattern(password, passwordSettings);
         validatePasswordMinLength(password, passwordSettings);
         validatePasswordMaxLength(password, passwordSettings);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<User> findAllByLoginContains(String login, Pageable pageable) {
+        return userLoginRepository.findAllByLoginContainingIgnoreCase(login, pageable)
+              .map(UserLogin::getUser);
     }
 
     private void validatePasswordPattern(String password, PasswordSettings passwordSettings) {

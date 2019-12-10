@@ -5,6 +5,8 @@ import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.permission.annotation.FindWithPermission;
 import com.icthh.xm.commons.permission.repository.PermittedRepository;
 import com.icthh.xm.uaa.domain.Client;
+import com.icthh.xm.uaa.domain.User;
+import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
 import lombok.RequiredArgsConstructor;
@@ -124,5 +126,11 @@ public class ClientService {
     @IgnoreLogginAspect
     public Client getClient(String clientId) {
         return clientRepository.findOneByClientId(clientId);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ClientDTO> findAllByClientIdContains(String clientId, Pageable pageable) {
+        return clientRepository.findAllByClientIdContainingIgnoreCase(clientId, pageable)
+              .map(client -> new ClientDTO(client.clientSecret(PSWRD_MASK)));
     }
 }

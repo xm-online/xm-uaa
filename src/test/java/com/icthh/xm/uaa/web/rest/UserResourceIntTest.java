@@ -68,10 +68,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.converter.json.Jackson2ObjectMapperBuilder.json;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -437,6 +439,34 @@ public class UserResourceIntTest {
             .andExpect(jsonPath("$.imageUrl").value(DEFAULT_IMAGEURL))
             .andExpect(jsonPath("$.langKey").value(DEFAULT_LANGKEY))
             .andExpect(jsonPath("$.logins[0].login").value("test"));
+    }
+
+    @Test
+    @Transactional
+    public void getUserByLoginContains() throws Exception {
+        userRepository.saveAndFlush(user);
+        getUsersByLoginContainsMatcher("test");
+        getUsersByLoginContainsMatcher("tE");
+        getUsersByLoginContainsMatcher("St");
+
+        restUserMockMvc.perform(get("/api/users/logins-contains?login=wrong-login"))
+              .andDo(print())
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+              .andExpect(content().json("[]"));
+    }
+
+    private void getUsersByLoginContainsMatcher(String login) throws Exception {
+        restUserMockMvc.perform(get("/api/users/logins-contains?login={login}", login))
+              .andDo(print())
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+              .andExpect(jsonPath("$[0].userKey").value(user.getUserKey()))
+              .andExpect(jsonPath("$[0].firstName").value(DEFAULT_FIRSTNAME))
+              .andExpect(jsonPath("$[0].lastName").value(DEFAULT_LASTNAME))
+              .andExpect(jsonPath("$[0].imageUrl").value(DEFAULT_IMAGEURL))
+              .andExpect(jsonPath("$[0].langKey").value(DEFAULT_LANGKEY))
+              .andExpect(jsonPath("$[0].logins[0].login").value("test"));
     }
 
     @Test

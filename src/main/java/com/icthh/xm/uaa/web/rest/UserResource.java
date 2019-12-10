@@ -1,5 +1,7 @@
 package com.icthh.xm.uaa.web.rest;
 
+import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
+
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
 import com.icthh.xm.commons.exceptions.BusinessException;
@@ -18,6 +20,14 @@ import com.icthh.xm.uaa.web.rest.util.HeaderUtil;
 import com.icthh.xm.uaa.web.rest.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import io.swagger.annotations.ApiParam;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -38,17 +48,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
 
 
 /**
@@ -272,6 +271,22 @@ public class UserResource {
     @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'USER.GET_USER_BY_LOGIN')")
     public ResponseEntity<UserDTO> getUserByLogin(@RequestParam String login) {
         return ResponseUtil.wrapOrNotFound(userService.findOneByLogin(login).map(UserDTO::new));
+    }
+
+    /**
+     * GET  /users/logins-contains/:login : get the users.
+     *
+     * @param login part of the login of the users to find
+     * @param pageable the pagination information
+     * @return the ResponseEntity with status 200 (OK) and body with list of users, or the empty list
+     */
+    @GetMapping("/users/logins-contains")
+    @Timed
+    @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'USER.GET_USER_BY_LOGIN')")
+    public ResponseEntity<List<UserDTO>> getAllUsersByLoginContains(@RequestParam String login, Pageable pageable) {
+        Page<UserDTO> page = userService.findAllByLoginContains(login, pageable).map(UserDTO::new);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/users/logins-contains");
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
     /**

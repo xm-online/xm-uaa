@@ -2,16 +2,16 @@ package com.icthh.xm.uaa.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import com.icthh.xm.uaa.domain.Client;
-import com.icthh.xm.uaa.service.ClientQueryService;
 import com.icthh.xm.uaa.service.ClientService;
-import com.icthh.xm.uaa.service.dto.ClientCriteria;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
+import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.web.rest.util.HeaderUtil;
 import com.icthh.xm.uaa.web.rest.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import io.swagger.annotations.ApiParam;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
@@ -42,15 +43,12 @@ public class ClientResource {
 
     private final ClientService clientService;
     private final ClientResource clientResource;
-    private final ClientQueryService clientQueryService;
 
     public ClientResource(
                   ClientService clientService,
-                  @Lazy ClientResource clientResource,
-                  ClientQueryService clientQueryService) {
+                  @Lazy ClientResource clientResource) {
         this.clientService = clientService;
         this.clientResource = clientResource;
-        this.clientQueryService = clientQueryService;
     }
 
     /**
@@ -110,6 +108,21 @@ public class ClientResource {
     }
 
     /**
+     * GET  /clients/clientid-contains/:clientId : get the clients.
+     *
+     * @param clientId part of the clientId of the clients to find
+     * @param pageable the pagination information
+     * @return the ResponseEntity with status 200 (OK) and body with list of clients, or the empty list
+     */
+    @GetMapping("/clients/clientid-contains")
+    @Timed
+    public ResponseEntity<List<ClientDTO>> getAllClientsByClientIdContains(@RequestParam String clientId, Pageable pageable) {
+        Page<ClientDTO> page = clientService.findAllByClientIdContains(clientId, pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/clients/clientid-contains");
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
      * GET  /clients/:id : get the "id" client.
      *
      * @param id the id of the client to retrieve
@@ -134,18 +147,5 @@ public class ClientResource {
     public ResponseEntity<Void> deleteClient(@PathVariable Long id) {
         clientService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
-    }
-
-    /**
-     * GET  /clients : get all the clients.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of clients in body
-     */
-    @GetMapping("/clients")
-    @Timed
-    public ResponseEntity<List<ClientDTO>> getAllClients(ClientCriteria clientCriteria, Pageable pageable) {
-        Page<ClientDTO> page = clientQueryService.findByCriteria(clientCriteria, pageable).map(ClientDTO::new);
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/clients");
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 }
