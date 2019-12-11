@@ -1,12 +1,10 @@
 package com.icthh.xm.uaa.repository;
 
 import com.icthh.xm.uaa.domain.UserLogin;
-import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.Optional;
 
 public interface UserLoginRepository extends JpaRepository<UserLogin, Long> {
 

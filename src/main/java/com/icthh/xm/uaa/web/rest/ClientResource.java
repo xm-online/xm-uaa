@@ -113,6 +113,7 @@ public class ClientResource {
      * @return the ResponseEntity with status 200 (OK) and body with list of clients, or the empty list
      */
     @GetMapping("/clients/clientid-contains")
+    @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'CLIENT.GET_LIST.ITEM')")
     @Timed
     public ResponseEntity<List<ClientDTO>> getAllClientsByClientIdContains(@RequestParam String clientId, Pageable pageable) {
         Page<ClientDTO> page = clientService.findAllByClientIdContains(clientId, pageable);
