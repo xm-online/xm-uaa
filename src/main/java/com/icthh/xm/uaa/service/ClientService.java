@@ -1,6 +1,8 @@
 package com.icthh.xm.uaa.service;
 
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
+import com.icthh.xm.commons.lep.LogicExtensionPoint;
+import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.permission.annotation.FindWithPermission;
 import com.icthh.xm.commons.permission.repository.PermittedRepository;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Service Implementation for managing Client.
  */
+@LepService(group = "service.client")
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -125,6 +128,7 @@ public class ClientService {
         return clientRepository.findOneByClientId(clientId);
     }
 
+    @LogicExtensionPoint("FindAllByClientIdContains")
     @Transactional(readOnly = true)
     public Page<ClientDTO> findAllByClientIdContains(String clientId, Pageable pageable) {
         return clientRepository.findAllByClientIdContainingIgnoreCase(clientId, pageable)

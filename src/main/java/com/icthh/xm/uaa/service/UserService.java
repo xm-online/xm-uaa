@@ -486,6 +486,7 @@ public class UserService {
         validatePasswordMaxLength(password, passwordSettings);
     }
 
+    @LogicExtensionPoint("FindAllByLoginContains")
     @Transactional(readOnly = true)
     public Page<User> findAllByLoginContains(String login, Pageable pageable) {
         return userLoginRepository.findAllByLoginContainingIgnoreCase(login, pageable)
