@@ -1,12 +1,15 @@
 package com.icthh.xm.uaa.service;
 
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
+import com.icthh.xm.commons.lep.LogicExtensionPoint;
+import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.permission.annotation.FindWithPermission;
 import com.icthh.xm.commons.permission.repository.PermittedRepository;
 import com.icthh.xm.uaa.domain.Client;
 import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
@@ -15,11 +18,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-
 /**
  * Service Implementation for managing Client.
  */
+@LepService(group = "service.client")
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -124,5 +126,12 @@ public class ClientService {
     @IgnoreLogginAspect
     public Client getClient(String clientId) {
         return clientRepository.findOneByClientId(clientId);
+    }
+
+    @LogicExtensionPoint("FindAllByClientIdContains")
+    @Transactional(readOnly = true)
+    public Page<ClientDTO> findAllByClientIdContains(String clientId, Pageable pageable) {
+        return clientRepository.findAllByClientIdContainingIgnoreCase(clientId, pageable)
+              .map(client -> new ClientDTO(client.clientSecret(PSWRD_MASK)));
     }
 }

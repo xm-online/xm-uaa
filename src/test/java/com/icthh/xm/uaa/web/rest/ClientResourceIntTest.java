@@ -38,6 +38,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -390,5 +391,33 @@ public class ClientResourceIntTest {
         // Validate the database is empty
         List<Client> clientList = clientRepository.findAll();
         assertThat(clientList).hasSize(databaseSizeBeforeDelete - 1);
+    }
+
+    @Test
+    @Transactional
+    public void getClientsByClientIdContains() throws Exception {
+        clientService.save(client);
+
+        getUserByLoginContainsMatcher(DEFAULT_CLIENT_ID);
+        getUserByLoginContainsMatcher(DEFAULT_CLIENT_ID.toLowerCase());
+        getUserByLoginContainsMatcher(DEFAULT_CLIENT_ID.substring(0, 2));
+        getUserByLoginContainsMatcher(DEFAULT_CLIENT_ID.substring(DEFAULT_CLIENT_ID.length() - 2));
+
+        restClientMockMvc.perform(get("/api/clients/clientid-contains?clientId=www"))
+              .andDo(print())
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+              .andExpect(content().json("[]"));
+    }
+
+    private void getUserByLoginContainsMatcher(String clientId) throws Exception {
+        restClientMockMvc.perform(get("/api/clients/clientid-contains?clientId={clientId}", clientId))
+              .andDo(print())
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+              .andExpect(jsonPath("$[0].id").value(client.getId().intValue()))
+              .andExpect(jsonPath("$[0].clientId").value(DEFAULT_CLIENT_ID))
+              .andExpect(jsonPath("$[0].roleKey").value(DEFAULT_ROLE_KEY))
+              .andExpect(jsonPath("$[0].description").value(DEFAULT_DESCRIPTION));
     }
 }

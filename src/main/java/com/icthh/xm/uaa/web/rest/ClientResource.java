@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
@@ -101,6 +102,22 @@ public class ClientResource {
     public ResponseEntity<List<ClientDTO>> getAllClients(@ApiParam Pageable pageable) {
         Page<ClientDTO> page = clientService.findAll(pageable, null);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/clients");
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * GET  /clients/clientid-contains/:clientId : get the clients.
+     *
+     * @param clientId part of the clientId of the clients to find
+     * @param pageable the pagination information
+     * @return the ResponseEntity with status 200 (OK) and body with list of clients, or the empty list
+     */
+    @GetMapping("/clients/clientid-contains")
+    @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'CLIENT.GET_LIST.ITEM')")
+    @Timed
+    public ResponseEntity<List<ClientDTO>> getAllClientsByClientIdContains(@RequestParam String clientId, Pageable pageable) {
+        Page<ClientDTO> page = clientService.findAllByClientIdContains(clientId, pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/clients/clientid-contains");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
