@@ -20,6 +20,12 @@ spring:
     main:
         allow-bean-definition-overriding: true
     cloud:
+        bus:
+            enabled: false
+        discovery:
+            enabled: false
+        consul:
+            enabled: false
         stream:
             kafka:
                 binder:
