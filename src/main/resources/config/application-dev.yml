@@ -69,6 +69,8 @@ spring:
             hibernate.cache.use_second_level_cache: false
             hibernate.cache.use_query_cache: false
             hibernate.generate_statistics: true
+            # see org.hibernate.cfg.AvailableSettings.PREFER_GENERATOR_NAME_AS_DEFAULT_SEQUENCE_NAME
+            hibernate.model.generator_name_as_sequence_name: false
     liquibase:
         contexts: dev
         enabled: true
@@ -95,7 +97,7 @@ spring:
             discovery:
                 enabled: true
     kafka:
-        bootstrap-servers: localhost:9093
+        bootstrap-servers: localhost:9092
 
 server:
     port: 9999
@@ -107,9 +109,6 @@ server:
 # ===================================================================
 
 jhipster:
-    http:
-        version: V_1_1 # To use HTTP/2 you will need to activate TLS (see application-tls.yml)
-    # CORS is only enabled by default with the "dev" profile, so BrowserSync can access the API
     cors:
         allowed-origins: "*"
         allowed-methods: "*"
@@ -125,13 +124,8 @@ jhipster:
         from: <tenantname>@xm-online.com
         base-url: http://127.0.0.1:9999
     metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
-        jmx:
-            enabled: true
-        prometheus:
-            enabled: false #expose metrics via prometheus
         logs: # Reports Dropwizard metrics in the logs
             enabled: false
-            report-frequency: 60 # in seconds
     logging:
         logstash: # Forward logs to logstash over a socket, used by LoggingConfiguration
             enabled: false

@@ -3,95 +3,110 @@ import org.gradle.internal.os.OperatingSystem
 buildscript {
     repositories {
         mavenLocal()
-        jcenter()
         mavenCentral()
-        maven { url "http://repo.spring.io/plugins-release" }
-        maven { url "http://repo.spring.io/milestone" }
-        maven { url "https://plugins.gradle.org/m2/" }
+        gradlePluginPortal()
+        maven { url "https://repo.spring.io/plugins-release" }
     }
     dependencies {
-        classpath "org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}"
-        classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
-        classpath "gradle.plugin.com.gorylenko.gradle-git-properties:gradle-git-properties:1.5.2"
         //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
     }
 }
 
 plugins {
-    id "org.sonarqube" version "2.6.2"
-    id "net.ltgt.apt-eclipse" version "0.19"
-    id "net.ltgt.apt-idea" version "0.19"
-    id "net.ltgt.apt" version "0.19"
-    id "io.spring.dependency-management" version "1.0.6.RELEASE"
-    id 'org.liquibase.gradle' version '2.0.1'
+    id "java"
+    id "maven-publish"
+    id "idea"
+    id "jacoco"
+    id "org.springframework.boot"
+    id "com.google.cloud.tools.jib"
+    id "com.gorylenko.gradle-git-properties"
+    id "net.ltgt.apt-eclipse"
+    id "net.ltgt.apt-idea"
+    id "net.ltgt.apt"
+    id "org.liquibase.gradle"
+    id "org.sonarqube"
+    id "io.spring.nohttp"
+    id "war"
+    id "com.github.spotbugs"
+    id "pmd"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
 }
 
-apply plugin: 'java'
-sourceCompatibility=1.8
-targetCompatibility=1.8
-// Until JHipster supports JDK 9
-assert System.properties['java.specification.version'] == '1.8'
+group = "com.icthh.xm.uaa"
+version = "0.0.1-SNAPSHOT"
 
-apply plugin: 'maven'
-apply plugin: 'org.springframework.boot'
-apply plugin: 'war'
-apply plugin: 'propdeps'
-apply plugin: 'io.spring.dependency-management'
-apply plugin: 'idea'
-apply plugin: 'checkstyle'
-apply plugin: 'findbugs'
-apply plugin: 'pmd'
+description = ""
 
-dependencyManagement {
-  imports {
-    mavenBom 'io.github.jhipster:jhipster-dependencies:' + jhipster_dependencies_version
-    //jhipster-needle-gradle-dependency-management - JHipster will add additional dependencies management here
-  }
+sourceCompatibility=11
+targetCompatibility=11
+assert System.properties["java.specification.version"] == "11" || "12" || "13"
+
+apply from: "gradle/docker.gradle"
+apply from: "gradle/sonar.gradle"
+//jhipster-needle-gradle-apply-from - JHipster will add additional gradle scripts to be applied here
+
+if (project.hasProperty("prod")) {
+    apply from: "gradle/profile_prod.gradle"
+} else {
+    apply from: "gradle/profile_dev.gradle"
 }
 
-defaultTasks 'bootRun'
-
-group = 'com.icthh.xm.uaa'
-version = '0.0.1-SNAPSHOT'
-
-description = ''
-
-bootWar {
-   mainClassName = 'com.icthh.xm.uaa.UaaApp'
+if (project.hasProperty("war")) {
+    apply from: "gradle/war.gradle"
 }
 
-war {
-
+if (project.hasProperty("zipkin")) {
+    apply from: "gradle/zipkin.gradle"
 }
 
-springBoot {
-    mainClassName = 'com.icthh.xm.uaa.UaaApp'
-    buildInfo()
+idea {
+    module {
+        excludeDirs += files("node_modules")
+    }
 }
 
+eclipse {
+    sourceSets {
+        main {
+            java {
+                srcDirs += ["build/generated/sources/annotationProcessor/java/main"]
+            }
+        }
+    }
+}
 
+// See https://virgo47.wordpress.com/2018/09/14/classpath-too-long-with-spring-boot-and-gradle/ for details
+// https://github.com/jhipster/generator-jhipster/issues/9713
 if (OperatingSystem.current().isWindows()) {
-    // https://stackoverflow.com/questions/40037487/the-filename-or-extension-is-too-long-error-using-gradle
     task classpathJar(type: Jar) {
-        dependsOn configurations.runtime
-        appendix = 'classpath'
+        inputs.files sourceSets.main.runtimeClasspath
 
+        archiveName = "runboot-classpath.jar"
         doFirst {
             manifest {
-                attributes 'Class-Path': configurations.runtime.files.collect {
-                    it.toURI().toURL().toString().replaceFirst(/file:\/+/, '/').replaceAll(' ', '%20')
-                }.join(' ')
+                def classpath = sourceSets.main.runtimeClasspath.files
+                attributes "Class-Path": classpath.collect {f -> f.toURI().toString()}.join(" ")
             }
         }
     }
 
     bootRun {
-        dependsOn classpathJar
-        doFirst {
-            classpath = files("$buildDir/classes/java/main", "$buildDir/resources/main", classpathJar.archivePath)
-        }
+        classpath = classpathJar.outputs.files
     }
+}
+
+defaultTasks "bootRun"
+
+springBoot {
+    mainClassName = "com.icthh.xm.uaa.UaaApp"
+}
+
+bootWar {
+    mainClassName = 'com.icthh.xm.uaa.UaaApp'
+}
+
+war {
+
 }
 
 test {
@@ -137,48 +152,33 @@ task cucumberTestReport(type: TestReport) {
     reportOn cucumberTest
 }
 
-apply from: 'gradle/docker.gradle'
-apply from: 'gradle/sonar.gradle'
-//jhipster-needle-gradle-apply-from - JHipster will add additional gradle scripts to be applied here
-
-if (project.hasProperty('prod')) {
-    apply from: 'gradle/profile_prod.gradle'
-} else {
-    apply from: 'gradle/profile_dev.gradle'
+if (!project.hasProperty("runList")) {
+    project.ext.runList = "main"
 }
 
-
-if (project.hasProperty('zipkin')) {
-    apply from: 'gradle/zipkin.gradle'
-}
-
-if (!project.hasProperty('runList')) {
-    project.ext.runList = 'main'
-}
-
-project.ext.diffChangelogFile = 'src/main/resources/config/liquibase/changelog/' + new Date().format('yyyyMMddHHmmss') + '_changelog.xml'
+project.ext.diffChangelogFile = "src/main/resources/config/liquibase/changelog/" + new Date().format("yyyyMMddHHmmss") + "_changelog.xml"
 
 liquibase {
     activities {
         main {
-            driver ''
-            url ''
-            username 'uaa'
-            password ''
-            changeLogFile 'src/main/resources/config/liquibase/master.xml'
-            defaultSchemaName ''
-            logLevel 'debug'
-            classpath 'src/main/resources/'
+            driver ""
+            url ""
+            username "uaa"
+            password ""
+            changeLogFile "src/main/resources/config/liquibase/master.xml"
+            defaultSchemaName ""
+            logLevel "debug"
+            classpath "src/main/resources/"
         }
         diffLog {
-            driver ''
-            url ''
-            username 'uaa'
-            password ''
+            driver ""
+            url ""
+            username "uaa"
+            password ""
             changeLogFile project.ext.diffChangelogFile
-            referenceUrl 'hibernate:spring:com.icthh.xm.uaa.domain?dialect=&amp;hibernate.physical_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy&amp;hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy'
-            defaultSchemaName ''
-            logLevel 'debug'
+            referenceUrl "hibernate:spring:com.icthh.xm.uaa.domain?dialect=&hibernate.physical_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy&hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy"
+            defaultSchemaName ""
+            logLevel "debug"
             classpath "$buildDir/classes/java/main"
         }
     }
@@ -186,14 +186,26 @@ liquibase {
     runList = project.ext.runList
 }
 
-group = 'com.icthh.xm.uaa'
-version = '0.0.1-SNAPSHOT'
+checkstyle {
+    toolVersion = "7.6.1"
+    ignoreFailures = true
+    configFile = rootProject.file('./qa/checkstyle.xml')
+}
 
-description = ''
+spotbugs {
+    ignoreFailures = true
+}
+
+pmd {
+    rulePriority = 3
+    toolVersion = '5.5.4'
+    ignoreFailures = true
+    ruleSetFiles = files("./qa/pmd.xml")
+}
 
 configurations {
     providedRuntime
-    compile.exclude module: "spring-boot-starter-tomcat"
+    implementation.exclude module: "spring-boot-starter-tomcat"
     // netty's native is pulled by spring-cloud-starter-ribbon, but is useless unless you explicitly add the native binary dependency.
     // Having it in the classpath without the binary can cause warnings
     all*.exclude group: 'io.netty', module: 'netty-transport-native-epoll'
@@ -212,168 +224,147 @@ repositories {
 }
 
 dependencies {
+    // import JHipster dependencies BOM
+    implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
+
     // Use ", version: jhipster_dependencies_version, changing: true" if you want
     // to use a SNAPSHOT release instead of a stable release
-    compile group: "io.github.jhipster", name: "jhipster-framework"
-    compile "io.dropwizard.metrics:metrics-core"
-    compile "io.dropwizard.metrics:metrics-json"
-    compile "io.dropwizard.metrics:metrics-jvm"
-    compile "io.dropwizard.metrics:metrics-servlet"
-    compile "io.dropwizard.metrics:metrics-servlets"
-    compile "io.prometheus:simpleclient"
-    compile "io.prometheus:simpleclient_dropwizard"
-    compile "io.prometheus:simpleclient_servlet"
-    compile "net.logstash.logback:logstash-logback-encoder"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-hppc"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5"
-    compile "com.fasterxml.jackson.core:jackson-annotations"
-    compile "com.fasterxml.jackson.core:jackson-databind"
-    compile "com.fasterxml.jackson.module:jackson-module-afterburner"
-    compile "com.ryantenney.metrics:metrics-spring"
-    compile "org.hibernate:hibernate-core"
-    compile "com.zaxxer:HikariCP"
-    compile "org.apache.commons:commons-lang3"
-    compile "commons-io:commons-io"
-    compile "javax.transaction:javax.transaction-api"
-    compile "org.hibernate:hibernate-entitymanager"
-    compile "org.hibernate:hibernate-envers"
-    compile "org.hibernate.validator:hibernate-validator"
-    compile "org.liquibase:liquibase-core"
-    compile "com.mattbertolini:liquibase-slf4j"
+    implementation group: "io.github.jhipster", name: "jhipster-framework"
+    implementation "io.dropwizard.metrics:metrics-core"
+    implementation "io.dropwizard.metrics:metrics-json"
+    implementation "io.dropwizard.metrics:metrics-jvm"
+    implementation "io.dropwizard.metrics:metrics-servlet"
+    implementation "io.dropwizard.metrics:metrics-servlets"
+    implementation "io.micrometer:micrometer-registry-prometheus"
+    implementation "net.logstash.logback:logstash-logback-encoder"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5"
+    implementation "com.fasterxml.jackson.core:jackson-annotations"
+    implementation "com.fasterxml.jackson.core:jackson-databind"
+    implementation "com.fasterxml.jackson.module:jackson-module-afterburner"
+    implementation "org.hibernate:hibernate-core"
+    implementation "com.zaxxer:HikariCP"
+    implementation "org.apache.commons:commons-lang3"
+    implementation "commons-io:commons-io"
+    implementation "javax.transaction:javax.transaction-api"
+    implementation "org.hibernate:hibernate-entitymanager"
+    implementation "org.hibernate.validator:hibernate-validator"
+    implementation "org.liquibase:liquibase-core"
     liquibaseRuntime "org.liquibase:liquibase-core"
     liquibaseRuntime "org.liquibase.ext:liquibase-hibernate5:${liquibase_hibernate5_version}"
     liquibaseRuntime sourceSets.main.compileClasspath
-    compile "org.springframework.boot:spring-boot-loader-tools"
-    compile "org.springframework.boot:spring-boot-starter-mail"
-    compile "org.springframework.boot:spring-boot-starter-logging"
-    compile "org.springframework.boot:spring-boot-starter-actuator"
-    compile "org.springframework.boot:spring-boot-starter-aop"
-    compile "org.springframework.boot:spring-boot-starter-data-jpa"
-    compile "org.springframework.cloud:spring-cloud-stream"
-    compile "org.springframework.cloud:spring-cloud-stream-binder-kafka"
-    compile "org.springframework.kafka:spring-kafka"
-    compile "org.springframework.boot:spring-boot-starter-security"
-    compile ("org.springframework.boot:spring-boot-starter-web") {
-        exclude module: 'spring-boot-starter-tomcat'
+    implementation "org.springframework.boot:spring-boot-loader-tools"
+    implementation "org.springframework.boot:spring-boot-starter-mail"
+    implementation "org.springframework.boot:spring-boot-starter-logging"
+    implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation "org.springframework.boot:spring-boot-starter-aop"
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa"
+    implementation "org.springframework.cloud:spring-cloud-stream"
+    implementation "org.springframework.cloud:spring-cloud-stream-binder-kafka"
+    implementation "org.springframework.kafka:spring-kafka"
+    implementation "org.springframework.boot:spring-boot-starter-security"
+    implementation ("org.springframework.boot:spring-boot-starter-web") {
+        exclude module: "spring-boot-starter-tomcat"
     }
-    compile "org.springframework.boot:spring-boot-starter-undertow"
-    compile "org.springframework.boot:spring-boot-starter-thymeleaf"
-    compile "org.zalando:problem-spring-web:0.24.0-RC.0"
-    compile "org.springframework.cloud:spring-cloud-starter"
-    compile "org.springframework.cloud:spring-cloud-starter-netflix-ribbon"
-    compile "org.springframework.cloud:spring-cloud-starter-netflix-hystrix"
-    compile "org.springframework.retry:spring-retry"
-    compile "org.springframework.cloud:spring-cloud-starter-consul-discovery"
-    compile "org.springframework.cloud:spring-cloud-starter-consul-config"
-    compile "org.springframework.cloud:spring-cloud-security"
-    compile "org.springframework.cloud:spring-cloud-starter-openfeign"
-    compile "org.springframework.boot:spring-boot-starter-cloud-connectors"
-    compile "org.springframework.security:spring-security-config"
-    compile "org.springframework.security:spring-security-data"
-    compile "org.springframework.security:spring-security-web"
-    compile "org.springframework.security.oauth:spring-security-oauth2"
-    compile "org.springframework.security:spring-security-jwt"
-    compile "org.springframework.security:spring-security-ldap"
-    compile ("io.springfox:springfox-swagger2") {
-        exclude module: 'mapstruct'
+    implementation "org.springframework.boot:spring-boot-starter-undertow"
+    implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
+    implementation "org.zalando:problem-spring-web"
+    implementation "org.springframework.cloud:spring-cloud-starter"
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-ribbon"
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-hystrix"
+    implementation "org.springframework.retry:spring-retry"
+    implementation "org.springframework.cloud:spring-cloud-starter-consul-discovery"
+    implementation "org.springframework.cloud:spring-cloud-starter-consul-config"
+    implementation "org.springframework.cloud:spring-cloud-security"
+    implementation "org.springframework.cloud:spring-cloud-starter-openfeign"
+    implementation "org.springframework.boot:spring-boot-starter-cloud-connectors"
+    implementation "org.springframework.security:spring-security-config"
+    implementation "org.springframework.security:spring-security-data"
+    implementation "org.springframework.security:spring-security-web"
+    implementation "org.springframework.security.oauth:spring-security-oauth2"
+    implementation "org.springframework.security:spring-security-jwt"
+    implementation "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
+    implementation ("io.springfox:springfox-swagger2") {
+        exclude module: "mapstruct"
     }
-    compile "io.springfox:springfox-bean-validators"
-    compile "org.postgresql:postgresql"
-    compile "com.h2database:h2"
+    implementation "io.springfox:springfox-bean-validators"
+    implementation "org.postgresql:postgresql"
+    implementation "com.h2database:h2"
     liquibaseRuntime "org.postgresql:postgresql"
-    compile "org.mapstruct:mapstruct-jdk8:${mapstruct_version}"
-    compile "org.freemarker:freemarker:${freemarker_version}"
-    compile "org.springframework.social:spring-social-security:${spring_social_version}"
-    compile "org.springframework.social:spring-social-core:${spring_social_version}"
-    compile "org.springframework.social:spring-social-config:${spring_social_version}"
-    compile "org.springframework.social:spring-social-google:${spring_social_google_version}"
-    compile "org.springframework.social:spring-social-facebook:${spring_social_facebook_version}"
-    compile "org.springframework.social:spring-social-twitter:${spring_social_twitter_version}"
-    compile "org.springframework.social:spring-social-linkedin:${spring_social_linkedin_version}"
-    compile "org.jboss.aerogear:aerogear-otp-java:${aerogear_version}"
-    compileOnly "org.projectlombok:lombok:${lombok_version}"
-
-    compile "com.icthh.xm.commons:xm-commons-ms-web:${xm_commons_version}"
-    compile "com.icthh.xm.commons:xm-commons-lep:${xm_commons_version}"
-    compile "com.icthh.xm.commons:xm-commons-tenant-endpoint:${xm_commons_version}"
-    compile "com.icthh.xm.commons:xm-commons-i18n:${xm_commons_version}"
-    compile "com.icthh.xm.commons:xm-commons-migration-db:${xm_commons_version}"
-    compile "com.icthh.xm.commons:xm-commons-permission:${xm_commons_version}"
-    compile "com.icthh.xm.commons:xm-commons-timeline:${xm_commons_version}"
-    compile "com.icthh.xm.commons:xm-commons-metric:${xm_commons_version}"
-    compile "com.icthh.xm.commons:xm-commons-scheduler:${xm_commons_version}"
-    compile "com.icthh.xm.commons:xm-commons-mail:${xm_commons_version}"
-
-    // groovy
-    compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.4.5'
-    compile group: 'org.codehaus.groovy.modules.http-builder', name: 'http-builder', version: '0.7.1'
-
-    annotationProcessor "org.projectlombok:lombok:${lombok_version}"
+    implementation "org.mapstruct:mapstruct:${mapstruct_version}"
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
-    annotationProcessor "org.hibernate:hibernate-jpamodelgen"
-    annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor") {
-        exclude group: 'com.vaadin.external.google', module: 'android-json'
+    annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
+    annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
+    annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
+        exclude group: "com.vaadin.external.google", module: "android-json"
     }
-    testCompile "com.jayway.jsonpath:json-path"
-    testCompile "io.cucumber:cucumber-junit"
-    testCompile "io.cucumber:cucumber-spring"
-    testCompile ("org.springframework.boot:spring-boot-starter-test") {
-        exclude group: 'com.vaadin.external.google', module: 'android-json'
+
+    // XM custom dependencies
+    compileOnly "org.projectlombok:lombok:${lombok_version}"
+    annotationProcessor "org.projectlombok:lombok:${lombok_version}"
+
+    implementation "com.icthh.xm.commons:xm-commons-ms-web:${xm_commons_version}"
+    implementation "com.icthh.xm.commons:xm-commons-lep:${xm_commons_version}"
+    implementation "com.icthh.xm.commons:xm-commons-tenant-endpoint:${xm_commons_version}"
+    implementation "com.icthh.xm.commons:xm-commons-i18n:${xm_commons_version}"
+    implementation "com.icthh.xm.commons:xm-commons-migration-db:${xm_commons_version}"
+    implementation "com.icthh.xm.commons:xm-commons-permission:${xm_commons_version}"
+    implementation "com.icthh.xm.commons:xm-commons-timeline:${xm_commons_version}"
+    implementation "com.icthh.xm.commons:xm-commons-metric:${xm_commons_version}"
+    implementation "com.icthh.xm.commons:xm-commons-scheduler:${xm_commons_version}"
+    implementation "com.icthh.xm.commons:xm-commons-mail:${xm_commons_version}"
+
+    implementation group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.4.5'
+    implementation group: 'org.codehaus.groovy.modules.http-builder', name: 'http-builder', version: '0.7.1'
+
+    implementation "org.springframework.security:spring-security-ldap"
+    implementation "org.freemarker:freemarker:${freemarker_version}"
+    implementation "org.springframework.social:spring-social-security:${spring_social_version}"
+    implementation "org.springframework.social:spring-social-core:${spring_social_version}"
+    implementation "org.springframework.social:spring-social-config:${spring_social_version}"
+    implementation "org.springframework.social:spring-social-google:${spring_social_google_version}"
+    implementation "org.springframework.social:spring-social-facebook:${spring_social_facebook_version}"
+    implementation "org.springframework.social:spring-social-twitter:${spring_social_twitter_version}"
+    implementation "org.springframework.social:spring-social-linkedin:${spring_social_linkedin_version}"
+    implementation "org.jboss.aerogear:aerogear-otp-java:${aerogear_version}"
+
+    // test dependencies
+    testImplementation "com.jayway.jsonpath:json-path"
+    testImplementation "io.cucumber:cucumber-junit"
+    testImplementation "io.cucumber:cucumber-spring"
+    testImplementation ("org.springframework.boot:spring-boot-starter-test") {
+        exclude module: "junit"
+        exclude group: "com.vaadin.external.google", module: "android-json"
     }
-    testCompile "org.springframework.security:spring-security-test"
-    testCompile "org.springframework.boot:spring-boot-test"
-    testCompile "org.assertj:assertj-core"
-    testCompile "junit:junit"
-    testCompile "org.mockito:mockito-core"
-    testCompile "com.mattbertolini:liquibase-slf4j"
-    testCompile "org.hamcrest:hamcrest-library"
-    testCompile "com.h2database:h2"
-    testCompile "org.zapodot:embedded-ldap-junit:${embedded_ldap_version}"
+    testImplementation "org.springframework.security:spring-security-test"
+    testImplementation "org.springframework.boot:spring-boot-test"
+    testImplementation "org.junit.jupiter:junit-jupiter-engine"
+    testImplementation "org.junit.vintage:junit-vintage-engine"
+    testImplementation "com.tngtech.archunit:archunit-junit5-api:${archunit_junit5_version}"
+    testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:${archunit_junit5_version}"
+    testImplementation "org.assertj:assertj-core"
+    testImplementation "junit:junit"
+    testImplementation "org.mockito:mockito-core"
+    testImplementation "org.hamcrest:hamcrest-library"
+    testImplementation "com.h2database:h2"
     liquibaseRuntime "com.h2database:h2"
+
+    // XM test custom dependencies
     testCompileOnly "org.projectlombok:lombok:${lombok_version}"
-    testCompile "org.springframework.cloud:spring-cloud-stream-test-support"
+    testAnnotationProcessor "org.projectlombok:lombok:${lombok_version}"
+    testImplementation "org.zapodot:embedded-ldap-junit:${embedded_ldap_version}"
+
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 }
 
-checkstyle {
-    toolVersion = "7.6.1"
-    ignoreFailures = true
-    configFile = rootProject.file('./qa/checkstyle.xml')
-}
-
-findbugs {
-    toolVersion = '3.0.1'
-    ignoreFailures = true
-}
-
-pmd {
-    rulePriority = 3
-    toolVersion = '5.5.4'
-    ignoreFailures = true
-    ruleSetFiles = files("./qa/pmd.xml")
-}
-
-clean {
-    delete "target"
-}
-
 task cleanResources(type: Delete) {
-    delete 'build/resources'
+    delete "build/resources"
 }
 
 wrapper {
-    gradleVersion = '4.10.2'
+    gradleVersion = "6.0.1"
 }
 
-task stage(dependsOn: 'bootWar') {
-}
-
-bootWar.dependsOn war
-compileJava {
-    dependsOn processResources
-    // add method parameters names to .class (used by LEP scripts)
-    options.compilerArgs << '-parameters'
-}
-processResources.dependsOn cleanResources,bootBuildInfo
-bootBuildInfo.mustRunAfter cleanResources
+compileJava.dependsOn processResources
+processResources.dependsOn bootBuildInfo

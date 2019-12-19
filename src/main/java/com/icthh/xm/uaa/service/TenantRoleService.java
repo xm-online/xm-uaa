@@ -85,14 +85,15 @@ public class TenantRoleService {
      */
     public Map<String, Role> getRoles() {
         TreeMap<String, Role> roles = getConfig(permissionProperties.getRolesSpecPath(),
-                        new TypeReference<TreeMap<String, Role>>() {});
+            new TypeReference<>() {
+            });
         return roles != null ? roles : new TreeMap<>();
     }
 
     private Map<String, Map<String, Set<Permission>>> getPermissions() {
         Map<String, Map<String, Set<Permission>>> permissions = getConfig(
             permissionProperties.getPermissionsSpecPath(),
-            new TypeReference<TreeMap<String, TreeMap<String, TreeSet<Permission>>>>() {
+            new TypeReference<>() {
             });
         return permissions != null ? permissions : new TreeMap<>();
     }
@@ -472,7 +473,7 @@ public class TenantRoleService {
     }
 
     @SneakyThrows
-    private <T> T getConfig(String configPath, TypeReference typeReference) {
+    private <T> T getConfig(String configPath, TypeReference<T> typeReference) {
         String config = getConfigContent(configPath).orElse(EMPTY_YAML);
 
         return mapper.readValue(config, typeReference);

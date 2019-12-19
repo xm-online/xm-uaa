@@ -17,6 +17,8 @@
 spring:
     application:
         name: uaa
+    main:
+        allow-bean-definition-overriding: true
     cloud:
         stream:
             kafka:
@@ -52,6 +54,8 @@ spring:
             hibernate.generate_statistics: true
             hibernate.hbm2ddl.auto: validate
             hibernate.jdbc.time_zone: UTC
+            # see org.hibernate.cfg.AvailableSettings.PREFER_GENERATOR_NAME_AS_DEFAULT_SEQUENCE_NAME
+            hibernate.model.generator_name_as_sequence_name: false
     liquibase:
         contexts: test
         change-log: classpath:config/liquibase/master.xml
@@ -104,10 +108,8 @@ jhipster:
             client-id: internal
             client-secret: internal
     metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
-        jmx.enabled: true
-        logs: # Reports Dropwizard metrics in the logs
-            enabled: true
-            report-frequency: 60 # in seconds
+        logs: # Reports metrics in the logs
+            enabled: false
 
 # ===================================================================
 # Application specific properties

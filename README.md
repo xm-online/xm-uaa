@@ -2,17 +2,12 @@
 
 # uaa
 
-This application was generated using JHipster 5.7.2, you can find documentation and help at [https://www.jhipster.tech/documentation-archive/v5.7.2](https://www.jhipster.tech/documentation-archive/v5.7.2).
+This application was generated using JHipster 6.5.1, you can find documentation and help at [https://www.jhipster.tech/documentation-archive/v6.5.1](https://www.jhipster.tech/documentation-archive/v6.5.1).
 
 This is a "uaa" application intended to be part of a microservice architecture, please refer to the [Doing microservices with JHipster][] page of the documentation for more information.
 
 This is also a JHipster User Account and Authentication (UAA) Server, refer to [Using UAA for Microservice Security][] for details on how to secure JHipster microservices with OAuth2.
 This application is configured for Service Discovery and Configuration with Consul. On launch, it will refuse to start if it is not able to connect to Consul at [http://localhost:8500](http://localhost:8500). For more information, read our documentation on [Service Discovery and Configuration with Consul][].
-
-**Note:** `gradle-local.properties` added to `.gitignore` and must never be committed into GIT project repository. 
-
-
-For details about gradle script properties substitution see Readme of [Gradle Properties Plugin][].
 
 ## Development
 
@@ -24,21 +19,29 @@ For further instructions on how to develop with JHipster, have a look at [Using 
 
 ## Building for production
 
-To optimize the uaa application for production, run:
+### Packaging as jar
 
-    ./gradlew -Pprod clean bootWar
+To build the final jar and optimize the uaa application for production, run:
+
+    ./gradlew -Pprod clean bootJar
 
 To ensure everything worked, run:
 
-    java -jar build/libs/*.war
+    java -jar build/libs/*.jar
 
 Refer to [Using JHipster in production][] for more details.
+
+### Packaging as war
+
+To package your application as a war in order to deploy it to an application server, run:
+
+    ./gradlew -Pprod -Pwar clean bootWar
 
 ## Testing
 
 To launch your application's tests, run:
 
-    ./gradlew test
+    ./gradlew test integrationTest jacocoTestReport
 
 For more information, refer to the [Running tests page][].
 
@@ -50,10 +53,12 @@ Sonar is used to analyse code quality. You can start a local Sonar server (acces
 docker-compose -f src/main/docker/sonar.yml up -d
 ```
 
+You can run a Sonar analysis with using the [sonar-scanner](https://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner) or by using the gradle plugin.
+
 Then, run a Sonar analysis:
 
 ```
-./gradlew -Pprod clean test sonarqube
+./gradlew -Pprod clean check jacocoTestReport sonarqube
 ```
 
 For more information, refer to the [Code quality page][].
@@ -73,7 +78,7 @@ To stop it and remove the container, run:
 You can also fully dockerize your application and all the services that it depends on.
 To achieve this, first build a docker image of your app by running:
 
-    ./gradlew bootWar -Pprod jibDockerBuild
+    ./gradlew bootJar -Pprod jibDockerBuild
 
 Then run:
 
@@ -86,13 +91,13 @@ For more information refer to [Using Docker and Docker-Compose][], this page als
 To configure CI for your project, run the ci-cd sub-generator (`jhipster ci-cd`), this will let you generate configuration files for a number of Continuous Integration systems. Consult the [Setting up Continuous Integration][] page for more information.
 
 [jhipster homepage and latest documentation]: https://www.jhipster.tech
-[jhipster 5.7.2 archive]: https://www.jhipster.tech/documentation-archive/v5.7.2
-[doing microservices with jhipster]: https://www.jhipster.tech/documentation-archive/v5.7.2/microservices-architecture/
+[jhipster 6.5.1 archive]: https://www.jhipster.tech/documentation-archive/v6.5.1
+[doing microservices with jhipster]: https://www.jhipster.tech/documentation-archive/v6.5.1/microservices-architecture/
 
-[Using UAA for Microservice Security]: https://www.jhipster.tech/documentation-archive/v5.7.2/using-uaa/[Using JHipster in development]: https://www.jhipster.tech/documentation-archive/v5.7.2/development/
-[Service Discovery and Configuration with Consul]: https://www.jhipster.tech/documentation-archive/v5.7.2/microservices-architecture/#consul
-[Using Docker and Docker-Compose]: https://www.jhipster.tech/documentation-archive/v5.7.2/docker-compose
-[Using JHipster in production]: https://www.jhipster.tech/documentation-archive/v5.7.2/production/
-[Running tests page]: https://www.jhipster.tech/documentation-archive/v5.7.2/running-tests/
-[Code quality page]: https://www.jhipster.tech/documentation-archive/v5.7.2/code-quality/
-[Setting up Continuous Integration]: https://www.jhipster.tech/documentation-archive/v5.7.2/setting-up-ci/
+[Using UAA for Microservice Security]: https://www.jhipster.tech/documentation-archive/v6.5.1/using-uaa/[Using JHipster in development]: https://www.jhipster.tech/documentation-archive/v6.5.1/development/
+[Service Discovery and Configuration with Consul]: https://www.jhipster.tech/documentation-archive/v6.5.1/microservices-architecture/#consul
+[Using Docker and Docker-Compose]: https://www.jhipster.tech/documentation-archive/v6.5.1/docker-compose
+[Using JHipster in production]: https://www.jhipster.tech/documentation-archive/v6.5.1/production/
+[Running tests page]: https://www.jhipster.tech/documentation-archive/v6.5.1/running-tests/
+[Code quality page]: https://www.jhipster.tech/documentation-archive/v6.5.1/code-quality/
+[Setting up Continuous Integration]: https://www.jhipster.tech/documentation-archive/v6.5.1/setting-up-ci/

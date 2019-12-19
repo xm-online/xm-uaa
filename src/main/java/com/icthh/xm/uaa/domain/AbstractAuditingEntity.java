@@ -1,7 +1,6 @@
 package com.icthh.xm.uaa.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.hibernate.envers.Audited;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -19,7 +18,6 @@ import java.time.Instant;
  * last modified by date.
  */
 @MappedSuperclass
-@Audited
 @EntityListeners(AuditingEntityListener.class)
 public abstract class AbstractAuditingEntity implements Serializable {
 

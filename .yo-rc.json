@@ -3,7 +3,7 @@
     "promptValues": {
       "packageName": "com.icthh.xm.uaa"
     },
-    "jhipsterVersion": "5.7.2",
+    "jhipsterVersion": "6.5.1",
     "applicationType": "uaa",
     "baseName": "uaa",
     "packageName": "com.icthh.xm.uaa",
@@ -16,18 +16,22 @@
     "devDatabaseType": "h2Memory",
     "prodDatabaseType": "postgresql",
     "searchEngine": false,
-    "messageBroker": "kafka",
+    "messageBroker": false,
     "serviceDiscoveryType": "consul",
     "buildTool": "gradle",
     "enableSwaggerCodegen": false,
+    "embeddableLaunchScript": false,
     "testFrameworks": [
       "gatling",
       "cucumber"
     ],
     "jhiPrefix": "jhi",
+    "entitySuffix": "",
+    "dtoSuffix": "DTO",
     "otherModules": [],
     "enableTranslation": false,
     "clientPackageManager": "npm",
+    "blueprints": [],
     "skipClient": true
   }
 }

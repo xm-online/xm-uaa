@@ -38,7 +38,8 @@ public class ListToStringConverter implements AttributeConverter<List<String>, S
     @Override
     public List<String> convertToEntityAttribute(String dbValue) {
         List<String> mapValue = emptyList();
-        TypeReference<List<String>> typeRef = new TypeReference<List<String>>() {};
+        TypeReference<List<String>> typeRef = new TypeReference<>() {
+        };
         try {
             mapValue = mapper.readValue(StringUtils.isNoneBlank(dbValue) ? dbValue : "[]", typeRef);
         } catch (IOException e) {

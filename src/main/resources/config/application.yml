@@ -37,6 +37,8 @@ spring:
         exclude: org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration
     application:
         name: uaa
+    main:
+        allow-bean-definition-overriding: true
     cloud:
         inetutils:
             preferredNetworks:
@@ -162,7 +164,7 @@ xm-config:
 # ===================================================================
 
 application:
-    scheduler-enabled: false
+    scheduler-enabled: true
     tenant-properties-path-pattern: /config/tenants/{tenantName}/uaa/${application.tenant-properties-name}
     tenant-properties-name: uaa.yml
     tenant-login-properties-path-pattern: /config/tenants/{tenantName}/uaa/${application.tenant-login-properties-name}

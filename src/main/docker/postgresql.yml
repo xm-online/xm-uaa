@@ -1,7 +1,7 @@
 version: '2'
 services:
     uaa-postgresql:
-        image: postgres:10.4
+        image: postgres:11.5
         # volumes:
         #     - ~/volumes/jhipster/uaa/postgresql/:/var/lib/postgresql/data/
         environment:
