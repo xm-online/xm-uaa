@@ -103,10 +103,11 @@ springBoot {
 
 bootWar {
     mainClassName = 'com.icthh.xm.uaa.UaaApp'
-}
-
-war {
-
+    manifest {
+        attributes(
+            "Implementation-Version": archiveVersion
+        )
+    }
 }
 
 test {
