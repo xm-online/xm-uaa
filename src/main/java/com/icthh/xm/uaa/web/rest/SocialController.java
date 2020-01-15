@@ -5,6 +5,7 @@ import static com.icthh.xm.uaa.social.SocialLoginAnswer.AnswerType.REGISTERED;
 import static com.icthh.xm.uaa.social.SocialLoginAnswer.AnswerType.SING_IN;
 import static org.springframework.social.support.URIBuilder.fromUri;
 
+import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.uaa.commons.UaaUtils;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.service.SocialService;
@@ -41,6 +42,7 @@ public class SocialController {
 
     @PostMapping(value = "/signin/{providerId}")
     @PreAuthorize("hasPermission(null, 'SOCIAL.SIGN_IN')")
+    @PrivilegeDescription("Privilege to social sign in")
     public RedirectView signIn(@PathVariable String providerId) {
         try {
             return new RedirectView(socialService.initSocialLogin(providerId), false);
@@ -73,6 +75,7 @@ public class SocialController {
 
     @PostMapping(value = "/accept/{activationCode}")
     @PreAuthorize("hasPermission(null, 'SOCIAL.ACCEPT_CONNECTION')")
+    @PrivilegeDescription("Privilege to social accept connection")
     public void acceptConnection(@PathVariable String activationCode) {
         socialService.acceptConnection(activationCode);
     }

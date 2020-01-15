@@ -12,6 +12,7 @@ import static org.springframework.transaction.annotation.Propagation.REQUIRES_NE
 import com.google.common.base.Preconditions;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
+import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.logging.LoggingAspectConfig;
@@ -258,6 +259,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     @FindWithPermission("USER.GET_LIST")
+    @PrivilegeDescription("Privilege to get all the users")
     public Page<UserDTO> getAllManagedUsers(Pageable pageable, String roleKey, String privilegeKey) {
         if (StringUtils.isNoneBlank(roleKey)) {
             log.debug("Find by roleKey {}", roleKey);

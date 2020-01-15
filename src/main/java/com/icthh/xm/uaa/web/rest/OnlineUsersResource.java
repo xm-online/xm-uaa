@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.uaa.service.OnlineUsersService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,6 +29,7 @@ public class OnlineUsersResource {
     @GetMapping("/onlineUsers")
     @Timed
     @PreAuthorize("hasPermission(null, 'USER.METRIC.ONLINE')")
+    @PrivilegeDescription("Privilege to get all online users")
     public Integer getUsersOnline() {
         return onlineUsersService.find().size();
     }

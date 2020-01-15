@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.uaa.domain.TemplateParams;
 import com.icthh.xm.uaa.service.LdapService;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -29,6 +30,7 @@ public class LdapResource {
     @GetMapping("/ldap/_search-with-template")
     @Timed
     @PreAuthorize("hasPermission({'templateKey': #templateKey}, 'LDAP.SEARCH')")
+    @PrivilegeDescription("Privilege to ldap search by templateKey")
     public ResponseEntity searchByTemplate(@NotEmpty @RequestParam String templateKey,
                                            @ApiParam TemplateParams templateParams) {
         Set<Map<String, List<String>>> result = ldapService.searchByTemplate(templateKey, templateParams);

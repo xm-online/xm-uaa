@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.service;
 
 import com.icthh.xm.commons.permission.annotation.FindWithPermission;
+import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.uaa.config.audit.AuditEventConverter;
 import com.icthh.xm.uaa.domain.PersistentAuditEvent;
 import com.icthh.xm.uaa.repository.AuditEventPermittedRepository;
@@ -33,12 +34,14 @@ public class AuditEventService {
     private final AuditEventPermittedRepository permittedRepository;
 
     @FindWithPermission("AUDIT.GET_LIST")
+    @PrivilegeDescription("Privilege to get all the auditEvents")
     public Page<AuditEvent> findAll(Pageable pageable, String privilegeKey) {
         return permittedRepository.findAll(pageable, PersistentAuditEvent.class, privilegeKey)
             .map(auditEventConverter::convertToAuditEvent);
     }
 
     @FindWithPermission("AUDIT.GET_LIST")
+    @PrivilegeDescription("Privilege to get all the auditEvents")
     public Page<AuditEvent> findByDates(Instant fromDate, Instant toDate, Pageable pageable, String privilegeKey) {
         return permittedRepository.findAllByAuditEventDateBetween(fromDate, toDate, pageable, privilegeKey)
             .map(auditEventConverter::convertToAuditEvent);

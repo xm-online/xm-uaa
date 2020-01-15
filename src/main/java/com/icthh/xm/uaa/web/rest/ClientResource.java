@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.uaa.domain.Client;
 import com.icthh.xm.uaa.service.ClientService;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
@@ -59,6 +60,7 @@ public class ClientResource {
     @PostMapping("/clients")
     @Timed
     @PreAuthorize("hasPermission({'client': #client}, 'CLIENT.CREATE')")
+    @PrivilegeDescription("Privilege to create a new client")
     public ResponseEntity<Void> createClient(@RequestBody ClientDTO client) throws URISyntaxException {
         if (client.getId() != null) {
             return ResponseEntity
@@ -82,6 +84,7 @@ public class ClientResource {
     @PutMapping("/clients")
     @Timed
     @PreAuthorize("hasPermission({'id': #client.id, 'newClient': #client}, 'client', 'CLIENT.UPDATE')")
+    @PrivilegeDescription("Privilege to updates an existing client")
     public ResponseEntity<Void> updateClient(@RequestBody ClientDTO client) throws URISyntaxException {
         if (client.getId() == null) {
             //in order to call method with permissions check
@@ -115,6 +118,7 @@ public class ClientResource {
     @GetMapping("/clients/clientid-contains")
     @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'CLIENT.GET_LIST.ITEM')")
     @Timed
+    @PrivilegeDescription("Privilege to get the clients")
     public ResponseEntity<List<ClientDTO>> getAllClientsByClientIdContains(@RequestParam String clientId, Pageable pageable) {
         Page<ClientDTO> page = clientService.findAllByClientIdContains(clientId, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/clients/clientid-contains");
@@ -130,6 +134,7 @@ public class ClientResource {
     @GetMapping("/clients/{id}")
     @Timed
     @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'CLIENT.GET_LIST.ITEM')")
+    @PrivilegeDescription("Privilege to get the clients")
     public ResponseEntity<ClientDTO> getClient(@PathVariable Long id) {
         return ResponseUtil.wrapOrNotFound(clientService.findOne(id).map(ClientDTO::new));
     }
@@ -143,6 +148,7 @@ public class ClientResource {
     @DeleteMapping("/clients/{id}")
     @Timed
     @PreAuthorize("hasPermission({'id': #id}, 'client', 'CLIENT.DELETE')")
+    @PrivilegeDescription("Privilege to delete the client by id")
     public ResponseEntity<Void> deleteClient(@PathVariable Long id) {
         clientService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();

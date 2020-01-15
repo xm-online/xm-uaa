@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import com.icthh.xm.commons.exceptions.BusinessException;
+import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
@@ -92,6 +93,7 @@ public class AccountResource {
     @PostMapping(path = "/register", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_PLAIN_VALUE})
     @Timed
     @PreAuthorize("hasPermission({'user': #user, 'request': #request}, 'ACCOUNT.REGISTER')")
+    @PrivilegeDescription("Privilege to register the user")
     public ResponseEntity<Void> registerAccount(@Valid @RequestBody ManagedUserVM user, HttpServletRequest request) {
         if (user.getEmail() == null) {
             throw new BusinessException("Email can't be empty");
@@ -114,6 +116,7 @@ public class AccountResource {
     @GetMapping("/is-captcha-need")
     @Timed
     @PreAuthorize("hasPermission({'request': #request}, 'CAPTCHA.GET')")
+    @PrivilegeDescription("Privilege to get captcha")
     public ResponseEntity<CaptchaVM> isCaptchaNeed(HttpServletRequest request) {
         return ResponseEntity.ok(new CaptchaVM(
             captchaService.isCaptchaNeed(request.getRemoteAddr()),
@@ -131,6 +134,7 @@ public class AccountResource {
     @GetMapping("/activate")
     @Timed
     @PreAuthorize("hasPermission(null, 'ACCOUNT.ACTIVATE')")
+    @PrivilegeDescription("Privilege to activate the registered user")
     public ResponseEntity<String> activateAccount(@RequestParam("key") String key) {
         return accountService.activateRegistration(key)
             .map(user -> {
@@ -149,6 +153,7 @@ public class AccountResource {
     @GetMapping("/authenticate")
     @Timed
     @PreAuthorize("hasPermission({'request': #request}, 'ACCOUNT.CHECK_AUTH')")
+    @PrivilegeDescription("Privilege to check if the user is authenticated")
     public String isAuthenticated(HttpServletRequest request) {
         log.debug("REST request to check if the current user is authenticated");
         return request.getRemoteUser();
@@ -163,6 +168,7 @@ public class AccountResource {
     @GetMapping("/account")
     @Timed
     @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'ACCOUNT.GET_LIST.ITEM')")
+    @PrivilegeDescription("Privilege to get the current user")
     public ResponseEntity<UserDTO> getAccount() {
         return ResponseUtil.wrapOrNotFound(userService.findOneWithLoginsByUserKey(getRequiredUserKey())
                                                .map(user -> {
@@ -176,6 +182,7 @@ public class AccountResource {
         produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @Timed
     @PreAuthorize("hasPermission({'login': #login}, 'ACCOUNT.RESET_ACTIVATION')")
+    @PrivilegeDescription("Privilege to reset activation key")
     public ResponseEntity<Void> resetActivationKey(@RequestBody String login) {
         userService.resetActivationKey(login);
         return new ResponseEntity<>(HttpStatus.OK);
@@ -191,6 +198,7 @@ public class AccountResource {
     @PostMapping("/account")
     @Timed
     @PreAuthorize("hasPermission({'user': #user}, 'ACCOUNT.UPDATE')")
+    @PrivilegeDescription("Privilege to update the current user information")
     public ResponseEntity<UserDTO> saveAccount(@Valid @RequestBody UserDTO user) {
         user.getLogins().forEach(userLogin -> userLoginRepository.findOneByLoginIgnoreCaseAndUserIdNot(
             userLogin.getLogin(), user.getId()).ifPresent(s -> {
@@ -215,6 +223,7 @@ public class AccountResource {
     @PutMapping("/account/logins")
     @Timed
     @PreAuthorize("hasPermission({'userKey': #user.userKey, 'newUser': #user}, 'user', 'ACCOUNT.LOGIN.UPDATE')")
+    @PrivilegeDescription("Privilege to updates an existing Account logins")
     public ResponseEntity<UserDTO> updateUserLogins(@Valid @RequestBody UserDTO user) {
         user.getLogins().forEach(
             userLogin -> userLoginRepository.findOneByLoginIgnoreCaseAndUserIdNot(
@@ -238,6 +247,7 @@ public class AccountResource {
     @PostMapping(path = "/account/change_password", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @Timed
     @PreAuthorize("hasPermission({'password': #password}, 'ACCOUNT.PASSWORD.UPDATE')")
+    @PrivilegeDescription("Privilege to changes the current user's password")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordVM password) {
         UserDTO userDTO = accountService.changePassword(password);
         produceEvent(userDTO, Constants.CHANGE_PASSWORD_EVENT_TYPE);
@@ -254,6 +264,7 @@ public class AccountResource {
     @PostMapping(path = "/account/reset_password/init", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @Timed
     @PreAuthorize("hasPermission({'mail': #mail}, 'ACCOUNT.PASSWORD.RESET')")
+    @PrivilegeDescription("Privilege to send an email to reset the password of the user")
     public ResponseEntity<Void> requestPasswordReset(@RequestBody String mail) {
         userService.requestPasswordReset(mail)
             .ifPresent(accountMailService::sendMailOnPasswordInit);
@@ -269,6 +280,7 @@ public class AccountResource {
     @GetMapping(path = "/account/reset_password/check", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @Timed
     @PreAuthorize("hasPermission(null, 'ACCOUNT.PASSWORD.RESET.CHECK')")
+    @PrivilegeDescription("Privilege to check if key is valid")
     public ResponseEntity<Void> checkPasswordReset(@RequestParam("key") String key) {
         userService.checkPasswordReset(key);
         return new ResponseEntity<>(HttpStatus.OK);
@@ -284,6 +296,7 @@ public class AccountResource {
     @PostMapping(path = "/account/reset_password/finish", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @Timed
     @PreAuthorize("hasPermission({'keyAndPassword': #keyAndPassword}, 'ACCOUNT.PASSWORD.RESET.FINISH')")
+    @PrivilegeDescription("Privilege to finish reset the password of the user")
     public ResponseEntity<Void> finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
         if (!checkPasswordLength(keyAndPassword.getNewPassword())) {
             throw new BusinessException(CHECK_ERROR_MESSAGE);
@@ -313,19 +326,21 @@ public class AccountResource {
     @PostMapping(path = "/account/tfa_enable")
     @Timed
     @PreAuthorize("hasPermission(null, 'ACCOUNT.TFA.ENABLE')")
+    @PrivilegeDescription("Privilege to enable TFA for current loged in user")
     public ResponseEntity<Void> enableTwoFactorAuth(@Valid @NotNull @RequestBody TfaEnableRequest request) {
         accountService.enableTwoFactorAuth(request.getOtpChannelSpec());
         return ResponseEntity.ok().build();
     }
 
     /**
-     * POST /account/tfa_disable : enable TFA for current loged in user.
+     * POST /account/tfa_disable : disable TFA for current loged in user.
      *
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping(path = "/account/tfa_disable")
     @Timed
     @PreAuthorize("hasPermission(null, 'ACCOUNT.TFA.DISABLE')")
+    @PrivilegeDescription("Privilege to disable TFA for current loged in user")
     public ResponseEntity<Void> disableTwoFactorAuth() {
         accountService.disableTwoFactorAuth();
         return ResponseEntity.ok().build();
@@ -334,6 +349,7 @@ public class AccountResource {
     @GetMapping(path = "/account/tfa_available_otp_channel_specs")
     @Timed
     @PreAuthorize("hasPermission(null, 'ACCOUNT.TFA.AVAILABLE_OTP_CHANNEL_SPECS')")
+    @PrivilegeDescription("Privilege to get tfaOtpChannelSpecs")
     public ResponseEntity<Map<OtpChannelType, List<TfaOtpChannelSpec>>> getTfaAvailableOtpChannelSpecs() {
         Map<OtpChannelType, List<TfaOtpChannelSpec>> channelSpecs = accountService.getTfaAvailableOtpChannelSpecs();
         if (CollectionUtils.isEmpty(channelSpecs)) {

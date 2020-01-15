@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.web.rest;
 
+import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.uaa.service.AuditEventService;
 import com.icthh.xm.uaa.web.rest.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -75,6 +76,7 @@ public class AuditResource {
      */
     @GetMapping("/{id:.+}")
     @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'AUDIT.GET_LIST.ITEM')")
+    @PrivilegeDescription("Privilege to get an AuditEvent by id")
     public ResponseEntity<AuditEvent> get(@PathVariable Long id) {
         return ResponseUtil.wrapOrNotFound(auditEventService.find(id));
     }

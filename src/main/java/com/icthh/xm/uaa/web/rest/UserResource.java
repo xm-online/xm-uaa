@@ -5,6 +5,7 @@ import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdm
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
 import com.icthh.xm.commons.exceptions.BusinessException;
+import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
@@ -104,6 +105,7 @@ public class UserResource {
     @PostMapping("/users")
     @Timed
     @PreAuthorize("hasPermission({'user': #user}, 'USER.CREATE')")
+    @PrivilegeDescription("Privilege to create a new user")
     public ResponseEntity createUser(@Valid @RequestBody UserDTO user) throws URISyntaxException {
         if (user.getId() != null) {
             return ResponseEntity.badRequest()
@@ -134,6 +136,7 @@ public class UserResource {
     @PutMapping("/users")
     @Timed
     @PreAuthorize("hasPermission({'userKey': #user.userKey, 'newUser': #user}, 'user', 'USER.UPDATE')")
+    @PrivilegeDescription("Privilege to updates an existing user")
     public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody UserDTO user) {
         assertNotSuperAdmin(user);
         Optional<UserDTO> updatedUser = userService.updateUser(user);
@@ -151,6 +154,7 @@ public class UserResource {
     @PutMapping("/users/{userKey}/block")
     @Timed
     @PreAuthorize("hasPermission('USER.BLOCK')")
+    @PrivilegeDescription("Privilege to blocks user")
     public ResponseEntity<UserDTO> blockUser(@NotEmpty @PathVariable String userKey) {
         Optional<UserDTO> updatedUser = userService.blockUserAccount(userKey);
         updatedUser.ifPresent(this::produceUpdateEvent);
@@ -167,6 +171,7 @@ public class UserResource {
     @PutMapping("/users/{userKey}/activate")
     @Timed
     @PreAuthorize("hasPermission('USER.UNBLOCK')")
+    @PrivilegeDescription("Privilege to unblocks user")
     public ResponseEntity<UserDTO> unblockUser(@NotEmpty @PathVariable String userKey) {
         Optional<UserDTO> updatedUser = userService.activateUserAccount(userKey);
         updatedUser.ifPresent(this::produceUpdateEvent);
@@ -183,6 +188,7 @@ public class UserResource {
     @PutMapping("/users/role")
     @Timed
     @PreAuthorize("hasPermission({'id': #user.userKey, 'newUser': #user}, 'user', 'USER.CHANGE.ROLE')")
+    @PrivilegeDescription("Privilege to change roleKey for user")
     public ResponseEntity<UserDTO> changeRoleKey(@Valid @RequestBody UserDTO user) {
         Preconditions.checkArgument(StringUtils.isNotEmpty(user.getRoleKey()));
         assertNotSuperAdmin(user.getRoleKey());
@@ -203,6 +209,7 @@ public class UserResource {
     @PutMapping("/users/logins")
     @Timed
     @PreAuthorize("hasPermission({'userKey': #user.userKey, 'newUser': #user}, 'user', 'USER.LOGIN.UPDATE')")
+    @PrivilegeDescription("Privilege to updates an existing User logins")
     public ResponseEntity<UserDTO> updateUserLogins(@Valid @RequestBody UserDTO user) {
         user.getLogins().forEach(userLogin ->
                                      userLoginRepository.findOneByLoginIgnoreCaseAndUserIdNot(userLogin.getLogin(), user.getId())
@@ -241,6 +248,7 @@ public class UserResource {
     @GetMapping("/users/{userKey}")
     @Timed
     @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'USER.GET_LIST.ITEM')")
+    @PrivilegeDescription("Privilege to get the user by userKey")
     public ResponseEntity<UserDTO> getUser(@PathVariable String userKey) {
         return ResponseUtil.wrapOrNotFound(
             userService.findOneWithLoginsByUserKey(userKey).map(UserDTO::new));
@@ -255,6 +263,7 @@ public class UserResource {
     @GetMapping("/users/{userKey}/public")
     @Timed
     @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'USER.GET_LIST.ITEM.PUBLIC')")
+    @PrivilegeDescription("Privilege to get public user info for userKey")
     public ResponseEntity<UserPublicDTO> getPublicUser(@PathVariable String userKey) {
         return ResponseUtil.wrapOrNotFound(
             userService.findOneWithLoginsByUserKey(userKey).map(UserPublicDTO::new));
@@ -269,6 +278,7 @@ public class UserResource {
     @GetMapping("/users/logins")
     @Timed
     @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'USER.GET_USER_BY_LOGIN')")
+    @PrivilegeDescription("Privilege to get all users by login")
     public ResponseEntity<UserDTO> getUserByLogin(@RequestParam String login) {
         return ResponseUtil.wrapOrNotFound(userService.findOneByLogin(login).map(UserDTO::new));
     }
@@ -283,6 +293,7 @@ public class UserResource {
     @GetMapping("/users/logins-contains")
     @Timed
     @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'USER.GET_USER_BY_LOGIN')")
+    @PrivilegeDescription("Privilege to get all users by login")
     public ResponseEntity<List<UserDTO>> getAllUsersByLoginContains(@RequestParam String login, Pageable pageable) {
         Page<UserDTO> page = userService.findAllByLoginContains(login, pageable).map(UserDTO::new);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/users/logins-contains");
@@ -298,6 +309,7 @@ public class UserResource {
     @DeleteMapping("/users/{userKey}")
     @Timed
     @PreAuthorize("hasPermission({'userKey':#userKey}, 'user', 'USER.DELETE')")
+    @PrivilegeDescription("Privilege to delete the user by userKey")
     public ResponseEntity<Void> deleteUser(@PathVariable String userKey) {
         userService.deleteUser(userKey);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert("userManagement.deleted", userKey)).build();
@@ -313,6 +325,7 @@ public class UserResource {
     @PostMapping(path = "/users/{userKey}/tfa_enable")
     @Timed
     @PreAuthorize("hasPermission({'userKey':#userKey}, 'user', 'USER.TFA.ENABLE')")
+    @PrivilegeDescription("Privilege to enable TFA for user with userKey")
     public ResponseEntity<Void> enableTwoFactorAuth(@PathVariable String userKey,
                                                     @Valid @NotNull @RequestBody TfaEnableRequest request) {
         userService.enableTwoFactorAuth(userKey, request.getOtpChannelSpec());
@@ -327,6 +340,7 @@ public class UserResource {
     @PostMapping(path = "/users/{userKey}/tfa_disable")
     @Timed
     @PreAuthorize("hasPermission({'userKey':#userKey}, 'user', 'USER.TFA.DISABLE')")
+    @PrivilegeDescription("Privilege to disable TFA for user with userKey")
     public ResponseEntity<Void> disableTwoFactorAuth(@PathVariable String userKey) {
         userService.disableTwoFactorAuth(userKey);
         return new ResponseEntity<>(HttpStatus.OK);
@@ -335,6 +349,7 @@ public class UserResource {
     @GetMapping(path = "/users/{userKey}/tfa_available_otp_channel_specs")
     @Timed
     @PreAuthorize("hasPermission(null, 'USER.TFA.AVAILABLE_OTP_CHANNEL_SPECS')")
+    @PrivilegeDescription("Privilege to get tfaOtpChannelSpecs for user with userKey")
     public ResponseEntity<Map<OtpChannelType, List<TfaOtpChannelSpec>>> getTfaAvailableOtpChannelSpecs(@PathVariable String userKey) {
         Map<OtpChannelType, List<TfaOtpChannelSpec>> channelSpecs = userService.getTfaAvailableOtpChannelSpecs(userKey);
         if (CollectionUtils.isEmpty(channelSpecs)) {

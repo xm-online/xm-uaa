@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.uaa.service.TenantRoleService;
 import com.icthh.xm.uaa.service.dto.RoleDTO;
 import com.icthh.xm.uaa.service.dto.RoleMatrixDTO;
@@ -42,6 +43,7 @@ public class RoleResource {
     @PostMapping("/roles")
     @Timed
     @PreAuthorize("hasPermission({'role': #role}, 'ROLE.CREATE')")
+    @PrivilegeDescription("Privilege to create a new role")
     public ResponseEntity<Void> createRole(@RequestBody RoleDTO role) {
         tenantRoleService.addRole(role);
         return ResponseEntity.ok().build();
@@ -55,6 +57,7 @@ public class RoleResource {
     @GetMapping("/roles")
     @Timed
     @PostFilter("hasPermission({'returnObject': filterObject, 'log': false}, 'ROLE.GET_LIST')")
+    @PrivilegeDescription("Privilege to get all roles")
     public Collection<RoleDTO> getRoles() {
         return tenantRoleService.getAllRoles();
     }
@@ -67,6 +70,7 @@ public class RoleResource {
     @GetMapping("/roles/{roleKey}")
     @Timed
     @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'ROLE.GET_LIST.ITEM')")
+    @PrivilegeDescription("Privilege to get the role by roleKey")
     public ResponseEntity<RoleDTO> getRole(@PathVariable String roleKey) {
         return ResponseUtil.wrapOrNotFound(tenantRoleService.getRole(roleKey));
     }
@@ -81,6 +85,7 @@ public class RoleResource {
     @DeleteMapping("/roles/{roleKey}")
     @Timed
     @PreAuthorize("hasPermission({'roleKey': #roleKey}, 'ROLE.DELETE')")
+    @PrivilegeDescription("Privilege to delete the role by roleKey")
     public ResponseEntity<Void> deleteUser(@PathVariable String roleKey) {
         tenantRoleService.deleteRole(roleKey);
         return ResponseEntity.ok().build();
@@ -94,6 +99,7 @@ public class RoleResource {
     @PutMapping("/roles")
     @Timed
     @PreAuthorize("hasPermission({'role': #roleDTO}, 'ROLE.UPDATE')")
+    @PrivilegeDescription("Privilege to update an existing role")
     public ResponseEntity<Void> updateRole(@RequestBody RoleDTO roleDTO) {
         tenantRoleService.updateRole(roleDTO);
         return ResponseEntity.ok().build();
@@ -106,6 +112,7 @@ public class RoleResource {
     @GetMapping("/roles/matrix")
     @Timed
     @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'ROLE.MATRIX.GET')")
+    @PrivilegeDescription("Privilege to get role matrix")
     public ResponseEntity<RoleMatrixDTO> getRoleMatrix() {
         return ResponseEntity.ok(tenantRoleService.getRoleMatrix());
     }
@@ -118,6 +125,7 @@ public class RoleResource {
     @PutMapping("/roles/matrix")
     @Timed
     @PreAuthorize("hasPermission({'roleMatrix': #roleMatrix}, 'ROLE.MATRIX.UPDATE')")
+    @PrivilegeDescription("Privilege to update permissions by role matrix")
     public ResponseEntity<Void> updateRoleMatrix(@RequestBody RoleMatrixDTO roleMatrix) {
         tenantRoleService.updateRoleMatrix(roleMatrix);
         return ResponseEntity.ok().build();
