@@ -296,7 +296,7 @@ public class AccountResource {
     @PostMapping(path = "/account/reset_password/finish", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @Timed
     @PreAuthorize("hasPermission({'keyAndPassword': #keyAndPassword}, 'ACCOUNT.PASSWORD.RESET.FINISH')")
-    @PrivilegeDescription("Privilege to finish reset the password of the user")
+    @PrivilegeDescription("Privilege to reset the password of the user by link")
     public ResponseEntity<Void> finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
         if (!checkPasswordLength(keyAndPassword.getNewPassword())) {
             throw new BusinessException(CHECK_ERROR_MESSAGE);
