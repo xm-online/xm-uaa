@@ -51,10 +51,10 @@ public class ClientService {
      * @return the persisted entity
      */
     public Client createClient(ClientDTO client) {
-       if (getClient(client.getClientId()) != null) {
-           throw new BusinessException("client.already.exists",
-                                        "Client with client id: " + client.getClientId() + " already exists");
-       }
+        if (getClient(client.getClientId()) != null) {
+            throw new BusinessException("client.already.exists",
+                  "Client with client id: " + client.getClientId() + " already exists");
+        }
 
         Client newClient = new Client();
         newClient.setClientId(client.getClientId());
