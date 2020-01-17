@@ -53,7 +53,7 @@ public class ClientService {
     public Client createClient(ClientDTO client) {
         if (getClient(client.getClientId()) != null) {
             throw new BusinessException("client.already.exists",
-                  "Client with client id: " + client.getClientId() + " already exists");
+                                        "Client with client id: " + client.getClientId() + " already exists");
         }
 
         Client newClient = new Client();
