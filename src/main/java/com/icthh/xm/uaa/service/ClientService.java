@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.service;
 
+import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
@@ -50,6 +51,11 @@ public class ClientService {
      * @return the persisted entity
      */
     public Client createClient(ClientDTO client) {
+        if (getClient(client.getClientId()) != null) {
+            throw new BusinessException("client.already.exists",
+                                        "Client with client id: " + client.getClientId() + " already exists");
+        }
+
         Client newClient = new Client();
         newClient.setClientId(client.getClientId());
         String clientSecret;
