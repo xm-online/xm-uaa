@@ -25,6 +25,7 @@ import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.service.dto.PermissionDTO;
 import com.icthh.xm.uaa.service.dto.RoleDTO;
+import com.icthh.xm.uaa.service.dto.RoleMatrixDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
@@ -204,6 +205,30 @@ public class TenantRoleServiceUnitTest {
                                                                       && p.isEnabled()));
         assertTrue(role.get().getPermissions().stream().noneMatch(p -> p.getPrivilegeKey().equals("MISSING.PRIVILEGE")
                                                                       && !p.isEnabled()));
+
+    }
+
+    @Test
+    public void testGetRoleMatrix() {
+        String privilegesPath = "/config/tenants/privileges.yml";
+        String rolesPath = "/api/config/tenants/{tenantName}/roles.yml";
+
+        when(tenantConfigRepository.getConfigFullPath(TENANT, rolesPath))
+            .thenReturn(readConfigFile("/config/tenants/XM/roles.yml"));
+        when(commonConfigRepository.getConfig(isNull(), eq(singletonList(privilegesPath))))
+            .thenReturn(getSingleConfigMap(privilegesPath, readConfigFile("/config/tenants/privileges.yml")));
+
+        RoleMatrixDTO roleMatrix = tenantRoleService.getRoleMatrix();
+        assertEquals(3, roleMatrix.getRoles().size());
+        assertTrue(roleMatrix.getRoles().stream().anyMatch(roleKey -> roleKey.equals("ROLE_ADMIN")));
+        assertTrue(roleMatrix.getRoles().stream().anyMatch(roleKey -> roleKey.equals("ROLE_USER")));
+        assertTrue(roleMatrix.getRoles().stream().anyMatch(roleKey -> roleKey.equals("SUPER-ADMIN")));
+
+        assertEquals(2, roleMatrix.getPermissions().size());
+        assertTrue(roleMatrix.getPermissions().stream().anyMatch(permission ->
+            permission.getDescription().equals("Privilege to create new attachment")));
+        assertTrue(roleMatrix.getPermissions().stream().anyMatch(permission ->
+            permission.getDescription().equals("Privilege to delete attachment")));
 
     }
 
