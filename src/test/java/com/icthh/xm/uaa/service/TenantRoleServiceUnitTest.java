@@ -84,11 +84,6 @@ public class TenantRoleServiceUnitTest {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-    }
-
-    @Before
-    public void before() {
-
         TenantContext tenantContext = mock(TenantContext.class);
         when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(TENANT)));
 
@@ -212,23 +207,34 @@ public class TenantRoleServiceUnitTest {
     public void testGetRoleMatrix() {
         String privilegesPath = "/config/tenants/privileges.yml";
         String rolesPath = "/api/config/tenants/{tenantName}/roles.yml";
+        String customPrivilegesPath = "/api/config/tenants/XM/custom-privileges.yml";
 
+        when(tenantConfigRepository.getConfigFullPath(TENANT, customPrivilegesPath))
+            .thenReturn(readConfigFile("/config/tenants/XM/custom-privileges.yml"));
         when(tenantConfigRepository.getConfigFullPath(TENANT, rolesPath))
             .thenReturn(readConfigFile("/config/tenants/XM/roles.yml"));
         when(commonConfigRepository.getConfig(isNull(), eq(singletonList(privilegesPath))))
             .thenReturn(getSingleConfigMap(privilegesPath, readConfigFile("/config/tenants/privileges.yml")));
 
         RoleMatrixDTO roleMatrix = tenantRoleService.getRoleMatrix();
+
+        verify(tenantConfigRepository).getConfigFullPath(TENANT, rolesPath);
+        verify(tenantConfigRepository).getConfigFullPath(TENANT, customPrivilegesPath);
+
         assertEquals(3, roleMatrix.getRoles().size());
         assertTrue(roleMatrix.getRoles().stream().anyMatch(roleKey -> roleKey.equals("ROLE_ADMIN")));
         assertTrue(roleMatrix.getRoles().stream().anyMatch(roleKey -> roleKey.equals("ROLE_USER")));
         assertTrue(roleMatrix.getRoles().stream().anyMatch(roleKey -> roleKey.equals("SUPER-ADMIN")));
 
-        assertEquals(2, roleMatrix.getPermissions().size());
+        assertEquals(4, roleMatrix.getPermissions().size());
         assertTrue(roleMatrix.getPermissions().stream().anyMatch(permission ->
             permission.getDescription().equals("Privilege to create new attachment")));
         assertTrue(roleMatrix.getPermissions().stream().anyMatch(permission ->
             permission.getDescription().equals("Privilege to delete attachment")));
+        assertTrue(roleMatrix.getPermissions().stream().anyMatch(permission ->
+            permission.getDescription().equals("Privilege to get custom privilege")));
+        assertTrue(roleMatrix.getPermissions().stream().anyMatch(permission ->
+            permission.getDescription().equals("Privilege to edit custom privilege")));
 
     }
 
