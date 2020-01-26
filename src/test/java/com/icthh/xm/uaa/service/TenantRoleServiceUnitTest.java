@@ -49,6 +49,8 @@ import java.util.stream.Collectors;
 public class TenantRoleServiceUnitTest {
 
     public static final String TENANT = "XM";
+    private static final String ROLES_PATH = "/api/config/tenants/{tenantName}/roles.yml";
+    private static final String CUSTOM_PRIVILEGES_PATH = "/api/config/tenants/XM/custom-privileges.yml";
 
     @InjectMocks
     TenantRoleService tenantRoleService;
@@ -204,29 +206,35 @@ public class TenantRoleServiceUnitTest {
     }
 
     @Test
-    public void testGetRoleMatrix() {
-        String privilegesPath = "/config/tenants/privileges.yml";
-        String rolesPath = "/api/config/tenants/{tenantName}/roles.yml";
-        String customPrivilegesPath = "/api/config/tenants/XM/custom-privileges.yml";
-
-        when(tenantConfigRepository.getConfigFullPath(TENANT, customPrivilegesPath))
-            .thenReturn(readConfigFile("/config/tenants/XM/custom-privileges.yml"));
-        when(tenantConfigRepository.getConfigFullPath(TENANT, rolesPath))
-            .thenReturn(readConfigFile("/config/tenants/XM/roles.yml"));
-        when(commonConfigRepository.getConfig(isNull(), eq(singletonList(privilegesPath))))
-            .thenReturn(getSingleConfigMap(privilegesPath, readConfigFile("/config/tenants/privileges.yml")));
+    public void testGetRoleMatrixWithoutCustomPrivileges() {
+        mockPrivileges();
 
         RoleMatrixDTO roleMatrix = tenantRoleService.getRoleMatrix();
 
-        verify(tenantConfigRepository).getConfigFullPath(TENANT, rolesPath);
-        verify(tenantConfigRepository).getConfigFullPath(TENANT, customPrivilegesPath);
+        verify(tenantConfigRepository).getConfigFullPath(TENANT, ROLES_PATH);
 
-        assertEquals(3, roleMatrix.getRoles().size());
-        assertTrue(roleMatrix.getRoles().stream().anyMatch(roleKey -> roleKey.equals("ROLE_ADMIN")));
-        assertTrue(roleMatrix.getRoles().stream().anyMatch(roleKey -> roleKey.equals("ROLE_USER")));
-        assertTrue(roleMatrix.getRoles().stream().anyMatch(roleKey -> roleKey.equals("SUPER-ADMIN")));
+        assertRoles(roleMatrix);
+        assertEquals(2, roleMatrix.getPermissions().size());
 
+        assertTrue(roleMatrix.getPermissions().stream().anyMatch(permission ->
+            permission.getDescription().equals("Privilege to create new attachment")));
+        assertTrue(roleMatrix.getPermissions().stream().anyMatch(permission ->
+            permission.getDescription().equals("Privilege to delete attachment")));
+
+    }
+
+    @Test
+    public void testGetRoleMatrixWithCustomPrivileges() {
+        mockCustomPrivileges();
+
+        RoleMatrixDTO roleMatrix = tenantRoleService.getRoleMatrix();
+
+        verify(tenantConfigRepository).getConfigFullPath(TENANT, ROLES_PATH);
+        verify(tenantConfigRepository).getConfigFullPath(TENANT, CUSTOM_PRIVILEGES_PATH);
+
+        assertRoles(roleMatrix);
         assertEquals(4, roleMatrix.getPermissions().size());
+
         assertTrue(roleMatrix.getPermissions().stream().anyMatch(permission ->
             permission.getDescription().equals("Privilege to create new attachment")));
         assertTrue(roleMatrix.getPermissions().stream().anyMatch(permission ->
@@ -236,6 +244,71 @@ public class TenantRoleServiceUnitTest {
         assertTrue(roleMatrix.getPermissions().stream().anyMatch(permission ->
             permission.getDescription().equals("Privilege to edit custom privilege")));
 
+    }
+
+    @Test
+    public void testGetRoleByKeyWithoutCustomPrivileges() {
+        mockPrivileges();
+
+        Optional<RoleDTO> optionalRole = tenantRoleService.getRole("SUPER-ADMIN");
+
+        verify(tenantConfigRepository).getConfigFullPath(TENANT, ROLES_PATH);
+
+        assertTrue(optionalRole.isPresent());
+
+        RoleDTO role = optionalRole.get();
+
+        assertEquals("SUPER-ADMIN", role.getRoleKey());
+        assertEquals(2, role.getPermissions().size());
+        assertTrue(role.getPermissions().stream().anyMatch(permission ->
+            permission.getDescription().equals("Privilege to create new attachment")));
+        assertTrue(role.getPermissions().stream().anyMatch(permission ->
+            permission.getDescription().equals("Privilege to delete attachment")));
+    }
+
+    @Test
+    public void testGetRoleByKeyWithCustomPrivileges() {
+        mockCustomPrivileges();
+
+        Optional<RoleDTO> optionalRole = tenantRoleService.getRole("ROLE_ADMIN");
+
+        verify(tenantConfigRepository).getConfigFullPath(TENANT, ROLES_PATH);
+        verify(tenantConfigRepository).getConfigFullPath(TENANT, CUSTOM_PRIVILEGES_PATH);
+
+        assertTrue(optionalRole.isPresent());
+
+        RoleDTO role = optionalRole.get();
+
+        assertEquals("ROLE_ADMIN", role.getRoleKey());
+        assertEquals(4, role.getPermissions().size());
+        assertTrue(role.getPermissions().stream().anyMatch(permission ->
+            permission.getDescription().equals("Privilege to create new attachment")));
+        assertTrue(role.getPermissions().stream().anyMatch(permission ->
+            permission.getDescription().equals("Privilege to delete attachment")));
+        assertTrue(role.getPermissions().stream().anyMatch(permission ->
+            permission.getDescription().equals("Privilege to get custom privilege")));
+    }
+
+    private void mockPrivileges() {
+        String privilegesPath = "/config/tenants/privileges.yml";
+
+        when(tenantConfigRepository.getConfigFullPath(TENANT, ROLES_PATH))
+            .thenReturn(readConfigFile("/config/tenants/XM/roles.yml"));
+        when(commonConfigRepository.getConfig(isNull(), eq(singletonList(privilegesPath))))
+            .thenReturn(getSingleConfigMap(privilegesPath, readConfigFile("/config/tenants/privileges.yml")));
+    }
+
+    private void mockCustomPrivileges() {
+        mockPrivileges();
+        when(tenantConfigRepository.getConfigFullPath(TENANT, CUSTOM_PRIVILEGES_PATH))
+            .thenReturn(readConfigFile("/config/tenants/XM/custom-privileges.yml"));
+    }
+
+    private void assertRoles(RoleMatrixDTO roleMatrix) {
+        assertEquals(3, roleMatrix.getRoles().size());
+        assertTrue(roleMatrix.getRoles().stream().anyMatch(roleKey -> roleKey.equals("ROLE_ADMIN")));
+        assertTrue(roleMatrix.getRoles().stream().anyMatch(roleKey -> roleKey.equals("ROLE_USER")));
+        assertTrue(roleMatrix.getRoles().stream().anyMatch(roleKey -> roleKey.equals("SUPER-ADMIN")));
     }
 
     private Map<String, Configuration> getSingleConfigMap(final String path) {
