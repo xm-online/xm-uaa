@@ -268,6 +268,7 @@ public class TenantRoleService {
                     permission.setEnabled(false);
                 }
                 permission.setResources(privilege.getResources());
+                permission.setDescription(privilege.getCustomDescription());
                 roleDto.getPermissions().add(permission);
             });
 
@@ -351,6 +352,7 @@ public class TenantRoleService {
                     permission.setMsName(privilege.getMsName());
                     permission.setPrivilegeKey(privilege.getKey());
                 }
+                permission.setDescription(privilege.getCustomDescription());
                 return permission;
             }).collect(Collectors.toList()));
 

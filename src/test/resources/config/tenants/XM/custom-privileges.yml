@@ -1,0 +1,8 @@
+---
+entity:
+- key: "CUSTOM.PRIVILEGE.GET"
+  description: {}
+  customDescription: "Privilege to get custom privilege"
+- key: "CUSTOM.PRIVILEGE.EDIT"
+  description: {}
+  customDescription: "Privilege to edit custom privilege"

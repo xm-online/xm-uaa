@@ -30,7 +30,7 @@ public class RoleMatrixDTO {
     @Getter
     @Setter
     @RequiredArgsConstructor
-    @EqualsAndHashCode(exclude = "roles")
+    @EqualsAndHashCode(exclude = {"roles", "description"})
     @ToString(exclude = "roles")
     public static class PermissionMatrixDTO implements Comparable<PermissionMatrixDTO> {
 
@@ -38,6 +38,7 @@ public class RoleMatrixDTO {
         private String privilegeKey;
         private PermissionType permissionType;
         private Set<String> roles = new TreeSet<>();
+        private String description;
 
         @Override
         public int compareTo(PermissionMatrixDTO o) {

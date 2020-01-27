@@ -4,8 +4,10 @@ uaa:
   description: {}
   resources:
   - "attachment"
+  customDescription: "Privilege to create new attachment"
 - key: "ATTACHMENT.DELETE"
   description: {}
   resources:
   - "attachment"
   - "id"
+  customDescription: "Privilege to delete attachment"
