@@ -113,7 +113,7 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
             log.info("check password expiration, passwordUpdateDate: {}, currentDate: {}, expirationPeriod: {}",
                 updatePasswordDate, currentDate, expirationPeriod);
             long period = DAYS.between(updatePasswordDate, currentDate);
-            if (period > expirationPeriod) {
+            if (period > expirationPeriod && !SUPER_ADMIN.equals(user.getRoleKey())) {
                 throw new CredentialsExpiredException("Password expiration period is over, please change password");
             }
         }
