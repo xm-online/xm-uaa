@@ -4,6 +4,7 @@ import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.security.DomainTokenServices;
 import com.icthh.xm.uaa.security.TokenConstraintsService;
+import com.icthh.xm.uaa.security.oauth2.athorization.code.CustomAuthorizationCodeServices;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpGenerator;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
@@ -11,17 +12,6 @@ import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpTokenGranter;
 import com.icthh.xm.uaa.security.provider.DefaultAuthenticationRefreshProvider;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
-
-import java.io.IOException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import javax.servlet.http.HttpServletResponse;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -53,14 +43,19 @@ import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.CorsFilter;
 
-@RequiredArgsConstructor
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 @Configuration
-@EnableAuthorizationServer
 @EnableWebSecurity
+@RequiredArgsConstructor
+@EnableAuthorizationServer
 @Import({
+    TfaOtpConfiguration.class,
     UserAuthPasswordEncoderConfiguration.class,
-    UaaAccessTokenConverterConfiguration.class,
-    TfaOtpConfiguration.class
+    UaaAccessTokenConverterConfiguration.class
 })
 public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
 
@@ -118,18 +113,20 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
     @Qualifier("authenticationManagerBean")
     private AuthenticationManager authenticationManager;
 
-    private final PasswordEncoder passwordEncoder;
-    private final TenantContextHolder tenantContextHolder;
-    private final DefaultAuthenticationRefreshProvider defaultAuthenticationRefreshProvider;
-    private final TenantPropertiesService tenantPropertiesService;
-    private final ClientDetailsService clientDetailsService;
-    private final JwtTokenStore tokenStore;
-    private final JwtAccessTokenConverter jwtAccessTokenConverter;
-    private final OtpGenerator otpGenerator;
     private final OtpStore otpStore;
-    private final OtpSendStrategy otpSendStrategy;
-    private final TokenConstraintsService tokenConstraintsService;
     private final UserService userService;
+    private final JwtTokenStore tokenStore;
+    private final OtpGenerator otpGenerator;
+    private final PasswordEncoder passwordEncoder;
+    private final OtpSendStrategy otpSendStrategy;
+    private final ClientDetailsService clientDetailsService;
+    private final TenantContextHolder tenantContextHolder;
+    private final TenantPropertiesService tenantPropertiesService;
+    private final JwtAccessTokenConverter jwtAccessTokenConverter;
+    private final TokenConstraintsService tokenConstraintsService;
+    private final CustomAuthorizationCodeServices customAuthorizationCodeServices;
+    private final DefaultAuthenticationRefreshProvider defaultAuthenticationRefreshProvider;
+
 
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
@@ -142,7 +139,9 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
             .authenticationManager(authenticationManager)
             .accessTokenConverter(jwtAccessTokenConverter)
             .tokenServices(tokenServices())
-            .tokenGranter(tokenGranter(endpoints));
+            .tokenGranter(tokenGranter(endpoints))
+            .authorizationCodeServices(customAuthorizationCodeServices)
+        ;
     }
 
     private TokenGranter tokenGranter(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
@@ -161,8 +160,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
      * Apply custom token services.
      */
     @Bean
-    public AuthorizationServerTokenServices tokenServices() throws UnrecoverableKeyException, CertificateException,
-        NoSuchAlgorithmException, KeyStoreException, IOException {
+    public AuthorizationServerTokenServices tokenServices() {
 
         final DomainTokenServices tokenServices = new DomainTokenServices();
         tokenServices.setTokenStore(tokenStore);
@@ -181,7 +179,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
     }
 
     @Override
-    public void configure(AuthorizationServerSecurityConfigurer oauthServer) throws Exception {
+    public void configure(AuthorizationServerSecurityConfigurer oauthServer) {
         oauthServer.tokenKeyAccess("permitAll()").checkTokenAccess("isAuthenticated()");
         oauthServer.passwordEncoder(passwordEncoder);
     }
