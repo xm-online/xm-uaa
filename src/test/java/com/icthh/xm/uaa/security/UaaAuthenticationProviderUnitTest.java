@@ -60,9 +60,9 @@ public class UaaAuthenticationProviderUnitTest {
         when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProperties);
 
         uaaAuthenticationProvider = new UaaAuthenticationProvider(authenticationProvider,
-            null,
-            userService,
-            tenantPropertiesService);
+                                                                  null,
+                                                                  userService,
+                                                                  tenantPropertiesService);
         uaaAuthenticationProvider.setSelf(uaaAuthenticationProvider);
     }
 
