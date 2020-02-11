@@ -368,3 +368,9 @@ wrapper {
 
 compileJava.dependsOn processResources
 processResources.dependsOn bootBuildInfo
+
+task getProjectVersion {
+    doLast {
+        println project.version
+    }
+}
