@@ -8,7 +8,6 @@ import org.springframework.security.oauth2.common.exceptions.InvalidGrantExcepti
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.code.InMemoryAuthorizationCodeServices;
-import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.stereotype.Component;
 
 
