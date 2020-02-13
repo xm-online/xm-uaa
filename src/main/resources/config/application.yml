@@ -181,7 +181,7 @@ application:
     tenant-login-properties-name: logins.yml
     email-path-pattern: /config/tenants/{tenantName}/uaa/emails/{langKey}/{fileName}.ftl
     tenant-ignored-path-list: /swagger-resources/configuration/ui, /oauth/token_key, /h2-console
-    proxy-filter-white-list: /management/health
+    proxy-filter-white-list: /management/health, /management/prometheus
     kafka-system-topic: system_topic
     kafka-system-queue: system_queue
     kafka-enabled: true
