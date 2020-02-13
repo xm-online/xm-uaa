@@ -6,6 +6,7 @@ import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.permission.annotation.FindWithPermission;
+import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.commons.permission.repository.PermittedRepository;
 import com.icthh.xm.uaa.domain.Client;
 import com.icthh.xm.uaa.repository.ClientRepository;
@@ -102,6 +103,7 @@ public class ClientService {
      */
     @Transactional(readOnly = true)
     @FindWithPermission("CLIENT.GET_LIST")
+    @PrivilegeDescription("Privilege to get all the clients")
     public Page<ClientDTO> findAll(Pageable pageable, String privilegeKey) {
         return permittedRepository.findAll(pageable, Client.class, privilegeKey).map(
             source -> new ClientDTO(source.clientSecret(PSWRD_MASK)));

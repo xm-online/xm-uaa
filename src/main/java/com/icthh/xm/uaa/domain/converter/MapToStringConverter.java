@@ -37,7 +37,7 @@ public class MapToStringConverter implements AttributeConverter<Map<String, Obje
     @Override
     public Map<String, Object> convertToEntityAttribute(String data) {
         Map<String, Object> mapValue = new HashMap<>();
-        TypeReference<HashMap<String, Object>> typeRef = new TypeReference<HashMap<String, Object>>() {
+        TypeReference<HashMap<String, Object>> typeRef = new TypeReference<>() {
         };
         try {
             mapValue = mapper.readValue(StringUtils.isNoneBlank(data) ? data : "{}", typeRef);

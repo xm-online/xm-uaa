@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.uaa.domain.properties.TenantLogins;
 import com.icthh.xm.uaa.service.TenantLoginsService;
 import com.icthh.xm.uaa.web.rest.vm.UaaValidationVM;
@@ -45,6 +46,7 @@ public class TenantLoginsResource {
         @ApiResponse(code = 500, message = "Internal server error")})
     @Timed
     @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'TENANT.LOGIN.GET_LIST')")
+    @PrivilegeDescription("Privilege to get uaa login properties")
     public ResponseEntity<TenantLogins> getLogins() {
         return ResponseEntity.ok(tenantLoginsService.getLogins());
     }
@@ -62,6 +64,7 @@ public class TenantLoginsResource {
     @SneakyThrows
     @Timed
     @PreAuthorize("hasPermission(null, 'TENANT.LOGIN.VALIDATE')")
+    @PrivilegeDescription("Privilege to validate logins yml")
     public UaaValidationVM validate(@RequestBody String loginsYml) {
         try {
             mapper.readValue(loginsYml, TenantLogins.class);
@@ -84,6 +87,7 @@ public class TenantLoginsResource {
     @SneakyThrows
     @Timed
     @PreAuthorize("hasPermission({'loginsYml': #loginsYml}, 'TENANT.LOGIN.UPDATE')")
+    @PrivilegeDescription("Privilege to update logins yml")
     public ResponseEntity<Void> updateLogins(@RequestBody String loginsYml) {
         tenantLoginsService.updateLogins(loginsYml);
         return ResponseEntity.ok().build();

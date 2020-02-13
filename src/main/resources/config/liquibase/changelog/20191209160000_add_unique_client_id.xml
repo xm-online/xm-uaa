@@ -5,11 +5,8 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
     <changeSet id="20191209160000" author="dtsarenko">
+        <validCheckSum>7:e08c227ca3aeffbb6557961e9071bea8</validCheckSum>
         <addUniqueConstraint tableName="client" columnNames="client_id"
             constraintName="client_id_constraint"/>
-
-        <createIndex indexName="idx_client_client_id" tableName="client" unique="true">
-            <column name="client_id"/>
-        </createIndex>
     </changeSet>
 </databaseChangeLog>

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
@@ -43,6 +44,7 @@ public class TenantPropertiesResource {
     @SneakyThrows
     @Timed
     @PreAuthorize("hasPermission(null, 'UAA.TENANT.PROPERTIES.VALIDATE')")
+    @PrivilegeDescription("Privilege to vaalidate uaa yml")
     public UaaValidationVM validate(@RequestBody String uaaYml) {
         try {
             mapper.readValue(uaaYml, TenantProperties.class);
@@ -60,6 +62,7 @@ public class TenantPropertiesResource {
     @SneakyThrows
     @Timed
     @PreAuthorize("hasPermission({'uaaYml': #uaaYml}, 'UAA.TENANT.PROPERTIES.UPDATE')")
+    @PrivilegeDescription("Privilege to update uaa yml")
     public ResponseEntity<Void> updateTenantProperties(@RequestBody String uaaYml) {
         tenantPropertiesService.updateTenantProps(uaaYml);
         return ResponseEntity.ok().build();

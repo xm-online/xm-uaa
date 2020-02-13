@@ -5,38 +5,28 @@ import com.ryantenney.metrics.spring.config.annotation.EnableMetrics;
 import com.ryantenney.metrics.spring.config.annotation.MetricsConfigurerAdapter;
 import com.zaxxer.hikari.HikariDataSource;
 
-import io.github.jhipster.config.JHipsterProperties;
-import io.prometheus.client.CollectorRegistry;
-import io.prometheus.client.dropwizard.DropwizardExports;
-import io.prometheus.client.exporter.MetricsServlet;
-
 import javax.annotation.PostConstruct;
-import javax.servlet.ServletContext;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.springframework.context.annotation.Configuration;
 
 @Slf4j
 @Configuration
 @EnableMetrics(proxyTargetClass = true)
-public class AppMetricsConfiguration extends MetricsConfigurerAdapter implements ServletContextInitializer {
+public class AppMetricsConfiguration extends MetricsConfigurerAdapter {
 
     private static final String SCHEDULER = "scheduler";
 
     private final MetricRegistry metricRegistry;
-    private final JHipsterProperties jhipsterProperties;
     private final SchedulerMetricsSet schedulerMetricsSet;
 
     private HikariDataSource hikariDataSource;
 
     public AppMetricsConfiguration(MetricRegistry metricRegistry,
-                                  JHipsterProperties jhipsterProperties,
-                                  SchedulerMetricsSet schedulerMetricsSet) {
+                                   SchedulerMetricsSet schedulerMetricsSet) {
 
         this.metricRegistry = metricRegistry;
-        this.jhipsterProperties = jhipsterProperties;
         this.schedulerMetricsSet = schedulerMetricsSet;
     }
 
@@ -55,20 +45,5 @@ public class AppMetricsConfiguration extends MetricsConfigurerAdapter implements
         }
 
         metricRegistry.register(SCHEDULER, schedulerMetricsSet);
-    }
-
-    @Override
-    public void onStartup(ServletContext servletContext) {
-
-        if (jhipsterProperties.getMetrics().getPrometheus().isEnabled()) {
-            String endpoint = jhipsterProperties.getMetrics().getPrometheus().getEndpoint();
-
-            log.debug("Initializing prometheus metrics exporting via {}", endpoint);
-
-            CollectorRegistry.defaultRegistry.register(new DropwizardExports(metricRegistry));
-            servletContext
-                .addServlet("prometheusMetrics", new MetricsServlet(CollectorRegistry.defaultRegistry))
-                .addMapping(endpoint);
-        }
     }
 }

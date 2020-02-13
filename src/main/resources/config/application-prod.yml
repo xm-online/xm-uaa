@@ -59,6 +59,8 @@ spring:
             hibernate.cache.use_second_level_cache: false
             hibernate.cache.use_query_cache: false
             hibernate.generate_statistics: false
+            # see org.hibernate.cfg.AvailableSettings.PREFER_GENERATOR_NAME_AS_DEFAULT_SEQUENCE_NAME
+            hibernate.model.generator_name_as_sequence_name: false
     liquibase:
         contexts: prod
     mail:
@@ -99,6 +101,8 @@ spring:
 # ===================================================================
 server:
     port: 9999
+    http2:
+        enabled: false # To use HTTP/2 you will need SSL support (see above the "server.ssl" configuration)
     compression:
         enabled: true
         mime-types: text/html,text/xml,text/plain,text/css, application/javascript, application/json
@@ -112,7 +116,6 @@ server:
 
 jhipster:
     http:
-        version: V_1_1 # To use HTTP/2 you will need SSL support (see above the "server.ssl" configuration)
         cache: # Used by the CachingHttpHeadersFilter
             timeToLiveInDays: 1461
     security:
@@ -129,13 +132,8 @@ jhipster:
         from: <tenantname>@xm-online.com
         base-url: http://my-server-url-to-change # Modify according to your server's URL
     metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
-        jmx:
-            enabled: true
-        prometheus:
-            enabled: false #expose metrics via prometheus
         logs: # Reports Dropwizard metrics in the logs
             enabled: false
-            report-frequency: 60 # in seconds
     logging:
         logstash: # Forward logs to logstash over a socket, used by LoggingConfiguration
             enabled: false

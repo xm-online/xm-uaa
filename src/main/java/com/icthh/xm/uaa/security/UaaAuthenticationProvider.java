@@ -88,7 +88,9 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
 
     private void checkTermsOfConditions(Authentication authentication) {
         TenantProperties.PublicSettings publicSettings = tenantPropertiesService.getTenantProps().getPublicSettings();
-        if (publicSettings == null || !publicSettings.getTermsOfConditionsEnabled()) {
+        if (publicSettings == null ||
+            publicSettings.getTermsOfConditionsEnabled() == null ||
+            !publicSettings.getTermsOfConditionsEnabled()) {
             return;
         }
 
