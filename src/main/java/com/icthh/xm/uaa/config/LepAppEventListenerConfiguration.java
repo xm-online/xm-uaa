@@ -4,6 +4,7 @@ import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import com.icthh.xm.commons.lep.commons.CommonsService;
 import com.icthh.xm.uaa.lep.XmUaaLepProcessingApplicationListener;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
+import com.icthh.xm.uaa.security.CustomizableLepTokenStorage;
 import com.icthh.xm.uaa.security.oauth2.athorization.code.CustomAuthorizationCodeServices;
 import com.icthh.xm.uaa.service.AccountService;
 import com.icthh.xm.uaa.service.UserLoginService;
@@ -12,7 +13,6 @@ import com.icthh.xm.uaa.service.mail.MailService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -32,11 +32,10 @@ public class LepAppEventListenerConfiguration {
         UserService userService,
         CommonsService commonsService,
         CustomAuthorizationCodeServices customAuthorizationCodeServices,
-        JwtTokenStore jwtTokenStore
+        CustomizableLepTokenStorage customizableLepTokenStorage
 
     ) {
         return new XmUaaLepProcessingApplicationListener(
-            jwtTokenStore,
             mailService,
             userService,
             restTemplate,
@@ -45,6 +44,7 @@ public class LepAppEventListenerConfiguration {
             userLoginService,
             tenantConfigService,
             profileEventProducer,
+            customizableLepTokenStorage,
             customAuthorizationCodeServices
         );
     }

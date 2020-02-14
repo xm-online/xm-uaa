@@ -4,7 +4,6 @@ import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.oauth2.common.exceptions.InvalidGrantException;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.code.InMemoryAuthorizationCodeServices;
@@ -28,7 +27,7 @@ public class CustomAuthorizationCodeServices implements AuthorizationCodeService
 
     @Override
     @LogicExtensionPoint("ConsumeAuthorizationCode")
-    public OAuth2Authentication consumeAuthorizationCode(String code) throws InvalidGrantException {
+    public OAuth2Authentication consumeAuthorizationCode(String code) {
         return defaultInMemoryAuthorizationCodeServices.remove(code);
     }
 }
