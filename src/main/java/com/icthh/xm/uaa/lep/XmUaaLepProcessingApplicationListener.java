@@ -8,28 +8,17 @@ import com.icthh.xm.lep.api.ScopedContext;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
 import com.icthh.xm.uaa.security.oauth2.athorization.code.CustomAuthorizationCodeServices;
 import com.icthh.xm.uaa.service.AccountService;
+import com.icthh.xm.uaa.security.CustomizableLepTokenStorage;
 import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.mail.MailService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_KEY_COMMONS;
-import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_KEY_SERVICES;
-import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_KEY_TEMPLATES;
-import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_SUB_KEY_PROFILE_EVEBT_PRODUCER_SERVICE;
-import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_SUB_KEY_SERVICE_ACCOUNT;
-import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_SUB_KEY_SERVICE_CUSTOM_AUTHORIZATION_CODE;
-import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_SUB_KEY_SERVICE_JWT_TOKEN_STORE;
-import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_SUB_KEY_SERVICE_MAIL;
-import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_SUB_KEY_SERVICE_TENANT_CONFIG_SERVICE;
-import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_SUB_KEY_SERVICE_USER;
-import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_SUB_KEY_SERVICE_USER_LOGIN_SERVICE;
-import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_SUB_KEY_TEMPLATE_REST;
+import static com.icthh.xm.uaa.lep.XmUaaLepConstants.*;
 
 /**
  * The {@link XmUaaLepProcessingApplicationListener} class.
@@ -37,7 +26,6 @@ import static com.icthh.xm.uaa.lep.XmUaaLepConstants.BINDING_SUB_KEY_TEMPLATE_RE
 @RequiredArgsConstructor
 public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingApplicationListener {
 
-    private final JwtTokenStore jwtTokeStore;
     private final MailService mailService;
     private final UserService userService;
     private final RestTemplate restTemplate;
@@ -46,6 +34,7 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
     private final UserLoginService userLoginService;
     private final TenantConfigService tenantConfigService;
     private final ProfileEventProducer profileEventProducer;
+    private final CustomizableLepTokenStorage customizableLepTokenStorage;
     private final CustomAuthorizationCodeServices customAuthorizationCodeServices;
 
 
@@ -56,11 +45,11 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
 
         services.put(BINDING_SUB_KEY_SERVICE_USER, userService);
         services.put(BINDING_SUB_KEY_SERVICE_MAIL, mailService);
-        services.put(BINDING_SUB_KEY_SERVICE_JWT_TOKEN_STORE, jwtTokeStore);
         services.put(BINDING_SUB_KEY_SERVICE_ACCOUNT, accountService);
         services.put(BINDING_SUB_KEY_SERVICE_USER_LOGIN_SERVICE, userLoginService);
         services.put(BINDING_SUB_KEY_SERVICE_TENANT_CONFIG_SERVICE, tenantConfigService);
         services.put(BINDING_SUB_KEY_PROFILE_EVEBT_PRODUCER_SERVICE, profileEventProducer);
+        services.put(BINDING_SUB_KEY_SERVICE_CUSTOMIZABLE_TOKE_STORAGE, customizableLepTokenStorage);
         services.put(BINDING_SUB_KEY_SERVICE_CUSTOM_AUTHORIZATION_CODE, customAuthorizationCodeServices);
 
         executionContext.setValue(BINDING_KEY_COMMONS, new CommonsExecutor(commonsService));
