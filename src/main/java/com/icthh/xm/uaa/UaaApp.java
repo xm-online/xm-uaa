@@ -7,20 +7,10 @@ import com.icthh.xm.commons.tenant.internal.DefaultTenantContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.config.DefaultProfileUtil;
 import io.github.jhipster.config.JHipsterConstants;
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Arrays;
-import java.util.Collection;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -28,8 +18,14 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.env.Environment;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.Collection;
+
 @ComponentScan("com.icthh.xm")
-@EnableAutoConfiguration
 @EnableConfigurationProperties({
     LiquibaseProperties.class,
     ApplicationProperties.class

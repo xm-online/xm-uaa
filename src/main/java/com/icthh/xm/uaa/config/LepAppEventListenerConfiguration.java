@@ -4,6 +4,8 @@ import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import com.icthh.xm.commons.lep.commons.CommonsService;
 import com.icthh.xm.uaa.lep.XmUaaLepProcessingApplicationListener;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
+import com.icthh.xm.uaa.security.CustomizableLepTokenStorage;
+import com.icthh.xm.uaa.security.oauth2.athorization.code.CustomAuthorizationCodeServices;
 import com.icthh.xm.uaa.service.AccountService;
 import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
@@ -21,16 +23,29 @@ public class LepAppEventListenerConfiguration {
 
     @Bean
     XmUaaLepProcessingApplicationListener buildLepProcessingApplicationListener(
-                    AccountService accountService,
-                    TenantConfigService tenantConfigService,
-                    UserLoginService userLoginService,
-                    ProfileEventProducer profileEventProducer,
-                    MailService mailService,
-                    @Qualifier("loadBalancedRestTemplate") RestTemplate restTemplate,
-                    UserService userService,
-                    CommonsService commonsService) {
+        AccountService accountService,
+        TenantConfigService tenantConfigService,
+        UserLoginService userLoginService,
+        ProfileEventProducer profileEventProducer,
+        MailService mailService,
+        @Qualifier("loadBalancedRestTemplate") RestTemplate restTemplate,
+        UserService userService,
+        CommonsService commonsService,
+        CustomAuthorizationCodeServices customAuthorizationCodeServices,
+        CustomizableLepTokenStorage customizableLepTokenStorage
 
-        return new XmUaaLepProcessingApplicationListener(accountService, tenantConfigService,
-                        userLoginService, profileEventProducer, mailService, userService, restTemplate, commonsService);
+    ) {
+        return new XmUaaLepProcessingApplicationListener(
+            mailService,
+            userService,
+            restTemplate,
+            commonsService,
+            accountService,
+            userLoginService,
+            tenantConfigService,
+            profileEventProducer,
+            customizableLepTokenStorage,
+            customAuthorizationCodeServices
+        );
     }
 }
