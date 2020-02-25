@@ -22,7 +22,7 @@ import java.io.IOException;
  */
 @Component
 @Slf4j
-@Order(Ordered.HIGHEST_PRECEDENCE + 1)
+@Order(Ordered.HIGHEST_PRECEDENCE + 2)
 public class LoggingFilter implements Filter {
     @Override
     public void init(final FilterConfig filterConfig) throws ServletException {
