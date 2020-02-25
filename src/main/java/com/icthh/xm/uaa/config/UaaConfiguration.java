@@ -72,13 +72,13 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
         @Override
         public void configure(HttpSecurity http) throws Exception {
             http
-                .addFilterBefore(customerUserAuthenticationFilter, BasicAuthenticationFilter.class)
                 .exceptionHandling()
                 .authenticationEntryPoint((request, response, authException)
                     -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
                 .and()
                 .csrf()
                 .disable()
+                .addFilterBefore(customerUserAuthenticationFilter, BasicAuthenticationFilter.class)
                 .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
                 .headers()
                 .frameOptions()
