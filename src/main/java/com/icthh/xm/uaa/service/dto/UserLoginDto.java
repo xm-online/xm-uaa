@@ -2,11 +2,10 @@ package com.icthh.xm.uaa.service.dto;
 
 import com.icthh.xm.uaa.domain.UserLogin;
 import java.io.Serializable;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
+import lombok.*;
+
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

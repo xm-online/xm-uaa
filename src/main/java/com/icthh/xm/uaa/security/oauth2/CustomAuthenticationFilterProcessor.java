@@ -8,12 +8,12 @@ import javax.servlet.FilterChain;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
-@LepService(group = "service.auth.filter")
-public class CustomUserAuthenticationService {
+@LepService(group = "service.auth.processor")
+public class CustomAuthenticationFilterProcessor {
 
     @SneakyThrows
-    @LogicExtensionPoint("DoFilter")
-    void process(ServletRequest request, ServletResponse response, FilterChain chain) {
+    @LogicExtensionPoint(value = "Process")
+    public void process(ServletRequest request, ServletResponse response, FilterChain chain) {
         chain.doFilter(request, response);
     }
 }
