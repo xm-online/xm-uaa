@@ -29,6 +29,7 @@
 
     <include file="classpath:config/liquibase/changelog/20191029160400_terms_conditions.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20191209160000_add_unique_client_id.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/2018121504121801_update_event_value_length.xml" relativeToChangelogFile="false"/>
 
     <!-- jhipster-needle-liquibase-add-changelog - JHipster will add liquibase changelogs here -->
     <!-- jhipster-needle-liquibase-add-constraints-changelog - JHipster will add liquibase constraints changelogs here -->
