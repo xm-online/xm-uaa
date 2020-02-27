@@ -50,6 +50,7 @@ import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_DOMAIN;
 import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_PORT;
 import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_PROTOCOL;
 import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_WEB_APP;
+import static com.icthh.xm.uaa.config.UaaFilterOrders.PROXY_FILTER_ORDER;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_PATTERN;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERR_TENANT_NOT_SUPPLIED;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERR_TENANT_SUSPENDED;
@@ -62,7 +63,7 @@ import static com.icthh.xm.uaa.web.constant.ErrorConstants.TENANT_NOT_SUPPLIED;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@Order(Ordered.HIGHEST_PRECEDENCE + 1)
+@Order(PROXY_FILTER_ORDER)
 public class ProxyFilter implements Filter {
 
     private final ApplicationProperties applicationProperties;

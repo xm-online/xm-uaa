@@ -3,35 +3,31 @@ package com.icthh.xm.uaa.web.filter;
 import com.icthh.xm.commons.logging.util.LogObjectPrinter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
-import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+
+import static com.icthh.xm.uaa.config.UaaFilterOrders.LOGGINF_FILTER_ORDER;
 
 /**
  * Filter for logging all HTTP requests.
  */
 @Component
 @Slf4j
-@Order(Ordered.HIGHEST_PRECEDENCE + 2)
+@Order(LOGGINF_FILTER_ORDER)
 public class LoggingFilter implements Filter {
     @Override
-    public void init(final FilterConfig filterConfig) throws ServletException {
+    public void init(final FilterConfig filterConfig) {
 
     }
 
     @Override
     public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
-    throws IOException, ServletException {
+        throws IOException, ServletException {
 
         StopWatch stopWatch = StopWatch.createStarted();
 
@@ -50,7 +46,7 @@ public class LoggingFilter implements Filter {
             }
 
             log.info("START {} --> {} {}, contentLength = {} ", remoteAddr, method, requestUri,
-                     contentLength);
+                contentLength);
 
             chain.doFilter(request, response);
 
@@ -65,15 +61,15 @@ public class LoggingFilter implements Filter {
 
             if (httpSuccess) {
                 log.info("STOP  {} --> {} {}, status = {}, time = {} ms",
-                         remoteAddr, method, requestUri, status, stopWatch.getTime());
+                    remoteAddr, method, requestUri, status, stopWatch.getTime());
             } else {
                 log.warn("STOP  {} --> {} {}, status = {}, time = {} ms",
-                         remoteAddr, method, requestUri, status, stopWatch.getTime());
+                    remoteAddr, method, requestUri, status, stopWatch.getTime());
             }
 
         } catch (Exception e) {
             log.error("STOP  {} --> {} {}, error = {}, time = {} ms",
-                      remoteAddr, method, requestUri, LogObjectPrinter.printException(e), stopWatch.getTime());
+                remoteAddr, method, requestUri, LogObjectPrinter.printException(e), stopWatch.getTime());
             throw e;
         }
 

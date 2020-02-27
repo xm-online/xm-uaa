@@ -3,17 +3,21 @@ package com.icthh.xm.uaa.security.oauth2;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-import org.springframework.web.filter.GenericFilterBean;
 
+import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
+import static com.icthh.xm.uaa.config.UaaFilterOrders.CUSTOM_AUTHENTICATION_FILTER_ORDER;
+
 @Slf4j
 @Component
-public class CustomerUserAuthenticationFilter extends GenericFilterBean {
+@Order(CUSTOM_AUTHENTICATION_FILTER_ORDER)
+public class CustomerUserAuthenticationFilter implements Filter {
 
     @Autowired
     private CustomAuthenticationFilterProcessor customAuthenticationFilterProcessor;

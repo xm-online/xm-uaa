@@ -15,11 +15,11 @@ import javax.servlet.ServletResponse;
 
 import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
 import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
-import static org.springframework.core.Ordered.HIGHEST_PRECEDENCE;
+import static com.icthh.xm.uaa.config.UaaFilterOrders.LEP_THREAD_CONTEXT_FILTER_ORDER;
 
 @Component
 @RequiredArgsConstructor
-@Order(HIGHEST_PRECEDENCE)
+@Order(LEP_THREAD_CONTEXT_FILTER_ORDER)
 public class LepThreadContextFilter implements Filter {
 
     private final LepManager lepManager;
