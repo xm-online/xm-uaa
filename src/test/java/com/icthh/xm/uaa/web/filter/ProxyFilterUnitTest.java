@@ -77,7 +77,7 @@ public class ProxyFilterUnitTest {
     private TokenStore tokenStore;
 
     @InjectMocks
-    private ProxyFilter filter;
+    private XmContextFilter filter;
 
     @Before
     public void setUp() throws Exception {

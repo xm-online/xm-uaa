@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -25,12 +24,7 @@ import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -38,24 +32,10 @@ import java.util.List;
 
 import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
 import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
-import static com.icthh.xm.uaa.config.Constants.AUTH_TENANT_KEY;
-import static com.icthh.xm.uaa.config.Constants.AUTH_USERNAME;
-import static com.icthh.xm.uaa.config.Constants.AUTH_USER_NAME;
-import static com.icthh.xm.uaa.config.Constants.HEADER_DOMAIN;
-import static com.icthh.xm.uaa.config.Constants.HEADER_PORT;
-import static com.icthh.xm.uaa.config.Constants.HEADER_SCHEME;
-import static com.icthh.xm.uaa.config.Constants.HEADER_TENANT;
-import static com.icthh.xm.uaa.config.Constants.HEADER_WEBAPP_URL;
-import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_DOMAIN;
-import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_PORT;
-import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_PROTOCOL;
-import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_WEB_APP;
-import static com.icthh.xm.uaa.config.UaaFilterOrders.PROXY_FILTER_ORDER;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_PATTERN;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERR_TENANT_NOT_SUPPLIED;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERR_TENANT_SUSPENDED;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.TENANT_IS_SUSPENDED;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.TENANT_NOT_SUPPLIED;
+import static com.icthh.xm.uaa.config.Constants.*;
+import static com.icthh.xm.uaa.config.UaaFilterOrders.XM_CONTEXT_FILTER_ORDER;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.*;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 /**
  * Init context for request.
@@ -63,8 +43,8 @@ import static com.icthh.xm.uaa.web.constant.ErrorConstants.TENANT_NOT_SUPPLIED;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@Order(PROXY_FILTER_ORDER)
-public class ProxyFilter implements Filter {
+@Order(XM_CONTEXT_FILTER_ORDER)
+public class XmContextFilter implements Filter {
 
     private final ApplicationProperties applicationProperties;
     private final TenantContextHolder tenantContextHolder;
@@ -202,7 +182,7 @@ public class ProxyFilter implements Filter {
     }
 
     private boolean verify(HttpServletResponse httpResponse, String tenantKey) throws IOException {
-        if (StringUtils.isBlank(tenantKey)) {
+        if (isBlank(tenantKey)) {
             log.error("Tenant not supplied");
             sendResponse(httpResponse, String.format(ERROR_PATTERN, ERR_TENANT_NOT_SUPPLIED, TENANT_NOT_SUPPLIED));
             return false;
@@ -215,11 +195,7 @@ public class ProxyFilter implements Filter {
     }
 
     private boolean isNullTenantKeyAllowed(HttpServletRequest httpRequest, String tenantKey) {
-        if (StringUtils.isBlank(tenantKey) && isWhiteListRequest(httpRequest)) {
-            return true;
-        }
-
-        return false;
+        return isBlank(tenantKey) && isWhiteListRequest(httpRequest);
     }
 
     private void sendResponse(HttpServletResponse httpResponse, String format) throws IOException {

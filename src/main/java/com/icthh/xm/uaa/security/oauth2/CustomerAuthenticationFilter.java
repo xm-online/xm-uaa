@@ -17,7 +17,7 @@ import static com.icthh.xm.uaa.config.UaaFilterOrders.CUSTOM_AUTHENTICATION_FILT
 @Slf4j
 @Component
 @Order(CUSTOM_AUTHENTICATION_FILTER_ORDER)
-public class CustomerUserAuthenticationFilter implements Filter {
+public class CustomerAuthenticationFilter implements Filter {
 
     @Autowired
     private CustomAuthenticationFilterProcessor customAuthenticationFilterProcessor;

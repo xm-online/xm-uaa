@@ -11,14 +11,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-import static com.icthh.xm.uaa.config.UaaFilterOrders.LOGGINF_FILTER_ORDER;
+import static com.icthh.xm.uaa.config.UaaFilterOrders.LOGGIN_FILTER_ORDER;
 
 /**
  * Filter for logging all HTTP requests.
  */
 @Component
 @Slf4j
-@Order(LOGGINF_FILTER_ORDER)
+@Order(LOGGIN_FILTER_ORDER)
 public class LoggingFilter implements Filter {
     @Override
     public void init(final FilterConfig filterConfig) {

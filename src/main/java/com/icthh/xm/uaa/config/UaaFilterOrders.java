@@ -8,8 +8,8 @@ import static org.springframework.core.Ordered.HIGHEST_PRECEDENCE;
 public class UaaFilterOrders {
 
     public static final int LEP_THREAD_CONTEXT_FILTER_ORDER = HIGHEST_PRECEDENCE;
-    public static final int CUSTOM_AUTHENTICATION_FILTER_ORDER = HIGHEST_PRECEDENCE + 1;
-    public static final int PROXY_FILTER_ORDER = HIGHEST_PRECEDENCE + 2;
-    public static final int LOGGINF_FILTER_ORDER = HIGHEST_PRECEDENCE + 3;
+    public static final int XM_CONTEXT_FILTER_ORDER = HIGHEST_PRECEDENCE + 1;
+    public static final int CUSTOM_AUTHENTICATION_FILTER_ORDER = HIGHEST_PRECEDENCE + 2;
+    public static final int LOGGIN_FILTER_ORDER = HIGHEST_PRECEDENCE + 3;
 
 }
