@@ -4,7 +4,6 @@ import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.security.DomainTokenServices;
 import com.icthh.xm.uaa.security.TokenConstraintsService;
-import com.icthh.xm.uaa.security.oauth2.CustomerUserAuthenticationFilter;
 import com.icthh.xm.uaa.security.oauth2.athorization.code.CustomAuthorizationCodeServices;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpGenerator;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
@@ -42,7 +41,6 @@ import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.filter.CorsFilter;
 
 import javax.servlet.http.HttpServletResponse;
@@ -67,7 +65,6 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
 
         private final TokenStore tokenStore;
         private final CorsFilter corsFilter;
-        private final CustomerUserAuthenticationFilter customerUserAuthenticationFilter;
 
         @Override
         public void configure(HttpSecurity http) throws Exception {
@@ -86,7 +83,6 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .addFilterBefore(customerUserAuthenticationFilter, BasicAuthenticationFilter.class)
                 .authorizeRequests()
                 .antMatchers("/social/**").permitAll()
                 .antMatchers("/api/register").permitAll()
