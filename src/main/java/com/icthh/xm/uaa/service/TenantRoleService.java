@@ -23,7 +23,6 @@ import com.icthh.xm.uaa.service.dto.PermissionDTO;
 import com.icthh.xm.uaa.service.dto.RoleDTO;
 import com.icthh.xm.uaa.service.dto.RoleMatrixDTO;
 import com.icthh.xm.uaa.service.dto.RoleMatrixDTO.PermissionMatrixDTO;
-import com.icthh.xm.uaa.service.mapper.PermissionDomainMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -35,22 +34,17 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import javax.validation.Valid;
 import java.time.Instant;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.icthh.xm.uaa.service.dto.PermissionType.SYSTEM;
 import static com.icthh.xm.uaa.service.dto.PermissionType.TENANT;
+import static com.icthh.xm.uaa.service.mapper.PermissionDomainMapper.permissionDtoToPermission;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_FORBIDDEN_ROLE;
+import static java.util.Objects.isNull;
+import static java.util.Optional.ofNullable;
 
 /**
  * Service Implementation for managing Role.
@@ -156,23 +150,25 @@ public class TenantRoleService {
     @SneakyThrows
     public void updateRole(RoleDTO roleDto) {
         Map<String, Role> roles = getRoles();
-        Role role = roles.get(roleDto.getRoleKey());
-        if (role == null) {
-            throw new BusinessException("Role doesn't exist");
-        }
-        // role updating
-        role.setDescription(roleDto.getDescription());
-        role.setUpdatedBy(xmAuthenticationContextHolder.getContext().getRequiredLogin());
-        role.setUpdatedDate(Instant.now().toString());
-        roles.put(roleDto.getRoleKey(), role);
+        Role roleToUpdate = roles.get(roleDto.getRoleKey());
+
+        if (isNull(roleToUpdate)) throw new BusinessException("Role doesn't exist");
+
+        roleToUpdate.setDescription(roleDto.getDescription());
+        roleToUpdate.setUpdatedBy(xmAuthenticationContextHolder.getContext().getRequiredLogin());
+        roleToUpdate.setUpdatedDate(Instant.now().toString());
+
+        roles.put(roleDto.getRoleKey(), roleToUpdate);
+
         updateRoles(mapper.writeValueAsString(roles));
 
-        if (CollectionUtils.isEmpty(roleDto.getPermissions())) {
-            return;
-        }
-        // permission updating
+        Collection<PermissionDTO> newPermissions = roleDto.getPermissions();
+
+        if (newPermissions.isEmpty()) return;
+
         Map<String, Map<String, Set<Permission>>> existingPermissions = getPermissions();
-        enrichExistingPermissions(existingPermissions, roleDto.getPermissions());
+
+        enrichExistingPermissions(existingPermissions, newPermissions);
 
         updatePermissions(mapper.writeValueAsString(existingPermissions));
     }
@@ -461,17 +457,31 @@ public class TenantRoleService {
      * @param newPermissions permissions to add
      */
     private void enrichExistingPermissions(
-                    Map<String, Map<String, Set<Permission>>> existingPermissions,
-                    Collection<PermissionDTO> newPermissions) {
-        newPermissions.forEach(permissionDto -> {
-            existingPermissions.putIfAbsent(permissionDto.getMsName(), new TreeMap<>());
-            existingPermissions.get(permissionDto.getMsName()).putIfAbsent(permissionDto.getRoleKey(),
-                            new TreeSet<>());
-            Permission permission = PermissionDomainMapper.permissionDtoToPermission(permissionDto);
+        Map<String, Map<String, Set<Permission>>> existingPermissions,
+        Collection<PermissionDTO> newPermissions
+    ) {
+        newPermissions.forEach(newPermission -> {
+
+            String msName = newPermission.getMsName();
+            String roleKey = newPermission.getRoleKey();
+
+            existingPermissions.putIfAbsent(msName, new TreeMap<>());
+            existingPermissions.get(msName).putIfAbsent(roleKey, new TreeSet<>());
+
+            Permission permissionModel = permissionDtoToPermission(newPermission);
+
+            Set<Permission> rolePermissions = existingPermissions.get(msName).get(roleKey);
+
             // needed explicitly delete old permission
-            existingPermissions.get(permissionDto.getMsName()).get(permissionDto.getRoleKey()).remove(permission);
-            existingPermissions.get(permissionDto.getMsName()).get(permissionDto.getRoleKey()).add(permission);
+            rolePermissions.removeIf(existingPermission -> isPrivilegeKeysEqual(existingPermission, permissionModel));
+            rolePermissions.add(permissionModel);
         });
+    }
+
+    private boolean isPrivilegeKeysEqual(Permission existingPermission, Permission newPermission) {
+        return ofNullable(existingPermission.getPrivilegeKey())
+            .filter(existingPrivilege -> existingPrivilege.equals(newPermission.getPrivilegeKey()))
+            .isPresent();
     }
 
     @SneakyThrows
@@ -494,7 +504,7 @@ public class TenantRoleService {
             log.warn("Error while getting '{}'", configPath, e);
         }
 
-        return Optional.ofNullable(config);
+        return ofNullable(config);
     }
 
     private Optional<String> getCommonConfigContent(String configPath) {
