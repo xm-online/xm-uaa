@@ -43,7 +43,6 @@ import static com.icthh.xm.uaa.service.dto.PermissionType.SYSTEM;
 import static com.icthh.xm.uaa.service.dto.PermissionType.TENANT;
 import static com.icthh.xm.uaa.service.mapper.PermissionDomainMapper.permissionDtoToPermission;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_FORBIDDEN_ROLE;
-import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -152,7 +151,9 @@ public class TenantRoleService {
         Map<String, Role> roles = getRoles();
         Role roleToUpdate = roles.get(roleDto.getRoleKey());
 
-        if (isNull(roleToUpdate)) throw new BusinessException("Role doesn't exist");
+        if (roleToUpdate == null) {
+            throw new BusinessException("Role doesn't exist");
+        }
 
         roleToUpdate.setDescription(roleDto.getDescription());
         roleToUpdate.setUpdatedBy(xmAuthenticationContextHolder.getContext().getRequiredLogin());
@@ -164,7 +165,9 @@ public class TenantRoleService {
 
         Collection<PermissionDTO> newPermissions = roleDto.getPermissions();
 
-        if (newPermissions.isEmpty()) return;
+        if (newPermissions.isEmpty()) {
+            return;
+        }
 
         Map<String, Map<String, Set<Permission>>> existingPermissions = getPermissions();
 
