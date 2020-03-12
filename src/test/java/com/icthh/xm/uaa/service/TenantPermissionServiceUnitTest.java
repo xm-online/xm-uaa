@@ -11,15 +11,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static com.icthh.xm.uaa.utils.FileUtil.readConfigFile;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -94,11 +90,6 @@ public class TenantPermissionServiceUnitTest {
         assertEquals("ATTACHMENT.CREATE", listAnonym.get(1).getPrivilegeKey());
         assertEquals("DASHBOARD.GET_LIST.ITEM", listAnonym.get(2).getPrivilegeKey());
 
-    }
-
-    private String readConfigFile(String path) {
-        return new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream(path)))
-            .lines().collect(Collectors.joining("\n"));
     }
 
     @Test
