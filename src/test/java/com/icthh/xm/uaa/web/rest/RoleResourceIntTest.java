@@ -2,7 +2,6 @@ package com.icthh.xm.uaa.web.rest;
 
 import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
-import com.icthh.xm.commons.config.domain.Configuration;
 import com.icthh.xm.commons.i18n.error.web.ExceptionTranslator;
 import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
@@ -19,17 +18,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
+import static com.icthh.xm.uaa.utils.FileUtil.getSingleConfigMap;
+import static com.icthh.xm.uaa.utils.FileUtil.readConfigFile;
 import static java.util.Collections.singletonList;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
@@ -119,21 +112,6 @@ public class RoleResourceIntTest {
                                                    "Privilege to get custom privilege",
                                                    "Privilege to edit custom privilege")));
 
-    }
-
-    //copy paste, rewrite
-    private Map<String, Configuration> getSingleConfigMap(String path, String content) {
-        Map<String, Configuration> privilegesMap = new HashMap<>();
-        privilegesMap.put(path, Configuration.of()
-            .path(path)
-            .content(content)
-            .build());
-        return privilegesMap;
-    }
-
-    private String readConfigFile(String path) {
-        return new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream(path)))
-            .lines().collect(Collectors.joining("\n"));
     }
 
 }

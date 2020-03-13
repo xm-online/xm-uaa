@@ -1,22 +1,9 @@
 package com.icthh.xm.uaa.service;
 
-import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
-import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
-import com.icthh.xm.commons.config.domain.Configuration;
 import com.icthh.xm.commons.permission.config.PermissionProperties;
+import com.icthh.xm.commons.security.XmAuthenticationContext;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
@@ -35,12 +22,15 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
+
+import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
+import static com.icthh.xm.uaa.utils.FileUtil.getSingleConfigMap;
+import static com.icthh.xm.uaa.utils.FileUtil.readConfigFile;
+import static java.util.Collections.singletonList;
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 /**
  *
@@ -48,9 +38,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TenantRoleServiceUnitTest {
 
-    public static final String TENANT = "XM";
+    private static final String XM_TENANT = "XM";
     private static final String ROLES_PATH = "/api/config/tenants/{tenantName}/roles.yml";
     private static final String CUSTOM_PRIVILEGES_PATH = "/api/config/tenants/XM/custom-privileges.yml";
+    private static final String PERMISSIONS_PATH = "/api/config/tenants/{tenantName}/permissions.yml";
 
     @InjectMocks
     TenantRoleService tenantRoleService;
@@ -87,7 +78,7 @@ public class TenantRoleServiceUnitTest {
         MockitoAnnotations.initMocks(this);
 
         TenantContext tenantContext = mock(TenantContext.class);
-        when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(TENANT)));
+        when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(XM_TENANT)));
 
         when(tenantContextHolder.getContext()).thenReturn(tenantContext);
         when(permissionProperties.getRolesSpecPath()).thenReturn("/config/tenants/{tenantName}/roles.yml");
@@ -99,56 +90,53 @@ public class TenantRoleServiceUnitTest {
     @Test
     public void testGetRoles() {
 
-        String rolesPath = "/api/config/tenants/{tenantName}/roles.yml";
-
-        when(tenantConfigRepository.getConfigFullPath(TENANT, rolesPath)).thenReturn("");
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, ROLES_PATH)).thenReturn("");
         assertTrue(tenantRoleService.getRoles().isEmpty());
 
-        when(tenantConfigRepository.getConfigFullPath(TENANT, rolesPath)).thenReturn(null);
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, ROLES_PATH)).thenReturn(null);
         assertTrue(tenantRoleService.getRoles().isEmpty());
 
-        when(tenantConfigRepository.getConfigFullPath(TENANT, rolesPath)).thenReturn("---");
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, ROLES_PATH)).thenReturn("---");
         assertTrue(tenantRoleService.getRoles().isEmpty());
 
-        when(tenantConfigRepository.getConfigFullPath(TENANT, rolesPath))
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, ROLES_PATH))
             .thenReturn(readConfigFile("/config/tenants/XM/roles.yml"));
         assertEquals("test", tenantRoleService.getRoles().get("ROLE_USER").getDescription());
         assertEquals("test2", tenantRoleService.getRoles().get(SUPER_ADMIN).getDescription());
 
-        when(tenantConfigRepository.getConfigFullPath(TENANT, rolesPath))
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, ROLES_PATH))
             .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
         assertTrue(tenantRoleService.getRoles().isEmpty());
 
-        verify(tenantConfigRepository, times(6)).getConfigFullPath(eq(TENANT), anyString());
+        verify(tenantConfigRepository, times(6)).getConfigFullPath(eq(XM_TENANT), anyString());
 
     }
 
     @Test
     public void testGetRolePermissions() {
 
-        String permissionsPath = "/api/config/tenants/{tenantName}/permissions.yml";
         String roleKey = "ROLE_ADMIN";
 
-        when(tenantConfigRepository.getConfigFullPath(TENANT, permissionsPath)).thenReturn("");
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, PERMISSIONS_PATH)).thenReturn("");
         assertTrue(tenantRoleService.getRolePermissions(roleKey).isEmpty());
 
-        when(tenantConfigRepository.getConfigFullPath(TENANT, permissionsPath)).thenReturn(null);
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, PERMISSIONS_PATH)).thenReturn(null);
         assertTrue(tenantRoleService.getRolePermissions(roleKey).isEmpty());
 
-        when(tenantConfigRepository.getConfigFullPath(TENANT, permissionsPath)).thenReturn("---");
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, PERMISSIONS_PATH)).thenReturn("---");
         assertTrue(tenantRoleService.getRolePermissions(roleKey).isEmpty());
 
-        when(tenantConfigRepository.getConfigFullPath(TENANT, permissionsPath))
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, PERMISSIONS_PATH))
             .thenReturn(readConfigFile("/config/tenants/XM/permissions.yml"));
         assertFalse(tenantRoleService.getRolePermissions(roleKey).isEmpty());
         assertEquals("ROLE_ADMIN", tenantRoleService.getRolePermissions(roleKey).get(0).getRoleKey());
         assertEquals("ATTACHMENT.CREATE", tenantRoleService.getRolePermissions(roleKey).get(0).getPrivilegeKey());
 
-        when(tenantConfigRepository.getConfigFullPath(TENANT, permissionsPath))
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, PERMISSIONS_PATH))
             .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
         assertTrue(tenantRoleService.getRolePermissions(roleKey).isEmpty());
 
-        verify(tenantConfigRepository, times(7)).getConfigFullPath(eq(TENANT), eq(permissionsPath));
+        verify(tenantConfigRepository, times(7)).getConfigFullPath(eq(XM_TENANT), eq(PERMISSIONS_PATH));
 
     }
 
@@ -156,29 +144,27 @@ public class TenantRoleServiceUnitTest {
     public void testGetRole() {
 
         String privilegesPath = "/config/tenants/privileges.yml";
-        String rolesPath = "/api/config/tenants/{tenantName}/roles.yml";
-        String permissionsPath = "/api/config/tenants/{tenantName}/permissions.yml";
 
         String roleKey = "ROLE_ADMIN";
 
         // no configs
-        when(tenantConfigRepository.getConfigFullPath(TENANT, rolesPath)).thenReturn("");
-        when(tenantConfigRepository.getConfigFullPath(TENANT, permissionsPath)).thenReturn("");
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, ROLES_PATH)).thenReturn("");
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, PERMISSIONS_PATH)).thenReturn("");
         when(commonConfigRepository.getConfig(isNull(), eq(singletonList(privilegesPath))))
             .thenReturn(getSingleConfigMap(privilegesPath));
         assertFalse(tenantRoleService.getRole(roleKey).isPresent());
 
         // privileges.yml exists
-        when(tenantConfigRepository.getConfigFullPath(TENANT, rolesPath)).thenReturn("");
-        when(tenantConfigRepository.getConfigFullPath(TENANT, permissionsPath)).thenReturn("");
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, ROLES_PATH)).thenReturn("");
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, PERMISSIONS_PATH)).thenReturn("");
         when(commonConfigRepository.getConfig(isNull(), eq(singletonList(privilegesPath))))
             .thenReturn(getSingleConfigMap(privilegesPath, readConfigFile("/config/tenants/privileges.yml")));
         assertFalse(tenantRoleService.getRole(roleKey).isPresent());
 
         // roles.yml and privileges.yml exist
-        when(tenantConfigRepository.getConfigFullPath(TENANT, rolesPath))
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, ROLES_PATH))
             .thenReturn(readConfigFile("/config/tenants/XM/roles.yml"));
-        when(tenantConfigRepository.getConfigFullPath(TENANT, permissionsPath)).thenReturn("");
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, PERMISSIONS_PATH)).thenReturn("");
         when(commonConfigRepository.getConfig(isNull(), eq(singletonList(privilegesPath))))
             .thenReturn(getSingleConfigMap(privilegesPath, readConfigFile("/config/tenants/privileges.yml")));
         Optional<RoleDTO> role = tenantRoleService.getRole(roleKey);
@@ -188,9 +174,9 @@ public class TenantRoleServiceUnitTest {
         assertTrue(role.get().getPermissions().stream().noneMatch(PermissionDTO::isEnabled));
 
         // roles, privileges and permissions exists
-        when(tenantConfigRepository.getConfigFullPath(TENANT, rolesPath))
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, ROLES_PATH))
             .thenReturn(readConfigFile("/config/tenants/XM/roles.yml"));
-        when(tenantConfigRepository.getConfigFullPath(TENANT, permissionsPath))
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, PERMISSIONS_PATH))
             .thenReturn(readConfigFile("/config/tenants/XM/permissions.yml"));
         when(commonConfigRepository.getConfig(isNull(), eq(singletonList(privilegesPath))))
             .thenReturn(getSingleConfigMap(privilegesPath, readConfigFile("/config/tenants/privileges.yml")));
@@ -211,7 +197,7 @@ public class TenantRoleServiceUnitTest {
 
         RoleMatrixDTO roleMatrix = tenantRoleService.getRoleMatrix();
 
-        verify(tenantConfigRepository).getConfigFullPath(TENANT, ROLES_PATH);
+        verify(tenantConfigRepository).getConfigFullPath(XM_TENANT, ROLES_PATH);
 
         assertRoles(roleMatrix);
         assertEquals(2, roleMatrix.getPermissions().size());
@@ -229,8 +215,8 @@ public class TenantRoleServiceUnitTest {
 
         RoleMatrixDTO roleMatrix = tenantRoleService.getRoleMatrix();
 
-        verify(tenantConfigRepository).getConfigFullPath(TENANT, ROLES_PATH);
-        verify(tenantConfigRepository).getConfigFullPath(TENANT, CUSTOM_PRIVILEGES_PATH);
+        verify(tenantConfigRepository).getConfigFullPath(XM_TENANT, ROLES_PATH);
+        verify(tenantConfigRepository).getConfigFullPath(XM_TENANT, CUSTOM_PRIVILEGES_PATH);
 
         assertRoles(roleMatrix);
         assertEquals(4, roleMatrix.getPermissions().size());
@@ -252,7 +238,7 @@ public class TenantRoleServiceUnitTest {
 
         Optional<RoleDTO> optionalRole = tenantRoleService.getRole("SUPER-ADMIN");
 
-        verify(tenantConfigRepository).getConfigFullPath(TENANT, ROLES_PATH);
+        verify(tenantConfigRepository).getConfigFullPath(XM_TENANT, ROLES_PATH);
 
         assertTrue(optionalRole.isPresent());
 
@@ -272,8 +258,8 @@ public class TenantRoleServiceUnitTest {
 
         Optional<RoleDTO> optionalRole = tenantRoleService.getRole("ROLE_ADMIN");
 
-        verify(tenantConfigRepository).getConfigFullPath(TENANT, ROLES_PATH);
-        verify(tenantConfigRepository).getConfigFullPath(TENANT, CUSTOM_PRIVILEGES_PATH);
+        verify(tenantConfigRepository).getConfigFullPath(XM_TENANT, ROLES_PATH);
+        verify(tenantConfigRepository).getConfigFullPath(XM_TENANT, CUSTOM_PRIVILEGES_PATH);
 
         assertTrue(optionalRole.isPresent());
 
@@ -292,7 +278,7 @@ public class TenantRoleServiceUnitTest {
     private void mockPrivileges() {
         String privilegesPath = "/config/tenants/privileges.yml";
 
-        when(tenantConfigRepository.getConfigFullPath(TENANT, ROLES_PATH))
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, ROLES_PATH))
             .thenReturn(readConfigFile("/config/tenants/XM/roles.yml"));
         when(commonConfigRepository.getConfig(isNull(), eq(singletonList(privilegesPath))))
             .thenReturn(getSingleConfigMap(privilegesPath, readConfigFile("/config/tenants/privileges.yml")));
@@ -300,7 +286,7 @@ public class TenantRoleServiceUnitTest {
 
     private void mockCustomPrivileges() {
         mockPrivileges();
-        when(tenantConfigRepository.getConfigFullPath(TENANT, CUSTOM_PRIVILEGES_PATH))
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, CUSTOM_PRIVILEGES_PATH))
             .thenReturn(readConfigFile("/config/tenants/XM/custom-privileges.yml"));
     }
 
@@ -311,21 +297,47 @@ public class TenantRoleServiceUnitTest {
         assertTrue(roleMatrix.getRoles().stream().anyMatch(roleKey -> roleKey.equals("SUPER-ADMIN")));
     }
 
-    private Map<String, Configuration> getSingleConfigMap(final String path) {
-        return getSingleConfigMap(path, "");
-    }
-    private Map<String, Configuration> getSingleConfigMap(String path, String content) {
-        Map<String, Configuration> privilegesMap = new HashMap<>();
-        privilegesMap.put(path, Configuration.of()
-                                                       .path(path)
-                                                       .content(content)
-                                                       .build());
-        return privilegesMap;
+    @Test
+    public void updateRole() {
+
+        updateRoleMoks();
+
+        RoleDTO newRole = new RoleDTO();
+
+        newRole.setCreatedBy("xm");
+        newRole.setUpdatedBy("xm");
+        newRole.setRoleKey("ROLE_ADMIN");
+        newRole.setDescription("Test update existing role");
+        newRole.setCreatedDate("2019-11-09T07:27:34.757Z");
+        newRole.setUpdatedDate("2019-11-09T07:27:34.757Z");
+
+        PermissionDTO newPermission = new PermissionDTO();
+
+        newPermission.setMsName("uaa");
+        newPermission.setRoleKey("ROLE_ADMIN");
+        newPermission.setPrivilegeKey("ATTACHMENT.CREATE");
+        newPermission.setEnabled(false);
+
+        newRole.setPermissions(singletonList(newPermission));
+
+        tenantRoleService.updateRole(newRole);
+
+        verify(tenantConfigRepository).updateConfigFullPath(eq(XM_TENANT), eq(ROLES_PATH), anyString());
+
+        verify(tenantConfigRepository)
+            .updateConfigFullPath(XM_TENANT, PERMISSIONS_PATH, readConfigFile("/RoleResourceIntTest/updatedPermissions.yml"));
     }
 
-    private String readConfigFile(String path) {
-        return new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream(path)))
-            .lines().collect(Collectors.joining("\n"));
-    }
+    private void updateRoleMoks() {
+        XmAuthenticationContext authenticationContext = mock(XmAuthenticationContext.class);
+        when(xmAuthenticationContextHolder.getContext()).thenReturn(authenticationContext);
 
+        when(authenticationContext.getRequiredLogin()).thenReturn(XM_TENANT);
+
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, PERMISSIONS_PATH))
+            .thenReturn(readConfigFile("/config/tenants/XM/permissions.yml"));
+
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, ROLES_PATH))
+            .thenReturn(readConfigFile("/config/tenants/XM/roles.yml"));
+    }
 }

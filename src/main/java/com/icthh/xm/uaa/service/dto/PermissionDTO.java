@@ -2,11 +2,13 @@ package com.icthh.xm.uaa.service.dto;
 
 import com.icthh.xm.commons.permission.domain.Permission;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.Comparator;
 import java.util.Set;
 
 @Data
+@NoArgsConstructor
 public class PermissionDTO implements Comparable<PermissionDTO> {
 
     private String msName;
@@ -19,9 +21,6 @@ public class PermissionDTO implements Comparable<PermissionDTO> {
     private Set<String> resources;
     private PermissionType permissionType;
     private String description;
-
-    public PermissionDTO() {
-    }
 
     public PermissionDTO(Permission permission) {
         msName = permission.getMsName();

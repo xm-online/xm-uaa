@@ -1,0 +1,23 @@
+---
+uaa:
+  ROLE_ADMIN:
+  - privilegeKey: "MISSING.PRIVILEGE"
+    disabled: false
+    deleted: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: "SKIP"
+  - privilegeKey: "ATTACHMENT.CREATE"
+    disabled: true
+    deleted: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: null
+  ROLE_ANONYMOUS:
+  - privilegeKey: "ATTACHMENT.CREATE"
+    disabled: false
+    deleted: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: "SKIP"
+
