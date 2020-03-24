@@ -7,7 +7,7 @@ services:
         env_file:
             - ./env/uaa-app.env
         secrets:
-            - source: SPRING_DATASOURCE_PASSWORD
+            - source: UAA_SPRING_DATASOURCE_PASSWORD
               target: SPRING_DATASOURCE_PASSWORD
             - source: UAA_APPLICATION_KEYSTORE_FILE
               target: APPLICATION_KEYSTORE_FILE
