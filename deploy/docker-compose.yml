@@ -17,10 +17,6 @@ services:
               target: APPLICATION_RECAPTCHA_SECRETKEY
             - source: APPLICATION_RECAPTCHA_PUBLICKEY
               target: APPLICATION_RECAPTCHA_PUBLICKEY
-            - source: SPRING_DATASOURCE_URL
-              target: SPRING_DATASOURCE_URL
-            - source: SPRING_DATASOURCE_USERNAME
-              target: SPRING_DATASOURCE_USERNAME
         deploy:
             mode: replicated
             replicas: 1
@@ -42,10 +38,6 @@ secrets:
     APPLICATION_RECAPTCHA_PUBLICKEY:
         external: true
     APPLICATION_RECAPTCHA_SECRETKEY:
-        external: true
-    SPRING_DATASOURCE_URL:
-        external: true
-    SPRING_DATASOURCE_USERNAME:
         external: true
 
 networks:
