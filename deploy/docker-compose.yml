@@ -29,6 +29,8 @@ services:
                 syslog-facility: local7
 
 secrets:
+    UAA_SPRING_DATASOURCE_PASSWORD:
+        external: true
     UAA_APPLICATION_KEYSTORE_FILE:
         external: true
     UAA_APPLICATION_KEYSTORE_PASSWORD:
