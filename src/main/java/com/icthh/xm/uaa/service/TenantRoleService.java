@@ -84,11 +84,14 @@ public class TenantRoleService {
     }
 
     private Map<String, Map<String, Set<Permission>>> getPermissions() {
-        Map<String, Map<String, Set<Permission>>> permissions = getConfig(
+        SortedMap<String, SortedMap<String, SortedSet<Permission>>> permissions = getConfig(
             permissionProperties.getPermissionsSpecPath(),
             new TypeReference<>() {
             });
-        return permissions != null ? permissions : new TreeMap<>();
+        permissions = permissions != null ? permissions : new TreeMap<>();
+        Map<String, Map<String, Set<Permission>>> result = new TreeMap<>();
+        permissions.forEach((key, value) -> result.put(key, value != null ? new TreeMap<>(value) : null));
+        return result;
     }
 
     private Map<String, Set<Privilege>> getPrivileges() {
@@ -464,33 +467,22 @@ public class TenantRoleService {
         Collection<PermissionDTO> newPermissions
     ) {
         newPermissions.forEach(newPermission -> {
-
             String msName = newPermission.getMsName();
             String roleKey = newPermission.getRoleKey();
-
             existingPermissions.putIfAbsent(msName, new TreeMap<>());
             existingPermissions.get(msName).putIfAbsent(roleKey, new TreeSet<>());
 
-            Permission permissionModel = permissionDtoToPermission(newPermission);
-
+            Permission permission = permissionDtoToPermission(newPermission);
             Set<Permission> rolePermissions = existingPermissions.get(msName).get(roleKey);
-
             // needed explicitly delete old permission
-            rolePermissions.removeIf(existingPermission -> isPrivilegeKeysEqual(existingPermission, permissionModel));
-            rolePermissions.add(permissionModel);
+            rolePermissions.remove(permission);
+            rolePermissions.add(permission);
         });
-    }
-
-    private boolean isPrivilegeKeysEqual(Permission existingPermission, Permission newPermission) {
-        return ofNullable(existingPermission.getPrivilegeKey())
-            .filter(existingPrivilege -> existingPrivilege.equals(newPermission.getPrivilegeKey()))
-            .isPresent();
     }
 
     @SneakyThrows
     private <T> T getConfig(String configPath, TypeReference<T> typeReference) {
         String config = getConfigContent(configPath).orElse(EMPTY_YAML);
-
         return mapper.readValue(config, typeReference);
     }
 
