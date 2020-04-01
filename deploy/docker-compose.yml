@@ -9,10 +9,6 @@ services:
         secrets:
             - source: UAA_SPRING_DATASOURCE_PASSWORD
               target: SPRING_DATASOURCE_PASSWORD
-            - source: UAA_APPLICATION_KEYSTORE_FILE
-              target: APPLICATION_KEYSTORE_FILE
-            - source: UAA_APPLICATION_KEYSTORE_PASSWORD
-              target: APPLICATION_KEYSTORE_PASSWORD
             - source: APPLICATION_RECAPTCHA_SECRETKEY
               target: APPLICATION_RECAPTCHA_SECRETKEY
             - source: APPLICATION_RECAPTCHA_PUBLICKEY
@@ -30,12 +26,6 @@ services:
 
 secrets:
     UAA_SPRING_DATASOURCE_PASSWORD:
-        external: true
-    UAA_APPLICATION_KEYSTORE_FILE:
-        external: true
-    UAA_APPLICATION_KEYSTORE_PASSWORD:
-        external: true
-    SPRING_DATASOURCE_PASSWORD:
         external: true
     APPLICATION_RECAPTCHA_PUBLICKEY:
         external: true
