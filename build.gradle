@@ -379,7 +379,7 @@ import org.apache.commons.configuration.PropertiesConfiguration
 
 task incrementProjectVersion {
     doLast{
-        PropertiesConfiguration props = new PropertiesConfiguration('gradle.properties')
+        PropertiesConfiguration props = new PropertiesConfiguration('./gradle.properties')
         String version = props.getProperty("version")
         println "old version: " + version
         String newVersion = version.tokenize(".")[0].toString() + "." + version.tokenize(".")[1].toString() + "." + (version.tokenize(".")[2].toInteger() + 1).toString()
@@ -392,7 +392,7 @@ task incrementProjectVersion {
 
 task decrementProjectVersion(dependsOn: configurations.compile) {
     doLast{
-        PropertiesConfiguration props = new PropertiesConfiguration('gradle.properties')
+        PropertiesConfiguration props = new PropertiesConfiguration('./gradle.properties')
         String version = props.getProperty("version")
         println "old version: " + version
         String newVersion = version
