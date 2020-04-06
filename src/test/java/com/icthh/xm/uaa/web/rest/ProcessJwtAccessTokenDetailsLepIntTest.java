@@ -79,7 +79,7 @@ public class ProcessJwtAccessTokenDetailsLepIntTest {
         lepLoader.onRefresh(path,"lepContext.inArgs.details.put('wasCalled', true)");
         Map<String, Object> details = new HashMap<>();
         processor.processJwtAccessTokenDetails(null, details);
-        assertEquals("Lep ProcessJwtAccessTokenDetails$$around was not invoked", Boolean.TRUE, details.get("wasCalles"));
+        assertEquals("Lep ProcessJwtAccessTokenDetails$$around was not invoked", Boolean.TRUE, details.get("wasCalled"));
         lepLoader.onRefresh(path,null);
     }
 
