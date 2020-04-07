@@ -1,8 +1,10 @@
 package com.icthh.xm.uaa.web.rest;
 
 import com.icthh.xm.commons.i18n.error.web.ExceptionTranslator;
+import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
+import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.UserAuthPasswordEncoderConfiguration;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
@@ -11,6 +13,7 @@ import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.service.ClientService;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,6 +27,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.transaction.BeforeTransaction;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +36,9 @@ import javax.persistence.EntityManager;
 import java.time.Instant;
 import java.util.List;
 
+import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
+import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
+import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -103,9 +110,24 @@ public class ClientResourceIntTest {
     @Autowired
     private TenantContextHolder tenantContextHolder;
 
+    @Autowired
+    private LepManager lepManager;
+
+    @Autowired
+    private XmAuthenticationContextHolder xmAuthenticationContextHolder;
+
     private MockMvc restClientMockMvc;
 
     private Client client;
+
+    @BeforeTransaction
+    public void BeforeTransaction() {
+        TenantContextUtils.setTenant(tenantContextHolder, DEFAULT_TENANT_KEY_VALUE);
+        lepManager.beginThreadContext(scopedContext -> {
+            scopedContext.setValue(THREAD_CONTEXT_KEY_TENANT_CONTEXT, tenantContextHolder.getContext());
+            scopedContext.setValue(BINDING_KEY_AUTH_CONTEXT, xmAuthenticationContextHolder.getContext());
+        });
+    }
 
     @Before
     public void setup() {
@@ -115,6 +137,13 @@ public class ClientResourceIntTest {
             .setControllerAdvice(exceptionTranslator)
             .setMessageConverters(jacksonMessageConverter).build();
         TenantContextUtils.setTenant(tenantContextHolder, "XM");
+    }
+
+
+    @After
+    public void destroy() {
+        tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
+        lepManager.endThreadContext();
     }
 
     /**

@@ -10,7 +10,7 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Component;
 
 @Component
-@LepService("security")
+@LepService(group = "security")
 public class DomainJwtAccessTokenDetailsPostProcessor {
 
     @LogicExtensionPoint("ProcessJwtAccessTokenDetails")
