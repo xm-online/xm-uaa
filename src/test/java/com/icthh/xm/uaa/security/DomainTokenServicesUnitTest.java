@@ -200,11 +200,8 @@ public class DomainTokenServicesUnitTest {
 
         when(authenticationRefreshProvider.refresh(any(OAuth2Authentication.class))).thenCallRealMethod();
 
-        Map<String, String> addDetails = new HashMap<>();
-        addDetails.put("detail_key", "detail_value");
-
         OAuth2AccessToken accessToken = tokenServices
-            .createAccessToken(createAuthentication(LOGIN, TENANT, ROLE, addDetails));
+            .createAccessToken(createAuthentication(LOGIN, TENANT, ROLE, of("detail_key", "detail_value")));
 
         assertNotNull(accessToken);
         assertNotNull(accessToken.getRefreshToken());
