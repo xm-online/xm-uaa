@@ -9,9 +9,7 @@ import static com.icthh.xm.uaa.config.Constants.KEYSTORE_ALIAS;
 import static com.icthh.xm.uaa.config.Constants.KEYSTORE_PATH;
 import static com.icthh.xm.uaa.config.Constants.KEYSTORE_PSWRD;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
@@ -145,6 +143,11 @@ public class DomainTokenServicesUnitTest {
     }
 
     private void assertTokenAttributes(OAuth2AccessToken token) {
+        assertNotNull(token);
+        assertNotNull(token.getValue());
+        assertNotNull(token.getRefreshToken());
+        assertNotNull(token.getRefreshToken().getValue());
+
         assertNotNull(token.getAdditionalInformation());
         assertEquals(TENANT, token.getAdditionalInformation().get(AUTH_TENANT_KEY));
         assertEquals(USER_KEY, token.getAdditionalInformation().get(AUTH_USER_KEY));
@@ -153,23 +156,17 @@ public class DomainTokenServicesUnitTest {
 
         OAuth2Authentication auth = tokenServices.loadAuthentication(token.getValue());
 
-        assertEquals(LOGIN, auth.getUserAuthentication().getName());
-        assertEquals(CLIENT, auth.getOAuth2Request().getClientId());
-        assertEquals(TENANT, getDetailByKey(auth.getDetails(), AUTH_TENANT_KEY));
-        assertEquals(USER_KEY, getDetailByKey(auth.getDetails(), (AUTH_USER_KEY)));
+        assertAuthenticationProperties(auth);
     }
 
     @Test
-    public void testRefreshToken() throws Exception {
+    public void testRefreshToken() {
         whenFindUserByLogin(true);
 
         when(authenticationRefreshProvider.refresh(any(OAuth2Authentication.class))).thenCallRealMethod();
 
         OAuth2AccessToken accessToken = tokenServices.createAccessToken(createAuthentication(LOGIN, TENANT, ROLE));
-
-        assertNotNull(accessToken);
-        assertNotNull(accessToken.getRefreshToken());
-        assertNotNull(accessToken.getRefreshToken().getValue());
+        assertTokenAttributes(accessToken);
 
         String refreshTokenValue = accessToken.getRefreshToken().getValue();
 
@@ -180,18 +177,7 @@ public class DomainTokenServicesUnitTest {
         TokenRequest tokenRequest = new TokenRequest(params, CLIENT, null, "refresh_token");
 
         OAuth2AccessToken refreshedToken = tokenServices.refreshAccessToken(refreshTokenValue, tokenRequest);
-
-        assertNotNull(refreshedToken);
-        assertNotNull(refreshedToken.getValue());
-        assertNotNull(refreshedToken.getRefreshToken());
-        assertNotNull(refreshedToken.getRefreshToken().getValue());
-
-        OAuth2Authentication auth = tokenServices.loadAuthentication(refreshedToken.getValue());
-
-        assertEquals(LOGIN, auth.getUserAuthentication().getName());
-        assertEquals(CLIENT, auth.getOAuth2Request().getClientId());
-        assertEquals(TENANT, getDetailByKey(auth.getDetails(), AUTH_TENANT_KEY));
-        assertEquals(USER_KEY, getDetailByKey(auth.getDetails(),AUTH_USER_KEY));
+        assertTokenAttributes(refreshedToken);
     }
 
     @Test
@@ -202,18 +188,13 @@ public class DomainTokenServicesUnitTest {
 
         OAuth2AccessToken accessToken = tokenServices
             .createAccessToken(createAuthentication(LOGIN, TENANT, ROLE, of("detail_key", "detail_value")));
+        assertTokenAttributes(accessToken);
 
-        assertNotNull(accessToken);
-        assertNotNull(accessToken.getRefreshToken());
-        assertNotNull(accessToken.getRefreshToken().getValue());
         assertEquals("detail_value", getAdditionalDetailByKey(accessToken.getAdditionalInformation(), "detail_key"));
 
         // verify that additional details passed to JWT details postprocessor during access token creation
-        ArgumentCaptor<OAuth2Authentication> captor = ArgumentCaptor.forClass(OAuth2Authentication.class);
-        verify(domainJwtAccessTokenDetailsPostProcessor).processJwtAccessTokenDetails(captor.capture(), any());
-        DomainUserDetails domainUserDetails = (DomainUserDetails) captor.getValue().getUserAuthentication().getPrincipal();
+        DomainUserDetails domainUserDetails = verifyJwtAccessTokenDetailsPostProcessor(1, false);
         assertEquals("detail_value", domainUserDetails.getAdditionalDetails().get("detail_key"));
-        assertFalse(captor.getValue().getOAuth2Request().isRefresh());
 
         String refreshTokenValue = accessToken.getRefreshToken().getValue();
 
@@ -224,30 +205,19 @@ public class DomainTokenServicesUnitTest {
         TokenRequest tokenRequest = new TokenRequest(params, CLIENT, null, "refresh_token");
 
         OAuth2AccessToken refreshedToken = tokenServices.refreshAccessToken(refreshTokenValue, tokenRequest);
-
-        assertNotNull(refreshedToken);
-        assertNotNull(refreshedToken.getValue());
-        assertNotNull(refreshedToken.getRefreshToken());
-        assertNotNull(refreshedToken.getRefreshToken().getValue());
+        assertTokenAttributes(refreshedToken);
 
         // verify that additional details passed to JWT details postprocessor during access token refresh
-        verify(domainJwtAccessTokenDetailsPostProcessor, times(2)).processJwtAccessTokenDetails(captor.capture(), any());
-        domainUserDetails = (DomainUserDetails) captor.getValue().getUserAuthentication().getPrincipal();
+        domainUserDetails = verifyJwtAccessTokenDetailsPostProcessor(2, true);
         assertEquals("detail_value", domainUserDetails.getAdditionalDetails().get("detail_key"));
-        assertTrue(captor.getValue().getOAuth2Request().isRefresh());
 
         OAuth2Authentication auth = tokenServices.loadAuthentication(refreshedToken.getValue());
-
-        assertEquals(LOGIN, auth.getUserAuthentication().getName());
-        assertEquals(CLIENT, auth.getOAuth2Request().getClientId());
-        assertEquals(TENANT, getDetailByKey(auth.getDetails(), AUTH_TENANT_KEY));
-        assertEquals(USER_KEY, getDetailByKey(auth.getDetails(), AUTH_USER_KEY));
         assertEquals("detail_value", getAdditionalDetailByKey(auth.getDetails(), "detail_key"));
 
     }
 
     @Test
-    public void testRefreshTokenForDeactivatedUser() throws Exception {
+    public void testRefreshTokenForDeactivatedUser() {
         whenFindUserByLogin(false);
 
         OAuth2AccessToken accessToken = tokenServices.createAccessToken(createAuthentication(LOGIN, TENANT, ROLE));
@@ -270,6 +240,26 @@ public class DomainTokenServicesUnitTest {
 
         verifyNoMoreInteractions(authenticationManager);
         verifyNoMoreInteractions(authenticationRefreshProvider);
+    }
+
+    private DomainUserDetails verifyJwtAccessTokenDetailsPostProcessor(int times, boolean isRefresh) {
+        ArgumentCaptor<OAuth2Authentication> captor = ArgumentCaptor.forClass(OAuth2Authentication.class);
+
+        verify(domainJwtAccessTokenDetailsPostProcessor, times(times))
+            .processJwtAccessTokenDetails(captor.capture(), any());
+
+        assertEquals(isRefresh, captor.getValue().getOAuth2Request().isRefresh());
+
+        return (DomainUserDetails) captor.getValue().getUserAuthentication().getPrincipal();
+
+    }
+
+    private void assertAuthenticationProperties(OAuth2Authentication auth) {
+        assertEquals(LOGIN, auth.getPrincipal());
+        assertEquals(LOGIN, auth.getUserAuthentication().getName());
+        assertEquals(CLIENT, auth.getOAuth2Request().getClientId());
+        assertEquals(TENANT, getDetailByKey(auth.getDetails(), AUTH_TENANT_KEY));
+        assertEquals(USER_KEY, getDetailByKey(auth.getDetails(),AUTH_USER_KEY));
     }
 
     private void whenFindUserByLogin(boolean isActive) {
