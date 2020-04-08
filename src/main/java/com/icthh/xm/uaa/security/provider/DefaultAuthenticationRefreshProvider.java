@@ -9,7 +9,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+import static com.icthh.xm.uaa.config.Constants.AUTH_ADDITIONAL_DETAILS;
 import static com.icthh.xm.uaa.config.Constants.AUTH_LOGINS_KEY;
 import static com.icthh.xm.uaa.config.Constants.AUTH_TENANT_KEY;
 import static com.icthh.xm.uaa.config.Constants.AUTH_USER_KEY;
@@ -40,6 +42,12 @@ public class DefaultAuthenticationRefreshProvider implements AuthenticationRefre
                                                            null,
                                                            getMapValueList(details, AUTH_LOGINS_KEY)
             );
+
+            Optional.of(details)
+                    .map(map -> map.get(AUTH_ADDITIONAL_DETAILS))
+                    .map(Map.class::cast)
+                    .ifPresent(map -> user.getAdditionalDetails().putAll(map));
+
             return new UsernamePasswordAuthenticationToken(user, "", authentication.getAuthorities());
         }
         return authentication;
