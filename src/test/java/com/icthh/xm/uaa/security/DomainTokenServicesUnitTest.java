@@ -12,11 +12,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
@@ -34,6 +36,7 @@ import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -81,6 +84,8 @@ public class DomainTokenServicesUnitTest {
     private AuthenticationManager authenticationManager;
     @Mock
     private DefaultAuthenticationRefreshProvider authenticationRefreshProvider;
+    @Mock
+    private DomainJwtAccessTokenDetailsPostProcessor domainJwtAccessTokenDetailsPostProcessor;
 
     @InjectMocks
     private TokenConstraintsService tokenConstraintsService;
@@ -95,8 +100,8 @@ public class DomainTokenServicesUnitTest {
         TenantContextHolder tenantContextHolder = mock(TenantContextHolder.class);
         when(tenantContextHolder.getContext()).thenReturn(tenantContext);
 
-        DomainJwtAccessTokenDetailsPostProcessor processor = new DomainJwtAccessTokenDetailsPostProcessor();
-        JwtAccessTokenConverter converter = new DomainJwtAccessTokenConverter(tenantContextHolder, processor);
+        doCallRealMethod().when(domainJwtAccessTokenDetailsPostProcessor).processJwtAccessTokenDetails(any(), any());
+        JwtAccessTokenConverter converter = new DomainJwtAccessTokenConverter(tenantContextHolder, domainJwtAccessTokenDetailsPostProcessor);
         KeyPair keyPair = new KeyStoreKeyFactory(
             new ClassPathResource(KEYSTORE_PATH), KEYSTORE_PSWRD.toCharArray())
             .getKeyPair(KEYSTORE_ALIAS);
@@ -120,8 +125,7 @@ public class DomainTokenServicesUnitTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    public void testAccessToken() throws JsonProcessingException {
+    public void testAccessToken() {
         OAuth2AccessToken token = tokenServices.createAccessToken(createAuthentication(LOGIN, TENANT, ROLE));
 
         assertTokenAttributes(token);
@@ -139,6 +143,11 @@ public class DomainTokenServicesUnitTest {
     }
 
     private void assertTokenAttributes(OAuth2AccessToken token) {
+        assertNotNull(token);
+        assertNotNull(token.getValue());
+        assertNotNull(token.getRefreshToken());
+        assertNotNull(token.getRefreshToken().getValue());
+
         assertNotNull(token.getAdditionalInformation());
         assertEquals(TENANT, token.getAdditionalInformation().get(AUTH_TENANT_KEY));
         assertEquals(USER_KEY, token.getAdditionalInformation().get(AUTH_USER_KEY));
@@ -147,60 +156,69 @@ public class DomainTokenServicesUnitTest {
 
         OAuth2Authentication auth = tokenServices.loadAuthentication(token.getValue());
 
-        assertEquals(LOGIN, auth.getUserAuthentication().getName());
-        assertEquals(CLIENT, auth.getOAuth2Request().getClientId());
-        assertEquals(TENANT, ((Map<String, String>) auth.getDetails()).get(AUTH_TENANT_KEY));
-        assertEquals(USER_KEY, ((Map<String, String>) auth.getDetails()).get(AUTH_USER_KEY));
+        assertAuthenticationProperties(auth);
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    public void testRefreshToken() throws Exception {
-        when(userService.findOneByLogin(LOGIN)).thenAnswer(invocation -> {
-            User user = new User();
-            user.setActivated(true); // user is active
-            user.setUserKey(USER_KEY);
-            return Optional.of(user);
-        });
+    public void testRefreshToken() {
+        whenFindUserByLogin(true);
 
         when(authenticationRefreshProvider.refresh(any(OAuth2Authentication.class))).thenCallRealMethod();
 
         OAuth2AccessToken accessToken = tokenServices.createAccessToken(createAuthentication(LOGIN, TENANT, ROLE));
+        assertTokenAttributes(accessToken);
 
-        assertNotNull(accessToken);
-        assertNotNull(accessToken.getRefreshToken());
-        assertNotNull(accessToken.getRefreshToken().getValue());
+        String refreshTokenValue = accessToken.getRefreshToken().getValue();
 
         Map<String, String> params = new HashMap<>();
         params.put("grant_type", "refresh_token");
-        params.put("refresh_token", accessToken.getRefreshToken().getValue());
+        params.put("refresh_token", refreshTokenValue);
 
         TokenRequest tokenRequest = new TokenRequest(params, CLIENT, null, "refresh_token");
 
-        OAuth2AccessToken refreshedToken = tokenServices.refreshAccessToken(accessToken.getRefreshToken().getValue(),
-                                                                            tokenRequest);
-
-        assertNotNull(refreshedToken);
-        assertNotNull(refreshedToken.getValue());
-        assertNotNull(refreshedToken.getRefreshToken());
-        assertNotNull(refreshedToken.getRefreshToken().getValue());
-
-        OAuth2Authentication auth = tokenServices.loadAuthentication(refreshedToken.getValue());
-
-        assertEquals(LOGIN, auth.getUserAuthentication().getName());
-        assertEquals(CLIENT, auth.getOAuth2Request().getClientId());
-        assertEquals(TENANT, ((Map<String, String>) auth.getDetails()).get(AUTH_TENANT_KEY));
-        assertEquals(USER_KEY, ((Map<String, String>) auth.getDetails()).get(AUTH_USER_KEY));
+        OAuth2AccessToken refreshedToken = tokenServices.refreshAccessToken(refreshTokenValue, tokenRequest);
+        assertTokenAttributes(refreshedToken);
     }
 
     @Test
-    public void testRefreshTokenForDeactivatedUser() throws Exception {
-        when(userService.findOneByLogin(LOGIN)).thenAnswer(invocation -> {
-            User user = new User();
-            user.setActivated(false); // user is deactivated
-            user.setUserKey(USER_KEY);
-            return Optional.of(user);
-        });
+    public void testRefreshTokenWithAdditionalDetails() {
+        whenFindUserByLogin(true);
+
+        when(authenticationRefreshProvider.refresh(any(OAuth2Authentication.class))).thenCallRealMethod();
+
+        OAuth2AccessToken accessToken = tokenServices
+            .createAccessToken(createAuthentication(LOGIN, TENANT, ROLE, of("detail_key", "detail_value")));
+        assertTokenAttributes(accessToken);
+
+        assertEquals("detail_value", getAdditionalDetailByKey(accessToken.getAdditionalInformation(), "detail_key"));
+
+        // verify that additional details passed to JWT details postprocessor during access token creation
+        DomainUserDetails domainUserDetails = verifyJwtAccessTokenDetailsPostProcessor(1, false);
+        assertEquals("detail_value", domainUserDetails.getAdditionalDetails().get("detail_key"));
+
+        String refreshTokenValue = accessToken.getRefreshToken().getValue();
+
+        Map<String, String> params = new HashMap<>();
+        params.put("grant_type", "refresh_token");
+        params.put("refresh_token", refreshTokenValue);
+
+        TokenRequest tokenRequest = new TokenRequest(params, CLIENT, null, "refresh_token");
+
+        OAuth2AccessToken refreshedToken = tokenServices.refreshAccessToken(refreshTokenValue, tokenRequest);
+        assertTokenAttributes(refreshedToken);
+
+        // verify that additional details passed to JWT details postprocessor during access token refresh
+        domainUserDetails = verifyJwtAccessTokenDetailsPostProcessor(2, true);
+        assertEquals("detail_value", domainUserDetails.getAdditionalDetails().get("detail_key"));
+
+        OAuth2Authentication auth = tokenServices.loadAuthentication(refreshedToken.getValue());
+        assertEquals("detail_value", getAdditionalDetailByKey(auth.getDetails(), "detail_key"));
+
+    }
+
+    @Test
+    public void testRefreshTokenForDeactivatedUser() {
+        whenFindUserByLogin(false);
 
         OAuth2AccessToken accessToken = tokenServices.createAccessToken(createAuthentication(LOGIN, TENANT, ROLE));
 
@@ -224,11 +242,64 @@ public class DomainTokenServicesUnitTest {
         verifyNoMoreInteractions(authenticationRefreshProvider);
     }
 
-    private OAuth2Authentication createAuthentication(String username, String tenant, String role) {
-        return createAuthentication(null, username, tenant, role);
+    private DomainUserDetails verifyJwtAccessTokenDetailsPostProcessor(int times, boolean isRefresh) {
+        ArgumentCaptor<OAuth2Authentication> captor = ArgumentCaptor.forClass(OAuth2Authentication.class);
+
+        verify(domainJwtAccessTokenDetailsPostProcessor, times(times))
+            .processJwtAccessTokenDetails(captor.capture(), any());
+
+        assertEquals(isRefresh, captor.getValue().getOAuth2Request().isRefresh());
+
+        return (DomainUserDetails) captor.getValue().getUserAuthentication().getPrincipal();
+
+    }
+
+    private void assertAuthenticationProperties(OAuth2Authentication auth) {
+        assertEquals(LOGIN, auth.getPrincipal());
+        assertEquals(LOGIN, auth.getUserAuthentication().getName());
+        assertEquals(CLIENT, auth.getOAuth2Request().getClientId());
+        assertEquals(TENANT, getDetailByKey(auth.getDetails(), AUTH_TENANT_KEY));
+        assertEquals(USER_KEY, getDetailByKey(auth.getDetails(),AUTH_USER_KEY));
+    }
+
+    private void whenFindUserByLogin(boolean isActive) {
+        when(userService.findOneByLogin(LOGIN)).thenAnswer(invocation -> {
+            User user = new User();
+            user.setActivated(isActive); // user is active
+            user.setUserKey(USER_KEY);
+            return Optional.of(user);
+        });
+    }
+
+    private Object getDetailByKey(Object details, String key) {
+        return Optional.ofNullable(details)
+                       .map(Map.class::cast)
+                       .map(map -> map.get(key))
+                       .orElseThrow(() -> new RuntimeException(" details does not contains value for key: " + key));
+    }
+
+    private Object getAdditionalDetailByKey(Object details, String key) {
+        return Optional.ofNullable(details)
+                       .map(Map.class::cast)
+                       .map(map -> map.get(AUTH_ADDITIONAL_DETAILS))
+                       .map(Map.class::cast)
+                       .map(map -> map.get(key))
+                       .orElseThrow(() -> new RuntimeException(
+                           AUTH_ADDITIONAL_DETAILS + " does not contains value for key: " + key));
+    }
+
+    private OAuth2Authentication createAuthentication(String username, String tenant, String role, Map<String, String> additionalDetails) {
+        return createAuthentication(null, username, tenant, role, additionalDetails);
     }
 
     private OAuth2Authentication createAuthentication(Map<String, String> requestParams, String username, String tenant, String role) {
+        return createAuthentication(requestParams, username, tenant, role, Collections.emptyMap());
+    }
+
+    private OAuth2Authentication createAuthentication(String username, String tenant, String role) {
+        return createAuthentication(null, username, tenant, role, Collections.emptyMap());
+    }
+    private OAuth2Authentication createAuthentication(Map<String, String> requestParams, String username, String tenant, String role, Map<String, String> additionalDetails) {
         DomainUserDetails principal = new DomainUserDetails(username,
                                                             "test",
                                                             Collections.singletonList(new SimpleGrantedAuthority(role)),
@@ -239,6 +310,8 @@ public class DomainTokenServicesUnitTest {
                                                             null,
                                                             false,
                                                             null);
+        principal.getAdditionalDetails().putAll(additionalDetails);
+
         Authentication authentication = new UsernamePasswordAuthenticationToken(principal, principal.getPassword(),
                                                                                 principal.getAuthorities());
 
