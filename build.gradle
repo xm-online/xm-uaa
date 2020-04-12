@@ -53,7 +53,6 @@ dependencyManagement {
 defaultTasks 'bootRun'
 
 group = 'com.icthh.xm.uaa'
-version = '0.0.1-SNAPSHOT'
 
 description = ''
 
@@ -187,7 +186,6 @@ liquibase {
 }
 
 group = 'com.icthh.xm.uaa'
-version = '0.0.1-SNAPSHOT'
 
 description = ''
 
