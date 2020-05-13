@@ -182,6 +182,8 @@ public class TenantProperties {
 
         private String domain;
         private Type type;
+        private String imageUrl;
+        private String dynamicParameterPattern;
         private String providerUrl;
         private String systemUser;
         private String systemPassword;
