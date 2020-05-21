@@ -88,6 +88,9 @@ public class DomainTokenServicesUnitTest {
     private DomainJwtAccessTokenDetailsPostProcessor domainJwtAccessTokenDetailsPostProcessor;
 
     @InjectMocks
+    private UserSecurityValidator userSecurityValidator;
+
+    @InjectMocks
     private TokenConstraintsService tokenConstraintsService;
 
     @InjectMocks
@@ -122,6 +125,7 @@ public class DomainTokenServicesUnitTest {
         tokenServices.setTokenConstraintsService(tokenConstraintsService);
         tokenServices.setAuthenticationRefreshProvider(authenticationRefreshProvider);
         tokenServices.setUserService(userService);
+        tokenServices.setUserSecurityValidator(userSecurityValidator);
     }
 
     @Test
