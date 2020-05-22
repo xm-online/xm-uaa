@@ -17,10 +17,10 @@ import java.util.Map;
 @Service
 @LepService(group = "request.enrichment")
 @RequiredArgsConstructor
-public class RequestEnrichmentService {
+public class LepRequestEnrichmentService {
 
     @Setter(onMethod = @__(@Autowired))
-    private RequestEnrichmentService self;
+    private LepRequestEnrichmentService self;
 
     public ServletRequest enrichRequest(ServletRequest request) {
         if (request instanceof HttpServletRequest) {
