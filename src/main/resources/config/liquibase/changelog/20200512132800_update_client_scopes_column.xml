@@ -4,9 +4,10 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
-    <changeSet id="20191209160000" author="dtsarenko">
-        <validCheckSum>1:any</validCheckSum>
-        <addUniqueConstraint tableName="client" columnNames="client_id"
-            constraintName="client_id_constraint"/>
+    <changeSet id="20200512132800" author="rternovyi">
+        <modifyDataType tableName="client"
+                        columnName="scopes"
+                        newDataType="varchar(2048)"/>
     </changeSet>
+
 </databaseChangeLog>

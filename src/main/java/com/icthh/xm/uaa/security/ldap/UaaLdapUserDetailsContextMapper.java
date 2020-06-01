@@ -9,17 +9,20 @@ import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.ldap.core.DirContextOperations;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.ldap.userdetails.LdapUserDetailsMapper;
 
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
 import java.math.BigInteger;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static java.util.Objects.nonNull;
 
 @AllArgsConstructor
 @Slf4j
@@ -52,6 +55,7 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
         //base info mapping
         userDTO.setFirstName(ctx.getStringAttribute(ldapConf.getAttribute().getFirstName()));
         userDTO.setLastName(ctx.getStringAttribute(ldapConf.getAttribute().getLastName()));
+        userDTO.setImageUrl(parseImageUrl(ctx));
 
         //login mapping
         UserLogin userLogin = new UserLogin();
@@ -66,11 +70,17 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
     private void updateUser(DirContextOperations ctx, User user, Collection<? extends GrantedAuthority> authorities) {
         String mappedRole = mapRole(ldapConf.getRole(), authorities);
         log.info("Mapped role from ldap [{}], current role [{}]", mappedRole, user.getRoleKey());
+        String imageUrl = parseImageUrl(ctx);
 
-        if (!mappedRole.equals(user.getRoleKey())) {
+        if (needUpdate(mappedRole, user, imageUrl)) {
+            user.setImageUrl(imageUrl);
             user.setResetKey(mappedRole);
             userService.saveUser(user);
         }
+    }
+
+    private boolean needUpdate(String mappedRole, User user, String imageUrl) {
+        return !mappedRole.equals(user.getRoleKey()) || !StringUtils.equals(user.getImageUrl(), imageUrl);
     }
 
     private String mapRole(TenantProperties.Ldap.Role roleConf, Collection<? extends GrantedAuthority> authorities) {
@@ -98,5 +108,29 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
 
         log.info("Mapped role: {}", mappedXmRole);
         return mappedXmRole;
+    }
+
+    private String parseImageUrl(DirContextOperations ctx) {
+        String imageUrl = ldapConf.getImageUrl();
+        String dynamicParameterPattern = ldapConf.getDynamicParameterPattern();
+        if (nonNull(imageUrl) && nonNull(dynamicParameterPattern)) {
+            ImageUrlParser imageUrlParser = ImageUrlParser.parser(imageUrl, dynamicParameterPattern);
+            List<String> parameters = imageUrlParser.getParameters();
+            Map<String, String> paramsMap = parameters.stream()
+                .collect(Collectors.toMap(Function.identity(), param -> getAttribute(ctx, param)));
+            return imageUrlParser.replace(paramsMap);
+        }
+        return null;
+
+    }
+
+    private String getAttribute(DirContextOperations ctx, String param) {
+        try {
+            return String.valueOf(ctx.getAttributes().get(param).get());
+        } catch (NamingException e) {
+            log.error("Cannot find {} in Active Directory", param, e);
+        }
+        return null;
+
     }
 }

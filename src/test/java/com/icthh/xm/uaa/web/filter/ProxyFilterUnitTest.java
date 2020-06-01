@@ -9,6 +9,7 @@ import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.uaa.commons.XmPrivilegedRequestContext;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
+import com.icthh.xm.uaa.service.LepRequestEnrichmentService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -75,6 +76,8 @@ public class ProxyFilterUnitTest {
     private LepManager lepManager;
     @Mock
     private TokenStore tokenStore;
+    @Mock
+    LepRequestEnrichmentService lepRequestEnrichmentService;
 
     @InjectMocks
     private ProxyFilter filter;
@@ -95,6 +98,7 @@ public class ProxyFilterUnitTest {
         when(tenantListRepository.getSuspendedTenants()).thenReturn(Collections.emptySet());
         PrivilegedTenantContext privilegedTenantContext = mock(PrivilegedTenantContext.class);
         when(tenantContextHolder.getPrivilegedContext()).thenReturn(privilegedTenantContext);
+        when(lepRequestEnrichmentService.enrichRequest(request)).thenReturn(request);
 
         Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(USER_NAME);
@@ -127,6 +131,7 @@ public class ProxyFilterUnitTest {
         verify(privilegedTenantContext, times(1))
             .setTenant(eq(TenantContextUtils.buildTenant(DEFAULT_TENANT_KEY_VALUE)));
         verify(privilegedTenantContext, times(1)).destroyCurrentContext();
+        verify(lepRequestEnrichmentService).enrichRequest(request);
     }
 
     @Test
@@ -138,6 +143,7 @@ public class ProxyFilterUnitTest {
         verify(chain).doFilter(request, response);
         verify(request).getServletPath();
         verifyNoMoreInteractions(request, response);
+        verify(lepRequestEnrichmentService, times(0)).enrichRequest(request);
     }
 
     @Test
@@ -151,6 +157,7 @@ public class ProxyFilterUnitTest {
         verify(response, times(2)).getWriter();
         verify(writer).write(String.format(ERROR_PATTERN, ERR_TENANT_NOT_SUPPLIED, TENANT_NOT_SUPPLIED));
         verify(writer).flush();
+        verify(lepRequestEnrichmentService, times(0)).enrichRequest(request);
     }
 
     @Test
@@ -161,6 +168,7 @@ public class ProxyFilterUnitTest {
         filter.doFilter(request, response, chain);
 
         verify(chain).doFilter(request, response);
+        verify(lepRequestEnrichmentService, times(0)).enrichRequest(request);
     }
 
     @Test
@@ -176,5 +184,6 @@ public class ProxyFilterUnitTest {
         verify(response, times(2)).getWriter();
         verify(writer).write(String.format(ERROR_PATTERN, ERR_TENANT_SUSPENDED, TENANT_IS_SUSPENDED));
         verify(writer).flush();
+        verify(lepRequestEnrichmentService, times(0)).enrichRequest(request);
     }
 }
