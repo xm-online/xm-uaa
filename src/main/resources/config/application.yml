@@ -203,3 +203,5 @@ application:
         tenant-script-storage: XM_MS_CONFIG
     keystore-file: keystore.p12
     keystore-password: password
+    security:
+        passwordEncoderStrength: -1

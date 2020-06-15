@@ -12,8 +12,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class UserAuthPasswordEncoderConfiguration {
 
     @Bean("passwordEncoder")
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    public PasswordEncoder passwordEncoder(ApplicationProperties applicationProperties) {
+        ApplicationProperties.Security security = applicationProperties.getSecurity();
+        if (security.getPasswordEncoderStrength() != null) {
+            return new BCryptPasswordEncoder(security.getPasswordEncoderStrength());
+        } else {
+            return new BCryptPasswordEncoder();
+        }
     }
 
 }

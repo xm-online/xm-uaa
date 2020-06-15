@@ -61,6 +61,7 @@ public class ApplicationProperties {
         private Integer accessTokenValiditySeconds;
         private Integer refreshTokenValiditySeconds;
         private Integer tfaAccessTokenValiditySeconds;
+        private Integer passwordEncoderStrength;
     }
 
     @Getter
