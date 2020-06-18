@@ -32,6 +32,8 @@
 
     <include file="classpath:config/liquibase/changelog/20200512132800_update_client_scopes_column.xml" relativeToChangelogFile="false"/>
 
+    <include file="classpath:config/liquibase/changelog/20200618000000_add_role_and_permission.xml" relativeToChangelogFile="false"/>
+
     <!-- jhipster-needle-liquibase-add-changelog - JHipster will add liquibase changelogs here -->
     <!-- jhipster-needle-liquibase-add-constraints-changelog - JHipster will add liquibase constraints changelogs here -->
 </databaseChangeLog>
