@@ -16,12 +16,11 @@ import com.icthh.xm.uaa.service.dto.RoleMatrixDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
 
+import java.util.Collections;
 import java.util.Optional;
 
 import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
@@ -43,7 +42,6 @@ public class TenantRoleServiceUnitTest {
     private static final String CUSTOM_PRIVILEGES_PATH = "/api/config/tenants/XM/custom-privileges.yml";
     private static final String PERMISSIONS_PATH = "/api/config/tenants/{tenantName}/permissions.yml";
 
-    @InjectMocks
     TenantRoleService tenantRoleService;
 
     @Mock
@@ -85,6 +83,17 @@ public class TenantRoleServiceUnitTest {
         when(permissionProperties.getPermissionsSpecPath()).thenReturn("/config/tenants/{tenantName}/permissions.yml");
         when(permissionProperties.getPrivilegesSpecPath()).thenReturn("/config/tenants/privileges.yml");
 
+        ConfigServiceConfigurationSource configServiceConfigurationSource = new ConfigServiceConfigurationSource(
+            permissionProperties, tenantConfigRepository, tenantContextHolder,
+            xmAuthenticationContextHolder, commonConfigRepository);
+
+        PermissionsConfigModeProvider permissionsConfigModeProvider = mock(TenantConfigPermissionsConfigModeProviderImpl.class);
+        when(permissionsConfigModeProvider.getMode()).thenReturn(PermissionsConfigMode.CONFIGURATION_SERVICE);
+        PermissionsConfigurationProvider permissionsConfigurationProvider = new PermissionsConfigurationProvider(Collections.singletonList(
+            configServiceConfigurationSource), permissionsConfigModeProvider);
+
+        tenantRoleService = new TenantRoleService(userRepository, clientRepository, xmAuthenticationContextHolder,
+            environmentService, permissionsConfigurationProvider, tenantContextHolder);
     }
 
     @Test

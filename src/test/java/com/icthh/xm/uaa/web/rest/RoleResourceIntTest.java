@@ -5,6 +5,8 @@ import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
 import com.icthh.xm.commons.i18n.error.web.ExceptionTranslator;
 import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
+import com.icthh.xm.uaa.service.PermissionsConfigMode;
+import com.icthh.xm.uaa.service.PermissionsConfigModeProvider;
 import lombok.SneakyThrows;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,6 +48,9 @@ public class RoleResourceIntTest {
     @MockBean
     private TenantConfigRepository tenantConfigRepository;
 
+    @MockBean
+    private PermissionsConfigModeProvider permissionsConfigModeProvider;
+
     @Autowired
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
 
@@ -77,6 +82,7 @@ public class RoleResourceIntTest {
             .thenReturn(getSingleConfigMap("/config/tenants/privileges.yml",
                 readConfigFile("/config/tenants/privileges.yml")));
 
+        when(permissionsConfigModeProvider.getMode()).thenReturn(PermissionsConfigMode.CONFIGURATION_SERVICE);
     }
 
     @Test

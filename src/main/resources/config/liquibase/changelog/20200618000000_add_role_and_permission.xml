@@ -12,7 +12,6 @@
             <column name="role_key" type="varchar">
                 <constraints nullable="false"/>
             </column>
-            <column name="based_on" type="bigint"/>
             <column name="description" type="varchar"/>
 
             <column name="created_by" type="varchar(255)">

@@ -1,19 +1,12 @@
 package com.icthh.xm.uaa.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
-import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
-import com.icthh.xm.commons.config.domain.Configuration;
 import com.icthh.xm.commons.exceptions.BusinessException;
-import com.icthh.xm.commons.permission.config.PermissionProperties;
 import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.commons.permission.domain.Permission;
 import com.icthh.xm.commons.permission.domain.Privilege;
 import com.icthh.xm.commons.permission.domain.Role;
-import com.icthh.xm.commons.permission.domain.mapper.PermissionMapper;
-import com.icthh.xm.commons.permission.domain.mapper.PrivilegeMapper;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
@@ -28,9 +21,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 
 import javax.validation.Valid;
 import java.time.Instant;
@@ -43,69 +34,41 @@ import static com.icthh.xm.uaa.service.dto.PermissionType.SYSTEM;
 import static com.icthh.xm.uaa.service.dto.PermissionType.TENANT;
 import static com.icthh.xm.uaa.service.mapper.PermissionDomainMapper.permissionDtoToPermission;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_FORBIDDEN_ROLE;
-import static java.util.Optional.ofNullable;
 
 /**
- * Service Implementation for managing Role.
+ * Service Implementation for managing Role and Permission.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class TenantRoleService {
 
-    private static final String API = "/api";
-
-    private static final String EMPTY_YAML = "---";
-
-    private static final String CUSTOM_PRIVILEGES_PATH = "/config/tenants/{tenantName}/custom-privileges.yml";
-
-    @Value("${xm-permission.custom-privileges-path:}")
-    private String customPrivilegesPath;
-
-    private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-    private final PermissionProperties permissionProperties;
-    private final TenantConfigRepository tenantConfigRepository;
     private final UserRepository userRepository;
     private final ClientRepository clientRepository;
-    private final TenantContextHolder tenantContextHolder;
     private final XmAuthenticationContextHolder xmAuthenticationContextHolder;
     private final EnvironmentService environmentService;
-    private final CommonConfigRepository commonConfigRepository;
+    private final PermissionsConfigurationProvider permissionsConfigurationProvider;
+    private final TenantContextHolder tenantContextHolder;
+    private final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
     /**
      * Get roles properties.
      * @return role props
      */
     public Map<String, Role> getRoles() {
-        TreeMap<String, Role> roles = getConfig(permissionProperties.getRolesSpecPath(),
-            new TypeReference<>() {
-            });
-        return roles != null ? roles : new TreeMap<>();
+        return permissionsConfigurationProvider.getSource().getRoles();
     }
 
     private Map<String, Map<String, Set<Permission>>> getPermissions() {
-        SortedMap<String, SortedMap<String, SortedSet<Permission>>> permissions = getConfig(
-            permissionProperties.getPermissionsSpecPath(),
-            new TypeReference<>() {
-            });
-        permissions = permissions != null ? permissions : new TreeMap<>();
-        Map<String, Map<String, Set<Permission>>> result = new TreeMap<>();
-        permissions.forEach((key, value) -> result.put(key, value != null ? new TreeMap<>(value) : null));
-        return result;
+       return permissionsConfigurationProvider.getSource().getPermissions();
     }
 
     private Map<String, Set<Privilege>> getPrivileges() {
-        String privilegesFile = getCommonConfigContent(permissionProperties.getPrivilegesSpecPath()).orElse("");
-        return StringUtils.isBlank(privilegesFile) ? new TreeMap<>() : PrivilegeMapper
-                        .ymlToPrivileges(privilegesFile);
+        return permissionsConfigurationProvider.getDefaultSource().getPrivileges();
     }
 
     private Map<String, Set<Privilege>> getCustomPrivileges() {
-        String tenant = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder.getContext());
-        String path = StringUtils.isBlank(customPrivilegesPath) ? CUSTOM_PRIVILEGES_PATH : customPrivilegesPath;
-        String privilegesFile = getConfigContent(path.replace("{tenantName}", tenant)).orElse("");
-        return StringUtils.isBlank(privilegesFile) ? new TreeMap<>() : PrivilegeMapper
-            .ymlToPrivileges(privilegesFile);
+        return permissionsConfigurationProvider.getDefaultSource().getCustomPrivileges();
     }
 
     /**
@@ -133,7 +96,7 @@ public class TenantRoleService {
         role.setUpdatedDate(roleDto.getUpdatedDate());
         roles.put(roleDto.getRoleKey(), role);
 
-        updateRoles(mapper.writeValueAsString(roles));
+        updateRoles(roles);
 
         Map<String, Map<String, Set<Permission>>> permissions = getPermissions();
         if (StringUtils.isBlank(roleDto.getBasedOn())) {
@@ -142,7 +105,7 @@ public class TenantRoleService {
             enrichExistingPermissions(permissions, roleDto.getRoleKey(), roleDto.getBasedOn());
         }
 
-        updatePermissions(mapper.writeValueAsString(permissions));
+        updatePermissions(permissions);
     }
 
     /**
@@ -164,11 +127,11 @@ public class TenantRoleService {
 
         roles.put(roleDto.getRoleKey(), roleToUpdate);
 
-        updateRoles(mapper.writeValueAsString(roles));
+        updateRoles(roles);
 
         Collection<PermissionDTO> newPermissions = roleDto.getPermissions();
 
-        if (newPermissions.isEmpty()) {
+        if (newPermissions.isEmpty()) { //todo V: think it over. if no permissions provided, delete existing?
             return;
         }
 
@@ -176,44 +139,30 @@ public class TenantRoleService {
 
         enrichExistingPermissions(existingPermissions, newPermissions);
 
-        updatePermissions(mapper.writeValueAsString(existingPermissions));
+        updatePermissions(existingPermissions);
     }
 
     @SneakyThrows
     public List<PermissionDTO> getRolePermissions(String roleKey) {
-        String permissionsFile = getConfigContent(permissionProperties.getPermissionsSpecPath()).orElse("");
-
-        if (StringUtils.isBlank(permissionsFile)) {
-            return Collections.emptyList();
-        }
-
-        Map<String, Permission> permissions = PermissionMapper.ymlToPermissions(permissionsFile);
-
-        return permissions.values()
-                          .stream()
-                          .filter(perm -> roleKey.equals(perm.getRoleKey()))
-                          .map(PermissionDTO::new)
-                          .collect(Collectors.toList());
+        return  permissionsConfigurationProvider.getSource().getRolePermissions(roleKey).values()
+            .stream()
+            .filter(perm -> roleKey.equals(perm.getRoleKey()))
+            .map(PermissionDTO::new)
+            .collect(Collectors.toList());
     }
 
     /**
      * Update roles properties.
-     * @param rolesYml roles config yml
+     * @param roles roles to update map, key - roleKey
      */
     @SneakyThrows
-    private void updateRoles(String rolesYml) {
-        String tenant = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder.getContext());
-
-        tenantConfigRepository.updateConfigFullPath(tenant,
-            API + permissionProperties.getRolesSpecPath(), rolesYml);
+    private void updateRoles(Map<String, Role> roles) {
+        permissionsConfigurationProvider.updateRoles(roles);
     }
 
     @SneakyThrows
-    private void updatePermissions(String permissionsYml) {
-        String tenant = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder.getContext());
-
-        tenantConfigRepository.updateConfigFullPath(tenant, API + permissionProperties.getPermissionsSpecPath(),
-            permissionsYml);
+    private void updatePermissions(Map<String, Map<String, Set<Permission>>> permissions) {
+       permissionsConfigurationProvider.updatePermissions(permissions);
     }
 
     /**
@@ -305,13 +254,13 @@ public class TenantRoleService {
 
         Map<String, Role> roles = getRoles();
         roles.remove(roleKey);
-        updateRoles(mapper.writeValueAsString(roles));
+        updateRoles(roles);
 
         Map<String, Map<String, Set<Permission>>> permissions = getPermissions();
         for (Map<String, Set<Permission>> perm : permissions.values()) {
             perm.remove(roleKey);
         }
-        updatePermissions(mapper.writeValueAsString(permissions));
+        updatePermissions(permissions);
 
     }
 
@@ -426,7 +375,7 @@ public class TenantRoleService {
                     allPermissions.get(permissionMatrixDTO.getMsName()).get(role).add(permission);
                 });
             });
-        updatePermissions(mapper.writeValueAsString(allPermissions));
+        updatePermissions(allPermissions);
     }
 
     /**
@@ -481,31 +430,18 @@ public class TenantRoleService {
     }
 
     @SneakyThrows
-    private <T> T getConfig(String configPath, TypeReference<T> typeReference) {
-        String config = getConfigContent(configPath).orElse(EMPTY_YAML);
-        return mapper.readValue(config, typeReference);
+    public String getRoleConfiguration(String tenantKey) {
+        Map<String, Role> roles = tenantContextHolder.getPrivilegedContext()
+            .execute(TenantContextUtils.buildTenant(tenantKey),
+                () -> permissionsConfigurationProvider.getSource().getRoles());
+        return mapper.writeValueAsString(roles);
     }
 
-    private Optional<String> getConfigContent(String configPath) {
-        String tenant = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder.getContext());
-        String config = null;
-        try {
-            config = tenantConfigRepository.getConfigFullPath(tenant, API + configPath);
-            if (StringUtils.isBlank(config) || EMPTY_YAML.equals(config)) {
-                config = null;
-            }
-
-        } catch (HttpClientErrorException e) {
-            log.warn("Error while getting '{}'", configPath, e);
-        }
-
-        return ofNullable(config);
-    }
-
-    private Optional<String> getCommonConfigContent(String configPath) {
-        return commonConfigRepository.getConfig(null, Collections.singletonList(configPath))
-                                     .values().stream()
-                                     .map(Configuration::getContent)
-                                     .findFirst();
+    @SneakyThrows
+    public String getPermissionConfiguration(String tenantKey) {
+        Map<String, Map<String, Set<Permission>>> roles = tenantContextHolder.getPrivilegedContext()
+            .execute(TenantContextUtils.buildTenant(tenantKey),
+                () -> permissionsConfigurationProvider.getSource().getPermissions());
+        return mapper.writeValueAsString(roles);
     }
 }

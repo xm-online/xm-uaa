@@ -4,21 +4,20 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
- * //todo V: add doc
+ * Persistence entity for Role
  */
 @Entity
 @Table(name = "role")
-//@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE) // //todo V!: needed?
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Data
-@EqualsAndHashCode(callSuper = true) //todo V!: needed? use just id?
-@ToString(exclude = "permissions")
-public class Role extends AbstractAuditingEntity implements Serializable {
+@EqualsAndHashCode(callSuper = true)
+public class RoleEntity extends AbstractAuditingEntity implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
@@ -29,14 +28,10 @@ public class Role extends AbstractAuditingEntity implements Serializable {
     @Column(name = "role_key")
     private String roleKey;
 
-    @OneToOne
-    @JoinColumn(name = "based_on")
-    private Role basedOn;
-
     @Column(name = "description")
     private String description;
 
-    @OneToMany(mappedBy = "role")
-    private List<Permission> permissions; //todo V: use set?
+    @OneToMany(mappedBy = "role", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<PermissionEntity> permissions = new HashSet<>();
 
 }
