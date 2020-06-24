@@ -42,8 +42,8 @@
                 <constraints nullable="false"/>
             </column>
             <column name="reaction_strategy" type="varchar(255)"/>
-            <column name="env_condition" type="varchar(255)"/>
-            <column name="resource_condition" type="varchar(255)"/>
+            <column name="env_condition" type="varchar(1000)"/>
+            <column name="resource_condition" type="varchar(1000)"/>
             <column name="permission_type" type="varchar(255)"/>
             <column name="description" type="varchar(255)"/>
 
