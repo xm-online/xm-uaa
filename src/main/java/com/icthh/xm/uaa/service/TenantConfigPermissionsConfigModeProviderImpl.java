@@ -4,6 +4,8 @@ import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 /**
  * {@link PermissionsConfigModeProvider} based on tenant configuration.
  */
@@ -16,7 +18,9 @@ public class TenantConfigPermissionsConfigModeProviderImpl implements Permission
 
     @Override
     public PermissionsConfigMode getMode() {
-        return (Boolean) tenantConfigService.getConfig().get(UAA_PERMISSIONS_PROPERTY)
+        return Optional.ofNullable(tenantConfigService.getConfig().get(UAA_PERMISSIONS_PROPERTY))
+            .map(e -> Boolean.parseBoolean((String) e))
+            .orElse(Boolean.FALSE)
             ? PermissionsConfigMode.DATABASE
             : null;
     }
