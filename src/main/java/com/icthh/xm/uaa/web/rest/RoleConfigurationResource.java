@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 /**
  *
  */
-@RestController
+@RestController //todo V: use /api request mapping?
 @RequiredArgsConstructor
 @ConditionalOnBean(DatabaseConfigurationSource.class)
 public class RoleConfigurationResource {
@@ -23,7 +23,7 @@ public class RoleConfigurationResource {
      * Will be helpful when populating a blank database after enabling database persistence
      * at the first time.
      */
-    @PostMapping("/roles/migrate")
+    @PostMapping("/roles/{tenant}/migrate")
     public void migrate(@PathVariable("tenant") String tenant) {
         tenantRoleMigrationService.migrate(tenant);
     }
