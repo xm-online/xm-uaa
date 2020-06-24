@@ -9,10 +9,10 @@
             <column name="id" type="bigint" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="role_key" type="varchar">
+            <column name="role_key" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="description" type="varchar"/>
+            <column name="description" type="varchar(256)"/>
 
             <column name="created_by" type="varchar(255)">
                 <constraints nullable="true" />
@@ -36,16 +36,16 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="role_id" type="bigint"/>
-            <column name="ms_name" type="varchar"/>
-            <column name="privilege_key" type="varchar"/>
+            <column name="ms_name" type="varchar(255)"/>
+            <column name="privilege_key" type="varchar(255)"/>
             <column name="disabled" type="boolean">
                 <constraints nullable="false"/>
             </column>
-            <column name="reaction_strategy" type="varchar"/>
-            <column name="env_condition" type="varchar"/>
-            <column name="resource_condition" type="varchar"/>
-            <column name="permission_type" type="varchar"/>
-            <column name="description" type="varchar"/>
+            <column name="reaction_strategy" type="varchar(255)"/>
+            <column name="env_condition" type="varchar(255)"/>
+            <column name="resource_condition" type="varchar(255)"/>
+            <column name="permission_type" type="varchar(255)"/>
+            <column name="description" type="varchar(255)"/>
 
             <column name="created_by" type="varchar(255)">
                 <constraints nullable="true" />
