@@ -3,9 +3,9 @@ package com.icthh.xm.uaa.service;
 import com.icthh.xm.commons.permission.domain.Permission;
 import com.icthh.xm.commons.permission.domain.Role;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import java.util.*;
 import java.util.function.Function;
@@ -31,7 +31,7 @@ public class PermissionsConfigurationProvider {
         sourceMap = sources.stream()
             .collect(Collectors.toMap(ConfigurationSource::getMode, Function.identity(), (a, b) -> a, LinkedHashMap::new));
         this.permissionsConfigModeProvider = permissionsConfigModeProvider;
-        Assert.assertNotNull("Default data source is not specified", getDefaultSource());
+        Assert.notNull(getDefaultSource(), "Default data source is not specified");
     }
 
     public ConfigurationSource getSource() {
