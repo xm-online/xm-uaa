@@ -30,7 +30,7 @@ public class TenantRoleMigrationService {
     /**
      * Gets role and permissions from VCS source and puts the the database using {@code tenantKey}
      */
-    public void migrate(String tenantKey) {//todo V: think how better avoid duplication with Roleservice
+    public void migrate(String tenantKey) {
         tenantContextHolder.getPrivilegedContext()
             .execute(TenantContextUtils.buildTenant(tenantKey),
                 () -> {

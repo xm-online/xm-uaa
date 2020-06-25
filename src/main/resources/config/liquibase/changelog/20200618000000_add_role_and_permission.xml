@@ -36,7 +36,9 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="role_id" type="bigint"/>
-            <column name="ms_name" type="varchar(255)"/>
+            <column name="ms_name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
             <column name="privilege_key" type="varchar(255)"/>
             <column name="disabled" type="boolean">
                 <constraints nullable="false"/>

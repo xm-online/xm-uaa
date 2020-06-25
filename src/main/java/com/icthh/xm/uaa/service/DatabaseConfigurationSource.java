@@ -9,6 +9,7 @@ import com.icthh.xm.uaa.repository.RoleRepository;
 import com.icthh.xm.uaa.service.mapper.PermissionDomainMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.map.IdentityMap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.common.errors.IllegalSaslStateException;
 import org.springframework.core.annotation.Order;
@@ -44,7 +45,7 @@ public class DatabaseConfigurationSource implements ConfigurationSource { //todo
             .collect(Collectors.toMap(Role::getKey, Function.identity()));
     }
 
-    public Role mapToRole(RoleEntity entity) {//todo V!: add test, move to PermissionDomainMapper or RoleDomainMapper
+    public Role mapToRole(RoleEntity entity) {//todo V: add test, move to PermissionDomainMapper or RoleDomainMapper
         Role result = new Role();
         result.setKey(entity.getRoleKey());
         result.setDescription(entity.getDescription());
@@ -85,16 +86,16 @@ public class DatabaseConfigurationSource implements ConfigurationSource { //todo
         //add new
         HashMap<String, Role> newRoles = new HashMap<>(roles);
         newRoles.keySet().removeAll(currentByKey.keySet());
-        roleRepository.saveAll(newRoles.values().stream()
-            .map(d -> mapToRoleEntity(d, new RoleEntity()))
+        roleRepository.saveAll(newRoles.entrySet().stream()
+            .map(d -> mapToRoleEntity(d.getValue(), new RoleEntity(), d.getKey()))
             .collect(Collectors.toList())
         );
 
         //update existing
         HashMap<String, RoleEntity> updated = new HashMap<>(currentByKey);
         updated.keySet().retainAll(roles.keySet());
-        List<RoleEntity> updatedEntities = updated.values().stream() //todo V: combine with batch above?
-            .map(e -> mapToRoleEntity(roles.get(e.getRoleKey()), e))
+        List<RoleEntity> updatedEntities = updated.entrySet().stream() //todo V: combine with batch above?
+            .map(e -> mapToRoleEntity(roles.get(e.getKey()), e.getValue(), e.getKey()))
             .collect(Collectors.toList());
         roleRepository.saveAll(updatedEntities);
 
@@ -105,9 +106,9 @@ public class DatabaseConfigurationSource implements ConfigurationSource { //todo
         roleRepository.deleteAll(removed.values());
     }
 
-    private RoleEntity mapToRoleEntity(Role dto, RoleEntity roleEntity) { //todo V: move to utils, pay attention to cyclic dependencies
-        roleEntity.setRoleKey(dto.getKey());
-        roleEntity.setDescription(dto.getDescription());
+    private RoleEntity mapToRoleEntity(Role role, RoleEntity roleEntity, String key) { //todo V: move to utils, pay attention to cyclic dependencies
+        roleEntity.setRoleKey(key);
+        roleEntity.setDescription(role.getDescription());
 
         return roleEntity;
     }
@@ -117,18 +118,9 @@ public class DatabaseConfigurationSource implements ConfigurationSource { //todo
         List<RoleEntity> currentRoles = roleRepository.findAll();
         Map<String, RoleEntity> currentByKey = currentRoles.stream().collect(Collectors.toMap(RoleEntity::getRoleKey, Function.identity()));
 
-        Map<String, Set<Permission>> rolesToPermissions = permissions.values().stream()
-            .map(Map::entrySet)
-            .flatMap(Collection::stream)
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                Map.Entry::getValue,
-                (left, right) -> {
-                    HashSet<Permission> result = new HashSet<>(left);
-                    result.addAll(right);
-                    return result;
-                }
-            ));
+        IdentityMap permissionsToMs = mapPermissionsToMsName(permissions);
+
+        Map<String, Set<Permission>> rolesToPermissions = mapRolesToPermissions(permissions);
 
         for (Map.Entry<String, Set<Permission>> rolePermissionEntry : rolesToPermissions.entrySet()) {
             String roleKey = rolePermissionEntry.getKey();
@@ -158,7 +150,7 @@ public class DatabaseConfigurationSource implements ConfigurationSource { //todo
 
             role.getPermissions().addAll(
                 newPermissions.values().stream()
-                    .map(p -> mapToPermission(p, new PermissionEntity(), role))
+                    .map(p -> mapToPermission(p, new PermissionEntity(), role, (String) permissionsToMs.get(p)))
                     .collect(Collectors.toSet())
             );
 
@@ -168,7 +160,7 @@ public class DatabaseConfigurationSource implements ConfigurationSource { //todo
 
             role.getPermissions().addAll(
                 updatedPermissions.entrySet().stream()
-                    .map(p -> mapToPermission(permissionsToSet.get(p.getKey()), p.getValue(), role))
+                    .map(p -> mapToPermission(permissionsToSet.get(p.getKey()), p.getValue(), role, (String) permissionsToMs.get(p)))
                     .collect(Collectors.toSet())
             );
 
@@ -183,9 +175,37 @@ public class DatabaseConfigurationSource implements ConfigurationSource { //todo
         roleRepository.saveAll(currentRoles);
     }
 
-    public static PermissionEntity mapToPermission(Permission permission, PermissionEntity entity, RoleEntity role) {
+    private Map<String, Set<Permission>> mapRolesToPermissions(Map<String, Map<String, Set<Permission>>> permissions) {
+        return permissions.values().stream()
+                 .map(Map::entrySet)
+                 .flatMap(Collection::stream)
+                 .collect(Collectors.toMap(
+                     Map.Entry::getKey,
+                     Map.Entry::getValue,
+                     (left, right) -> {
+                         HashSet<Permission> result = new HashSet<>(left);
+                         result.addAll(right);
+                         return result;
+                     }
+                 ));
+    }
+
+    private IdentityMap mapPermissionsToMsName(Map<String, Map<String, Set<Permission>>> permissions) {
+        IdentityMap permissionsToMs = new IdentityMap();
+
+        for (Map.Entry<String, Map<String, Set<Permission>>> stringMapEntry : permissions.entrySet()) {
+            String msName = stringMapEntry.getKey();
+            for (Set<Permission> pSet : stringMapEntry.getValue().values()) {
+                pSet.forEach(perm -> permissionsToMs.put(perm, msName));
+            }
+
+        }
+        return permissionsToMs;
+    }
+
+    public static PermissionEntity mapToPermission(Permission permission, PermissionEntity entity, RoleEntity role, String msName) {
         entity.setPrivilegeKey(permission.getPrivilegeKey());
-        entity.setMsName(permission.getMsName());
+        entity.setMsName(msName);
         entity.setDisabled(permission.isDisabled());
         entity.setEnvCondition(Optional.ofNullable(permission.getEnvCondition()).map(Expression::getExpressionString).orElse(null));
         entity.setResourceCondition(Optional.ofNullable(permission.getResourceCondition()).map(Expression::getExpressionString).orElse(null));

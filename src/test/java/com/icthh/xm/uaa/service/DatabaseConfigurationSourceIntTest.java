@@ -3,6 +3,7 @@ package com.icthh.xm.uaa.service;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.icthh.xm.commons.permission.domain.Permission;
+import com.icthh.xm.commons.permission.domain.ReactionStrategy;
 import com.icthh.xm.commons.permission.domain.Role;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
@@ -13,26 +14,28 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.expression.Expression;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.transaction.BeforeTransaction;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-/**
- * Created by victor on 19.06.2020.
- */
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {
     UaaApp.class,
     XmOverrideConfiguration.class
 })
 @Transactional
-public class DatabaseConfigurationSourceIntTest {//todo V!: check Hibernate queries, review and extend tests
+public class DatabaseConfigurationSourceIntTest {//todo V!: check Hibernate queries
 
     @Autowired
     DatabaseConfigurationSource databaseConfigurationSource;
@@ -40,9 +43,38 @@ public class DatabaseConfigurationSourceIntTest {//todo V!: check Hibernate quer
     @Autowired
     TenantContextHolder tenantContextHolder;
 
+    @Autowired
+    EntityManager entityManager;
+
     @BeforeTransaction
     public void beforeTransaction() {
         TenantContextUtils.setTenant(tenantContextHolder, "XM");
+    }
+
+    @Test
+    public void testAddSingleRole() throws Exception {
+        //given
+        String description = randParameter("description");
+        String key = randParameter("key");
+
+        //role.key must be set from rolesExpected
+        Role role = new Role();
+        role.setDescription(description);
+
+        Map<String, Role> rolesExpected = ImmutableMap.of(key, role);
+
+        //when
+        databaseConfigurationSource.updateRoles(rolesExpected);
+        entityManager.flush();
+
+        //then
+        Map<String, Role> rolesAct = databaseConfigurationSource.getRoles();
+        Assert.assertNotNull(rolesAct);
+        assertEquals(1, rolesAct.size());
+        Role roleAct = rolesAct.get(key);
+        assertNotNull(roleAct);
+        assertEquals(roleAct.getKey(), key);
+        assertEquals(roleAct.getDescription(), description);
     }
 
     @Test
@@ -58,6 +90,7 @@ public class DatabaseConfigurationSourceIntTest {//todo V!: check Hibernate quer
 
         //when
         databaseConfigurationSource.updateRoles(rolesExpected);
+        entityManager.flush();
 
         //then
         Map<String, Role> rolesAct = databaseConfigurationSource.getRoles();
@@ -92,10 +125,56 @@ public class DatabaseConfigurationSourceIntTest {//todo V!: check Hibernate quer
 
         //when
         databaseConfigurationSource.updateRoles(rolesExpected);
+        entityManager.flush();
 
         //then
         Map<String, Role> rolesAct = databaseConfigurationSource.getRoles();
         assertEquals(rolesAct, rolesExpected);
+    }
+
+    @Test
+    public void testAddSinglePermission() throws Exception {
+        //given
+        Role role = newRandomRole();
+        databaseConfigurationSource.updateRoles(ImmutableMap.of(
+            role.getKey(), role
+        ));
+
+        String msName = randParameter("ms-name");
+        String privilegeKey = randParameter("privilege-key");
+        Expression resourceCondition = newCondition();
+        Expression envCondition = newCondition();
+
+        Permission permission = new Permission();
+        permission.setRoleKey(role.getKey());
+        permission.setPrivilegeKey(privilegeKey);
+        permission.setResourceCondition(resourceCondition);
+        permission.setEnvCondition(envCondition);
+
+        //when
+        databaseConfigurationSource.updatePermissions(ImmutableMap.of(
+            msName, ImmutableMap.of(
+                role.getKey(),
+                ImmutableSet.of(permission))));
+        entityManager.flush();
+
+        //then
+        Map<String, Map<String, Set<Permission>>> result =
+            databaseConfigurationSource.getPermissions();
+
+        assertEquals(1, result.size());
+        Map<String, Set<Permission>> actRolePermissions = result.get(msName);
+        assertNotNull(actRolePermissions);
+        assertEquals(1, actRolePermissions.size());
+        Set<Permission> permissionsAct = actRolePermissions.get(role.getKey());
+        assertEquals(1, permissionsAct.size());
+        Permission permissionAct = permissionsAct.iterator().next();
+
+        assertEquals(permissionAct.getMsName(), msName);
+        assertEquals(permissionAct.getPrivilegeKey(), privilegeKey);
+        assertEquals(permissionAct.getEnvCondition().getExpressionString(), envCondition.getExpressionString());
+        assertEquals(permissionAct.getResourceCondition().getExpressionString(), resourceCondition.getExpressionString());
+
     }
 
     @Test
@@ -138,6 +217,7 @@ public class DatabaseConfigurationSourceIntTest {//todo V!: check Hibernate quer
 
         //when
         databaseConfigurationSource.updatePermissions(permissionsExpected);
+        entityManager.flush();
 
         //then
         Map<String, Map<String, Set<Permission>>> permissionsAct =
@@ -174,7 +254,7 @@ public class DatabaseConfigurationSourceIntTest {//todo V!: check Hibernate quer
                 role2.getKey(),
                 ImmutableSet.of(
                     newRandomPermission(role2, ms1),
-                    newRandomPermission(role2, ms1)
+                    newRandomPermission(role2, ms1) //new permissions don't have msName
                 )
             ))
             .put(ms2, ImmutableMap.of(
@@ -211,6 +291,7 @@ public class DatabaseConfigurationSourceIntTest {//todo V!: check Hibernate quer
             .build();
         //when
         databaseConfigurationSource.updatePermissions(expected);
+        entityManager.flush();
 
         //then
         Map<String, Map<String, Set<Permission>>> permissionsAct =
@@ -224,7 +305,9 @@ public class DatabaseConfigurationSourceIntTest {//todo V!: check Hibernate quer
         permission.setRoleKey(role.getKey());
         permission.setMsName(ms);
         permission.setPrivilegeKey(randParameter("privilege-key"));
-        //todo V!: add expressions
+        permission.setEnvCondition(newCondition());
+        permission.setResourceCondition(newCondition());
+        permission.setReactionStrategy(ReactionStrategy.EXCEPTION);
         return permission;
     }
 
@@ -239,4 +322,8 @@ public class DatabaseConfigurationSourceIntTest {//todo V!: check Hibernate quer
         return prefix + "-" + UUID.randomUUID().toString();
     }
 
+    private Expression newCondition() {
+        ExpressionParser parser = new SpelExpressionParser();
+        return parser.parseExpression("#returnObject.typeKey != 'USER-PROFILE'");
+    }
 }

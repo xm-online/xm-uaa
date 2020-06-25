@@ -19,7 +19,7 @@ public class TenantConfigPermissionsConfigModeProviderImpl implements Permission
     @Override
     public PermissionsConfigMode getMode() {
         return Optional.ofNullable(tenantConfigService.getConfig().get(UAA_PERMISSIONS_PROPERTY))
-            .map(e -> Boolean.parseBoolean((String) e))
+            .map(e -> Boolean.parseBoolean(String.valueOf(e)))
             .orElse(Boolean.FALSE)
             ? PermissionsConfigMode.DATABASE
             : null;
