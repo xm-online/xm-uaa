@@ -10,14 +10,12 @@ import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.transaction.BeforeTransaction;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,9 +25,9 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(classes = {
     UaaApp.class,
     XmOverrideConfiguration.class
@@ -76,6 +74,36 @@ public class DatabaseConfigurationSourceIntTest {//todo V!: check Hibernate quer
         assertEquals(roleAct.getKey(), key);
         assertEquals(roleAct.getDescription(), description);
     }
+
+    @Test
+    public void testUpdateSingleRole() throws Exception {
+        //given
+        String description = randParameter("description");
+        String key = randParameter("key");
+
+        Role role = new Role();
+        role.setDescription(randParameter("description"));
+
+        Map<String, Role> rolesExpected = ImmutableMap.of(key, role);
+        databaseConfigurationSource.updateRoles(rolesExpected);
+        entityManager.flush();
+
+        role.setDescription(description);
+
+        //when
+        databaseConfigurationSource.updateRoles(rolesExpected);
+        entityManager.flush();
+
+        //then
+        Map<String, Role> rolesAct = databaseConfigurationSource.getRoles();
+        Assert.assertNotNull(rolesAct);
+        assertEquals(1, rolesAct.size());
+        Role roleAct = rolesAct.get(key);
+        assertNotNull(roleAct);
+        assertEquals(roleAct.getKey(), key);
+        assertEquals(roleAct.getDescription(), description);
+    }
+
 
     @Test
     public void testAddRolesAndGet() {
@@ -174,7 +202,60 @@ public class DatabaseConfigurationSourceIntTest {//todo V!: check Hibernate quer
         assertEquals(permissionAct.getPrivilegeKey(), privilegeKey);
         assertEquals(permissionAct.getEnvCondition().getExpressionString(), envCondition.getExpressionString());
         assertEquals(permissionAct.getResourceCondition().getExpressionString(), resourceCondition.getExpressionString());
+    }
 
+    @Test
+    public void testUpdateSinglePermission() throws Exception {
+        //given
+        Role role = newRandomRole();
+        databaseConfigurationSource.updateRoles(ImmutableMap.of(
+            role.getKey(), role
+        ));
+
+        String msName = randParameter("ms-name");
+        String privilegeKey = randParameter("privilege-key");
+        Expression resourceCondition = newCondition();
+        Expression envCondition = newCondition();
+
+        Permission permission = new Permission();
+        permission.setRoleKey(role.getKey());
+        permission.setPrivilegeKey(privilegeKey);
+        permission.setResourceCondition(resourceCondition);
+        permission.setEnvCondition(envCondition);
+        permission.setDisabled(true);
+
+        databaseConfigurationSource.updatePermissions(ImmutableMap.of(
+            msName, ImmutableMap.of(
+                role.getKey(),
+                ImmutableSet.of(permission))));
+        entityManager.flush();
+
+        permission.setDisabled(false);
+
+        //when
+        databaseConfigurationSource.updatePermissions(ImmutableMap.of(
+            msName, ImmutableMap.of(
+                role.getKey(),
+                ImmutableSet.of(permission))));
+        entityManager.flush();
+
+        //then
+        Map<String, Map<String, Set<Permission>>> result =
+            databaseConfigurationSource.getPermissions();
+
+        assertEquals(1, result.size());
+        Map<String, Set<Permission>> actRolePermissions = result.get(msName);
+        assertNotNull(actRolePermissions);
+        assertEquals(1, actRolePermissions.size());
+        Set<Permission> permissionsAct = actRolePermissions.get(role.getKey());
+        assertEquals(1, permissionsAct.size());
+        Permission permissionAct = permissionsAct.iterator().next();
+
+        assertEquals(permissionAct.getMsName(), msName);
+        assertEquals(permissionAct.getPrivilegeKey(), privilegeKey);
+        assertEquals(permissionAct.getEnvCondition().getExpressionString(), envCondition.getExpressionString());
+        assertEquals(permissionAct.getResourceCondition().getExpressionString(), resourceCondition.getExpressionString());
+        assertFalse(permissionAct.isDisabled());
     }
 
     @Test

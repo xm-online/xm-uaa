@@ -118,7 +118,7 @@ public class DatabaseConfigurationSource implements ConfigurationSource { //todo
         List<RoleEntity> currentRoles = roleRepository.findAll();
         Map<String, RoleEntity> currentByKey = currentRoles.stream().collect(Collectors.toMap(RoleEntity::getRoleKey, Function.identity()));
 
-        IdentityMap permissionsToMs = mapPermissionsToMsName(permissions);
+        IdentityMap permissionsToMsName = mapPermissionsToMsName(permissions);
 
         Map<String, Set<Permission>> rolesToPermissions = mapRolesToPermissions(permissions);
 
@@ -140,7 +140,7 @@ public class DatabaseConfigurationSource implements ConfigurationSource { //todo
 
             Map<Pair<String, String>, Permission> permissionsToSet = rolePermissionEntry.getValue().stream()
                 .collect(Collectors.toMap(
-                    p -> Pair.of(p.getPrivilegeKey(), p.getMsName()),
+                    p -> Pair.of(p.getPrivilegeKey(), (String) permissionsToMsName.get(p)),
                     Function.identity()
                 ));
 
@@ -150,7 +150,7 @@ public class DatabaseConfigurationSource implements ConfigurationSource { //todo
 
             role.getPermissions().addAll(
                 newPermissions.values().stream()
-                    .map(p -> mapToPermission(p, new PermissionEntity(), role, (String) permissionsToMs.get(p)))
+                    .map(p -> mapToPermission(p, new PermissionEntity(), role, (String) permissionsToMsName.get(p)))
                     .collect(Collectors.toSet())
             );
 
@@ -160,13 +160,14 @@ public class DatabaseConfigurationSource implements ConfigurationSource { //todo
 
             role.getPermissions().addAll(
                 updatedPermissions.entrySet().stream()
-                    .map(p -> mapToPermission(permissionsToSet.get(p.getKey()), p.getValue(), role, (String) permissionsToMs.get(p)))
+                    .map(p -> mapToPermission(permissionsToSet.get(p.getKey()), p.getValue(), role, p.getKey().getRight()))
                     .collect(Collectors.toSet())
             );
 
             //remote deleted
             HashMap<Pair<String, String>, PermissionEntity> deletedPermissions = new HashMap<>(currentPermissions);
             deletedPermissions.keySet().removeAll(newPermissions.keySet());
+            deletedPermissions.keySet().removeAll(updatedPermissions.keySet());
 
             role.getPermissions().removeIf(p -> deletedPermissions.containsKey(Pair.of(p.getPrivilegeKey(), p.getMsName())));
 
