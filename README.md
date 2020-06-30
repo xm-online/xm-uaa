@@ -115,17 +115,19 @@ Use the following steps:
 
     `curl --location --request POST '<UAA-MS-URL>/roles/<TENANT-NAME>/migrate' \
     --header 'x-tenant: XM' \
-    --header 'Authorization: Bearer <YOUR-AUTH-TOKEN>’`
+    --header 'Authorization: Bearer <YOUR-AUTH-TOKEN>'`
 
 
 2. For a specific tenant:
-2.1. Add files to .gitignore and delete them
+2.1. Under the configuration git repository, add files to .gitignore and delete them
+
     `config/tenants/XM/roles.yml
     config/tenants/XM/permissions.yml`
 
 2.2. Add the following line to tenant-config.yml
-    `uaa-permissions: true`
 
-2.3. Commit and push to VCS.
+    uaa-permissions: true
+
+2.3. Commit and push changes to the repo.
 
 2.4. Restart xm-ms-config and xm-uaa services. 
