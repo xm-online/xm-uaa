@@ -86,8 +86,7 @@ public class TenantRoleServiceUnitTest {
         when(permissionProperties.getPrivilegesSpecPath()).thenReturn("/config/tenants/privileges.yml");
 
         ConfigServiceConfigurationSource configServiceConfigurationSource = new ConfigServiceConfigurationSource(
-            permissionProperties, tenantConfigRepository, tenantContextHolder,
-            xmAuthenticationContextHolder, commonConfigRepository);
+            permissionProperties, tenantConfigRepository, tenantContextHolder, commonConfigRepository);
 
         PermissionsConfigModeProvider permissionsConfigModeProvider = mock(TenantConfigPermissionsConfigModeProviderImpl.class);
         when(permissionsConfigModeProvider.getMode()).thenReturn(PermissionsConfigMode.CONFIGURATION_SERVICE);
