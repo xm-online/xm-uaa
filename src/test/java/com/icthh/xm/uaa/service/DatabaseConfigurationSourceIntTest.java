@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.service;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.icthh.xm.commons.permission.domain.Permission;
@@ -20,9 +21,7 @@ import org.springframework.test.context.transaction.BeforeTransaction;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -33,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
     XmOverrideConfiguration.class
 })
 @Transactional
-public class DatabaseConfigurationSourceIntTest {//todo V!: check Hibernate queries
+public class DatabaseConfigurationSourceIntTest {//todo V: check Hibernate queries
 
     @Autowired
     DatabaseConfigurationSource databaseConfigurationSource;
@@ -50,7 +49,7 @@ public class DatabaseConfigurationSourceIntTest {//todo V!: check Hibernate quer
     }
 
     @Test
-    public void testAddSingleRole() throws Exception {
+    public void testAddSingleRole() {
         //given
         String description = randParameter("description");
         String key = randParameter("key");
@@ -76,7 +75,7 @@ public class DatabaseConfigurationSourceIntTest {//todo V!: check Hibernate quer
     }
 
     @Test
-    public void testUpdateSingleRole() throws Exception {
+    public void testUpdateSingleRole() {
         //given
         String description = randParameter("description");
         String key = randParameter("key");
@@ -161,7 +160,7 @@ public class DatabaseConfigurationSourceIntTest {//todo V!: check Hibernate quer
     }
 
     @Test
-    public void testAddSinglePermission() throws Exception {
+    public void testAddSinglePermission() {
         //given
         Role role = newRandomRole();
         databaseConfigurationSource.updateRoles(ImmutableMap.of(
@@ -205,7 +204,7 @@ public class DatabaseConfigurationSourceIntTest {//todo V!: check Hibernate quer
     }
 
     @Test
-    public void testUpdateSinglePermission() throws Exception {
+    public void testUpdateSinglePermission() {
         //given
         Role role = newRandomRole();
         databaseConfigurationSource.updateRoles(ImmutableMap.of(
@@ -309,7 +308,6 @@ public class DatabaseConfigurationSourceIntTest {//todo V!: check Hibernate quer
     @Test
     public void testUpdateRoles() {
         //given
-        //given
         Role role1 = newRandomRole();
         Role role2 = newRandomRole();
 
@@ -379,6 +377,76 @@ public class DatabaseConfigurationSourceIntTest {//todo V!: check Hibernate quer
             databaseConfigurationSource.getPermissions();
 
         assertEquals(expected, permissionsAct);
+    }
+
+    @Test
+    public void testDeleteNotIn() {
+        //given
+        String msName = randParameter("ms");
+        String msOther = randParameter("ms-other");
+
+        Role role = newRandomRole();
+        databaseConfigurationSource.updateRoles(ImmutableMap.of(role.getKey(), role));
+
+        Permission permissionExpected = newRandomPermission(role, msName);
+        Permission permissionShouldBeDeleted = newRandomPermission(role, msName);
+        Permission permissionOther = newRandomPermission(role, msOther);
+
+        databaseConfigurationSource.updatePermissions(ImmutableMap.of(
+            msName, ImmutableMap.of(
+                role.getKey(), ImmutableSet.of(permissionExpected, permissionShouldBeDeleted)),
+            msOther, ImmutableMap.of(
+                role.getKey(), ImmutableSet.of(permissionOther)))
+        );
+        entityManager.flush();
+        entityManager.clear();
+
+        //when
+        databaseConfigurationSource.deletePermissionsForRemovedPrivileges(msName, ImmutableList.of(permissionExpected.getPrivilegeKey()));
+
+        //then
+        Map<String, Map<String, Set<Permission>>> privilegesActual = databaseConfigurationSource.getPermissions();
+        assertEquals(ImmutableMap.of(
+            msName, ImmutableMap.of(
+                role.getKey(),
+                ImmutableSet.of(permissionExpected)),
+            msOther, ImmutableMap.of(
+                role.getKey(), ImmutableSet.of(permissionOther))
+            ), privilegesActual
+        );
+    }
+
+    @Test
+    public void testDeleteByMs() {
+        //given
+        String msName = randParameter("ms");
+        String msOther = randParameter("ms-other");
+
+        Role role = newRandomRole();
+        databaseConfigurationSource.updateRoles(ImmutableMap.of(role.getKey(), role));
+
+        Permission permissionExisting = newRandomPermission(role, msName);
+        Permission permissionOther = newRandomPermission(role, msOther);
+
+        databaseConfigurationSource.updatePermissions(ImmutableMap.of(
+            msName, ImmutableMap.of(
+                role.getKey(), ImmutableSet.of(permissionExisting)),
+            msOther, ImmutableMap.of(
+                role.getKey(), ImmutableSet.of(permissionOther)))
+        );
+        entityManager.flush();
+        entityManager.clear();
+
+        //when
+        databaseConfigurationSource.deletePermissionsForRemovedPrivileges(msName, Collections.emptyList());
+
+        //then
+        Map<String, Map<String, Set<Permission>>> privilegesActual = databaseConfigurationSource.getPermissions();
+        assertEquals(ImmutableMap.of(
+            msOther, ImmutableMap.of(
+                role.getKey(), ImmutableSet.of(permissionOther))
+            ), privilegesActual
+        );
     }
 
     private Permission newRandomPermission(Role role, String ms) {

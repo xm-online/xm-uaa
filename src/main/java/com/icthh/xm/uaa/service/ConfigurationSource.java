@@ -4,6 +4,7 @@ import com.icthh.xm.commons.permission.domain.Permission;
 import com.icthh.xm.commons.permission.domain.Privilege;
 import com.icthh.xm.commons.permission.domain.Role;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,4 +31,6 @@ interface ConfigurationSource {
     Map<String, Set<Privilege>> getPrivileges();
 
     Map<String, Set<Privilege>> getCustomPrivileges();
+
+    void deletePermissionsForRemovedPrivileges(String msName, Collection<String> data);
 }

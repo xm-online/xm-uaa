@@ -1,13 +1,12 @@
 package com.icthh.xm.uaa.repository.kafka;
 
-import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_AUTH_CONTEXT;
-import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
-
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.logging.util.MdcUtils;
+import com.icthh.xm.commons.messaging.event.system.SystemEventType;
+import com.icthh.xm.commons.permission.domain.mapper.PrivilegeMapper;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
@@ -17,16 +16,22 @@ import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.kafka.SystemEvent;
 import com.icthh.xm.uaa.repository.util.SystemEventMapper;
 import com.icthh.xm.uaa.service.UserService;
-
-import java.io.IOException;
-
+import com.icthh.xm.uaa.service.permission.PermissionUpdateService;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.util.Optional;
+
+import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_AUTH_CONTEXT;
+import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -38,6 +43,7 @@ public class SystemQueueConsumer {
     private final XmAuthenticationContextHolder authContextHolder;
     private final LepManager lepManager;
     private final UserService userService;
+    private final PermissionUpdateService permissionUpdateService;
 
     /**
      * Consume tenant command event message.
@@ -62,7 +68,10 @@ public class SystemQueueConsumer {
 
                 switch (event.getEventType().toUpperCase()) {
                     case Constants.UPDATE_ACCOUNT_EVENT_TYPE:
-                        onUpdateAcount(event);
+                        onUpdateAccount(event);
+                        break;
+                    case SystemEventType.MS_PRIVILEGES:
+                        onEventMsPrivileges(event);
                         break;
                     default:
                         log.info("Event ignored with type='{}', source='{}', event_id='{}'",
@@ -99,7 +108,7 @@ public class SystemQueueConsumer {
         MdcUtils.removeRid();
     }
 
-    private void onUpdateAcount(SystemEvent event) {
+    private void onUpdateAccount(SystemEvent event) {
         String userKey = String.valueOf(event.getDataMap().get(Constants.SYSTEM_EVENT_PROP_USER_KEY));
 
         init(event.getTenantKey(), event.getUserLogin());
@@ -112,5 +121,16 @@ public class SystemQueueConsumer {
             SystemEventMapper.toUser(event, user);
             userService.saveUser(user);
         }
+    }
+
+    @SneakyThrows
+    private void onEventMsPrivileges(SystemEvent event) {
+        Optional.ofNullable(event.getDataMap().get("privileges"))
+            .map(String::valueOf)
+            .filter(StringUtils::isNoneBlank)
+            .map(PrivilegeMapper::ymlToPrivileges)
+            .map(m -> m.get(event.getMessageSource()))
+            .filter(CollectionUtils::isNotEmpty)
+            .ifPresent(p -> permissionUpdateService.deleteRemovedPrivileges(event.getMessageSource(), p));
     }
 }

@@ -22,7 +22,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Created by victor on 22.06.2020.
+ * Created by victor on 22.06.2020. //todo V: add javadoc
  */
 @Component
 @Slf4j
@@ -43,17 +43,6 @@ public class DatabaseConfigurationSource implements ConfigurationSource { //todo
         return roleRepository.findAll().stream()
             .map(this::mapToRole)
             .collect(Collectors.toMap(Role::getKey, Function.identity()));
-    }
-
-    public Role mapToRole(RoleEntity entity) {//todo V: add test, move to PermissionDomainMapper or RoleDomainMapper
-        Role result = new Role();
-        result.setKey(entity.getRoleKey());
-        result.setDescription(entity.getDescription());
-        result.setCreatedBy(entity.getCreatedBy());
-        result.setCreatedDate(entity.getCreatedDate().toString());
-        result.setUpdatedBy(entity.getLastModifiedBy());
-        result.setUpdatedDate(entity.getLastModifiedDate().toString());
-        return result;
     }
 
     @Override
@@ -104,13 +93,6 @@ public class DatabaseConfigurationSource implements ConfigurationSource { //todo
         HashMap<String, RoleEntity> removed = new HashMap<>(currentByKey);
         removed.keySet().removeAll(roles.keySet());
         roleRepository.deleteAll(removed.values());
-    }
-
-    private RoleEntity mapToRoleEntity(Role role, RoleEntity roleEntity, String key) { //todo V: move to utils, pay attention to cyclic dependencies
-        roleEntity.setRoleKey(key);
-        roleEntity.setDescription(role.getDescription());
-
-        return roleEntity;
     }
 
     @Override
@@ -170,25 +152,68 @@ public class DatabaseConfigurationSource implements ConfigurationSource { //todo
             deletedPermissions.keySet().removeAll(updatedPermissions.keySet());
 
             role.getPermissions().removeIf(p -> deletedPermissions.containsKey(Pair.of(p.getPrivilegeKey(), p.getMsName())));
-
         }
 
         roleRepository.saveAll(currentRoles);
     }
 
+    @Override
+    public void deletePermissionsForRemovedPrivileges(String msName, Collection<String> activePrivileges) {
+        log.info("Deleting permissions for ms {}", msName);
+
+        if (!activePrivileges.isEmpty()) {
+            roleRepository.deletePermissionsNotIn(msName, activePrivileges);
+        } else {
+            roleRepository.deletePermissionsByMsName(msName);
+        }
+    }
+
+    @Override
+    public Map<String, Permission> getRolePermissions(String roleKey) {
+        throw new UnsupportedOperationException("not implemented");
+    }
+
+    @Override
+    public Map<String, Set<Privilege>> getPrivileges() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Map<String, Set<Privilege>> getCustomPrivileges() {
+        throw new UnsupportedOperationException();
+    }
+
+    public Role mapToRole(RoleEntity entity) {//todo V: add test, move to PermissionDomainMapper or RoleDomainMapper
+        Role result = new Role();
+        result.setKey(entity.getRoleKey());
+        result.setDescription(entity.getDescription());
+        result.setCreatedBy(entity.getCreatedBy());
+        result.setCreatedDate(entity.getCreatedDate().toString());
+        result.setUpdatedBy(entity.getLastModifiedBy());
+        result.setUpdatedDate(entity.getLastModifiedDate().toString());
+        return result;
+    }
+
+    private RoleEntity mapToRoleEntity(Role role, RoleEntity roleEntity, String key) { //todo V: move to utils, pay attention to cyclic dependencies
+        roleEntity.setRoleKey(key);
+        roleEntity.setDescription(role.getDescription());
+
+        return roleEntity;
+    }
+
     private Map<String, Set<Permission>> mapRolesToPermissions(Map<String, Map<String, Set<Permission>>> permissions) {
         return permissions.values().stream()
-                 .map(Map::entrySet)
-                 .flatMap(Collection::stream)
-                 .collect(Collectors.toMap(
-                     Map.Entry::getKey,
-                     Map.Entry::getValue,
-                     (left, right) -> {
-                         HashSet<Permission> result = new HashSet<>(left);
-                         result.addAll(right);
-                         return result;
-                     }
-                 ));
+            .map(Map::entrySet)
+            .flatMap(Collection::stream)
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                Map.Entry::getValue,
+                (left, right) -> {
+                    HashSet<Permission> result = new HashSet<>(left);
+                    result.addAll(right);
+                    return result;
+                }
+            ));
     }
 
     private IdentityMap mapPermissionsToMsName(Map<String, Map<String, Set<Permission>>> permissions) {
@@ -214,20 +239,5 @@ public class DatabaseConfigurationSource implements ConfigurationSource { //todo
 
         entity.setRole(role);
         return entity;
-    }
-
-    @Override
-    public Map<String, Permission> getRolePermissions(String roleKey) {
-        throw new UnsupportedOperationException("not implemented");
-    }
-
-    @Override
-    public Map<String, Set<Privilege>> getPrivileges() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Map<String, Set<Privilege>> getCustomPrivileges() {
-        throw new UnsupportedOperationException();
     }
 }

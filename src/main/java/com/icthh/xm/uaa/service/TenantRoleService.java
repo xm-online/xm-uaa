@@ -53,6 +53,7 @@ public class TenantRoleService {
 
     /**
      * Get roles properties.
+     *
      * @return role props
      */
     public Map<String, Role> getRoles() {
@@ -60,19 +61,20 @@ public class TenantRoleService {
     }
 
     private Map<String, Map<String, Set<Permission>>> getPermissions() {
-       return permissionsConfigurationProvider.getSource().getPermissions();
+        return permissionsConfigurationProvider.getSource().getPermissions();
     }
 
     private Map<String, Set<Privilege>> getPrivileges() {
         return permissionsConfigurationProvider.getDefaultSource().getPrivileges();
     }
 
-    private Map<String, Set<Privilege>> getCustomPrivileges() {
+    public Map<String, Set<Privilege>> getCustomPrivileges() {
         return permissionsConfigurationProvider.getDefaultSource().getCustomPrivileges();
     }
 
     /**
      * Add role.
+     *
      * @param roleDto the role dto
      */
     @SneakyThrows
@@ -110,6 +112,7 @@ public class TenantRoleService {
 
     /**
      * Update role.
+     *
      * @param roleDto the role dto
      */
     @SneakyThrows
@@ -131,7 +134,7 @@ public class TenantRoleService {
 
         Collection<PermissionDTO> newPermissions = roleDto.getPermissions();
 
-        if (newPermissions.isEmpty()) { //todo V: think it over. if no permissions provided, delete existing?
+        if (newPermissions.isEmpty()) {
             return;
         }
 
@@ -144,7 +147,7 @@ public class TenantRoleService {
 
     @SneakyThrows
     public List<PermissionDTO> getRolePermissions(String roleKey) {
-        return  permissionsConfigurationProvider.getSource().getRolePermissions(roleKey).values()
+        return permissionsConfigurationProvider.getSource().getRolePermissions(roleKey).values()
             .stream()
             .filter(perm -> roleKey.equals(perm.getRoleKey()))
             .map(PermissionDTO::new)
@@ -153,6 +156,7 @@ public class TenantRoleService {
 
     /**
      * Update roles properties.
+     *
      * @param roles roles to update map, key - roleKey
      */
     @SneakyThrows
@@ -162,11 +166,12 @@ public class TenantRoleService {
 
     @SneakyThrows
     private void updatePermissions(Map<String, Map<String, Set<Permission>>> permissions) {
-       permissionsConfigurationProvider.updatePermissions(permissions);
+        permissionsConfigurationProvider.updatePermissions(permissions);
     }
 
     /**
      * Get all roles.
+     *
      * @return roles set
      */
     public Set<RoleDTO> getAllRoles() {
@@ -179,6 +184,7 @@ public class TenantRoleService {
 
     /**
      * Get role with permissions by role key.
+     *
      * @param roleKey the role key
      * @return roleDTO
      */
@@ -266,6 +272,7 @@ public class TenantRoleService {
 
     /**
      * Get role matrix.
+     *
      * @return the role matrix
      */
     public RoleMatrixDTO getRoleMatrix() {
@@ -278,20 +285,20 @@ public class TenantRoleService {
         // create permissions matrix dto with role permissions
         getPermissions().forEach((msName, rolePermissions) ->
             rolePermissions.forEach((roleKey, permissions) ->
-                    permissions.forEach(permission -> {
-                        PermissionMatrixDTO permissionMatrix = matrixPermissions
-                            .get(msName + ":" + permission.getPrivilegeKey());
-                        if (permissionMatrix == null) {
-                            permissionMatrix = new PermissionMatrixDTO();
-                            permissionMatrix.setMsName(msName);
-                            permissionMatrix.setPrivilegeKey(permission.getPrivilegeKey());
-                            matrixPermissions.put(msName + ":" + permission.getPrivilegeKey(), permissionMatrix);
-                        }
-                        if (!permission.isDisabled()) {
-                            permissionMatrix.getRoles().add(roleKey);
-                        }
-                    })
-                ));
+                permissions.forEach(permission -> {
+                    PermissionMatrixDTO permissionMatrix = matrixPermissions
+                        .get(msName + ":" + permission.getPrivilegeKey());
+                    if (permissionMatrix == null) {
+                        permissionMatrix = new PermissionMatrixDTO();
+                        permissionMatrix.setMsName(msName);
+                        permissionMatrix.setPrivilegeKey(permission.getPrivilegeKey());
+                        matrixPermissions.put(msName + ":" + permission.getPrivilegeKey(), permissionMatrix);
+                    }
+                    if (!permission.isDisabled()) {
+                        permissionMatrix.getRoles().add(roleKey);
+                    }
+                })
+            ));
 
         // enrich role permissions with missing privileges
         Consumer<Set<Privilege>> privilegesProcessor = privileges ->
@@ -328,6 +335,7 @@ public class TenantRoleService {
 
     /**
      * Update permissions by role matrix.
+     *
      * @param roleMatrix the role matrix
      */
     @SneakyThrows
@@ -366,28 +374,29 @@ public class TenantRoleService {
         // processing permissions for new role
         roleMatrix.getPermissions().stream().filter(permissionMatrixDTO ->
             !permissionMatrixDTO.getRoles().isEmpty()).forEach(permissionMatrixDTO -> {
-                allPermissions.putIfAbsent(permissionMatrixDTO.getMsName(), new TreeMap<>());
-                permissionMatrixDTO.getRoles().forEach(role -> {
-                    allPermissions.get(permissionMatrixDTO.getMsName()).putIfAbsent(role, new TreeSet<>());
-                    Permission permission = new Permission();
-                    permission.setPrivilegeKey(permissionMatrixDTO.getPrivilegeKey());
-                    permission.setDisabled(false);
-                    allPermissions.get(permissionMatrixDTO.getMsName()).get(role).add(permission);
-                });
+            allPermissions.putIfAbsent(permissionMatrixDTO.getMsName(), new TreeMap<>());
+            permissionMatrixDTO.getRoles().forEach(role -> {
+                allPermissions.get(permissionMatrixDTO.getMsName()).putIfAbsent(role, new TreeSet<>());
+                Permission permission = new Permission();
+                permission.setPrivilegeKey(permissionMatrixDTO.getPrivilegeKey());
+                permission.setDisabled(false);
+                allPermissions.get(permissionMatrixDTO.getMsName()).get(role).add(permission);
             });
+        });
         updatePermissions(allPermissions);
     }
 
     /**
      * Set permissions based on role.
+     *
      * @param existingPermissions existing permissions
-     * @param role the role that will be assigned with permissions
-     * @param basedOn the role from where permissions will be received
+     * @param role                the role that will be assigned with permissions
+     * @param basedOn             the role from where permissions will be received
      */
     private void enrichExistingPermissions(
-                    Map<String, Map<String, Set<Permission>>> existingPermissions,
-                    String role,
-                    String basedOn) {
+        Map<String, Map<String, Set<Permission>>> existingPermissions,
+        String role,
+        String basedOn) {
         for (Map<String, Set<Permission>> perm : existingPermissions.values()) {
             perm.put(role, perm.getOrDefault(basedOn, new TreeSet<>()));
         }
@@ -395,12 +404,13 @@ public class TenantRoleService {
 
     /**
      * Set permissions for role.
+     *
      * @param existingPermissions existing permissions
-     * @param role the role that will be assigned with permissions
+     * @param role                the role that will be assigned with permissions
      */
     private void enrichExistingPermissions(
-                    Map<String, Map<String, Set<Permission>>> existingPermissions,
-                    String role) {
+        Map<String, Map<String, Set<Permission>>> existingPermissions,
+        String role) {
         for (Map<String, Set<Permission>> perm : existingPermissions.values()) {
             perm.put(role, new TreeSet<>());
         }
@@ -408,8 +418,9 @@ public class TenantRoleService {
 
     /**
      * Set permissions to role.
+     *
      * @param existingPermissions existing permissions
-     * @param newPermissions permissions to add
+     * @param newPermissions      permissions to add
      */
     private void enrichExistingPermissions(
         Map<String, Map<String, Set<Permission>>> existingPermissions,
@@ -444,4 +455,5 @@ public class TenantRoleService {
                 () -> permissionsConfigurationProvider.getSource().getPermissions());
         return mapper.writeValueAsString(roles);
     }
+
 }

@@ -101,6 +101,11 @@ public class ConfigServiceConfigurationSource implements ConfigurationSource {
     }
 
     @Override
+    public void deletePermissionsForRemovedPrivileges(String msName, Collection<String> data) {
+        //nop - config server handles deletion by his own
+    }
+
+    @Override
     public Map<String, Permission> getRolePermissions(String roleKey) {
         String permissionsFile = getConfigContent(permissionProperties.getPermissionsSpecPath()).orElse("");
 

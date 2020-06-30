@@ -47,7 +47,6 @@ public class PermissionDomainMapper {
         result.setRoleKey(roleKey);
         result.setPrivilegeKey(permissionEntity.getPrivilegeKey());
         result.setMsName(permissionEntity.getMsName());
-//        result.setDeleted(permissionEntity); //todo V: think over - do we need deleted flag?
         result.setDisabled(permissionEntity.isDisabled());
         result.setEnvCondition(parseCondition(permissionEntity.getEnvCondition(),
             "Error while parsing environment condition for " + permissionEntity.getPrivilegeKey()));

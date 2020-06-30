@@ -1,0 +1,9 @@
+{
+    "eventId": "834hP12k::XM::XM",
+    "messageSource": "test-ms",
+    "eventType": "MS_PRIVILEGES",
+    "data": {
+        "privileges": "---\ntest-ms:\n- key: \"ACCOUNT.ACTIVATE\"\n  description: {}\n  resources: []\n  customDescription: \"Privilege to activate the registered user\"\n- key: \"ACCOUNT.CHECK_AUTH\"\n  description: {}\n  resources:\n  - \"request\"\n  customDescription: \"Privilege to check if the user is authenticated\"\n"
+    },
+    "startDate": "2020-06-29T08:11:02.856733Z"
+}

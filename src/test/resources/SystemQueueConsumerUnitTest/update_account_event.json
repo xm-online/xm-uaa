@@ -1,0 +1,29 @@
+{
+    "eventId":"f81d3142-a259-4ff8-99e4-be533d68ca88",
+    "messageSource":"ms-uaa",
+    "tenantInfo":{
+        "tenant":"XM",
+        "xmToken":"",
+        "xmCookie":"",
+        "xmUserId":"",
+        "xmLocale":"en",
+        "userLogin":"",
+        "userKey":"f81d3142-a259-4ff8-99e4-be533d68ca99"
+    },
+    "eventType":"UPDATE_ACCOUNT",
+    "startDate":"2017-11-20T13:15:30Z",
+    "data":{
+        "id":1234,
+        "firstName":"Olena",
+        "lastName":"Kashyna",
+        "imageUrl":"",
+        "activated":true,
+        "langKey":"en",
+        "createdBy":"system",
+        "createdDate":"2017-11-20T13:15:30Z",
+        "lastModifiedBy":"",
+        "lastModifiedDate":"",
+
+        "userKey":"f81d3142-a259-4ff8-99e4-be533d68ca99"
+    }
+}
