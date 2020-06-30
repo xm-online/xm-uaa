@@ -4,6 +4,7 @@ import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.permission.domain.Permission;
 import com.icthh.xm.commons.permission.domain.ReactionStrategy;
 import com.icthh.xm.uaa.domain.PermissionEntity;
+import com.icthh.xm.uaa.domain.RoleEntity;
 import com.icthh.xm.uaa.service.dto.PermissionDTO;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
@@ -12,9 +13,11 @@ import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.ParseException;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
+import java.util.Optional;
+
 /**
- * Mapper for the entity {@link com.icthh.xm.commons.permission.domain.Permission} and
- * {@link com.icthh.xm.uaa.service.dto.PermissionDTO}.
+ * Mapper for the entity {@link com.icthh.xm.commons.permission.domain.Permission},
+ * {@link com.icthh.xm.uaa.service.dto.PermissionDTO} and {@link com.icthh.xm.uaa.domain.PermissionEntity}.
  */
 @UtilityClass
 public class PermissionDomainMapper {
@@ -65,5 +68,17 @@ public class PermissionDomainMapper {
             }
         }
         return null;
+    }
+
+    public static PermissionEntity permissionToPermissionEntity(Permission permission, PermissionEntity entity, RoleEntity role, String msName) {
+        entity.setPrivilegeKey(permission.getPrivilegeKey());
+        entity.setMsName(msName);
+        entity.setDisabled(permission.isDisabled());
+        entity.setEnvCondition(Optional.ofNullable(permission.getEnvCondition()).map(Expression::getExpressionString).orElse(null));
+        entity.setResourceCondition(Optional.ofNullable(permission.getResourceCondition()).map(Expression::getExpressionString).orElse(null));
+        entity.setReactionStrategy(permission.getReactionStrategy());
+
+        entity.setRole(role);
+        return entity;
     }
 }

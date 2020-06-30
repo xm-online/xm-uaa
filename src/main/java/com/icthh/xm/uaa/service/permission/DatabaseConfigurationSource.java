@@ -7,13 +7,13 @@ import com.icthh.xm.uaa.domain.PermissionEntity;
 import com.icthh.xm.uaa.domain.RoleEntity;
 import com.icthh.xm.uaa.repository.RoleRepository;
 import com.icthh.xm.uaa.service.mapper.PermissionDomainMapper;
+import com.icthh.xm.uaa.service.mapper.RoleDomainMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.map.IdentityMap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.common.errors.IllegalSaslStateException;
 import org.springframework.core.annotation.Order;
-import org.springframework.expression.Expression;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,7 +41,7 @@ public class DatabaseConfigurationSource implements ConfigurationSource {
     @Override
     public Map<String, Role> getRoles() {
         return roleRepository.findAll().stream()
-            .map(this::mapToRole)
+            .map(RoleDomainMapper::entityToRole)
             .collect(Collectors.toMap(Role::getKey, Function.identity()));
     }
 
@@ -76,7 +76,7 @@ public class DatabaseConfigurationSource implements ConfigurationSource {
         HashMap<String, Role> newRoles = new HashMap<>(roles);
         newRoles.keySet().removeAll(currentByKey.keySet());
         roleRepository.saveAll(newRoles.entrySet().stream()
-            .map(d -> mapToRoleEntity(d.getValue(), new RoleEntity(), d.getKey()))
+            .map(d -> RoleDomainMapper.roleToEntity(d.getValue(), new RoleEntity(), d.getKey()))
             .collect(Collectors.toList())
         );
 
@@ -84,7 +84,7 @@ public class DatabaseConfigurationSource implements ConfigurationSource {
         HashMap<String, RoleEntity> updated = new HashMap<>(currentByKey);
         updated.keySet().retainAll(roles.keySet());
         List<RoleEntity> updatedEntities = updated.entrySet().stream() //todo V: combine with batch above?
-            .map(e -> mapToRoleEntity(roles.get(e.getKey()), e.getValue(), e.getKey()))
+            .map(e -> RoleDomainMapper.roleToEntity(roles.get(e.getKey()), e.getValue(), e.getKey()))
             .collect(Collectors.toList());
         roleRepository.saveAll(updatedEntities);
 
@@ -132,7 +132,7 @@ public class DatabaseConfigurationSource implements ConfigurationSource {
 
             role.getPermissions().addAll(
                 newPermissions.values().stream()
-                    .map(p -> mapToPermission(p, new PermissionEntity(), role, (String) permissionsToMsName.get(p)))
+                    .map(p -> PermissionDomainMapper.permissionToPermissionEntity(p, new PermissionEntity(), role, (String) permissionsToMsName.get(p)))
                     .collect(Collectors.toSet())
             );
 
@@ -142,7 +142,7 @@ public class DatabaseConfigurationSource implements ConfigurationSource {
 
             role.getPermissions().addAll(
                 updatedPermissions.entrySet().stream()
-                    .map(p -> mapToPermission(permissionsToSet.get(p.getKey()), p.getValue(), role, p.getKey().getRight()))
+                    .map(p -> PermissionDomainMapper.permissionToPermissionEntity(permissionsToSet.get(p.getKey()), p.getValue(), role, p.getKey().getRight()))
                     .collect(Collectors.toSet())
             );
 
@@ -183,24 +183,6 @@ public class DatabaseConfigurationSource implements ConfigurationSource {
         throw new UnsupportedOperationException();
     }
 
-    public Role mapToRole(RoleEntity entity) {//todo V: add test, move to PermissionDomainMapper or RoleDomainMapper
-        Role result = new Role();
-        result.setKey(entity.getRoleKey());
-        result.setDescription(entity.getDescription());
-        result.setCreatedBy(entity.getCreatedBy());
-        result.setCreatedDate(entity.getCreatedDate().toString());
-        result.setUpdatedBy(entity.getLastModifiedBy());
-        result.setUpdatedDate(entity.getLastModifiedDate().toString());
-        return result;
-    }
-
-    private RoleEntity mapToRoleEntity(Role role, RoleEntity roleEntity, String key) { //todo V: move to utils, pay attention to cyclic dependencies
-        roleEntity.setRoleKey(key);
-        roleEntity.setDescription(role.getDescription());
-
-        return roleEntity;
-    }
-
     private Map<String, Set<Permission>> mapRolesToPermissions(Map<String, Map<String, Set<Permission>>> permissions) {
         return permissions.values().stream()
             .map(Map::entrySet)
@@ -229,15 +211,4 @@ public class DatabaseConfigurationSource implements ConfigurationSource {
         return permissionsToMs;
     }
 
-    public static PermissionEntity mapToPermission(Permission permission, PermissionEntity entity, RoleEntity role, String msName) {
-        entity.setPrivilegeKey(permission.getPrivilegeKey());
-        entity.setMsName(msName);
-        entity.setDisabled(permission.isDisabled());
-        entity.setEnvCondition(Optional.ofNullable(permission.getEnvCondition()).map(Expression::getExpressionString).orElse(null));
-        entity.setResourceCondition(Optional.ofNullable(permission.getResourceCondition()).map(Expression::getExpressionString).orElse(null));
-        entity.setReactionStrategy(permission.getReactionStrategy());
-
-        entity.setRole(role);
-        return entity;
-    }
 }
