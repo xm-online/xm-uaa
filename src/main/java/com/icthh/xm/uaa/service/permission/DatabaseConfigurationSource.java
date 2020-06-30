@@ -14,7 +14,7 @@ import org.apache.commons.collections.map.IdentityMap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.common.errors.IllegalSaslStateException;
 import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 /**
  * {@link ConfigurationSource} implementation that uses a database to keep Roles and Permissions.
  */
-@Service
+@Component
 @Slf4j
 @RequiredArgsConstructor
 @Transactional
