@@ -1,4 +1,4 @@
-package com.icthh.xm.uaa.service;
+package com.icthh.xm.uaa.service.permission;
 
 import com.icthh.xm.commons.permission.domain.Permission;
 import com.icthh.xm.commons.permission.domain.Privilege;
@@ -14,7 +14,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.common.errors.IllegalSaslStateException;
 import org.springframework.core.annotation.Order;
 import org.springframework.expression.Expression;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
@@ -24,12 +24,12 @@ import java.util.stream.Collectors;
 /**
  * Created by victor on 22.06.2020. //todo V: add javadoc
  */
-@Component
+@Service
 @Slf4j
 @RequiredArgsConstructor
 @Transactional
 @Order(1)
-public class DatabaseConfigurationSource implements ConfigurationSource { //todo V: move to a dedicated package
+public class DatabaseConfigurationSource implements ConfigurationSource {
     private final RoleRepository roleRepository;
 
     @Override

@@ -1,12 +1,11 @@
-package com.icthh.xm.uaa.service;
+package com.icthh.xm.uaa.service.permission;
 
 import com.icthh.xm.commons.permission.domain.Permission;
 import com.icthh.xm.commons.permission.domain.Role;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import lombok.AllArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
@@ -17,8 +16,7 @@ import java.util.Set;
  * Will be helpful when populating a blank database after enabling database persistence
  * at the first time.
  */
-@Component
-@ConditionalOnBean(DatabaseConfigurationSource.class)
+@Service
 @AllArgsConstructor
 @Transactional
 public class TenantRoleMigrationService {

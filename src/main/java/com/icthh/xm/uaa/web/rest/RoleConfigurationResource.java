@@ -1,8 +1,8 @@
 package com.icthh.xm.uaa.web.rest;
 
-import com.icthh.xm.uaa.service.DatabaseConfigurationSource;
-import com.icthh.xm.uaa.service.TenantRoleMigrationService;
-import com.icthh.xm.uaa.service.TenantRoleService;
+import com.icthh.xm.uaa.service.permission.DatabaseConfigurationSource;
+import com.icthh.xm.uaa.service.permission.TenantRoleMigrationService;
+import com.icthh.xm.uaa.service.permission.TenantRoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.web.bind.annotation.*;

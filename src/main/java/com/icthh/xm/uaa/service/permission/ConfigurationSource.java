@@ -1,4 +1,4 @@
-package com.icthh.xm.uaa.service;
+package com.icthh.xm.uaa.service.permission;
 
 import com.icthh.xm.commons.permission.domain.Permission;
 import com.icthh.xm.commons.permission.domain.Privilege;
@@ -11,7 +11,7 @@ import java.util.Set;
 /**
  * Created by victor on 22.06.2020. //todo V: add doc
  */
-interface ConfigurationSource {
+public interface ConfigurationSource {
 
     PermissionsConfigMode getMode();
 

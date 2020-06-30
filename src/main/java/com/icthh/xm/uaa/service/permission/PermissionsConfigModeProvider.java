@@ -1,4 +1,4 @@
-package com.icthh.xm.uaa.service;
+package com.icthh.xm.uaa.service.permission;
 
 /**
  * Describes a service that provides {@link PermissionsConfigMode} to be used.

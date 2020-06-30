@@ -2,7 +2,7 @@ package com.icthh.xm.uaa.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
-import com.icthh.xm.uaa.service.TenantRoleService;
+import com.icthh.xm.uaa.service.permission.TenantRoleService;
 import com.icthh.xm.uaa.service.dto.RoleDTO;
 import com.icthh.xm.uaa.service.dto.RoleMatrixDTO;
 import io.github.jhipster.web.util.ResponseUtil;

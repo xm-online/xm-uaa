@@ -26,7 +26,7 @@ import com.icthh.xm.uaa.service.AccountService;
 import com.icthh.xm.uaa.service.CaptchaService;
 import com.icthh.xm.uaa.service.TenantPermissionService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
-import com.icthh.xm.uaa.service.TenantRoleService;
+import com.icthh.xm.uaa.service.permission.TenantRoleService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.mail.MailService;

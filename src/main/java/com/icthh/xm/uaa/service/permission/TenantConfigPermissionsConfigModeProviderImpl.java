@@ -1,4 +1,4 @@
-package com.icthh.xm.uaa.service;
+package com.icthh.xm.uaa.service.permission;
 
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import lombok.RequiredArgsConstructor;

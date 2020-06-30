@@ -1,4 +1,4 @@
-package com.icthh.xm.uaa.service;
+package com.icthh.xm.uaa.service.permission;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -12,6 +12,7 @@ import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
+import com.icthh.xm.uaa.service.EnvironmentService;
 import com.icthh.xm.uaa.service.dto.PermissionDTO;
 import com.icthh.xm.uaa.service.dto.RoleDTO;
 import com.icthh.xm.uaa.service.dto.RoleMatrixDTO;

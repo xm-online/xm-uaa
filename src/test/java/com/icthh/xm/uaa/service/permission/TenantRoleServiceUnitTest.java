@@ -1,4 +1,4 @@
-package com.icthh.xm.uaa.service;
+package com.icthh.xm.uaa.service.permission;
 
 import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
@@ -10,6 +10,8 @@ import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
+import com.icthh.xm.uaa.service.EnvironmentService;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.dto.PermissionDTO;
 import com.icthh.xm.uaa.service.dto.RoleDTO;
 import com.icthh.xm.uaa.service.dto.RoleMatrixDTO;
