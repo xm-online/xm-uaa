@@ -29,7 +29,7 @@ import java.util.*;
 import static java.util.Optional.ofNullable;
 
 /**
- * Created by victor on 22.06.2020.
+ * {@link ConfigurationSource} implementation that uses xm-ms-config ms to keep all the configurations.
  */
 @Component
 @RequiredArgsConstructor
@@ -45,12 +45,11 @@ public class ConfigServiceConfigurationSource implements ConfigurationSource {
     @Value("${xm-permission.custom-privileges-path:}")
     private String customPrivilegesPath;
 
-    private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+    private final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
     private final PermissionProperties permissionProperties;
     private final TenantConfigRepository tenantConfigRepository;
     private final TenantContextHolder tenantContextHolder;
-    private final XmAuthenticationContextHolder xmAuthenticationContextHolder;
     private final CommonConfigRepository commonConfigRepository;
 
     @Override
@@ -156,6 +155,4 @@ public class ConfigServiceConfigurationSource implements ConfigurationSource {
             .map(Configuration::getContent)
             .findFirst();
     }
-
-
 }
