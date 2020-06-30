@@ -1,4 +1,4 @@
-package com.icthh.xm.uaa.service;
+package com.icthh.xm.uaa.service.permission;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
