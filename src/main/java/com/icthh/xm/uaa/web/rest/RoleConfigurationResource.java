@@ -8,9 +8,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.web.bind.annotation.*;
 
 /**
- *
+ * A resource that provides Role and Permission configuration for tenants with UAA persistence mode enabled.
  */
-@RestController //todo V: use /api request mapping?
+@RestController
 @RequiredArgsConstructor
 @ConditionalOnBean(DatabaseConfigurationSource.class)
 public class RoleConfigurationResource {

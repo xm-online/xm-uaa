@@ -22,7 +22,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Created by victor on 22.06.2020. //todo V: add javadoc
+ * {@link ConfigurationSource} implementation that uses a database to keep Roles and Permissions.
  */
 @Service
 @Slf4j
@@ -63,9 +63,6 @@ public class DatabaseConfigurationSource implements ConfigurationSource {
         return result;
     }
 
-    /**
-     * full state update
-     */
     @Override
     public void updateRoles(Map<String, Role> roles) {
         //get from db
@@ -83,7 +80,7 @@ public class DatabaseConfigurationSource implements ConfigurationSource {
         //update existing
         HashMap<String, RoleEntity> updated = new HashMap<>(currentByKey);
         updated.keySet().retainAll(roles.keySet());
-        List<RoleEntity> updatedEntities = updated.entrySet().stream() //todo V: combine with batch above?
+        List<RoleEntity> updatedEntities = updated.entrySet().stream()
             .map(e -> RoleDomainMapper.roleToEntity(roles.get(e.getKey()), e.getValue(), e.getKey()))
             .collect(Collectors.toList());
         roleRepository.saveAll(updatedEntities);

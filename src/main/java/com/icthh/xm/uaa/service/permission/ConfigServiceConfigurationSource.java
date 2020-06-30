@@ -101,7 +101,7 @@ public class ConfigServiceConfigurationSource implements ConfigurationSource {
     }
 
     @Override
-    public void deletePermissionsForRemovedPrivileges(String msName, Collection<String> data) {
+    public void deletePermissionsForRemovedPrivileges(String msName, Collection<String> activePrivileges) {
         //nop - config server handles deletion by his own
     }
 

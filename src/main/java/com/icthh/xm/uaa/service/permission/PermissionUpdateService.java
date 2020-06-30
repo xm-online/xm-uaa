@@ -22,7 +22,8 @@ import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_AUTH_CO
 import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
 
 /**
- * //todo V: doc
+ * A service that deletes permissions from the database that have common privileges that were removed.
+ * Apples only for tenants that have UAA permission mode enabled.
  */
 @Service
 @RequiredArgsConstructor
@@ -37,6 +38,12 @@ public class PermissionUpdateService {
     private final LepManager lepManager;
     private final XmAuthenticationContextHolder authContextHolder;
 
+    /**
+     * Deletes permissions for not active privileges (i.e. not in {@code existingCommonAppPrivileges}
+     *
+     * @param msName application name
+     * @param existingCommonAppPrivileges currently active common privileges
+     */
     @SneakyThrows
     public void deleteRemovedPrivileges(String msName, Set<Privilege> existingCommonAppPrivileges) {
         for (String tenantKey : tenantListRepository.getTenants()) {

@@ -9,28 +9,62 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Created by victor on 22.06.2020. //todo V: add doc
+ * Describes a source that provides operations to deal with Roles, Permissions and Privileges.
+ * Tenant-specific values are obtain using tenant context.
  */
 public interface ConfigurationSource {
 
+    /**
+     * @return configuration mode the source is using
+     */
     PermissionsConfigMode getMode();
 
+    /**
+     * @return Roles for a tenant. Key - role key, value - role itself.
+     */
     Map<String, Role> getRoles();
 
     /**
-     * @return key - application name, inner map key - role key, value - permission
+     * @return Permissions for a tenant. Key - application name,
+     * inner map key - role key, value - permission
      */
     Map<String, Map<String, Set<Permission>>> getPermissions();
 
+    /**
+     * Update roles for a tenant. This is a full state update.
+     *
+     * @param roles role configuration, Key - role key, value - role itself.
+     */
     void updateRoles(Map<String, Role> roles);
 
+    /**
+     * Updates permissions for a tenant. This is a full state update.
+     *
+     * @param permissions permission configuration, where key - application name,
+     * inner map key - role key, value - permission.
+     */
     void updatePermissions(Map<String, Map<String, Set<Permission>>> permissions);
 
+    /**
+     * @return permissions for a specific role by {@code roleKey}.
+     */
     Map<String, Permission> getRolePermissions(String roleKey);
 
+    /**
+     * @return application privileges. Key - application name, value - set of privileges.
+     */
     Map<String, Set<Privilege>> getPrivileges();
 
+    /**
+     * @return custom privileges for a tenant. Key - application name, value - set of privileges.
+     */
     Map<String, Set<Privilege>> getCustomPrivileges();
 
-    void deletePermissionsForRemovedPrivileges(String msName, Collection<String> data);
+    /**
+     * Deletes permissions for not active privileges (i.e. not in {@code activePrivileges}
+     *
+     * @param msName application name
+     * @param activePrivileges currently active privileges
+     */
+    void deletePermissionsForRemovedPrivileges(String msName, Collection<String> activePrivileges);
 }

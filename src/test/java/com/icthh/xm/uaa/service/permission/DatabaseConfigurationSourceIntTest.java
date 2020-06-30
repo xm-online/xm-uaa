@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
     XmOverrideConfiguration.class
 })
 @Transactional
-public class DatabaseConfigurationSourceIntTest {//todo V: check Hibernate queries
+public class DatabaseConfigurationSourceIntTest {
 
     @Autowired
     DatabaseConfigurationSource databaseConfigurationSource;
