@@ -101,3 +101,31 @@ To configure CI for your project, run the ci-cd sub-generator (`jhipster ci-cd`)
 [Running tests page]: https://www.jhipster.tech/documentation-archive/v6.5.1/running-tests/
 [Code quality page]: https://www.jhipster.tech/documentation-archive/v6.5.1/code-quality/
 [Setting up Continuous Integration]: https://www.jhipster.tech/documentation-archive/v6.5.1/setting-up-ci/
+
+## Enabling database persistence for permissions and roles (optional)
+
+By default, role and permission configurations are stored in xm-ms-config service which uses a git repository as persistent storage.
+This approach has some disadvantages as merge conflicts for manual handling when merging between different configuration branches (dev/stage/prod).
+In order to avoid this and keep environment configuration separately from the source code it's possible to enable database persistence on UAA side.
+The feature is tenant-specific so system can operate in both modes simultaneously.
+In this case roles and permissions will be persisted in the UAA xm-uaa database, xm-ms-config will ask xm-uaa for the configuration on startup.
+
+Use the following steps:
+1. (Optional) To migrate the current roles and permissions to the database, use the endpoint below:
+
+    `curl --location --request POST '<UAA-MS-URL>/roles/<TENANT-NAME>/migrate' \
+    --header 'x-tenant: XM' \
+    --header 'Authorization: Bearer <YOUR-AUTH-TOKEN>’`
+
+
+2. For a specific tenant:
+2.1. Add files to .gitignore and delete them
+    `config/tenants/XM/roles.yml
+    config/tenants/XM/permissions.yml`
+
+2.2. Add the following line to tenant-config.yml
+    `uaa-permissions: true`
+
+2.3. Commit and push to VCS.
+
+2.4. Restart xm-ms-config and xm-uaa services. 
