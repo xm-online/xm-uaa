@@ -9,6 +9,7 @@ import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.uaa.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.stereotype.Service;
@@ -55,6 +56,7 @@ public class PermissionUpdateService {
                         Set<String> activePrivileges = Stream.of(
                             existingCommonAppPrivileges,
                             tenantRoleService.getCustomPrivileges().get(msName))
+                            .filter(CollectionUtils::isNotEmpty)
                             .flatMap(Collection::stream)
                             .map(Privilege::getKey)
                             .collect(Collectors.toSet());
