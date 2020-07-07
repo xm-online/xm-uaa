@@ -205,3 +205,7 @@ application:
     keystore-password: password
     security:
         passwordEncoderStrength: -1
+
+gracefulShutdown:
+    enabled: false
+    shutdownDelay:
