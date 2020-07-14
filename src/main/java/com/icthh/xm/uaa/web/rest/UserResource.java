@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.web.rest;
 
+import static com.icthh.xm.uaa.config.Constants.LOGIN_USED_CODE;
 import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
 
 import com.codahale.metrics.annotation.Timed;
@@ -116,7 +117,7 @@ public class UserResource {
         user.getLogins().forEach(userLogin ->
                                      userLoginRepository.findOneByLoginIgnoreCase(userLogin.getLogin())
                                          .ifPresent(s -> {
-                                             throw new BusinessException(Constants.LOGIN_IS_USED_ERROR_TEXT);
+                                             throw new BusinessException(LOGIN_USED_CODE, Constants.LOGIN_IS_USED_ERROR_TEXT);
                                          })
         );
         User newUser = userService.createUser(user);
@@ -214,7 +215,7 @@ public class UserResource {
         user.getLogins().forEach(userLogin ->
                                      userLoginRepository.findOneByLoginIgnoreCaseAndUserIdNot(userLogin.getLogin(), user.getId())
                                          .ifPresent(s -> {
-                                             throw new BusinessException(Constants.LOGIN_IS_USED_ERROR_TEXT);
+                                             throw new BusinessException(LOGIN_USED_CODE, Constants.LOGIN_IS_USED_ERROR_TEXT);
                                          })
         );
         Optional<UserDTO> updatedUser = userService.updateUserLogins(user.getUserKey(), user.getLogins());

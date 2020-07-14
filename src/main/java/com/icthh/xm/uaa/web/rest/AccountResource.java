@@ -52,6 +52,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.icthh.xm.uaa.config.Constants.LOGIN_IS_USED_ERROR_TEXT;
+import static com.icthh.xm.uaa.config.Constants.LOGIN_USED_CODE;
 
 /**
  * REST controller for managing the current user's account.
@@ -64,7 +65,6 @@ import static com.icthh.xm.uaa.config.Constants.LOGIN_IS_USED_ERROR_TEXT;
 public class AccountResource {
 
     private static final String CHECK_ERROR_MESSAGE = "Incorrect password";
-    private static final String LOGIN_USED_CODE = "error.login.already.used";
     private static final String LOGIN_USED_PARAM = "loginTypeKey";
 
     private final UserRepository userRepository;
@@ -202,7 +202,7 @@ public class AccountResource {
     public ResponseEntity<UserDTO> saveAccount(@Valid @RequestBody UserDTO user) {
         user.getLogins().forEach(userLogin -> userLoginRepository.findOneByLoginIgnoreCaseAndUserIdNot(
             userLogin.getLogin(), user.getId()).ifPresent(s -> {
-            throw new BusinessException(LOGIN_IS_USED_ERROR_TEXT);
+            throw new BusinessException(LOGIN_USED_CODE, LOGIN_IS_USED_ERROR_TEXT);
         }));
         Optional<UserDTO> updatedUser = accountService.updateAccount(user);
 
@@ -228,7 +228,7 @@ public class AccountResource {
         user.getLogins().forEach(
             userLogin -> userLoginRepository.findOneByLoginIgnoreCaseAndUserIdNot(
                 userLogin.getLogin(), user.getId()).ifPresent(s -> {
-                throw new BusinessException(LOGIN_IS_USED_ERROR_TEXT);
+                throw new BusinessException(LOGIN_USED_CODE, LOGIN_IS_USED_ERROR_TEXT);
             }));
 
         Optional<UserDTO> updatedUser = userService.updateUserLogins(getRequiredUserKey(), user.getLogins());
