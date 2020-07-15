@@ -12,14 +12,12 @@ import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
-import com.icthh.xm.uaa.service.AccountMailService;
-import com.icthh.xm.uaa.service.AccountService;
-import com.icthh.xm.uaa.service.CaptchaService;
-import com.icthh.xm.uaa.service.TenantPermissionService;
-import com.icthh.xm.uaa.service.UserService;
+import com.icthh.xm.uaa.service.*;
 import com.icthh.xm.uaa.service.dto.TfaEnableRequest;
 import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
+import com.icthh.xm.uaa.service.user.password.PasswordResetFlowFactory;
+import com.icthh.xm.uaa.service.user.password.PasswordResetHandler;
 import com.icthh.xm.uaa.web.rest.util.HeaderUtil;
 import com.icthh.xm.uaa.web.rest.vm.CaptchaVM;
 import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
@@ -77,6 +75,7 @@ public class AccountResource {
     private final XmRequestContextHolder xmRequestContextHolder;
     private final TenantContextHolder tenantContextHolder;
     private final TenantPermissionService tenantPermissionService;
+    private final PasswordResetFlowFactory resetFlowFactory;
     private final AccountMailService accountMailService;
 
     private String getRequiredUserKey() {
@@ -265,9 +264,25 @@ public class AccountResource {
     @Timed
     @PreAuthorize("hasPermission({'mail': #mail}, 'ACCOUNT.PASSWORD.RESET')")
     @PrivilegeDescription("Privilege to send an email to reset the password of the user")
-    public ResponseEntity<Void> requestPasswordReset(@RequestBody String mail) {
-        userService.requestPasswordReset(mail)
-            .ifPresent(accountMailService::sendMailOnPasswordInit);
+    public ResponseEntity<Void> requestPasswordReset(
+        @RequestBody String mail,
+        @RequestBody String login,
+        @RequestBody String resetType,
+        @RequestBody String loginType) {
+
+        if (mail != null) {
+            login = mail;
+            resetType = "MAIL";
+            loginType = "MAIL";
+        }
+
+        Optional<User> user = userService.requestPasswordReset(login, loginType);
+
+        if (user.isPresent()) {
+            PasswordResetHandler.PasswordResetRequest resetRequest = new PasswordResetHandler.PasswordResetRequest(resetType, user.get());
+            resetFlowFactory.getPasswordResetHandler(resetType).handle(resetRequest);
+        }
+
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
