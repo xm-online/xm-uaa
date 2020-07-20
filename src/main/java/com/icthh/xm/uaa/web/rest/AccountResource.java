@@ -20,10 +20,7 @@ import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.user.password.PasswordResetFlowFactory;
 import com.icthh.xm.uaa.service.user.password.PasswordResetHandler;
 import com.icthh.xm.uaa.web.rest.util.HeaderUtil;
-import com.icthh.xm.uaa.web.rest.vm.CaptchaVM;
-import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
-import com.icthh.xm.uaa.web.rest.vm.KeyAndPasswordVM;
-import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
+import com.icthh.xm.uaa.web.rest.vm.*;
 import io.github.jhipster.web.util.ResponseUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -266,13 +263,14 @@ public class AccountResource {
     @PreAuthorize("hasPermission({'mail': #mail}, 'ACCOUNT.PASSWORD.RESET')")
     @PrivilegeDescription("Privilege to send an email to reset the password of the user")
     public ResponseEntity<Void> requestPasswordReset(
-        @RequestBody String mail,
-        @RequestBody String login,
-        @RequestBody String resetType,
-        @RequestBody String loginType) {
+        @RequestBody ResetPasswordVM request) {
 
-        if (mail != null) {
-            login = mail;
+        String login = request.getLogin();
+        String resetType = request.getResetType();
+        String loginType = request.getLoginType();
+
+        if (request.getMail() != null) {
+            login = request.getMail();
             resetType = "MAIL";
             loginType = UserLoginType.EMAIL.getValue();
         }
