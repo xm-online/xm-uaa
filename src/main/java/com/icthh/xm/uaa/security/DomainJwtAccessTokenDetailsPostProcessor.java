@@ -6,6 +6,8 @@ import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.icthh.xm.uaa.lep.keyresolver.OptionalProfileHeaderResolver;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +15,7 @@ import org.springframework.stereotype.Component;
 @LepService(group = "security")
 public class DomainJwtAccessTokenDetailsPostProcessor {
 
-    @LogicExtensionPoint("ProcessJwtAccessTokenDetails")
+    @LogicExtensionPoint(value = "ProcessJwtAccessTokenDetails", resolver = OptionalProfileHeaderResolver.class)
     public void processJwtAccessTokenDetails(OAuth2Authentication authentication, Map<String, Object> details) {
         Map<String, Object> additionalDetails = new HashMap<>();
         additionalDetails.putAll(authentication.getOAuth2Request().getRequestParameters());
