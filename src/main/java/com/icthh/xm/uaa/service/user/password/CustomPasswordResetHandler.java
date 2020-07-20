@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class CustomPasswordResetHandler implements PasswordResetHandler {
 
+    @Override
     @LogicExtensionPoint(value = "ResetPassword", resolver = CustomPasswordResetHandlerResolver.class)
     public void handle(PasswordResetRequest resetRequest) {
         log.warn("No lep for type: {}", resetRequest.getResetType());
