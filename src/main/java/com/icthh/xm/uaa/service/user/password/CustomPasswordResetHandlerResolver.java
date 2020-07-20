@@ -11,12 +11,12 @@ import static org.apache.commons.lang3.StringUtils.upperCase;
 @Component
 public class CustomPasswordResetHandlerResolver extends AppendLepKeyResolver {
 
-    public static final String RESET_TYPE = "resetType";
+    public static final String RESET_REQUEST = "resetRequest";
 
     @Override
     protected String[] getAppendSegments(SeparatorSegmentedLepKey baseKey, LepMethod method, LepManagerService managerService) {
-        String resetType = getRequiredParam(method, RESET_TYPE, String.class);
-        String translatedLocationTypeKey = upperCase(translateToLepConvention(resetType));
+        PasswordResetHandler.PasswordResetRequest resetType = getRequiredParam(method, RESET_REQUEST, PasswordResetHandler.PasswordResetRequest.class);
+        String translatedLocationTypeKey = upperCase(translateToLepConvention(resetType.getResetType()));
         return new String[] {
             translatedLocationTypeKey
         };
