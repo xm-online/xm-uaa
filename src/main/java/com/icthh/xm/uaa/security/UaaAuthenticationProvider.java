@@ -4,14 +4,13 @@ import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN
 import static com.icthh.xm.uaa.config.Constants.AUTH_USERNAME_DOMAIN_SEPARATOR;
 import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.DAYS;
-import static java.util.UUID.randomUUID;
 
-import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
+import com.icthh.xm.uaa.lep.keyresolver.OptionalProfileHeaderResolver;
 import com.icthh.xm.uaa.security.ldap.LdapAuthenticationProviderBuilder;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
@@ -30,7 +29,6 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.oauth2.common.exceptions.ClientAuthenticationException;
 
 @Slf4j
 @IgnoreLogginAspect
@@ -76,11 +74,11 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
     /**
      * {@inheritDoc}
      */
-    @LogicExtensionPoint(value = "Authenticate")
+    @LogicExtensionPoint(value = "Authenticate", resolver = OptionalProfileHeaderResolver.class)
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         Authentication result = getProvider(authentication).authenticate(authentication);
-        log.info("authenticated: {}, role: {}, {}",result.isAuthenticated(), result.getAuthorities(), result.getPrincipal());
+        log.info("authenticated: {}, role: {}, {}", result.isAuthenticated(), result.getAuthorities(), result.getPrincipal());
         checkPasswordExpiration(result);
         checkTermsOfConditions(result);
         return result;

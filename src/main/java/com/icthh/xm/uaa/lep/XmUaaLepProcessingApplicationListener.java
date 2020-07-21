@@ -6,13 +6,15 @@ import com.icthh.xm.commons.lep.commons.CommonsService;
 import com.icthh.xm.commons.lep.spring.SpringLepProcessingApplicationListener;
 import com.icthh.xm.lep.api.ScopedContext;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
+import com.icthh.xm.uaa.security.CustomizableLepTokenStorage;
 import com.icthh.xm.uaa.security.oauth2.athorization.code.CustomAuthorizationCodeServices;
 import com.icthh.xm.uaa.service.AccountService;
-import com.icthh.xm.uaa.security.CustomizableLepTokenStorage;
+import com.icthh.xm.uaa.service.LdapService;
 import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.mail.MailService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -36,6 +38,8 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
     private final ProfileEventProducer profileEventProducer;
     private final CustomizableLepTokenStorage customizableLepTokenStorage;
     private final CustomAuthorizationCodeServices customAuthorizationCodeServices;
+    private final LdapService ldapService;
+    private final UserDetailsService userDetailsService;
 
 
     @Override
@@ -51,6 +55,8 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
         services.put(BINDING_SUB_KEY_PROFILE_EVEBT_PRODUCER_SERVICE, profileEventProducer);
         services.put(BINDING_SUB_KEY_SERVICE_CUSTOMIZABLE_TOKE_STORAGE, customizableLepTokenStorage);
         services.put(BINDING_SUB_KEY_SERVICE_CUSTOM_AUTHORIZATION_CODE, customAuthorizationCodeServices);
+        services.put(BINDING_SUB_KEY_SERVICE_LDAP_SERVICE, ldapService);
+        services.put(BINDING_SUB_KEY_SERVICE_USER_DETAILS_SERVICE, userDetailsService);
 
         executionContext.setValue(BINDING_KEY_COMMONS, new CommonsExecutor(commonsService));
         executionContext.setValue(BINDING_KEY_SERVICES, services);
