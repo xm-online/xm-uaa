@@ -25,6 +25,9 @@ import com.icthh.xm.uaa.web.rest.vm.CaptchaVM;
 import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.KeyAndPasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
+import com.icthh.xm.uaa.web.rest.vm.ResetPasswordVM;
+import com.icthh.xm.uaa.service.account.password.reset.PasswordResetHandlerFactory;
+import com.icthh.xm.uaa.service.account.password.reset.PasswordResetHandler;
 import io.github.jhipster.web.util.ResponseUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -77,6 +80,7 @@ public class AccountResource {
     private final XmRequestContextHolder xmRequestContextHolder;
     private final TenantContextHolder tenantContextHolder;
     private final TenantPermissionService tenantPermissionService;
+    private final PasswordResetHandlerFactory resetFlowFactory;
     private final AccountMailService accountMailService;
 
     private String getRequiredUserKey() {
@@ -266,8 +270,29 @@ public class AccountResource {
     @PreAuthorize("hasPermission({'mail': #mail}, 'ACCOUNT.PASSWORD.RESET')")
     @PrivilegeDescription("Privilege to send an email to reset the password of the user")
     public ResponseEntity<Void> requestPasswordReset(@RequestBody String mail) {
-        userService.requestPasswordReset(mail)
+        userService.requestPasswordReset(mail, "LOGIN.EMAIL")
             .ifPresent(accountMailService::sendMailOnPasswordInit);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    /**
+     * POST /account/reset_password/init : Reset password and send reset key via customizable transport/flow.
+     *
+     * @param request password reset request
+     * @return the ResponseEntity with status 200 (OK) if the password was reset and reset flow (if configured) is executed
+     */
+    @PostMapping(path = "/account/reset_password/init", produces = MediaType.APPLICATION_JSON_UTF8_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Timed
+    @PreAuthorize("hasPermission({'login': #request.login}, 'ACCOUNT.PASSWORD.RESET')")
+    @PrivilegeDescription("Privilege to reset password start customizable reset flow")
+    public ResponseEntity<Void> requestPasswordResetViaRequestedFlow(@RequestBody ResetPasswordVM request) {
+        Optional<User> user = userService.requestPasswordReset(request.getLogin(), request.getLoginType());
+
+        if (user.isPresent()) {
+            PasswordResetHandler.PasswordResetRequest resetRequest = new PasswordResetHandler.PasswordResetRequest(request.getResetType(), user.get());
+            resetFlowFactory.getPasswordResetHandler(request.getResetType()).handle(resetRequest);
+        }
+
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

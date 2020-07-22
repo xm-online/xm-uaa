@@ -113,17 +113,18 @@ public class UserService {
     }
 
     /**
-     * Search user by mail login and set him reset key.
+     * Search user by login and set him reset key.
      *
-     * @param mail users mail login
+     * @param login users login
+     * @param loginType login type
      * @return user
      */
     @LogicExtensionPoint("RequestPasswordReset")
-    public Optional<User> requestPasswordReset(String mail) {
+    public Optional<User> requestPasswordReset(String login, String loginType) {
         return userLoginRepository
-            .findOneByLoginIgnoreCase(mail)
+            .findOneByLoginIgnoreCase(login)
             .filter(userLogin -> userLogin.getUser().isActivated()
-                && UserLoginType.EMAIL.getValue().equals(userLogin.getTypeKey()))
+                && loginType.equals(userLogin.getTypeKey()))
             .map(userLogin -> {
                 userLogin.getUser().setResetKey(RandomUtil.generateResetKey());
                 userLogin.getUser().setResetDate(Instant.now());
