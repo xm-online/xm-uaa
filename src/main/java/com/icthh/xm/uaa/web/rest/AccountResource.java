@@ -262,7 +262,7 @@ public class AccountResource {
     @PreAuthorize("hasPermission({'mail': #mail}, 'ACCOUNT.PASSWORD.RESET')")
     @PrivilegeDescription("Privilege to send an email to reset the password of the user")
     public ResponseEntity<Void> requestPasswordReset(@RequestBody String mail) {
-        userService.requestPasswordReset(mail)
+        userService.requestPasswordReset(mail, "LOGIN.EMAIL")
             .ifPresent(accountMailService::sendMailOnPasswordInit);
         return new ResponseEntity<>(HttpStatus.OK);
     }
