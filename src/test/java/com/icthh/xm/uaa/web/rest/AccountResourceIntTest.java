@@ -28,6 +28,7 @@ import com.icthh.xm.uaa.service.TenantPermissionService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.TenantRoleService;
 import com.icthh.xm.uaa.service.UserService;
+import com.icthh.xm.uaa.service.account.password.reset.PasswordResetHandlerFactory;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.mail.MailService;
 import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
@@ -140,6 +141,9 @@ public class AccountResourceIntTest {
     @Mock
     private TenantPermissionService tenantPermissionService;
 
+    @Mock
+    private PasswordResetHandlerFactory passwordResetHandlerFactory;
+
     private MockMvc restUserMockMvc;
 
     private MockMvc restMvc;
@@ -201,7 +205,7 @@ public class AccountResourceIntTest {
             captchaService,
             xmAuthenticationContextHolder,
             xmRequestContextHolder,
-            tenantContextHolder, tenantPermissionService, accountMailService);
+            tenantContextHolder, tenantPermissionService, passwordResetHandlerFactory, accountMailService);
 
         AccountResource accountUserMockResource = new AccountResource(userRepository,
             userLoginRepository,
@@ -211,7 +215,7 @@ public class AccountResourceIntTest {
             captchaService,
             xmAuthenticationContextHolder,
             xmRequestContextHolder,
-            tenantContextHolder, tenantPermissionService, accountMailService);
+            tenantContextHolder, tenantPermissionService, passwordResetHandlerFactory, accountMailService);
 
         this.restMvc = MockMvcBuilders.standaloneSetup(accountResource)
             .setMessageConverters(httpMessageConverters).setControllerAdvice(exceptionTranslator)

@@ -9,6 +9,7 @@ import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
+import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
@@ -67,6 +68,7 @@ import static com.icthh.xm.uaa.config.Constants.LOGIN_USED_CODE;
 @SuppressWarnings("unused")
 public class AccountResource {
 
+    private static final String INCORRECT_LOGIN_TYPE = "Incorrect login type";
     private static final String CHECK_ERROR_MESSAGE = "Incorrect password";
     private static final String LOGIN_USED_PARAM = "loginTypeKey";
 
@@ -270,7 +272,7 @@ public class AccountResource {
     @PreAuthorize("hasPermission({'mail': #mail}, 'ACCOUNT.PASSWORD.RESET')")
     @PrivilegeDescription("Privilege to send an email to reset the password of the user")
     public ResponseEntity<Void> requestPasswordReset(@RequestBody String mail) {
-        userService.requestPasswordReset(mail, "LOGIN.EMAIL")
+        userService.requestPasswordReset(mail)
             .ifPresent(accountMailService::sendMailOnPasswordInit);
         return new ResponseEntity<>(HttpStatus.OK);
     }
@@ -286,7 +288,13 @@ public class AccountResource {
     @PreAuthorize("hasPermission({'login': #request.login}, 'ACCOUNT.PASSWORD.RESET')")
     @PrivilegeDescription("Privilege to reset password start customizable reset flow")
     public ResponseEntity<Void> requestPasswordResetViaRequestedFlow(@RequestBody ResetPasswordVM request) {
-        Optional<User> user = userService.requestPasswordReset(request.getLogin(), request.getLoginType());
+        Optional<UserLoginType> userLoginType = UserLoginType.valueOfType(request.getLoginType());
+
+        if (userLoginType.isEmpty()) {
+            throw new BusinessException(INCORRECT_LOGIN_TYPE);
+        }
+
+        Optional<User> user = userService.requestPasswordResetForLoginWithType(request.getLogin(), userLoginType.get());
 
         if (user.isPresent()) {
             PasswordResetHandler.PasswordResetRequest resetRequest = new PasswordResetHandler.PasswordResetRequest(request.getResetType(), user.get());

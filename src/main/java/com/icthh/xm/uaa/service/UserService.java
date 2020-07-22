@@ -112,19 +112,30 @@ public class UserService {
             .orElseThrow(() -> new BusinessException("error.invalid.accept.terms.token", "Invalid token for accept terms fo conditions"));
     }
 
-    /**
-     * Search user by login and set him reset key.
+   /**
+     * Search user by mail login and set him reset key.
      *
-     * @param login users login
-     * @param loginType login type
+     * @param mail users mail login
      * @return user
      */
     @LogicExtensionPoint("RequestPasswordReset")
-    public Optional<User> requestPasswordReset(String login, String loginType) {
+    public Optional<User> requestPasswordReset(String mail) {
+        return requestPasswordResetForLoginWithType(mail, UserLoginType.EMAIL);
+    }
+
+    /**
+     * Search user by login and set him reset key.
+     *
+     * @param login     users login
+     * @param loginType login type
+     * @return user
+     */
+    @LogicExtensionPoint("RequestPasswordResetForLoginWithType")
+    public Optional<User> requestPasswordResetForLoginWithType(String login, UserLoginType loginType) {
         return userLoginRepository
             .findOneByLoginIgnoreCase(login)
             .filter(userLogin -> userLogin.getUser().isActivated()
-                && loginType.equals(userLogin.getTypeKey()))
+                && loginType.getValue().equals(userLogin.getTypeKey()))
             .map(userLogin -> {
                 userLogin.getUser().setResetKey(RandomUtil.generateResetKey());
                 userLogin.getUser().setResetDate(Instant.now());
