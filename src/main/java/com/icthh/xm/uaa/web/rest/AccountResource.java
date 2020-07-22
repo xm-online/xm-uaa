@@ -262,24 +262,28 @@ public class AccountResource {
     @Timed
     @PreAuthorize("hasPermission({'mail': #mail}, 'ACCOUNT.PASSWORD.RESET')")
     @PrivilegeDescription("Privilege to send an email to reset the password of the user")
-    public ResponseEntity<Void> requestPasswordReset(
-        @RequestBody ResetPasswordVM request) {
+    public ResponseEntity<Void> requestPasswordReset(@RequestBody String mail) {
+        userService.requestPasswordReset(mail)
+            .ifPresent(accountMailService::sendMailOnPasswordInit);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 
-        String login = request.getLogin();
-        String resetType = request.getResetType();
-        String loginType = request.getLoginType();
-
-        if (request.getMail() != null) {
-            login = request.getMail();
-            resetType = "MAIL";
-            loginType = UserLoginType.EMAIL.getValue();
-        }
-
-        Optional<User> user = userService.requestPasswordReset(login, loginType);
+    /**
+     * POST /account/reset_password/init : Reset password and send reset key via customizable transport/flow.
+     *
+     * @param request password reset request
+     * @return the ResponseEntity with status 200 (OK) if the password was reset and reset flow (if configured) executed
+     */
+    @PostMapping(path = "/account/reset_password/init", produces = MediaType.APPLICATION_JSON_UTF8_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Timed
+    @PreAuthorize("hasPermission({'login': #request.login, 'loginType': #request.loginType, 'resetType': #request.resetType}, 'ACCOUNT.PASSWORD.RESET')")
+    @PrivilegeDescription("Privilege to send an email to reset the password of the user")
+    public ResponseEntity<Void> requestPasswordResetViaRequestedFlow(@RequestBody ResetPasswordVM request) {
+        Optional<User> user = userService.requestPasswordReset(request.getLogin(), request.getLoginType());
 
         if (user.isPresent()) {
-            PasswordResetHandler.PasswordResetRequest resetRequest = new PasswordResetHandler.PasswordResetRequest(resetType, user.get());
-            resetFlowFactory.getPasswordResetHandler(resetType).handle(resetRequest);
+            PasswordResetHandler.PasswordResetRequest resetRequest = new PasswordResetHandler.PasswordResetRequest(request.getResetType(), user.get());
+            resetFlowFactory.getPasswordResetHandler(request.getResetType()).handle(resetRequest);
         }
 
         return new ResponseEntity<>(HttpStatus.OK);

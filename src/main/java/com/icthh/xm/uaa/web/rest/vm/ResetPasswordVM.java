@@ -4,7 +4,6 @@ import lombok.Data;
 
 @Data
 public class ResetPasswordVM {
-    String mail;
     String login;
     String resetType;
     String loginType;
