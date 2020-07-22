@@ -26,7 +26,7 @@ public class PasswordResetFlowFactory {
     }
 
     public PasswordResetHandler getPasswordResetHandler(String resetType) {
-        ofNullable(resetType).orElseThrow(() -> new IllegalArgumentException("Reset type must exists"));
+        ofNullable(resetType).orElseThrow(() -> new IllegalArgumentException("Reset type must exist"));
         return ofNullable(registeredHandlers.get(resetType)).orElse(customPasswordResetHandler);
     }
 
