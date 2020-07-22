@@ -275,7 +275,7 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/reset_password/init", produces = MediaType.APPLICATION_JSON_UTF8_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    @PreAuthorize("hasPermission({'login': #request.login, 'loginType': #request.loginType, 'resetType': #request.resetType}, 'ACCOUNT.PASSWORD.RESET')")
+    @PreAuthorize("hasPermission({'login': #request.login}, 'ACCOUNT.PASSWORD.RESET')")
     @PrivilegeDescription("Privilege to send an email to reset the password of the user")
     public ResponseEntity<Void> requestPasswordResetViaRequestedFlow(@RequestBody ResetPasswordVM request) {
         Optional<User> user = userService.requestPasswordReset(request.getLogin(), request.getLoginType());
