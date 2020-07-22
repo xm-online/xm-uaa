@@ -271,7 +271,7 @@ public class AccountResource {
      * POST /account/reset_password/init : Reset password and send reset key via customizable transport/flow.
      *
      * @param request password reset request
-     * @return the ResponseEntity with status 200 (OK) if the password was reset and reset flow (if configured) executed
+     * @return the ResponseEntity with status 200 (OK) if the password was reset and reset flow (if configured) is executed
      */
     @PostMapping(path = "/account/reset_password/init", produces = MediaType.APPLICATION_JSON_UTF8_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     @Timed
