@@ -112,7 +112,7 @@ public class UserService {
             .orElseThrow(() -> new BusinessException("error.invalid.accept.terms.token", "Invalid token for accept terms fo conditions"));
     }
 
-   /**
+    /**
      * Search user by mail login and set him reset key.
      *
      * @param mail users mail login

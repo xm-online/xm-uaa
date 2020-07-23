@@ -286,7 +286,7 @@ public class AccountResource {
     @PostMapping(path = "/account/reset_password/init", produces = MediaType.APPLICATION_JSON_UTF8_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     @Timed
     @PreAuthorize("hasPermission({'login': #request.login}, 'ACCOUNT.PASSWORD.RESET')")
-    @PrivilegeDescription("Privilege to reset password start customizable reset flow")
+    @PrivilegeDescription("Privilege to reset password and start customizable reset flow")
     public ResponseEntity<Void> requestPasswordResetViaRequestedFlow(@RequestBody ResetPasswordVM request) {
         Optional<UserLoginType> userLoginType = UserLoginType.valueOfType(request.getLoginType());
 
