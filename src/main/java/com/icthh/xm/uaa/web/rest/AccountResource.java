@@ -82,7 +82,6 @@ public class AccountResource {
     private final XmRequestContextHolder xmRequestContextHolder;
     private final TenantContextHolder tenantContextHolder;
     private final TenantPermissionService tenantPermissionService;
-    private final PasswordResetHandlerFactory resetFlowFactory;
     private final AccountMailService accountMailService;
 
     private String getRequiredUserKey() {
@@ -298,7 +297,7 @@ public class AccountResource {
 
         if (user.isPresent()) {
             PasswordResetHandler.PasswordResetRequest resetRequest = new PasswordResetHandler.PasswordResetRequest(request.getResetType(), user.get());
-            resetFlowFactory.getPasswordResetHandler(request.getResetType()).handle(resetRequest);
+            userService.handlePasswordReset(resetRequest);
         }
 
         return new ResponseEntity<>(HttpStatus.OK);

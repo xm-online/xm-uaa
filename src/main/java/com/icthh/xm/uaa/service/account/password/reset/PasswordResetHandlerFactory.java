@@ -8,8 +8,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
-
-import static java.util.Optional.ofNullable;
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -28,8 +27,8 @@ public class PasswordResetHandlerFactory {
     }
 
     public PasswordResetHandler getPasswordResetHandler(String resetType) {
-        ofNullable(resetType).orElseThrow(() -> new IllegalArgumentException("Reset type must exist"));
-        return ofNullable(registeredHandlers.get(resetType)).orElse(customPasswordResetHandler);
+        resetType = Objects.requireNonNull(resetType, "resetType can't be null");
+        return registeredHandlers.getOrDefault(resetType, customPasswordResetHandler);
     }
 
 }

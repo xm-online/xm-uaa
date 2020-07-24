@@ -29,6 +29,8 @@ import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserPermittedRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.security.TokenConstraintsService;
+import com.icthh.xm.uaa.service.account.password.reset.PasswordResetHandler;
+import com.icthh.xm.uaa.service.account.password.reset.PasswordResetHandlerFactory;
 import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.util.RandomUtil;
@@ -77,6 +79,7 @@ public class UserService {
     private final XmAuthenticationContextHolder xmAuthenticationContextHolder;
     private final UserPermittedRepository userPermittedRepository;
     private final TokenConstraintsService tokenConstraints;
+    private final PasswordResetHandlerFactory resetFlowFactory;
 
     /**
      * Search user by reset key and set him password.
@@ -597,4 +600,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public void handlePasswordReset(PasswordResetHandler.PasswordResetRequest resetRequest) {
+        resetFlowFactory.getPasswordResetHandler(resetRequest.getResetType()).handle(resetRequest);
+    }
 }

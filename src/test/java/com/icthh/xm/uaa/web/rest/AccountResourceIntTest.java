@@ -205,7 +205,7 @@ public class AccountResourceIntTest {
             captchaService,
             xmAuthenticationContextHolder,
             xmRequestContextHolder,
-            tenantContextHolder, tenantPermissionService, passwordResetHandlerFactory, accountMailService);
+            tenantContextHolder, tenantPermissionService, accountMailService);
 
         AccountResource accountUserMockResource = new AccountResource(userRepository,
             userLoginRepository,
@@ -215,7 +215,7 @@ public class AccountResourceIntTest {
             captchaService,
             xmAuthenticationContextHolder,
             xmRequestContextHolder,
-            tenantContextHolder, tenantPermissionService, passwordResetHandlerFactory, accountMailService);
+            tenantContextHolder, tenantPermissionService, accountMailService);
 
         this.restMvc = MockMvcBuilders.standaloneSetup(accountResource)
             .setMessageConverters(httpMessageConverters).setControllerAdvice(exceptionTranslator)

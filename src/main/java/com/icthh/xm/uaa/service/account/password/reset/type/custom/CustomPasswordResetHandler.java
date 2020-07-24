@@ -6,7 +6,7 @@ import com.icthh.xm.uaa.service.account.password.reset.PasswordResetHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-@LepService(group = "service.account.password.reset")
+@LepService(group = "service.user.password.reset")
 @Service
 @Slf4j
 public class CustomPasswordResetHandler implements PasswordResetHandler {
