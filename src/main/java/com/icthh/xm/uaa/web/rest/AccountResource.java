@@ -18,6 +18,7 @@ import com.icthh.xm.uaa.service.AccountService;
 import com.icthh.xm.uaa.service.CaptchaService;
 import com.icthh.xm.uaa.service.TenantPermissionService;
 import com.icthh.xm.uaa.service.UserService;
+import com.icthh.xm.uaa.service.account.password.reset.PasswordResetRequest;
 import com.icthh.xm.uaa.service.dto.TfaEnableRequest;
 import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
@@ -27,8 +28,6 @@ import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.KeyAndPasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
 import com.icthh.xm.uaa.web.rest.vm.ResetPasswordVM;
-import com.icthh.xm.uaa.service.account.password.reset.PasswordResetHandlerFactory;
-import com.icthh.xm.uaa.service.account.password.reset.PasswordResetHandler;
 import io.github.jhipster.web.util.ResponseUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -293,12 +292,8 @@ public class AccountResource {
             throw new BusinessException(INCORRECT_LOGIN_TYPE);
         }
 
-        Optional<User> user = userService.requestPasswordResetForLoginWithType(request.getLogin(), userLoginType.get());
-
-        if (user.isPresent()) {
-            PasswordResetHandler.PasswordResetRequest resetRequest = new PasswordResetHandler.PasswordResetRequest(request.getResetType(), user.get());
-            userService.handlePasswordReset(resetRequest);
-        }
+        userService.requestPasswordResetForLoginWithType(request.getLogin(), userLoginType.get())
+            .ifPresent(user -> userService.handlePasswordReset(new PasswordResetRequest(request.getResetType(), user)));
 
         return new ResponseEntity<>(HttpStatus.OK);
     }

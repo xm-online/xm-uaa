@@ -3,6 +3,7 @@ package com.icthh.xm.uaa.service.account.password.reset.type.custom;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.uaa.service.account.password.reset.PasswordResetHandler;
+import com.icthh.xm.uaa.service.account.password.reset.PasswordResetRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

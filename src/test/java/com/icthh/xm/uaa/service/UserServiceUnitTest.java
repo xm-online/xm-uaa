@@ -3,6 +3,8 @@ package com.icthh.xm.uaa.service;
 import com.icthh.xm.commons.security.XmAuthenticationContext;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.uaa.domain.User;
+import com.icthh.xm.uaa.domain.UserLogin;
+import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
@@ -50,7 +52,28 @@ public class UserServiceUnitTest {
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
+    }
 
+    @Test
+    public void testRequestPasswordResetWithResetByEmail() {
+        //GIVEN
+        User user = createUser();
+        user.setActivated(true);
+
+        String login = "a@b.c";
+        UserLogin userLogin = new UserLogin();
+        userLogin.setTypeKey("LOGIN.EMAIL");
+        userLogin.setLogin(login);
+        userLogin.setUser(user);
+
+        given(userLoginRepository.findOneByLoginIgnoreCase(login)).willReturn(Optional.of(userLogin));
+
+        //WHEN
+        Optional<User> actualLogin = service.requestPasswordResetForLoginWithType(login, UserLoginType.EMAIL);
+
+        //THEN
+        assertThat(actualLogin.isPresent()).isTrue();
+        assertThat(actualLogin.get().getResetKey()).isNotNull();
     }
 
     @Test
