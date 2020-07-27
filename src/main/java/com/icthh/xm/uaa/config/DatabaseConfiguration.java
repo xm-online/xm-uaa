@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.config;
 
 import static com.icthh.xm.uaa.config.Constants.CHANGE_LOG_PATH;
+import static org.hibernate.cfg.AvailableSettings.JPA_VALIDATION_FACTORY;
 
 import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
 import com.icthh.xm.commons.migration.db.XmMultiTenantSpringLiquibase;
@@ -30,6 +31,7 @@ import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -118,13 +120,15 @@ public class DatabaseConfiguration {
     @Bean
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource,
                                                                        MultiTenantConnectionProvider multiTenantConnectionProviderImpl,
-                                                                       CurrentTenantIdentifierResolver currentTenantIdentifierResolverImpl) {
+                                                                       CurrentTenantIdentifierResolver currentTenantIdentifierResolverImpl,
+                                                                       LocalValidatorFactoryBean localValidatorFactoryBean) {
         Map<String, Object> properties = new HashMap<>(jpaProperties.getProperties());
         properties.put(org.hibernate.cfg.Environment.MULTI_TENANT, MultiTenancyStrategy.SCHEMA);
         properties.put(org.hibernate.cfg.Environment.MULTI_TENANT_CONNECTION_PROVIDER,
                        multiTenantConnectionProviderImpl);
         properties.put(org.hibernate.cfg.Environment.MULTI_TENANT_IDENTIFIER_RESOLVER,
                        currentTenantIdentifierResolverImpl);
+        properties.put(JPA_VALIDATION_FACTORY, localValidatorFactoryBean);
 
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource);

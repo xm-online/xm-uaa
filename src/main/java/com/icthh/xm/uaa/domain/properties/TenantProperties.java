@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.icthh.xm.uaa.domain.OtpChannelType;
+import com.icthh.xm.uaa.domain.UserSpec;
 import com.icthh.xm.uaa.security.ldap.Type;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -40,6 +41,9 @@ public class TenantProperties {
 
     @JsonProperty("security")
     private Security security;
+
+    @JsonProperty("userSpec")
+    private List<UserSpec> userSpec;
 
     @Getter
     @Setter
