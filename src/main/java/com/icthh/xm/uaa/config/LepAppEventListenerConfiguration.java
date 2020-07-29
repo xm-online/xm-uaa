@@ -8,6 +8,7 @@ import com.icthh.xm.uaa.security.CustomizableLepTokenStorage;
 import com.icthh.xm.uaa.security.oauth2.athorization.code.CustomAuthorizationCodeServices;
 import com.icthh.xm.uaa.service.AccountService;
 import com.icthh.xm.uaa.service.LdapService;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.mail.MailService;
@@ -36,7 +37,8 @@ public class LepAppEventListenerConfiguration {
         CustomAuthorizationCodeServices customAuthorizationCodeServices,
         CustomizableLepTokenStorage customizableLepTokenStorage,
         LdapService ldapService,
-        UserDetailsService userDetailsService
+        UserDetailsService userDetailsService,
+        TenantPropertiesService tenantPropertiesService
 
     ) {
         return new XmUaaLepProcessingApplicationListener(
@@ -51,7 +53,8 @@ public class LepAppEventListenerConfiguration {
             customizableLepTokenStorage,
             customAuthorizationCodeServices,
             ldapService,
-            userDetailsService
+            userDetailsService,
+            tenantPropertiesService
         );
     }
 }
