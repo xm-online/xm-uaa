@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.repository;
 
+import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.config.audit.AuditEventConverter;
 import com.icthh.xm.uaa.domain.PersistentAuditEvent;
@@ -27,6 +28,7 @@ public class CustomAuditEventRepository implements AuditEventRepository {
 
     private final PersistenceAuditEventRepository persistenceAuditEventRepository;
     private final AuditEventConverter auditEventConverter;
+    private final ApplicationProperties applicationProperties;
 
     public List<AuditEvent> find(Date after) {
         Iterable<PersistentAuditEvent> persistentAuditEvents =
@@ -62,8 +64,8 @@ public class CustomAuditEventRepository implements AuditEventRepository {
     @Override
     public void add(AuditEvent event) {
         if (!AUTHORIZATION_FAILURE.equals(event.getType())
-            && !Constants.ANONYMOUS_USER.equals(event.getPrincipal())) {
-
+                && !Constants.ANONYMOUS_USER.equals(event.getPrincipal())
+                && applicationProperties.isAuditEventsEnabled()) {
             PersistentAuditEvent persistentAuditEvent = new PersistentAuditEvent();
             persistentAuditEvent.setPrincipal(event.getPrincipal());
             persistentAuditEvent.setAuditEventType(event.getType());
