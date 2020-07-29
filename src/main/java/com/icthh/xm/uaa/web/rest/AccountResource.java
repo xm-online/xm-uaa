@@ -286,14 +286,12 @@ public class AccountResource {
     @PreAuthorize("hasPermission({'login': #request.login}, 'ACCOUNT.PASSWORD.RESET')")
     @PrivilegeDescription("Privilege to reset password and start customizable reset flow")
     public ResponseEntity<Void> requestPasswordResetViaRequestedFlow(@RequestBody ResetPasswordVM request) {
-        Optional<UserLoginType> userLoginType = UserLoginType.valueOfType(request.getLoginType());
+        UserLoginType userLoginType = UserLoginType.valueOfType(request.getLoginType())
+                                                   .orElseThrow(() -> new BusinessException(INCORRECT_LOGIN_TYPE));
 
-        if (userLoginType.isEmpty()) {
-            throw new BusinessException(INCORRECT_LOGIN_TYPE);
-        }
-
-        userService.requestPasswordResetForLoginWithType(request.getLogin(), userLoginType.get())
-            .ifPresent(user -> userService.handlePasswordReset(new PasswordResetRequest(request.getResetType(), user)));
+        userService.requestPasswordResetForLoginWithType(request.getLogin(), userLoginType)
+                   .map(user -> new PasswordResetRequest(request.getResetType(), user))
+                   .ifPresent(userService::handlePasswordReset);
 
         return new ResponseEntity<>(HttpStatus.OK);
     }
