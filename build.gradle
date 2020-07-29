@@ -242,6 +242,8 @@ dependencies {
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5"
     implementation "com.fasterxml.jackson.core:jackson-annotations"
     implementation "com.fasterxml.jackson.core:jackson-databind"
+    implementation "com.github.fge:jackson-coreutils:1.8"
+    implementation "com.github.fge:json-schema-validator:2.2.6"
     implementation "com.fasterxml.jackson.module:jackson-module-afterburner"
     implementation "org.hibernate:hibernate-core"
     implementation "com.zaxxer:HikariCP"
