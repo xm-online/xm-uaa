@@ -134,6 +134,7 @@ xm-config:
     enabled: false
 
 application:
+    audit-events-enabled: true
     kafka-system-topic: system_topic
     kafka-system-queue: system_queue
     kafka-enabled: false
