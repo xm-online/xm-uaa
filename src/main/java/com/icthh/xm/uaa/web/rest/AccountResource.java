@@ -9,6 +9,7 @@ import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
+import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
@@ -17,6 +18,7 @@ import com.icthh.xm.uaa.service.AccountService;
 import com.icthh.xm.uaa.service.CaptchaService;
 import com.icthh.xm.uaa.service.TenantPermissionService;
 import com.icthh.xm.uaa.service.UserService;
+import com.icthh.xm.uaa.service.account.password.reset.PasswordResetRequest;
 import com.icthh.xm.uaa.service.dto.TfaEnableRequest;
 import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
@@ -25,6 +27,7 @@ import com.icthh.xm.uaa.web.rest.vm.CaptchaVM;
 import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.KeyAndPasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
+import com.icthh.xm.uaa.web.rest.vm.ResetPasswordVM;
 import io.github.jhipster.web.util.ResponseUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -64,6 +67,7 @@ import static com.icthh.xm.uaa.config.Constants.LOGIN_USED_CODE;
 @SuppressWarnings("unused")
 public class AccountResource {
 
+    private static final String INCORRECT_LOGIN_TYPE = "Incorrect login type";
     private static final String CHECK_ERROR_MESSAGE = "Incorrect password";
     private static final String LOGIN_USED_PARAM = "loginTypeKey";
 
@@ -268,6 +272,27 @@ public class AccountResource {
     public ResponseEntity<Void> requestPasswordReset(@RequestBody String mail) {
         userService.requestPasswordReset(mail)
             .ifPresent(accountMailService::sendMailOnPasswordInit);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    /**
+     * POST /account/reset_password/init : Reset password and send reset key via customizable transport/flow.
+     *
+     * @param request password reset request
+     * @return the ResponseEntity with status 200 (OK) if the password was reset and reset flow (if configured) is executed
+     */
+    @PostMapping(path = "/account/reset_password/init", produces = MediaType.APPLICATION_JSON_UTF8_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Timed
+    @PreAuthorize("hasPermission({'login': #request.login}, 'ACCOUNT.PASSWORD.RESET_BY_TYPE')")
+    @PrivilegeDescription("Privilege to reset password and start customizable reset flow")
+    public ResponseEntity<Void> requestPasswordResetViaRequestedFlow(@RequestBody ResetPasswordVM request) {
+        UserLoginType userLoginType = UserLoginType.valueOfType(request.getLoginType())
+                                                   .orElseThrow(() -> new BusinessException(INCORRECT_LOGIN_TYPE));
+
+        userService.requestPasswordResetForLoginWithType(request.getLogin(), userLoginType)
+                   .map(user -> new PasswordResetRequest(request.getResetType(), user))
+                   .ifPresent(userService::handlePasswordReset);
+
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
