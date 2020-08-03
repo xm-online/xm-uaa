@@ -4,14 +4,17 @@ import com.icthh.xm.commons.tenant.PrivilegedTenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.UaaApp;
+import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.repository.CustomAuditEventRepository;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.transaction.BeforeTransaction;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.icthh.xm.commons.tenant.TenantContextUtils.buildTenant;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 import static org.springframework.boot.actuate.security.AuthenticationAuditListener.AUTHENTICATION_SUCCESS;
 
 /**
@@ -44,9 +48,16 @@ public class OnlineUsersServiceIntTest {
     private CustomAuditEventRepository auditEventRepository;
     @Autowired
     private TenantContextHolder tenantContextHolder;
+    @SpyBean
+    private ApplicationProperties applicationProperties;
 
     private static final String DEFAULT_KEY = "TEST_KEY";
     private static final String DEFAULT_VALUE = "TEST_VALUE";
+
+    @Before
+    public void setUp() {
+        when(applicationProperties.isAuditEventsEnabled()).thenReturn(true);
+    }
 
     @BeforeTransaction
     public void initRepository() {
@@ -55,9 +66,16 @@ public class OnlineUsersServiceIntTest {
     }
 
     @Test
-    public void assertThatEntryAdd() {
+    public void assertThatEntryAddWithAuditEventEnabled() {
         auditEventRepository.add(new AuditEvent(DEFAULT_KEY, AUTHENTICATION_SUCCESS, Collections.emptyMap()));
         assertThat(onlineUsersService.find()).hasSize(1);
+    }
+
+    @Test
+    public void assertThatEntryNotAddWithAuditEventDisabled() {
+        when(applicationProperties.isAuditEventsEnabled()).thenReturn(false);
+        auditEventRepository.add(new AuditEvent(DEFAULT_KEY, AUTHENTICATION_SUCCESS, Collections.emptyMap()));
+        assertThat(onlineUsersService.find()).hasSize(0);
     }
 
     @Test
