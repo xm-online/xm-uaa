@@ -54,6 +54,7 @@ public class UserLoginServiceUnitTest {
         testedInstance.verifyLoginsNotExist(List.of(userLogin));
 
         // should fail
+
     }
 
     @Test
