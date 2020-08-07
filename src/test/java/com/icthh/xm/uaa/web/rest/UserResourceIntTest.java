@@ -733,7 +733,7 @@ public class UserResourceIntTest {
         assertThat(result.getImageUrl()).isEqualTo(DEFAULT_IMAGEURL);
         assertThat(result.getLangKey()).isEqualTo(DEFAULT_LANGKEY);
         assertThat(result.getLogins().size()).isEqualTo(1);
-        assertThat(result.getLogins().get(0).getLogin()).isEqualTo("testMail3");
+        assertThat(result.getLogins().get(0).getLogin()).isEqualTo("testmail3");
     }
 
 

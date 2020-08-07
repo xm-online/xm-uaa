@@ -113,7 +113,7 @@ public class UserResource {
         }
         assertNotSuperAdmin(user);
         userLoginService.normalizeLogins(user.getLogins());
-        userLoginService.verifyLoginsNotExist(user.getLogins(), user.getId());
+        userLoginService.verifyLoginsNotExist(user.getLogins());
 
         User newUser = userService.createUser(user);
         produceEvent(new UserDTO(newUser), Constants.CREATE_PROFILE_EVENT_TYPE);
