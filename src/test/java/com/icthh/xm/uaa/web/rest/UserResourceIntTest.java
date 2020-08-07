@@ -19,6 +19,7 @@ import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
+import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserMailService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
@@ -116,7 +117,7 @@ public class UserResourceIntTest {
     private static final int AUTO_LOGOUT_TIME = 10;
 
     @Autowired
-    private UserLoginRepository userLoginRepository;
+    private UserLoginService userLoginService;
 
     @Autowired
     private UserRepository userRepository;
@@ -190,7 +191,7 @@ public class UserResourceIntTest {
             new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
 
         doNothing().when(profileEventProducer).send(any());
-        UserResource userResource = new UserResource(userLoginRepository,
+        UserResource userResource = new UserResource(userLoginService,
             mailService,
             userService,
             profileEventProducer);

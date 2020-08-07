@@ -37,7 +37,7 @@ public class DomainUserDetailsService implements UserDetailsService {
     @Transactional
     @IgnoreLogginAspect
     public DomainUserDetails loadUserByUsername(final String login) {
-        final String lowerLogin = login.toLowerCase();
+        final String lowerLogin = login.toLowerCase().trim();
 
         String tenantKey = tenantContextHolder.getContext()
                                                  .getTenantKey()

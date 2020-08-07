@@ -36,6 +36,7 @@ public final class Constants {
     public static final String DB_SCHEMA_CREATETION_ENABLED = "db.schema.creation.enabled";
     public static final String CHANGE_LOG_PATH = "classpath:config/liquibase/master.xml";
     public static final String LOGIN_USED_CODE = "error.login.already.used";
+    public static final String LOGIN_USED_PARAM = "loginTypeKey";
     public static final String LOGIN_IS_USED_ERROR_TEXT = "Login already in use";
     public static final String ACTIVATE_PROFILE_EVENT_TYPE = "ACTIVATE_PROFILE";
     public static final String CREATE_PROFILE_EVENT_TYPE = "CREATE_PROFILE";
