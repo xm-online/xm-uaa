@@ -95,4 +95,14 @@ public class DomainUserDetailsServiceUnitTest {
         DomainUserDetails result = userDetailsService.loadUserByUsername("admin");
     }
 
+    @Test
+    public void testLoginWithLeadingAndTrailingSpaces() {
+        when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(DEFAULT_TENANT_KEY_VALUE)));
+        when(userLoginRepository.findOneByLogin(eq("admin")))
+            .thenReturn(Optional.of(userLogin));
+
+        DomainUserDetails result = userDetailsService.loadUserByUsername(" admin    ");
+
+        assertEquals("admin", result.getUsername());
+    }
 }
