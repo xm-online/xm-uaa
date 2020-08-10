@@ -9,10 +9,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class CachePasswordEncoderTest {
+public class CachePasswordHashEncoderTest {
 
     PasswordEncoder mockEncoder = mock(PasswordEncoder.class);
-    PasswordEncoder cachedEncoder = new CachePasswordEncoder(mockEncoder, 3);
+    PasswordEncoder cachedEncoder = new CachePasswordHashEncoder(mockEncoder, 3);
 
     @Test
     public void ifPasswordWasNotCachedMatchWillBeCalled() {

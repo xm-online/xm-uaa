@@ -1,6 +1,6 @@
 package com.icthh.xm.uaa.config;
 
-import com.icthh.xm.uaa.security.CachePasswordEncoder;
+import com.icthh.xm.uaa.security.CachePasswordHashEncoder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -20,8 +20,8 @@ public class UserAuthPasswordEncoderConfiguration {
         ApplicationProperties.Security security = applicationProperties.getSecurity();
         Integer passwordEncoderStrength = security.getPasswordEncoderStrength();
         PasswordEncoder passwordEncoder = getPasswordEncoder(passwordEncoderStrength);
-        if (TRUE.equals(security.getEnablePasswordCaching())) {
-            passwordEncoder = new CachePasswordEncoder(passwordEncoder, security.getEnablePasswordCacheSize());
+        if (TRUE.equals(security.getEnablePasswordHashCaching())) {
+            passwordEncoder = new CachePasswordHashEncoder(passwordEncoder, security.getEnablePasswordHashCacheSize());
         }
         return passwordEncoder;
     }

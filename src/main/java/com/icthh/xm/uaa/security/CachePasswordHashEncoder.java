@@ -4,15 +4,17 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-public class CachePasswordEncoder implements PasswordEncoder {
+public class CachePasswordHashEncoder implements PasswordEncoder {
 
-        private final PasswordEncoder passwordEncoder;
+    private static final int DEFAULT_CACHE_SIZE = 1000;
+
+    private final PasswordEncoder passwordEncoder;
         private final Cache<String, CharSequence> passwordCache;
 
-        public CachePasswordEncoder(PasswordEncoder passwordEncoder, Integer cacheSize) {
+        public CachePasswordHashEncoder(PasswordEncoder passwordEncoder, Integer cacheSize) {
             this.passwordEncoder = passwordEncoder;
             this.passwordCache = CacheBuilder.newBuilder()
-                .maximumSize(cacheSize != null ? cacheSize : 1000)
+                .maximumSize(cacheSize != null ? cacheSize : DEFAULT_CACHE_SIZE)
                 .build();
         }
 
