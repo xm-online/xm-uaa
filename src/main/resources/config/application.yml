@@ -206,7 +206,8 @@ application:
     keystore-password: password
     security:
         passwordEncoderStrength: -1
-
+        enablePasswordHashCaching: true
+        enablePasswordHashCacheSize: 1000
 gracefulShutdown:
     enabled: false
     shutdownDelay:
