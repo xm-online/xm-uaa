@@ -149,7 +149,7 @@ public class UserResource {
      */
     @PutMapping("/users/{userKey}/block")
     @Timed
-    @PreAuthorize("hasPermission('USER.BLOCK')")
+    @PreAuthorize("hasPermission(null, 'USER.BLOCK')")
     @PrivilegeDescription("Privilege to blocks user")
     public ResponseEntity<UserDTO> blockUser(@NotEmpty @PathVariable String userKey) {
         Optional<UserDTO> updatedUser = userService.blockUserAccount(userKey);
@@ -166,7 +166,7 @@ public class UserResource {
      */
     @PutMapping("/users/{userKey}/activate")
     @Timed
-    @PreAuthorize("hasPermission('USER.UNBLOCK')")
+    @PreAuthorize("hasPermission(null, 'USER.UNBLOCK')")
     @PrivilegeDescription("Privilege to unblocks user")
     public ResponseEntity<UserDTO> unblockUser(@NotEmpty @PathVariable String userKey) {
         Optional<UserDTO> updatedUser = userService.activateUserAccount(userKey);
