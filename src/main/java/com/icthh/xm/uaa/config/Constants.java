@@ -80,6 +80,8 @@ public final class Constants {
 
     public static final String TRANSLATION_KEY = "trKey";
 
+    public static final String JWT_ISSUER = "XmOnlineIssuer";
+
     private Constants() {
     }
 

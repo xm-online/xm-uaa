@@ -9,6 +9,7 @@ import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.service.dto.UserLoginDto;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import static java.util.stream.Collectors.toList;
@@ -37,18 +39,33 @@ public class DomainUserDetailsService implements UserDetailsService {
     @Transactional
     @IgnoreLogginAspect
     public DomainUserDetails loadUserByUsername(final String login) {
-        final String lowerLogin = login.toLowerCase();
+        if (StringUtils.isBlank(login)) {
+            throw new IllegalArgumentException("Email must be not blank");
+        }
+        String tenantKey = getTenant();
+        return findUserByUsername(login, tenantKey).orElseThrow(buildException(login, tenantKey));
+    }
 
-        String tenantKey = tenantContextHolder.getContext()
-                                                 .getTenantKey()
-                                                 .map(TenantKey::getValue)
-            .orElseThrow(() -> new TenantNotProvidedException("Tenant not provided for authentication"));
+    @Transactional
+    @IgnoreLogginAspect
+    public Optional<DomainUserDetails> findUserByUsername(final String login) {
+        return findUserByUsername(login, getTenant());
+    }
+
+    private Optional<DomainUserDetails> findUserByUsername(final String login, final String tenantKey) {
+        final String lowerLogin = login.toLowerCase();
 
         log.debug("Authenticating login: {}, lowercase: {}, within tenant: {}", login, lowerLogin, tenantKey);
 
         return userLoginRepository.findOneByLogin(lowerLogin)
-                                  .map(userLogin -> buildDomainUserDetails(lowerLogin, tenantKey, userLogin))
-                                  .orElseThrow(buildException(lowerLogin, tenantKey));
+            .map(userLogin -> buildDomainUserDetails(lowerLogin, tenantKey, userLogin));
+    }
+
+    private String getTenant() {
+        return tenantContextHolder.getContext()
+            .getTenantKey()
+            .map(TenantKey::getValue)
+            .orElseThrow(() -> new TenantNotProvidedException("Tenant not provided for authentication"));
     }
 
     private Supplier<UsernameNotFoundException> buildException(String lowerLogin, String tenantKey){

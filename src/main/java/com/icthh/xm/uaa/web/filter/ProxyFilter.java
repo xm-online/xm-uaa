@@ -110,6 +110,7 @@ public class ProxyFilter implements Filter {
             return;
         }
 
+        tenantKey = "COMPASS";
         if (!verify(httpResponse, tenantKey)) {
             return;
         }

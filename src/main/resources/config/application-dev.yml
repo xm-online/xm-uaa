@@ -98,7 +98,16 @@ spring:
                 enabled: true
     kafka:
         bootstrap-servers: localhost:9092
-
+    security:
+        oauth2:
+            client:
+                provider:
+                    oidc:
+                        issuer-uri: http://keycloak:9080/auth/realms/jhipster
+                registration:
+                    oidc:
+                        client-id: web_app
+                        client-secret: web_app
 server:
     port: 9999
 

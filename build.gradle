@@ -242,6 +242,8 @@ dependencies {
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5"
     implementation "com.fasterxml.jackson.core:jackson-annotations"
     implementation "com.fasterxml.jackson.core:jackson-databind"
+    // see https://github.com/liquibase/liquibase/issues/1051 for details
+    implementation "com.fasterxml.jackson.module:jackson-module-jaxb-annotations"
     implementation "com.fasterxml.jackson.module:jackson-module-afterburner"
     implementation "org.hibernate:hibernate-core"
     implementation "com.zaxxer:HikariCP"
@@ -284,6 +286,8 @@ dependencies {
     implementation "org.springframework.security:spring-security-web"
     implementation "org.springframework.security.oauth:spring-security-oauth2"
     implementation "org.springframework.security:spring-security-jwt"
+    implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
+    implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     implementation ("io.springfox:springfox-swagger2") {
         exclude module: "mapstruct"

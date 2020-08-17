@@ -63,6 +63,8 @@ public class ApplicationStartup implements ApplicationListener<ApplicationReadyE
 
         environmentService.updateConfigs(envVars);
 
+        List<String> environments = environmentService.getEnvironments();
+
     }
 
     private void createKafkaConsumers() {

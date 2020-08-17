@@ -7,31 +7,93 @@ import static com.icthh.xm.uaa.config.Constants.AUTH_ROLE_KEY;
 import static com.icthh.xm.uaa.config.Constants.AUTH_TENANT_KEY;
 import static com.icthh.xm.uaa.config.Constants.AUTH_USER_KEY;
 import static com.icthh.xm.uaa.config.Constants.CREATE_TOKEN_TIME;
+import static com.icthh.xm.uaa.config.Constants.JWT_ISSUER;
 import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_OTP_CHANNEL_TYPE;
 import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_VERIFICATION_OTP_KEY;
 import static org.apache.commons.collections.MapUtils.isNotEmpty;
+import static org.springframework.security.oauth2.jwt.JwtClaimNames.ISS;
 
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.domain.OtpChannelType;
+
+import java.security.KeyPair;
+import java.security.interfaces.RSAPrivateKey;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.jwt.JwtHelper;
+import org.springframework.security.jwt.crypto.sign.RsaSigner;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.oauth2.common.util.JsonParser;
+import org.springframework.security.oauth2.common.util.JsonParserFactory;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 
 /**
  * Overrides to add and get token tenant.
  */
-@RequiredArgsConstructor
 public class DomainJwtAccessTokenConverter extends JwtAccessTokenConverter {
+
+    private final static JsonParser OBJECT_MAPPER = JsonParserFactory.create();
 
     private final TenantContextHolder tenantContextHolder;
     private final DomainJwtAccessTokenDetailsPostProcessor tokenDetailsProcessor;
+    private final RsaSigner signer;
+    private final Map<String, String> customHeaders;
+    private final JwtDecoder jwtDecoder;
+
+    public DomainJwtAccessTokenConverter(TenantContextHolder tenantContextHolder,
+                                         DomainJwtAccessTokenDetailsPostProcessor tokenDetailsProcessor,
+                                         KeyPair keyPair,
+                                         Map<String, String> customHeaders,
+                                         JwtDecoder jwtDecoder) {
+        super();
+        this.jwtDecoder = jwtDecoder;
+        super.setKeyPair(keyPair);
+        this.signer = new RsaSigner((RSAPrivateKey) keyPair.getPrivate());
+        this.customHeaders = customHeaders;
+        this.tenantContextHolder = tenantContextHolder;
+        this.tokenDetailsProcessor = tokenDetailsProcessor;
+    }
+
+    /**
+     * Decode and verify JWT using the corresponding JSON Web Key (JWK)
+     * @param token the JWT
+     * @return the JWT claims
+     */
+    @Override
+    protected Map<String, Object> decode(String token) {
+        Jwt decode = jwtDecoder.decode(token);
+        return decode.getClaims();
+    }
+
+    @Override
+    protected String encode(OAuth2AccessToken accessToken, OAuth2Authentication authentication) {
+        String content;
+        try {
+            content = OBJECT_MAPPER
+                .formatMap(getAccessTokenConverter().convertAccessToken(accessToken, authentication));
+        } catch (Exception ex) {
+            throw new IllegalStateException(
+                "Cannot convert access token to JSON", ex);
+        }
+        return JwtHelper.encode(content, this.signer, this.customHeaders).getEncoded();
+    }
+
+    @Override
+    public OAuth2AccessToken extractAccessToken(String value, Map<String, ?> map) {
+        Map<String, Object> claims = new HashMap<>(map);
+        //default implementation expects 'exp' claim value in epoch seconds
+        claims.computeIfPresent(EXP, (k, v) -> (((Instant) v).getEpochSecond()));
+        return super.extractAccessToken(value, claims);
+    }
 
     @Override
     public OAuth2AccessToken enhance(OAuth2AccessToken accessToken, OAuth2Authentication authentication) {
@@ -57,6 +119,7 @@ public class DomainJwtAccessTokenConverter extends JwtAccessTokenConverter {
         if (principal instanceof DomainUserDetails) {
             final DomainUserDetails userDetails = (DomainUserDetails) principal;
 
+            details.put(ISS, JWT_ISSUER);//todo move to config
             details.put(AUTH_TENANT_KEY, userDetails.getTenant());
             details.put(AUTH_USER_KEY, userDetails.getUserKey());
             details.put(CREATE_TOKEN_TIME, System.currentTimeMillis());

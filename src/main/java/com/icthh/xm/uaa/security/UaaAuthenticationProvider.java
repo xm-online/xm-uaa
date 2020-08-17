@@ -4,11 +4,7 @@ import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN
 import static com.icthh.xm.uaa.config.Constants.AUTH_USERNAME_DOMAIN_SEPARATOR;
 import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.DAYS;
-import static java.util.UUID.randomUUID;
 
-import com.icthh.xm.commons.exceptions.BusinessException;
-import com.icthh.xm.commons.lep.LogicExtensionPoint;
-import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
@@ -20,7 +16,6 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Optional;
-import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,11 +25,12 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.oauth2.common.exceptions.ClientAuthenticationException;
+import org.springframework.stereotype.Service;
 
 @Slf4j
 @IgnoreLogginAspect
-@LepService(group = "security.provider")
+//@LepService(group = "security.provider")
+@Service
 public class UaaAuthenticationProvider implements AuthenticationProvider {
 
     private final AuthenticationProvider defaultProvider;
@@ -76,7 +72,7 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
     /**
      * {@inheritDoc}
      */
-    @LogicExtensionPoint(value = "Authenticate")
+//    @LogicExtensionPoint(value = "Authenticate")
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         Authentication result = getProvider(authentication).authenticate(authentication);
@@ -101,7 +97,7 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
         }
     }
 
-    @LogicExtensionPoint(value = "IsTermsOfConditionsAccepted")
+//    @LogicExtensionPoint(value = "IsTermsOfConditionsAccepted")
     public boolean isTermsOfConditionsAccepted(User user) {
         return user.getAcceptTocTime() != null;
     }
