@@ -1,34 +1,41 @@
 ---
-uaa:
-    ROLE_ADMIN:
-        - privilegeKey: "ACCOUNT.CREATE"
-          disabled: false
-          envCondition: null
-          resourceCondition: null
-          reactionStrategy: null
-    ROLE_ANONYMOUS:
-        - privilegeKey: "ACCOUNT.GET"
-          disabled: false
-          envCondition: null
-          resourceCondition: null
-          reactionStrategy: null
-entity:
-    ROLE_ANONYMOUS:
-        - privilegeKey: "ATTACHMENT.CREATE"
-          disabled: false
-          envCondition: null
-          resourceCondition: null
-          reactionStrategy: "SKIP"
 dashboard:
-    ROLE_ADMIN:
-        - privilegeKey: "DASHBOARD.CREATE"
-          disabled: false
-          envCondition: null
-          resourceCondition: null
-          reactionStrategy: null
-    ROLE_ANONYMOUS:
-        - privilegeKey: "DASHBOARD.GET_LIST.ITEM"
-          disabled: true
-          envCondition: null
-          resourceCondition: null
-          reactionStrategy: "SKIP"
+  ROLE_ADMIN:
+  - privilegeKey: "DASHBOARD.CREATE"
+    disabled: false
+    deleted: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: null
+  ROLE_ANONYMOUS:
+  - privilegeKey: "DASHBOARD.GET_LIST.ITEM"
+    disabled: true
+    deleted: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: "SKIP"
+entity:
+  ROLE_ADMIN: []
+  ROLE_ANONYMOUS:
+  - privilegeKey: "ATTACHMENT.CREATE"
+    disabled: false
+    deleted: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: "SKIP"
+uaa:
+  ROLE_ADMIN:
+  - privilegeKey: "ACCOUNT.CREATE"
+    disabled: false
+    deleted: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: null
+  ROLE_ANONYMOUS:
+  - privilegeKey: "ACCOUNT.GET"
+    disabled: false
+    deleted: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: null
+
