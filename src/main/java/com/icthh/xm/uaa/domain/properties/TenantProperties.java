@@ -41,6 +41,13 @@ public class TenantProperties {
     @JsonProperty("security")
     private Security security;
 
+    public Security getSecurity() {
+        if (security == null) {
+            security = new Security();
+        }
+        return security;
+    }
+
     @Getter
     @Setter
     @ToString
@@ -72,6 +79,9 @@ public class TenantProperties {
 
         @JsonProperty("passwordExpirationPeriod")
         private Integer passwordExpirationPeriod = -1;
+
+        @JsonProperty("removeDefaultPermissions")
+        private Boolean removeDefaultPermissions = false;
 
         @JsonSetter("accessTokenValiditySeconds")
         public void setAccessTokenValiditySeconds(Integer accessTokenValiditySeconds) {

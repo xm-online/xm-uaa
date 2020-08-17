@@ -8,6 +8,7 @@ import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
+import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.service.dto.PermissionDTO;
@@ -27,6 +28,7 @@ import java.util.Optional;
 import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
 import static com.icthh.xm.uaa.utils.FileUtil.getSingleConfigMap;
 import static com.icthh.xm.uaa.utils.FileUtil.readConfigFile;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -42,6 +44,9 @@ public class TenantRoleServiceUnitTest {
     private static final String ROLES_PATH = "/api/config/tenants/{tenantName}/roles.yml";
     private static final String CUSTOM_PRIVILEGES_PATH = "/api/config/tenants/XM/custom-privileges.yml";
     private static final String PERMISSIONS_PATH = "/api/config/tenants/{tenantName}/permissions.yml";
+    private static final String PERMISSIONS_PATH_INIT = "/config/tenants/XM/permissions_removeDefault_init.yml";
+    private static final String PERMISSIONS_PATH_EXPECTED = "/config/tenants/XM/permissions_removeDefault_expected.yml";
+    private static final String MOCK_ROLE = "MOCK_ROLE";
 
     @InjectMocks
     TenantRoleService tenantRoleService;
@@ -320,6 +325,9 @@ public class TenantRoleServiceUnitTest {
 
         newRole.setPermissions(singletonList(newPermission));
 
+        TenantProperties tenantProperties = new TenantProperties();
+        when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProperties);
+
         tenantRoleService.updateRole(newRole);
 
         verify(tenantConfigRepository).updateConfigFullPath(eq(XM_TENANT), eq(ROLES_PATH), anyString());
@@ -340,4 +348,23 @@ public class TenantRoleServiceUnitTest {
         when(tenantConfigRepository.getConfigFullPath(XM_TENANT, ROLES_PATH))
             .thenReturn(readConfigFile("/config/tenants/XM/roles.yml"));
     }
+
+    @Test
+    public void removeDefaultPermission() {
+        TenantProperties tenantProperties = new TenantProperties();
+        tenantProperties.getSecurity().setRemoveDefaultPermissions(true);
+        when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProperties);
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, PERMISSIONS_PATH))
+            .thenReturn(readConfigFile("/config/tenants/XM/permissions_removeDefault_init.yml"));
+        when(userRepository.findByRoleKey(MOCK_ROLE)).thenReturn(emptyList());
+        when(clientRepository.findByRoleKey(MOCK_ROLE)).thenReturn(emptyList());
+
+        tenantRoleService.deleteRole(MOCK_ROLE);
+
+        verify(tenantConfigRepository).updateConfigFullPath(eq(XM_TENANT), eq(ROLES_PATH), anyString());
+
+        verify(tenantConfigRepository)
+            .updateConfigFullPath(XM_TENANT, PERMISSIONS_PATH, readConfigFile("/config/tenants/XM/permissions_removeDefault_expected.yml"));
+    }
+
 }
