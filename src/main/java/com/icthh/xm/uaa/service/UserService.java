@@ -29,6 +29,8 @@ import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserPermittedRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.security.TokenConstraintsService;
+import com.icthh.xm.uaa.service.account.password.reset.PasswordResetHandlerFactory;
+import com.icthh.xm.uaa.service.account.password.reset.PasswordResetRequest;
 import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.util.RandomUtil;
@@ -77,6 +79,7 @@ public class UserService {
     private final XmAuthenticationContextHolder xmAuthenticationContextHolder;
     private final UserPermittedRepository userPermittedRepository;
     private final TokenConstraintsService tokenConstraints;
+    private final PasswordResetHandlerFactory passwordResetHandlerFactory;
 
     /**
      * Search user by reset key and set him password.
@@ -120,10 +123,22 @@ public class UserService {
      */
     @LogicExtensionPoint("RequestPasswordReset")
     public Optional<User> requestPasswordReset(String mail) {
+        return requestPasswordResetForLoginWithType(mail, UserLoginType.EMAIL);
+    }
+
+    /**
+     * Search user by login and set him reset key.
+     *
+     * @param login     users login
+     * @param loginType login type
+     * @return user
+     */
+    @LogicExtensionPoint("RequestPasswordResetForLoginWithType")
+    public Optional<User> requestPasswordResetForLoginWithType(String login, UserLoginType loginType) {
         return userLoginRepository
-            .findOneByLoginIgnoreCase(mail)
+            .findOneByLoginIgnoreCase(login)
             .filter(userLogin -> userLogin.getUser().isActivated()
-                && UserLoginType.EMAIL.getValue().equals(userLogin.getTypeKey()))
+                && loginType.getValue().equals(userLogin.getTypeKey()))
             .map(userLogin -> {
                 userLogin.getUser().setResetKey(RandomUtil.generateResetKey());
                 userLogin.getUser().setResetDate(Instant.now());
@@ -585,4 +600,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public void handlePasswordReset(PasswordResetRequest resetRequest) {
+        passwordResetHandlerFactory.getPasswordResetHandler(resetRequest.getResetType()).handle(resetRequest);
+    }
 }

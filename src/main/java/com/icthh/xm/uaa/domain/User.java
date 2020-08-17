@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.icthh.xm.uaa.domain.converter.MapToStringConverter;
+import com.icthh.xm.uaa.validator.JsonData;
 import com.icthh.xm.uaa.repository.converter.OtpChannelTypeAttributeConverter;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,6 +35,7 @@ import java.util.Objects;
 /**
  * A user.
  */
+@JsonData
 @Entity
 @Table(name = "jhi_user")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

@@ -4,6 +4,7 @@ import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.security.DomainTokenServices;
 import com.icthh.xm.uaa.security.TokenConstraintsService;
+import com.icthh.xm.uaa.security.UserSecurityValidator;
 import com.icthh.xm.uaa.security.oauth2.athorization.code.CustomAuthorizationCodeServices;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpGenerator;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
@@ -127,6 +128,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
     private final TokenConstraintsService tokenConstraintsService;
     private final CustomAuthorizationCodeServices customAuthorizationCodeServices;
     private final DefaultAuthenticationRefreshProvider defaultAuthenticationRefreshProvider;
+    private final UserSecurityValidator userSecurityValidator;
 
 
     @Override
@@ -171,6 +173,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
         tokenServices.setTenantContextHolder(tenantContextHolder);
         tokenServices.setTokenConstraintsService(tokenConstraintsService);
         tokenServices.setUserService(userService);
+        tokenServices.setUserSecurityValidator(userSecurityValidator);
         // OTP settings
         tokenServices.setOtpGenerator(otpGenerator);
         tokenServices.setOtpStore(otpStore);

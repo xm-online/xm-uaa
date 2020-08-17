@@ -27,12 +27,15 @@ import com.icthh.xm.uaa.service.CaptchaService;
 import com.icthh.xm.uaa.service.TenantPermissionService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.TenantRoleService;
+import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
+import com.icthh.xm.uaa.service.account.password.reset.PasswordResetHandlerFactory;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.mail.MailService;
 import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.KeyAndPasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
+import com.icthh.xm.uaa.web.rest.vm.ResetPasswordVM;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -54,6 +57,7 @@ import org.springframework.security.oauth2.provider.authentication.OAuth2Authent
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.transaction.BeforeTransaction;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -108,7 +112,7 @@ public class AccountResourceIntTest {
     private ExceptionTranslator exceptionTranslator;
 
     @Autowired
-    private UserLoginRepository userLoginRepository;
+    private UserLoginService userLoginService;
 
     @Autowired
     private HttpMessageConverter[] httpMessageConverters;
@@ -140,6 +144,9 @@ public class AccountResourceIntTest {
     @Mock
     private TenantPermissionService tenantPermissionService;
 
+    @Mock
+    private PasswordResetHandlerFactory passwordResetHandlerFactory;
+
     private MockMvc restUserMockMvc;
 
     private MockMvc restMvc;
@@ -156,6 +163,9 @@ public class AccountResourceIntTest {
 
     @Autowired
     private TenantContextHolder tenantContextHolder;
+
+    @Autowired
+    private UserLoginRepository userLoginRepository;
 
 
     @BeforeTransaction
@@ -194,7 +204,7 @@ public class AccountResourceIntTest {
             tenantPropertiesService);
 
         AccountResource accountResource = new AccountResource(userRepository,
-            userLoginRepository,
+            userLoginService,
             userService,
             accountService,
             profileEventProducer,
@@ -204,7 +214,7 @@ public class AccountResourceIntTest {
             tenantContextHolder, tenantPermissionService, accountMailService);
 
         AccountResource accountUserMockResource = new AccountResource(userRepository,
-            userLoginRepository,
+            userLoginService,
             mockUserService,
             accountService,
             profileEventProducer,
@@ -352,6 +362,40 @@ public class AccountResourceIntTest {
 
     @Test
     @Transactional
+    public void testRegisterValidWithLoginWithWhitespaces() throws Exception {
+        UserLogin login = new UserLogin();
+        login.setLogin("  joe@example.com   ");
+        login.setTypeKey(UserLoginType.EMAIL.getValue());
+        ManagedUserVM validUser = new ManagedUserVM(
+            null,                   // id
+            "password",             // password
+            "Joe",                  // firstName
+            "Shmoe",                // lastName
+            true,                   //activated
+            false, // tfaEnabled
+            null, // tfaOtpChannelType
+            null, // tfaOtpChannelSpec
+            "http://placehold.it/50x50",  //imageUrl
+            "en",                   // langKey
+            null,                   // createdBy
+            null,                   // createdDate
+            null,                   // lastModifiedBy
+            null,                   // lastModifiedDate
+            ROLE_USER, "test",
+            null, null, null, null, Collections.singletonList(login), false, null, null);
+
+        restMvc.perform(
+            post("/api/register")
+                .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                .content(TestUtil.convertObjectToJsonBytes(validUser)))
+            .andExpect(status().isCreated());
+
+        Optional<UserLogin> user = userLoginRepository.findOneByLoginIgnoreCase("joe@example.com");
+        assertThat(user.isPresent()).isTrue();
+    }
+
+    @Test
+    @Transactional
     public void testRegisterInvalidPassword() throws Exception {
         UserLogin login = new UserLogin();
         login.setLogin("joe@example.com");
@@ -458,6 +502,68 @@ public class AccountResourceIntTest {
             validUser.getAccessTokenValiditySeconds(), validUser.getRefreshTokenValiditySeconds(),
             validUser.getTfaAccessTokenValiditySeconds(),
             null, Arrays.asList(login, loginNew), false, null, null);
+
+        // Good user
+        restMvc.perform(
+            post("/api/register")
+                .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                .content(TestUtil.convertObjectToJsonBytes(validUser)))
+            .andExpect(status().isCreated());
+
+        // Duplicate login
+        restMvc.perform(
+            post("/api/register")
+                .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                .content(TestUtil.convertObjectToJsonBytes(duplicatedUser)))
+            .andExpect(status().isBadRequest());
+
+        Optional<UserLogin> userDup = userLoginRepository.findOneByLoginIgnoreCase("alicejr@example.com");
+        assertThat(userDup.isPresent()).isFalse();
+    }
+
+    @Test
+    @Transactional
+    public void testRegisterDuplicateLoginWithTrailingWhitespaces() throws Exception {
+        // Good
+        UserLogin loginOld = new UserLogin();
+        loginOld.setLogin("joe@example.com");
+        loginOld.setTypeKey(UserLoginType.EMAIL.getValue());
+        ManagedUserVM validUser = new ManagedUserVM(
+            null,                   // id
+            "password",             // password
+            "Alice",                // firstName
+            "Something",            // lastName
+            true,                   // activated
+            false, // tfaEnabled
+            null, // tfaOtpChannelType
+            null, // tfaOtpChannelSpec
+            "http://placehold.it/50x50", //imageUrl
+            "en",                   // langKey
+            null,                   // createdBy
+            null,                   // createdDate
+            null,                   // lastModifiedBy
+            null,                   // lastModifiedDate
+            ROLE_USER, "test",
+            null, null, null, null, Collections.singletonList(loginOld), false, null, null);
+
+        // Duplicate login, different login
+        UserLogin loginNew = new UserLogin();
+        loginNew.setLogin("alicejr@example.com");
+        loginNew.setTypeKey(UserLoginType.NICKNAME.getValue());
+        UserLogin loginOldWithWhitespaces = new UserLogin();
+        loginOldWithWhitespaces.setLogin("  joe@example.com   ");
+        loginOldWithWhitespaces.setTypeKey(UserLoginType.EMAIL.getValue());
+
+        ManagedUserVM duplicatedUser = new ManagedUserVM(validUser.getId(), validUser.getPassword(),
+            validUser.getFirstName(), validUser.getLastName(),
+            true, false,
+            null, null,
+            validUser.getImageUrl(), validUser.getLangKey(), validUser.getCreatedBy(),
+            validUser.getCreatedDate(), validUser.getLastModifiedBy(), validUser.getLastModifiedDate(),
+            validUser.getRoleKey(), "test",
+            validUser.getAccessTokenValiditySeconds(), validUser.getRefreshTokenValiditySeconds(),
+            validUser.getTfaAccessTokenValiditySeconds(),
+            null, Arrays.asList(loginOldWithWhitespaces, loginNew), false, null, null);
 
         // Good user
         restMvc.perform(
@@ -807,6 +913,72 @@ public class AccountResourceIntTest {
         restMvc.perform(post("/api/account/reset_password/init")
             .content("password-reset@example.com"))
             .andExpect(status().isOk());
+    }
+
+    @Test
+    @Transactional
+    public void testRequestPasswordResetWithEmailResetType() throws Exception {
+        //GIVEN
+        UserLogin userLogin = new UserLogin();
+        userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
+        userLogin.setLogin("password-reset@example.com");
+
+        User user = new User();
+        user.setUserKey(DEF_USER_KEY);
+        user.setPassword(RandomStringUtils.random(60));
+        user.setActivated(true);
+        user.setRoleKey(ROLE_USER);
+        user.getLogins().add(userLogin);
+        userLogin.setUser(user);
+
+        userRepository.saveAndFlush(user);
+        ResetPasswordVM resetPasswordVM = new ResetPasswordVM();
+        resetPasswordVM.setLogin(user.getEmail());
+        resetPasswordVM.setLoginType("LOGIN.EMAIL");
+        resetPasswordVM.setResetType("EMAIL");
+
+        //WHEN
+        ResultActions response = restMvc.perform(post("/api/account/reset_password/init")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(TestUtil.convertObjectToJsonBytes(resetPasswordVM)));
+
+        //THEN
+        response.andExpect(status().isOk());
+
+        Optional<User> updatedUser = userRepository.findOneByUserKey(user.getUserKey());
+        assertThat(updatedUser.isPresent()).isTrue();
+        assertThat(updatedUser.get().getResetKey()).isNotNull();
+    }
+
+    @Test
+    @Transactional
+    public void testRequestPasswordResetWithSpecifiedResetTypeAndWrongLoginType() throws Exception {
+        //GIVEN
+        UserLogin userLogin = new UserLogin();
+        userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
+        userLogin.setLogin("password-reset@example.com");
+
+        User user = new User();
+        user.setUserKey(DEF_USER_KEY);
+        user.setPassword(RandomStringUtils.random(60));
+        user.setActivated(true);
+        user.setRoleKey(ROLE_USER);
+        user.getLogins().add(userLogin);
+        userLogin.setUser(user);
+
+        userRepository.saveAndFlush(user);
+        ResetPasswordVM resetPasswordVM = new ResetPasswordVM();
+        resetPasswordVM.setLogin(user.getEmail());
+        resetPasswordVM.setLoginType("WRONG_LOGIN.TYPE");
+        resetPasswordVM.setResetType("EMAIL");
+
+        //WHEN
+        ResultActions response = restMvc.perform(post("/api/account/reset_password/init")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(TestUtil.convertObjectToJsonBytes(resetPasswordVM)));
+
+        //THEN
+        response.andExpect(status().isBadRequest());
     }
 
     @Transactional

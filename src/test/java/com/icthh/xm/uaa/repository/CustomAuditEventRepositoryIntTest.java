@@ -3,6 +3,7 @@ package com.icthh.xm.uaa.repository;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.UaaApp;
+import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.config.audit.AuditEventConverter;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
@@ -10,6 +11,7 @@ import com.icthh.xm.uaa.domain.PersistentAuditEvent;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,6 +32,7 @@ import java.util.Map;
 
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 /**
  * Test class for the CustomAuditEventRepository customAuditEventRepository class.
@@ -53,6 +56,9 @@ public class CustomAuditEventRepositoryIntTest {
     @Autowired
     private TenantContextHolder tenantContextHolder;
 
+    @Mock
+    private ApplicationProperties applicationProperties;
+
     private CustomAuditEventRepository customAuditEventRepository;
 
     private PersistentAuditEvent testUserEvent;
@@ -68,7 +74,11 @@ public class CustomAuditEventRepositoryIntTest {
 
     @Before
     public void setup() {
-        customAuditEventRepository = new CustomAuditEventRepository(persistenceAuditEventRepository, auditEventConverter);
+        when(applicationProperties.isAuditEventsEnabled()).thenReturn(true);
+        customAuditEventRepository = new CustomAuditEventRepository(persistenceAuditEventRepository,
+                                                                    auditEventConverter,
+                                                                    applicationProperties);
+
         persistenceAuditEventRepository.deleteAll();
         Instant oneHourAgo = Instant.now().minusSeconds(3600);
 
@@ -177,7 +187,7 @@ public class CustomAuditEventRepositoryIntTest {
     }
 
     @Test
-    public void addAuditEvent() {
+    public void addAuditEventEnabled() {
         Map<String, Object> data = new HashMap<>();
         data.put("test-key", "test-value");
         AuditEvent event = new AuditEvent("test-user", "test-type", data);
@@ -190,6 +200,17 @@ public class CustomAuditEventRepositoryIntTest {
         assertThat(persistentAuditEvent.getData()).containsKey("test-key");
         assertThat(persistentAuditEvent.getData().get("test-key")).isEqualTo("test-value");
         assertThat(persistentAuditEvent.getAuditEventDate()).isEqualTo(event.getTimestamp());
+    }
+
+    @Test
+    public void addAuditEventDisabled() {
+        when(applicationProperties.isAuditEventsEnabled()).thenReturn(false);
+        Map<String, Object> data = new HashMap<>();
+        data.put("test-key", "test-value");
+        AuditEvent event = new AuditEvent("test-user", "test-type", data);
+        customAuditEventRepository.add(event);
+        List<PersistentAuditEvent> persistentAuditEvents = persistenceAuditEventRepository.findAll();
+        assertThat(persistentAuditEvents).hasSize(0);
     }
 
     @Test

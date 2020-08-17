@@ -8,7 +8,6 @@ buildscript {
         maven { url "https://repo.spring.io/plugins-release" }
     }
     dependencies {
-        //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
     }
 }
 
@@ -42,6 +41,7 @@ assert System.properties["java.specification.version"] == "11" || "12" || "13"
 
 apply from: "gradle/docker.gradle"
 apply from: "gradle/sonar.gradle"
+apply from: "gradle/version.gradle"
 //jhipster-needle-gradle-apply-from - JHipster will add additional gradle scripts to be applied here
 
 if (project.hasProperty("prod")) {
@@ -242,6 +242,8 @@ dependencies {
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5"
     implementation "com.fasterxml.jackson.core:jackson-annotations"
     implementation "com.fasterxml.jackson.core:jackson-databind"
+    implementation "com.github.fge:jackson-coreutils:1.8"
+    implementation "com.github.fge:json-schema-validator:2.2.6"
     implementation "com.fasterxml.jackson.module:jackson-module-afterburner"
     implementation "org.hibernate:hibernate-core"
     implementation "com.zaxxer:HikariCP"
@@ -315,8 +317,10 @@ dependencies {
     implementation "com.icthh.xm.commons:xm-commons-scheduler:${xm_commons_version}"
     implementation "com.icthh.xm.commons:xm-commons-mail:${xm_commons_version}"
 
-    implementation group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.4.5'
-    implementation group: 'org.codehaus.groovy.modules.http-builder', name: 'http-builder', version: '0.7.1'
+    implementation ("org.codehaus.groovy.modules.http-builder:http-builder:0.7.1") {
+        exclude group: "commons-beanutils"
+    }
+    implementation "commons-beanutils:commons-beanutils:1.9.4"
 
     implementation "org.springframework.security:spring-security-ldap"
     implementation "org.freemarker:freemarker:${freemarker_version}"
@@ -368,9 +372,3 @@ wrapper {
 
 compileJava.dependsOn processResources
 processResources.dependsOn bootBuildInfo
-
-task getProjectVersion {
-    doLast {
-        println project.version
-    }
-}

@@ -44,6 +44,7 @@ public class ApplicationProperties {
     private boolean schedulerEnabled;
     private String keystoreFile;
     private String keystorePassword;
+    private boolean auditEventsEnabled;
 
     @Getter
     @Setter
@@ -61,6 +62,9 @@ public class ApplicationProperties {
         private Integer accessTokenValiditySeconds;
         private Integer refreshTokenValiditySeconds;
         private Integer tfaAccessTokenValiditySeconds;
+        private Integer passwordEncoderStrength;
+        private Boolean enablePasswordHashCaching;
+        private Integer enablePasswordHashCacheSize;
     }
 
     @Getter

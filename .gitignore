@@ -115,7 +115,6 @@ Desktop.ini
 # Directories
 ######################
 /bin/
-/deploy/
 /out/
 ######################
 # Logs
@@ -146,4 +145,4 @@ Desktop.ini
 .eslintcache
 
 src/main/lep-sandbox
-
+src/main/generated

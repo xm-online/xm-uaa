@@ -9,6 +9,7 @@ import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.uaa.commons.XmPrivilegedRequestContext;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
+import com.icthh.xm.uaa.service.LepRequestEnrichmentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -71,6 +72,7 @@ public class ProxyFilter implements Filter {
     private final TenantListRepository tenantListRepository;
     private final XmAuthenticationContextHolder xmAuthContextHolder;
     private final LepManager lepManager;
+    private final LepRequestEnrichmentService lepRequestEnrichmentService;
 
     private TokenStore tokenStore;
 
@@ -129,7 +131,8 @@ public class ProxyFilter implements Filter {
         });
 
         try {
-            chain.doFilter(request, response);
+            ServletRequest enrichedRequest = lepRequestEnrichmentService.enrichRequest(request);
+            chain.doFilter(enrichedRequest, response);
         } finally {
             lepManager.endThreadContext();
             requestContext.destroyCurrentContext();

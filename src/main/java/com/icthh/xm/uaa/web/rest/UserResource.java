@@ -4,13 +4,12 @@ import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdm
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
-import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
-import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
+import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserMailService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.TfaEnableRequest;
@@ -83,7 +82,7 @@ public class UserResource {
 
     private static final String ENTITY_NAME = "userManagement";
 
-    private final UserLoginRepository userLoginRepository;
+    private final UserLoginService userLoginService;
 
     private final UserMailService userMailService;
 
@@ -113,12 +112,9 @@ public class UserResource {
                 .body(null);
         }
         assertNotSuperAdmin(user);
-        user.getLogins().forEach(userLogin ->
-                                     userLoginRepository.findOneByLoginIgnoreCase(userLogin.getLogin())
-                                         .ifPresent(s -> {
-                                             throw new BusinessException(Constants.LOGIN_IS_USED_ERROR_TEXT);
-                                         })
-        );
+        userLoginService.normalizeLogins(user.getLogins());
+        userLoginService.verifyLoginsNotExist(user.getLogins());
+
         User newUser = userService.createUser(user);
         produceEvent(new UserDTO(newUser), Constants.CREATE_PROFILE_EVENT_TYPE);
         userMailService.sendMailOnCreateUser(newUser);
@@ -153,7 +149,7 @@ public class UserResource {
      */
     @PutMapping("/users/{userKey}/block")
     @Timed
-    @PreAuthorize("hasPermission('USER.BLOCK')")
+    @PreAuthorize("hasPermission(null, 'USER.BLOCK')")
     @PrivilegeDescription("Privilege to blocks user")
     public ResponseEntity<UserDTO> blockUser(@NotEmpty @PathVariable String userKey) {
         Optional<UserDTO> updatedUser = userService.blockUserAccount(userKey);
@@ -170,7 +166,7 @@ public class UserResource {
      */
     @PutMapping("/users/{userKey}/activate")
     @Timed
-    @PreAuthorize("hasPermission('USER.UNBLOCK')")
+    @PreAuthorize("hasPermission(null, 'USER.UNBLOCK')")
     @PrivilegeDescription("Privilege to unblocks user")
     public ResponseEntity<UserDTO> unblockUser(@NotEmpty @PathVariable String userKey) {
         Optional<UserDTO> updatedUser = userService.activateUserAccount(userKey);
@@ -211,12 +207,9 @@ public class UserResource {
     @PreAuthorize("hasPermission({'userKey': #user.userKey, 'newUser': #user}, 'user', 'USER.LOGIN.UPDATE')")
     @PrivilegeDescription("Privilege to updates an existing User logins")
     public ResponseEntity<UserDTO> updateUserLogins(@Valid @RequestBody UserDTO user) {
-        user.getLogins().forEach(userLogin ->
-                                     userLoginRepository.findOneByLoginIgnoreCaseAndUserIdNot(userLogin.getLogin(), user.getId())
-                                         .ifPresent(s -> {
-                                             throw new BusinessException(Constants.LOGIN_IS_USED_ERROR_TEXT);
-                                         })
-        );
+        userLoginService.normalizeLogins(user.getLogins());
+        userLoginService.verifyLoginsNotExist(user.getLogins(), user.getId());
+
         Optional<UserDTO> updatedUser = userService.updateUserLogins(user.getUserKey(), user.getLogins());
         updatedUser.ifPresent(userDTO -> produceEvent(userDTO, Constants.UPDATE_PROFILE_EVENT_TYPE));
         return ResponseUtil.wrapOrNotFound(updatedUser,
@@ -374,5 +367,4 @@ public class UserResource {
     private void produceUpdateEvent(UserDTO userDTO) {
         produceEvent(userDTO, Constants.UPDATE_PROFILE_EVENT_TYPE);
     }
-
 }
