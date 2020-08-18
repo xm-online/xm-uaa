@@ -40,10 +40,11 @@ public class TenantProperties {
     private boolean strictUserManagement;
 
     @JsonProperty("security")
-    private Security security;
+    private Security security = new Security();
 
     @JsonProperty("userSpec")
     private List<UserSpec> userSpec;
+
 
     @Getter
     @Setter
@@ -76,6 +77,9 @@ public class TenantProperties {
 
         @JsonProperty("passwordExpirationPeriod")
         private Integer passwordExpirationPeriod = -1;
+
+        @JsonProperty("removeDefaultPermissions")
+        private Boolean removeDefaultPermissions = false;
 
         @JsonSetter("accessTokenValiditySeconds")
         public void setAccessTokenValiditySeconds(Integer accessTokenValiditySeconds) {

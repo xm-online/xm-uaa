@@ -39,10 +39,12 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static com.icthh.xm.commons.permission.domain.ReactionStrategy.EXCEPTION;
 import static com.icthh.xm.uaa.service.dto.PermissionType.SYSTEM;
 import static com.icthh.xm.uaa.service.dto.PermissionType.TENANT;
 import static com.icthh.xm.uaa.service.mapper.PermissionDomainMapper.permissionDtoToPermission;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_FORBIDDEN_ROLE;
+import static java.lang.Boolean.TRUE;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -71,6 +73,7 @@ public class TenantRoleService {
     private final XmAuthenticationContextHolder xmAuthenticationContextHolder;
     private final EnvironmentService environmentService;
     private final CommonConfigRepository commonConfigRepository;
+    private final TenantPropertiesService tenantPropertiesService;
 
     /**
      * Get roles properties.
@@ -142,7 +145,24 @@ public class TenantRoleService {
             enrichExistingPermissions(permissions, roleDto.getRoleKey(), roleDto.getBasedOn());
         }
 
-        updatePermissions(mapper.writeValueAsString(permissions));
+        updatePermissions(permissions);
+    }
+
+    private void removeDefaultValues(Map<String, Map<String, Set<Permission>>> permissions) {
+        if (TRUE.equals(tenantPropertiesService.getTenantProps().getSecurity().getRemoveDefaultPermissions())) {
+            permissions.values()
+                .stream()
+                .map(Map::values)
+                .flatMap(Collection::stream)
+                .forEach(role -> role.removeIf(this::isPermissionHasDefaultValue));
+        }
+    }
+
+    private boolean isPermissionHasDefaultValue(Permission it) {
+        return it.isDisabled()
+            && it.getEnvCondition() == null
+            && it.getResourceCondition() == null
+            && (it.getReactionStrategy() == null || it.getReactionStrategy() == EXCEPTION);
     }
 
     /**
@@ -176,7 +196,7 @@ public class TenantRoleService {
 
         enrichExistingPermissions(existingPermissions, newPermissions);
 
-        updatePermissions(mapper.writeValueAsString(existingPermissions));
+        updatePermissions(existingPermissions);
     }
 
     @SneakyThrows
@@ -209,7 +229,9 @@ public class TenantRoleService {
     }
 
     @SneakyThrows
-    private void updatePermissions(String permissionsYml) {
+    private void updatePermissions(Map<String, Map<String, Set<Permission>>> permission) {
+        removeDefaultValues(permission);
+        String permissionsYml = mapper.writeValueAsString(permission);
         String tenant = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder.getContext());
 
         tenantConfigRepository.updateConfigFullPath(tenant, API + permissionProperties.getPermissionsSpecPath(),
@@ -311,7 +333,7 @@ public class TenantRoleService {
         for (Map<String, Set<Permission>> perm : permissions.values()) {
             perm.remove(roleKey);
         }
-        updatePermissions(mapper.writeValueAsString(permissions));
+        updatePermissions(permissions);
 
     }
 
@@ -426,7 +448,8 @@ public class TenantRoleService {
                     allPermissions.get(permissionMatrixDTO.getMsName()).get(role).add(permission);
                 });
             });
-        updatePermissions(mapper.writeValueAsString(allPermissions));
+
+        updatePermissions(allPermissions);
     }
 
     /**
