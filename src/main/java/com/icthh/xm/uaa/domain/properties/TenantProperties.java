@@ -40,14 +40,7 @@ public class TenantProperties {
     private boolean strictUserManagement;
 
     @JsonProperty("security")
-    private Security security;
-
-    public Security getSecurity() {
-        if (security == null) {
-            security = new Security();
-        }
-        return security;
-    }
+    private Security security = new Security();
 
     @JsonProperty("userSpec")
     private List<UserSpec> userSpec;

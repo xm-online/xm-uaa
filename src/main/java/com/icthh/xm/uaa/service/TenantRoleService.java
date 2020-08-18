@@ -150,16 +150,19 @@ public class TenantRoleService {
 
     private void removeDefaultValues(Map<String, Map<String, Set<Permission>>> permissions) {
         if (TRUE.equals(tenantPropertiesService.getTenantProps().getSecurity().getRemoveDefaultPermissions())) {
-            permissions.forEach((serviceName, service) ->
-                service.forEach((roleName, role) ->
-                    role.removeIf(it -> it.isDisabled()
-                        && it.getEnvCondition() == null
-                        && it.getResourceCondition() == null
-                        && (it.getReactionStrategy() == null || it.getReactionStrategy() == EXCEPTION)
-                    )
-                )
-            );
+            permissions.values()
+                .stream()
+                .map(Map::values)
+                .flatMap(Collection::stream)
+                .forEach(role -> role.removeIf(this::isPermissionHasDefaultValue));
         }
+    }
+
+    private boolean isPermissionHasDefaultValue(Permission it) {
+        return it.isDisabled()
+            && it.getEnvCondition() == null
+            && it.getResourceCondition() == null
+            && (it.getReactionStrategy() == null || it.getReactionStrategy() == EXCEPTION);
     }
 
     /**
