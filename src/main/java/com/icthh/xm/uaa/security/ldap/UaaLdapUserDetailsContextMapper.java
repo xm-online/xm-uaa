@@ -74,7 +74,7 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
 
         if (needUpdate(mappedRole, user, imageUrl)) {
             user.setImageUrl(imageUrl);
-            user.setResetKey(mappedRole);
+            user.setRoleKey(mappedRole);
             userService.saveUser(user);
         }
     }
