@@ -1,7 +1,9 @@
 package com.icthh.xm.uaa.security.ldap;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static java.util.Optional.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -53,11 +55,12 @@ public class UaaLdapUserDetailsContextMapperTest {
 
     @Test
     public void userRoleMustNotChangeDuringLogin() {
-        whenFindUserByLogin();
+        User user = whenFindUserByLogin();
         when(ldapConf.getRole()).thenReturn(new TenantProperties.Ldap.Role("DEFAULT_ROLE", null));
         uaaLdapUserDetailsContextMapper.mapUserFromContext(ctx, LOGIN, List.of());
         verify(userDetailsService).loadUserByUsername(eq(LOGIN));
         verify(userService, never()).saveUser(any(User.class));
+        assertEquals(user.getRoleKey(), "ROLE_ADMIN");
     }
 
     @Test
@@ -89,11 +92,10 @@ public class UaaLdapUserDetailsContextMapperTest {
         assertEquals(user.getRoleKey(), "DEFAULT_ROLE");
     }
 
-    private void whenFindUserByLogin() {
-        when(userService.findOneByLogin(LOGIN)).thenAnswer(invocation -> {
-            User user = new User();
-            user.setRoleKey("ROLE_ADMIN");
-            return Optional.of(user);
-        });
+    private User whenFindUserByLogin() {
+        User user = new User();
+        user.setRoleKey("ROLE_ADMIN");
+        when(userService.findOneByLogin(LOGIN)).thenAnswer(invocation -> of(user));
+        return user;
     }
 }
