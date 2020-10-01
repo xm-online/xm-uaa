@@ -23,6 +23,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.nonNull;
+import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 
 @AllArgsConstructor
 @Slf4j
@@ -58,17 +59,19 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
         userDTO.setImageUrl(parseImageUrl(ctx));
 
         //login mapping
+        TenantProperties.Ldap.Role roleConf = ldapConf.getRole();
         UserLogin userLogin = new UserLogin();
         userLogin.setLogin(username);
         userLogin.setTypeKey(UserLoginType.NICKNAME.getValue());
         userDTO.setLogins(Collections.singletonList(userLogin));
-        userDTO.setRoleKey(mapRole(ldapConf.getRole(), authorities));
-
+        userDTO.setRoleKey(defaultIfEmpty(mapRole(roleConf, authorities), roleConf.getDefaultRole()));
         userService.createUser(userDTO);
     }
 
     private void updateUser(DirContextOperations ctx, User user, Collection<? extends GrantedAuthority> authorities) {
-        String mappedRole = mapRole(ldapConf.getRole(), authorities);
+        TenantProperties.Ldap.Role roleConf = ldapConf.getRole();
+        String mappedRole = defaultIfEmpty(mapRole(roleConf, authorities), user.getRoleKey());
+        mappedRole = defaultIfEmpty(mappedRole, roleConf.getDefaultRole());
         log.info("Mapped role from ldap [{}], current role [{}]", mappedRole, user.getRoleKey());
         String imageUrl = parseImageUrl(ctx);
 
@@ -84,7 +87,6 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
     }
 
     private String mapRole(TenantProperties.Ldap.Role roleConf, Collection<? extends GrantedAuthority> authorities) {
-        String mappedXmRole = roleConf.getDefaultRole();
         LinkedList<String> mappedRoles = new LinkedList<>();
         Map<String, String> mappingConf = roleConf.getMapping();
 
@@ -96,12 +98,7 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
                 }
             });
         }
-        if (mappedRoles.isEmpty()) {
-            log.info("Role mapping not found. Default role {} will be used", mappedXmRole);
-        } else {
-            mappedXmRole = mappedRoles.getLast();
-        }
-
+        String mappedXmRole = mappedRoles.isEmpty() ? null : mappedRoles.getLast();
         if (mappedRoles.size() > BigInteger.ONE.intValue()) {
             log.warn("More than 1 role was matched: {}. Will be used the latest one: {}", mappedRoles, mappedXmRole);
         }
