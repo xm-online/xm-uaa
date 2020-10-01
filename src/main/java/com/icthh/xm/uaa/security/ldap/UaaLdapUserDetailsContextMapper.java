@@ -1,5 +1,8 @@
 package com.icthh.xm.uaa.security.ldap;
 
+import static java.util.Objects.nonNull;
+import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
+
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
@@ -7,6 +10,16 @@ import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
+import java.math.BigInteger;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import javax.naming.NamingException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -14,15 +27,6 @@ import org.springframework.ldap.core.DirContextOperations;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.ldap.userdetails.LdapUserDetailsMapper;
-
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import java.math.BigInteger;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import static java.util.Objects.nonNull;
 
 @AllArgsConstructor
 @Slf4j
@@ -58,17 +62,19 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
         userDTO.setImageUrl(parseImageUrl(ctx));
 
         //login mapping
+        TenantProperties.Ldap.Role roleConf = ldapConf.getRole();
         UserLogin userLogin = new UserLogin();
         userLogin.setLogin(username);
         userLogin.setTypeKey(UserLoginType.NICKNAME.getValue());
         userDTO.setLogins(Collections.singletonList(userLogin));
-        userDTO.setRoleKey(mapRole(ldapConf.getRole(), authorities));
-
+        userDTO.setRoleKey(mapRole(roleConf, authorities).orElse(roleConf.getDefaultRole()));
         userService.createUser(userDTO);
     }
 
     private void updateUser(DirContextOperations ctx, User user, Collection<? extends GrantedAuthority> authorities) {
-        String mappedRole = mapRole(ldapConf.getRole(), authorities);
+        TenantProperties.Ldap.Role roleConf = ldapConf.getRole();
+        String mappedRole = mapRole(roleConf, authorities)
+            .orElseGet(() -> defaultIfEmpty(user.getRoleKey(), roleConf.getDefaultRole()));
         log.info("Mapped role from ldap [{}], current role [{}]", mappedRole, user.getRoleKey());
         String imageUrl = parseImageUrl(ctx);
 
@@ -83,8 +89,7 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
         return !mappedRole.equals(user.getRoleKey()) || !StringUtils.equals(user.getImageUrl(), imageUrl);
     }
 
-    private String mapRole(TenantProperties.Ldap.Role roleConf, Collection<? extends GrantedAuthority> authorities) {
-        String mappedXmRole = roleConf.getDefaultRole();
+    private Optional<String> mapRole(TenantProperties.Ldap.Role roleConf, Collection<? extends GrantedAuthority> authorities) {
         LinkedList<String> mappedRoles = new LinkedList<>();
         Map<String, String> mappingConf = roleConf.getMapping();
 
@@ -96,17 +101,12 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
                 }
             });
         }
-        if (mappedRoles.isEmpty()) {
-            log.info("Role mapping not found. Default role {} will be used", mappedXmRole);
-        } else {
-            mappedXmRole = mappedRoles.getLast();
-        }
-
+        Optional<String> mappedXmRole = mappedRoles.isEmpty() ? Optional.empty() : Optional.of(mappedRoles.getLast());
         if (mappedRoles.size() > BigInteger.ONE.intValue()) {
             log.warn("More than 1 role was matched: {}. Will be used the latest one: {}", mappedRoles, mappedXmRole);
         }
 
-        log.info("Mapped role: {}", mappedXmRole);
+        log.info("Mapped role: {}", mappedXmRole.orElse(null));
         return mappedXmRole;
     }
 
