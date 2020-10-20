@@ -45,6 +45,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.AllArgsConstructor;
@@ -262,6 +263,15 @@ public class UserService {
      * @param userKey user key;
      */
     public void deleteUser(String userKey) {
+        deleteUser(userKey, userDTO -> log.info("No delete notification sent"));
+    }
+
+    /**
+     * Delete user and call notification if successfully performed.
+     *
+     * @param userKey user key;
+     */
+    public void deleteUser(String userKey, Consumer<UserDTO> notification) {
         if (xmAuthenticationContextHolder.getContext().getRequiredUserKey().equals(userKey)) {
             throw new BusinessException(ERROR_USER_DELETE_HIMSELF, "Forbidden to delete himself");
         }
@@ -269,6 +279,7 @@ public class UserService {
             assertNotSuperAdmin(user.getRoleKey());
             socialUserConnectionRepository.deleteByUserKey(user.getUserKey());
             userRepository.delete(user);
+            notification.accept(new UserDTO(user));
         });
     }
 
@@ -603,4 +614,5 @@ public class UserService {
     public void handlePasswordReset(PasswordResetRequest resetRequest) {
         passwordResetHandlerFactory.getPasswordResetHandler(resetRequest.getResetType()).handle(resetRequest);
     }
+
 }
