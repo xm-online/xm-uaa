@@ -304,7 +304,7 @@ public class UserResource {
     @PreAuthorize("hasPermission({'userKey':#userKey}, 'user', 'USER.DELETE')")
     @PrivilegeDescription("Privilege to delete the user by userKey")
     public ResponseEntity<Void> deleteUser(@PathVariable String userKey) {
-        userService.deleteUser(userKey);
+        userService.deleteUser(userKey, userDto -> produceEvent(userDto, Constants.DELETE_PROFILE_EVENT_TYPE));
         return ResponseEntity.ok().headers(HeaderUtil.createAlert("userManagement.deleted", userKey)).build();
     }
 

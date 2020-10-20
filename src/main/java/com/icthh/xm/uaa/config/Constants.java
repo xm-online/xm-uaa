@@ -43,6 +43,7 @@ public final class Constants {
     public static final String CHANGE_PASSWORD_EVENT_TYPE = "CHANGE_PASSWORD";
     public static final String UPDATE_PROFILE_EVENT_TYPE = "UPDATE_PROFILE";
     public static final String UPDATE_ACCOUNT_EVENT_TYPE = "UPDATE_ACCOUNT";
+    public static final String DELETE_PROFILE_EVENT_TYPE = "DELETE_PROFILE";
     public static final String AUTH_ADDITIONAL_DETAILS = "additionalDetails";
 
     public static final String CREATE_TOKEN_TIME = "createTokenTime";
