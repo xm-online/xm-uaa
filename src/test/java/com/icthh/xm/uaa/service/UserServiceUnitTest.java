@@ -6,6 +6,7 @@ import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
+import com.icthh.xm.uaa.repository.SocialUserConnectionRepository;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.security.TokenConstraintsService;
@@ -18,12 +19,17 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.AdditionalAnswers.delegatesTo;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -48,6 +54,8 @@ public class UserServiceUnitTest {
     private XmAuthenticationContextHolder xmAuthenticationContextHolder;
     @Mock
     private TokenConstraintsService tokenConstraintsService;
+    @Mock
+    private SocialUserConnectionRepository socialUserConnectionRepository;
 
     @Before
     public void setUp() throws Exception {
@@ -137,6 +145,40 @@ public class UserServiceUnitTest {
             service.activateUserAccount(USER_KEY);
         }).hasMessage("Forbidden to activate himself");
 
+    }
+
+    @Test
+    public void shouldDeleteUser() {
+        String userKey = "uk";
+        given(xmAuthenticationContextHolder.getContext()).willReturn(getDummyCTX());
+        given(userRepository.findOneWithLoginsByUserKey(userKey)).willReturn(Optional.of(createUser(userKey, "dummyRole")));
+        service.deleteUser(userKey);
+        verify(socialUserConnectionRepository, times(1)).deleteByUserKey(userKey);
+        verify(userRepository, times(1)).delete(any());
+    }
+
+    @Test
+    public void shouldDeleteUserAndCallNotification() {
+        String userKey = "uk";
+        given(xmAuthenticationContextHolder.getContext()).willReturn(getDummyCTX());
+        given(userRepository.findOneWithLoginsByUserKey(userKey)).willReturn(Optional.of(createUser(userKey, "dummyRole")));
+        Consumer<UserDTO> callBack = mockLambda(Consumer.class, userDto -> System.out.println("userKey=" + userDto));
+        service.deleteUser(userKey, callBack);
+        verify(socialUserConnectionRepository, times(1)).deleteByUserKey(userKey);
+        verify(userRepository, times(1)).delete(any());
+        verify(callBack, times(1)).accept(any());
+    }
+
+    @Test
+    public void shouldNotDeleteUserAndCallNotification() {
+        String userKey = "uk";
+        given(xmAuthenticationContextHolder.getContext()).willReturn(getDummyCTX());
+        given(userRepository.findOneWithLoginsByUserKey(userKey)).willReturn(Optional.of(createUser(userKey, "dummyRole")));
+        Consumer<UserDTO> callBack = mockLambda(Consumer.class, userDto -> System.out.println("userKey=" + userDto));
+        service.deleteUser("UNDEFINED_KEY", callBack);
+        verify(socialUserConnectionRepository, times(0)).deleteByUserKey(userKey);
+        verify(userRepository, times(0)).delete(any());
+        verify(callBack, times(0)).accept(any());
     }
 
     @Test
@@ -398,4 +440,9 @@ public class UserServiceUnitTest {
             }
         };
     }
+
+    public static <T> T mockLambda(final Class<T> lambdaType, final T lambda) {
+        return mock(lambdaType, delegatesTo(lambda));
+    }
+
 }
