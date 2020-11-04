@@ -26,6 +26,8 @@ import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.service.util.RandomUtil;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -314,4 +316,38 @@ public class UserServiceIntTest {
         userService.validatePassword("password");
     }
 
+
+    @SneakyThrows
+    @Test
+    public void passwordValidationPoliciesTest() {
+        exception.expect(BusinessException.class);
+        exception.expectMessage("password doesn't matched required count of policies");
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        TenantProperties tenantProperties = new TenantProperties();
+        PublicSettings publicSettings = new PublicSettings();
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setEnableBackEndValidation(true);
+        passwordSettings.setPattern("((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!#$]).{6,15})");
+
+        List<PublicSettings.PasswordPolicy> policyList = new ArrayList<>();
+        policyList.add(initPasswordPolicy(".*\\d.*"));
+        policyList.add(initPasswordPolicy("\\\\+\\d+$"));
+        publicSettings.setPasswordPoliciesMinimalMatchCount(2L);
+
+        publicSettings.setPasswordPolicies(policyList);
+        publicSettings.setPasswordSettings(passwordSettings);
+        tenantProperties.setPublicSettings(publicSettings);
+
+        tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
+            objectMapper.writeValueAsString(tenantProperties));
+
+        userService.validatePassword("Password5!");
+    }
+
+    private PublicSettings.PasswordPolicy initPasswordPolicy(String pattern){
+        PublicSettings.PasswordPolicy passwordPolicy  = new PublicSettings.PasswordPolicy();
+        passwordPolicy.setPattern(pattern);
+        return passwordPolicy;
+    }
 }
