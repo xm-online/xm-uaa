@@ -25,8 +25,8 @@ import java.security.cert.X509Certificate;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.bouncycastle.util.encoders.Base64;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -38,6 +38,8 @@ import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenCo
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Properties;
+
 /**
  * The {@link UaaAccessTokenConverterConfiguration} class.
  */
@@ -48,6 +50,8 @@ import org.springframework.web.client.RestTemplate;
     RestTemplateConfiguration.class
 })
 public class UaaAccessTokenConverterConfiguration {
+
+    public static final String KEYSTORE = "keyStore";
 
     private final RestTemplate keyUriRestTemplate;
     private final TenantContextHolder tenantContextHolder;
@@ -81,7 +85,7 @@ public class UaaAccessTokenConverterConfiguration {
         KeyPair keyPair = new KeyPair(publicKey, privateKey);
 
         DomainJwtAccessTokenConverter accessTokenConverter = new DomainJwtAccessTokenConverter(tenantContextHolder,
-                                                                                               tokenDetailsProcessor);
+            tokenDetailsProcessor);
         accessTokenConverter.setKeyPair(keyPair);
         return accessTokenConverter;
     }
@@ -105,14 +109,19 @@ public class UaaAccessTokenConverterConfiguration {
 
     private PrivateKey getPrivateKey() throws IOException, KeyStoreException, CertificateException,
         NoSuchAlgorithmException, UnrecoverableKeyException {
-        log.info("Keystore location {}", applicationProperties.getKeystoreFile());
-        try (InputStream stream = new ClassPathResource(applicationProperties.getKeystoreFile()).exists()
-            ? new ClassPathResource(applicationProperties.getKeystoreFile()).getInputStream()
-            : new FileInputStream(new File(applicationProperties.getKeystoreFile()))) {
-            KeyStore store = KeyStore.getInstance(Constants.KEYSTORE_TYPE);
-            store.load(stream, applicationProperties.getKeystorePassword().toCharArray());
-            return (PrivateKey) store.getKey("selfsigned",
-                                             applicationProperties.getKeystorePassword().toCharArray());
+        Properties systemProperties = System.getProperties();
+        if (systemProperties != null && systemProperties.get(KEYSTORE) instanceof String) {
+            log.info("Keystore loaded from memory");
+            final String base64KeyStore = (String) systemProperties.get(KEYSTORE);
+            byte [] encodedKeyStore  = Base64.encode(base64KeyStore.getBytes());
+            return initPrivateKey(new ByteArrayInputStream(encodedKeyStore));
+        } else {
+            log.info("Keystore location {}", applicationProperties.getKeystoreFile());
+            try (InputStream stream = new ClassPathResource(applicationProperties.getKeystoreFile()).exists()
+                ? new ClassPathResource(applicationProperties.getKeystoreFile()).getInputStream()
+                : new FileInputStream(new File(applicationProperties.getKeystoreFile()))) {
+                return initPrivateKey(stream);
+            }
         }
     }
 
@@ -124,4 +133,11 @@ public class UaaAccessTokenConverterConfiguration {
         return new JwtTokenStore(jwtAccessTokenConverter);
     }
 
+    private PrivateKey initPrivateKey(InputStream stream) throws KeyStoreException, UnrecoverableKeyException,
+        NoSuchAlgorithmException, IOException, CertificateException {
+        KeyStore store = KeyStore.getInstance(Constants.KEYSTORE_TYPE);
+        store.load(stream, applicationProperties.getKeystorePassword().toCharArray());
+        return (PrivateKey) store.getKey("selfsigned",
+            applicationProperties.getKeystorePassword().toCharArray());
+    }
 }
