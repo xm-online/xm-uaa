@@ -51,7 +51,7 @@ import java.util.Properties;
 })
 public class UaaAccessTokenConverterConfiguration {
 
-    public static final String KEYSTORE = "keyStore";
+    public static final String PRIVATE_KEY = "privateKey";
 
     private final RestTemplate keyUriRestTemplate;
     private final TenantContextHolder tenantContextHolder;
@@ -110,9 +110,9 @@ public class UaaAccessTokenConverterConfiguration {
     private PrivateKey getPrivateKey() throws IOException, KeyStoreException, CertificateException,
         NoSuchAlgorithmException, UnrecoverableKeyException {
         Properties systemProperties = System.getProperties();
-        if (systemProperties != null && systemProperties.get(KEYSTORE) instanceof String) {
+        if (systemProperties != null && systemProperties.get(PRIVATE_KEY) instanceof String) {
             log.info("Keystore loaded from memory");
-            final String base64KeyStore = (String) systemProperties.get(KEYSTORE);
+            final String base64KeyStore = (String) systemProperties.get(PRIVATE_KEY);
             byte [] encodedKeyStore  = Base64.encode(base64KeyStore.getBytes());
             return initPrivateKey(new ByteArrayInputStream(encodedKeyStore));
         } else {
