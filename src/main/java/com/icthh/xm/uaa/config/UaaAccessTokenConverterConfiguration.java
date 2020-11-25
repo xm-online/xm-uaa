@@ -21,6 +21,9 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.KeyFactory;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +41,6 @@ import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenCo
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Properties;
 
 /**
  * The {@link UaaAccessTokenConverterConfiguration} class.
@@ -50,8 +52,6 @@ import java.util.Properties;
     RestTemplateConfiguration.class
 })
 public class UaaAccessTokenConverterConfiguration {
-
-    public static final String PRIVATE_KEY = "privateKey";
 
     private final RestTemplate keyUriRestTemplate;
     private final TenantContextHolder tenantContextHolder;
@@ -108,19 +108,16 @@ public class UaaAccessTokenConverterConfiguration {
     }
 
     private PrivateKey getPrivateKey() throws IOException, KeyStoreException, CertificateException,
-        NoSuchAlgorithmException, UnrecoverableKeyException {
-        Properties systemProperties = System.getProperties();
-        if (systemProperties != null && systemProperties.get(PRIVATE_KEY) instanceof String) {
+        NoSuchAlgorithmException, UnrecoverableKeyException, InvalidKeySpecException {
+        if (!org.springframework.util.StringUtils.isEmpty(applicationProperties.getPrivateKey())) {
             log.info("Keystore loaded from memory");
-            final String base64KeyStore = (String) systemProperties.get(PRIVATE_KEY);
-            byte [] encodedKeyStore  = Base64.encode(base64KeyStore.getBytes());
-            return initPrivateKey(new ByteArrayInputStream(encodedKeyStore));
+            return initPrivateKey(Base64.decode(applicationProperties.getPrivateKey()));
         } else {
             log.info("Keystore location {}", applicationProperties.getKeystoreFile());
             try (InputStream stream = new ClassPathResource(applicationProperties.getKeystoreFile()).exists()
                 ? new ClassPathResource(applicationProperties.getKeystoreFile()).getInputStream()
                 : new FileInputStream(new File(applicationProperties.getKeystoreFile()))) {
-                return initPrivateKey(stream);
+                return initPrivateKeyFromKeystore(stream);
             }
         }
     }
@@ -133,11 +130,18 @@ public class UaaAccessTokenConverterConfiguration {
         return new JwtTokenStore(jwtAccessTokenConverter);
     }
 
-    private PrivateKey initPrivateKey(InputStream stream) throws KeyStoreException, UnrecoverableKeyException,
+    private PrivateKey initPrivateKeyFromKeystore(InputStream stream) throws KeyStoreException, UnrecoverableKeyException,
         NoSuchAlgorithmException, IOException, CertificateException {
         KeyStore store = KeyStore.getInstance(Constants.KEYSTORE_TYPE);
         store.load(stream, applicationProperties.getKeystorePassword().toCharArray());
         return (PrivateKey) store.getKey("selfsigned",
             applicationProperties.getKeystorePassword().toCharArray());
     }
+
+    private PrivateKey initPrivateKey(final byte[] encodedPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        KeyFactory factory = KeyFactory.getInstance("RSA");
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encodedPrivateKey);
+        return factory.generatePrivate(keySpec);
+    }
+
 }

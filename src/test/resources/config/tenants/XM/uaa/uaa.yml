@@ -4,6 +4,7 @@ security:
     accessTokenValiditySeconds:
     refreshTokenValiditySeconds:
     passwordExpirationPeriod: 90
+    defaultClientSecret: cleintSecret
 registrationCaptchaPeriodSeconds: 21600
 ldap:
   - domain: xm.com

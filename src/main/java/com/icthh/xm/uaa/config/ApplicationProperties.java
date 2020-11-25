@@ -44,6 +44,7 @@ public class ApplicationProperties {
     private boolean schedulerEnabled;
     private String keystoreFile;
     private String keystorePassword;
+    private String privateKey;
     private boolean auditEventsEnabled;
 
     @Getter
