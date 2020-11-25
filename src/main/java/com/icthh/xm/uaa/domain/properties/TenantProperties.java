@@ -98,6 +98,8 @@ public class TenantProperties {
     public static class PublicSettings {
 
         private PasswordSettings passwordSettings;
+        private List<PasswordPolicy> passwordPolicies;
+        private Long passwordPoliciesMinimalMatchCount;
 
         private Boolean termsOfConditionsEnabled;
 
@@ -108,6 +110,12 @@ public class TenantProperties {
             private String pattern;
             private Map<String, String> patternMessage;
             private boolean enableBackEndValidation = false;
+        }
+
+        @Data
+        public static class PasswordPolicy {
+            private String pattern;
+            private Map<String, String> patternMessage;
         }
 
         public Boolean isTermsOfConditionsEnabled() {

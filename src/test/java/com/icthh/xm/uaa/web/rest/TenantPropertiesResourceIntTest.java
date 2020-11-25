@@ -1,11 +1,5 @@
 package com.icthh.xm.uaa.web.rest;
 
-import static com.google.common.collect.ImmutableMap.of;
-import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.i18n.error.web.ExceptionTranslator;
@@ -15,6 +9,7 @@ import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings;
+import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings.PasswordPolicy;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings.PasswordSettings;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.SneakyThrows;
@@ -26,6 +21,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import java.util.List;
+
+import static com.google.common.collect.ImmutableMap.of;
+import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Test class for the TenantPropertiesResourceIntTest REST controller.
@@ -43,6 +46,7 @@ public class TenantPropertiesResourceIntTest {
     private static final String PASSWORD_MIN_LENGTH = "15";
     private static final String PASSWORD_PATTERN = "(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{8,}";
     private static final String PATTERN_MESSAGE = "Pattern Message";
+    private static final Long PASSWORD_POLICIES_MINIMAL_MATCH_COUNT = 1L;
 
     @Autowired
     private TenantPropertiesService tenantPropertiesService;
@@ -63,20 +67,25 @@ public class TenantPropertiesResourceIntTest {
 
         TenantProperties properties = new TenantProperties();
         PublicSettings publicSettings = new PublicSettings();
+        PasswordPolicy passwordPolicy = new PasswordPolicy();
         PasswordSettings passwordSettings = new PasswordSettings();
         passwordSettings.setMaxLength(Byte.parseByte(PASSWORD_MAX_LENGTH));
         passwordSettings.setMinLength(Byte.parseByte(PASSWORD_MIN_LENGTH));
         passwordSettings.setPattern(PASSWORD_PATTERN);
         passwordSettings.setPatternMessage(of("en", PATTERN_MESSAGE));
+        passwordPolicy.setPattern(PASSWORD_PATTERN);
+        passwordPolicy.setPatternMessage(of("en", PATTERN_MESSAGE));
+        publicSettings.setPasswordPolicies(List.of(passwordPolicy));
         publicSettings.setPasswordSettings(passwordSettings);
+        publicSettings.setPasswordPoliciesMinimalMatchCount(PASSWORD_POLICIES_MINIMAL_MATCH_COUNT);
         properties.setPublicSettings(publicSettings);
 
         tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
             new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
 
         this.restMvc = MockMvcBuilders.standaloneSetup(new TenantPropertiesResource(tenantPropertiesService))
-                                      .setControllerAdvice(exceptionTranslator)
-                                      .build();
+            .setControllerAdvice(exceptionTranslator)
+            .build();
     }
 
     @Test
@@ -87,7 +96,11 @@ public class TenantPropertiesResourceIntTest {
             .andExpect(jsonPath("$.passwordSettings.maxLength").value(PASSWORD_MAX_LENGTH))
             .andExpect(jsonPath("$.passwordSettings.minLength").value(PASSWORD_MIN_LENGTH))
             .andExpect(jsonPath("$.passwordSettings.pattern").value(PASSWORD_PATTERN))
-            .andExpect(jsonPath("$.passwordSettings.patternMessage.en").value(PATTERN_MESSAGE));
+            .andExpect(jsonPath("$.passwordSettings.patternMessage.en").value(PATTERN_MESSAGE))
+            .andExpect(jsonPath("$.passwordPolicies[0].pattern").value(PASSWORD_PATTERN))
+            .andExpect(jsonPath("$.passwordPoliciesMinimalMatchCount").value(PASSWORD_POLICIES_MINIMAL_MATCH_COUNT))
+            .andExpect(jsonPath("$.passwordPolicies[0].patternMessage.en").value(PATTERN_MESSAGE));
+
     }
 
 }

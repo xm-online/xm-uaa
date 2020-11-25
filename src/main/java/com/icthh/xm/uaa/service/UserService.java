@@ -1,22 +1,13 @@
 package com.icthh.xm.uaa.service;
 
-import static com.icthh.xm.uaa.service.util.RandomUtil.generateActivationKey;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_ACTIVATES_HIMSELF;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_BLOCK_HIMSELF;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_DELETE_HIMSELF;
-import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
-import static java.util.UUID.randomUUID;
-import static org.apache.commons.lang3.StringUtils.isEmpty;
-import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
-
 import com.google.common.base.Preconditions;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
-import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.logging.LoggingAspectConfig;
 import com.icthh.xm.commons.permission.annotation.FindWithPermission;
+import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
@@ -35,19 +26,6 @@ import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.util.RandomUtil;
 import com.icthh.xm.uaa.util.OtpUtils;
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -58,6 +36,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+
+import java.time.Instant;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.icthh.xm.uaa.service.util.RandomUtil.generateActivationKey;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.*;
+import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
+import static java.util.UUID.randomUUID;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
 
 /**
  * Service class for managing users.
@@ -512,6 +503,7 @@ public class UserService {
         validatePasswordPattern(password, passwordSettings);
         validatePasswordMinLength(password, passwordSettings);
         validatePasswordMaxLength(password, passwordSettings);
+        validatePasswordPolicies(password, publicSettings.getPasswordPolicies(), publicSettings.getPasswordPoliciesMinimalMatchCount());
     }
 
     @LogicExtensionPoint("FindAllByLoginContains")
@@ -526,11 +518,31 @@ public class UserService {
             return;
         }
 
-        Pattern pattern = Pattern.compile(passwordSettings.getPattern());
-        Matcher matcher = pattern.matcher(password);
-        if (!matcher.matches()) {
+        if (!validatePasswordPattern(password, passwordSettings.getPattern())) {
             throw new BusinessException("password.validation.failed",
                                         "password doesn't match regex");
+        }
+    }
+
+    private boolean validatePasswordPattern(String password, String passwordPattern) {
+        Pattern pattern = Pattern.compile(passwordPattern);
+        Matcher matcher = pattern.matcher(password);
+        return matcher.matches();
+    }
+
+    private void validatePasswordPolicies(String password, List<PublicSettings.PasswordPolicy> passwordPolicies,
+                                          Long passwordPoliciesMinimalMatchCount) {
+        if (passwordPolicies == null || passwordPolicies.isEmpty()) {
+            return;
+        }
+        long countOfMatchedPolicies = passwordPolicies.stream()
+            .map(passwordPolicy -> validatePasswordPattern(password, passwordPolicy.getPattern()))
+            .filter(Boolean.TRUE::equals)
+            .count();
+
+        if (countOfMatchedPolicies < passwordPoliciesMinimalMatchCount) {
+            throw new BusinessException("password.validation.failed",
+                                        "password doesn't matched required count of policies");
         }
     }
 
