@@ -45,6 +45,7 @@ public class ApplicationProperties {
     private String keystoreFile;
     private String keystorePassword;
     private String privateKey;
+    private String keystoreKeyName = "selfsigned";
     private boolean auditEventsEnabled;
 
     @Getter

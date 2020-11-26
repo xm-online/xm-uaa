@@ -28,7 +28,6 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.bouncycastle.util.encoders.Base64;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,6 +39,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.web.client.RestTemplate;
+import java.util.Base64;
 
 
 /**
@@ -109,9 +109,10 @@ public class UaaAccessTokenConverterConfiguration {
 
     private PrivateKey getPrivateKey() throws IOException, KeyStoreException, CertificateException,
         NoSuchAlgorithmException, UnrecoverableKeyException, InvalidKeySpecException {
-        if (!org.springframework.util.StringUtils.isEmpty(applicationProperties.getPrivateKey())) {
-            log.info("Keystore loaded from memory");
-            return initPrivateKey(Base64.decode(applicationProperties.getPrivateKey()));
+        final String privateKey = applicationProperties.getPrivateKey();
+        if (!StringUtils.isEmpty(privateKey)) {
+            log.info("Key was loaded from memory by application property: application.private-key");
+            return initPrivateKey(Base64.getDecoder().decode(applicationProperties.getPrivateKey()));
         } else {
             log.info("Keystore location {}", applicationProperties.getKeystoreFile());
             try (InputStream stream = new ClassPathResource(applicationProperties.getKeystoreFile()).exists()
@@ -134,7 +135,7 @@ public class UaaAccessTokenConverterConfiguration {
         NoSuchAlgorithmException, IOException, CertificateException {
         KeyStore store = KeyStore.getInstance(Constants.KEYSTORE_TYPE);
         store.load(stream, applicationProperties.getKeystorePassword().toCharArray());
-        return (PrivateKey) store.getKey("selfsigned",
+        return (PrivateKey) store.getKey(applicationProperties.getKeystoreKeyName(),
             applicationProperties.getKeystorePassword().toCharArray());
     }
 
