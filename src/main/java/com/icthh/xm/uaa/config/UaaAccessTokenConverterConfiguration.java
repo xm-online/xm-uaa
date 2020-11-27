@@ -28,6 +28,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.bouncycastle.util.encoders.Base64;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,7 +40,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.web.client.RestTemplate;
-import java.util.Base64;
 
 
 /**
@@ -112,7 +112,8 @@ public class UaaAccessTokenConverterConfiguration {
         final String privateKey = applicationProperties.getPrivateKey();
         if (!StringUtils.isEmpty(privateKey)) {
             log.info("Key was loaded from memory by application property: application.private-key");
-            return initPrivateKey(Base64.getDecoder().decode(applicationProperties.getPrivateKey()));
+
+            return initPrivateKey(Base64.decode(applicationProperties.getPrivateKey().getBytes(StandardCharsets.UTF_8)));
         } else {
             log.info("Keystore location {}", applicationProperties.getKeystoreFile());
             try (InputStream stream = new ClassPathResource(applicationProperties.getKeystoreFile()).exists()
