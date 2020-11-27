@@ -147,6 +147,32 @@ application:
         tenant-script-storage: XM_MS_CONFIG
     client-grant-types: client_credentials, refresh_token, password
     client-scope: openid
-    default-client-id:
     keystore-file: keystore.p12
     keystore-password: password
+    private-key: "MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQCvXuZ9nS4I9Sz4
+          kNw6/LEYnXff4Kyaug4QUk6Y45MQAPzPASRMogeCEHihJ/D3B98FnEtuTB0xYoMG
+          jPXJyr6lQfPA+KzEe1G+hk+SUYCo+5qpiip2d55NYm+xG0YQPy7Lls0RuYCUo9OX
+          yP3AZHN8kyM4HPkfGsL7lhOaN1LFUhUuO8LFX9GekzGsWZDS2RTEBu8xjLfvTN1c
+          erQAiTv2wEns7yuBowQMBIaRLqv+ln2DyOuRngXrzK1VFuW3G3gqKe2E0/Rho+h3
+          YpGO1y4iYo8XRBjfDmL+ZCVhPl6BYVJsd0xZFuVbP2hBTGiMJkRqkZzMGnBI6KeL
+          Qv3zb8hBAgMBAAECggEAHYoPqvLx0SJzG79SyUDNF8dWbMhsaneSbN9gS9JxcA2q
+          h7e6hIn6V8cseoC+zu1tfIVyEzcQ58OfLFhMAlx7NlzgkQ2SFFptT3lSJ+RAlrYi
+          vBIAywmlCYXeKGfeqlfqKvLQwf6MEP1zY6rAS0rgRQiHsyj2MW4Rj80cqipNb9z2
+          KIZW/5fLIqpUnJxGVS+aMQblP/iEAuzsVJLXWFyDs8gSlThOZ/K8/hqjcVnwqULw
+          CY8jjecF+mO1BonwNNGwkREQKBFf5UuWH5ixVzYHA4Oi4OsJq8RJkRdKVWM1KGu1
+          bNyGRkfp4ga0d29ekKHEdfWe7hsBHtYH+/7IcTRUUQKBgQD8Z0eTvaX/cty4io7t
+          fHdfmV6nrHRthnxG2Meab/PHdecwm0nMiePgXJRGZu0g5/flcrHqAEP2L6eM+Jnv
+          xXTKwAuJt16ifJiLvvyfLLnDCRGOIYgwMFWQtwcU4dyKvMzAS+IP6iTNWb7EFW9L
+          idpcbMV8P7dqApTKQlHzhsIofQKBgQCx3p6rDfgMIumr38tD96Zjoy0nkQUunfId
+          kH8tnq/YK1OhC9JqZRA2+8RZlQQoYogF0N8LeBttOr/SFm4xvBVbU2aNtGxkdGuL
+          9IMlJkZeGYKTcQRF1+LVubIv286T+ru4Tw7SHAMWr3bMDkbE7nAO3XHZXCD+80F0
+          jlU8m+wuFQKBgQDw045s/f/b63mELthO6npv4cN50sdIFZCQfJh+16DPSMTtEM3q
+          dgrScSMcxWouAob6C2SMM/KkfDWvASjHqSxVo8WegjKucJmQhQs+yQr5d7ajWYU7
+          DXMm4CvGlfa6/YeTVxP8QVkaAi5No3IMrhyGIVaQxa64XHwhPAQ7ivHIdQKBgQCk
+          VEy7NFiqvcatKEGfNbnf6+3X1D+5Zes+LTWSbD2BteW5sDZiXaSxZ8FsEiSZOw74
+          cJTg/8I3FEQMUPTVtjL1AQSKftp1pKmH0Asp00bHwUHF/nA4JtBHLRzW4njkdo3g
+          JgpHS+H+n3Vd6QKxBqk40pZQfrFtWkhq6uUM7fEyUQKBgQCfwv7q69EVBw/A0YGw
+          1I2eUZfDOOfq3wfbjCUD0ECHNMgR8eK3ageC7/4v7CugCAE/ZXPpuIKBv6tGrbEF
+          8SxQ+WYtVrOK0BVwUiiPMLqnJL/iLg/zuPZX6X8pdISUJx7LXhaJ3Jb2snkMWWx7
+          qtbGCU/DjgrCs8RjJDGtWY20GA=="
+    default-client-id: testClient
