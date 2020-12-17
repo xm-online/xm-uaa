@@ -24,6 +24,8 @@ import com.icthh.xm.uaa.service.UserMailService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.mapper.UserMapper;
+import com.icthh.xm.uaa.service.query.UserQueryService;
+import com.icthh.xm.uaa.service.query.filter.UserFilterQuery;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -64,6 +66,7 @@ import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -118,6 +121,9 @@ public class UserResourceIntTest {
 
     @Autowired
     private UserLoginService userLoginService;
+
+    @Autowired
+    private UserQueryService userQueryService;
 
     @Autowired
     private UserRepository userRepository;
@@ -194,7 +200,8 @@ public class UserResourceIntTest {
         UserResource userResource = new UserResource(userLoginService,
             mailService,
             userService,
-            profileEventProducer);
+            profileEventProducer,
+            userQueryService);
         this.restUserMockMvc = MockMvcBuilders.standaloneSetup(userResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)
@@ -440,6 +447,52 @@ public class UserResourceIntTest {
             .andExpect(jsonPath("$.imageUrl").value(DEFAULT_IMAGEURL))
             .andExpect(jsonPath("$.langKey").value(DEFAULT_LANGKEY))
             .andExpect(jsonPath("$.logins[0].login").value("test"));
+    }
+
+    @Test
+    @Transactional
+    public void findUserByFilter() throws Exception {
+        String firstName = "homer";
+        String lastName = "simpson";
+        String login = "al-homero";
+        userRepository.saveAndFlush(user);
+        User userHomer = createEntity(ROLE_USER);
+        userHomer.setFirstName(firstName);
+        userHomer.setLastName(lastName);
+        userHomer.getLogins().get(0).setLogin(login);
+        userHomer.getLogins().add(new UserLogin(){{
+            setLogin("donutEater");
+            setTypeKey(UserLoginType.EMAIL.getValue());
+            setUser(userHomer);
+        }});
+        userRepository.saveAndFlush(userHomer);
+
+        restUserMockMvc.perform(get("/api/users/filter?firstName.contains=er", userHomer.getUserKey()))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+            .andExpect(jsonPath("$[0].userKey").value(userHomer.getUserKey()))
+            .andExpect(jsonPath("$[0].firstName").value(firstName))
+            .andExpect(jsonPath("$[0].lastName").value(lastName))
+            .andExpect(jsonPath("$[0].imageUrl").value(DEFAULT_IMAGEURL))
+            .andExpect(jsonPath("$[0].langKey").value(DEFAULT_LANGKEY))
+            .andExpect(jsonPath("$[0].logins[0].login").value(login));
+
+        restUserMockMvc.perform(get("/api/users/filter?lastName.equals=simpson", userHomer.getUserKey()))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+            .andExpect(jsonPath("$[0].userKey").value(userHomer.getUserKey()))
+            .andExpect(jsonPath("$[0].firstName").value(firstName))
+            .andExpect(jsonPath("$[0].lastName").value(lastName))
+            .andExpect(jsonPath("$[0].imageUrl").value(DEFAULT_IMAGEURL))
+            .andExpect(jsonPath("$[0].langKey").value(DEFAULT_LANGKEY))
+            .andExpect(jsonPath("$[0].logins[0].login").value(login));
+
+
+        restUserMockMvc.perform(get("/api/users/filter?login.contains=e&sort=logins.login", userHomer.getUserKey()))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+            .andExpect(jsonPath("$[0].firstName").value(firstName))
+            .andExpect(jsonPath("$", hasSize(2)));
     }
 
     @Test

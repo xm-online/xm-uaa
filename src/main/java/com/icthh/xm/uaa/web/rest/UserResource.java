@@ -16,6 +16,8 @@ import com.icthh.xm.uaa.service.dto.TfaEnableRequest;
 import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.dto.UserPublicDTO;
+import com.icthh.xm.uaa.service.query.UserQueryService;
+import com.icthh.xm.uaa.service.query.filter.UserFilterQuery;
 import com.icthh.xm.uaa.web.rest.util.HeaderUtil;
 import com.icthh.xm.uaa.web.rest.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -89,6 +91,8 @@ public class UserResource {
     private final UserService userService;
 
     private final ProfileEventProducer profileEventProducer;
+
+    private final UserQueryService userQueryService;
 
 
     /**
@@ -229,6 +233,14 @@ public class UserResource {
         @RequestParam(required = false) String roleKey) {
         final Page<UserDTO> page = userService.getAllManagedUsers(pageable, roleKey, null);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/users");
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    @GetMapping("/users/filter")
+    @Timed
+    public ResponseEntity<List<UserDTO>> getAllByFilers(@ApiParam Pageable pageable, UserFilterQuery userFilterQuery){
+        final Page<UserDTO> page = userQueryService.findAllUsers(userFilterQuery,pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/users/filter");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
