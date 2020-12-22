@@ -3,10 +3,13 @@ package com.icthh.xm.uaa.security.ldap;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 
+import com.icthh.xm.commons.lep.LogicExtensionPoint;
+import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
+import com.icthh.xm.uaa.lep.keyresolver.LdapSearchByTemplateKeyResolver;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
@@ -30,6 +33,7 @@ import org.springframework.security.ldap.userdetails.LdapUserDetailsMapper;
 
 @AllArgsConstructor
 @Slf4j
+@LepService(group = "service.ldap")
 public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
 
     private final DomainUserDetailsService userDetailsService;
@@ -41,15 +45,21 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
                                           String username,
                                           Collection<? extends GrantedAuthority> authorities) {
 
-        Optional<User> userOpt = userService.findOneByLogin(username);
+        String userLogin = mapActiveDirectoryNameToUserLogin(username);
+        Optional<User> userOpt = userService.findOneByLogin(userLogin);
 
         if (userOpt.isPresent()) {
             updateUser(ctx, userOpt.get(), authorities);
         } else {
-            createUser(ctx, username, authorities);
+            createUser(ctx, userLogin, authorities);
         }
 
-        return userDetailsService.loadUserByUsername(username);
+        return userDetailsService.loadUserByUsername(userLogin);
+    }
+
+    @LogicExtensionPoint(value = "MapActiveDirectoryNameToUserLogin", resolver = LdapSearchByTemplateKeyResolver.class)
+    private String mapActiveDirectoryNameToUserLogin(String name) {
+        return name;
     }
 
     private void createUser(DirContextOperations ctx,
