@@ -237,8 +237,9 @@ public class UserResource {
     }
 
     @GetMapping("/users/filter")
+    @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'USER.GET_BY_FILTER.LIST')")
     @Timed
-    public ResponseEntity<List<UserDTO>> getAllByFilers(@ApiParam Pageable pageable, UserFilterQuery userFilterQuery){
+    public ResponseEntity<List<UserDTO>> getAllByFilters(@ApiParam Pageable pageable, UserFilterQuery userFilterQuery){
         final Page<UserDTO> page = userQueryService.findAllUsers(userFilterQuery,pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/users/filter");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
