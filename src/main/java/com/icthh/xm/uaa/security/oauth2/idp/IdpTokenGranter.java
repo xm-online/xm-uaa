@@ -60,7 +60,7 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         return getUserAuthenticationToken(parameters);
     }
 
-    private IdpAuthenticationToken getUserAuthenticationToken(Map<String, String> parameters){
+    private IdpAuthenticationToken getUserAuthenticationToken(Map<String, String> parameters) {
 
         String idpToken = parameters.remove("token");
         // parse IDP id token
@@ -68,19 +68,24 @@ public class IdpTokenGranter extends AbstractTokenGranter {
 
         validateAccessToken(idpOAuth2IdToken);
 
+
+        //TODO think about LEP + config
         Map<String, Object> additionalInformation = idpOAuth2IdToken.getAdditionalInformation();
         String userEmail = (String) additionalInformation.get("email");
 
+        //user + role section
+        //TODO think about LEP + config
         DomainUserDetails userDetails = (DomainUserDetails) domainUserDetailsService.loadUserByUsername(userEmail);
-
         Collection<? extends GrantedAuthority> authorities = authoritiesMapper.mapAuthorities(userDetails.getAuthorities());
 
+        //build container for user
         IdpAuthenticationToken userAuthenticationToken = new IdpAuthenticationToken(userDetails, null, authorities);
         userAuthenticationToken.setDetails(parameters);
 
         return userAuthenticationToken;
 
     }
+
     //TODO add claim validation: audience and issuer
     private void validateAccessToken(OAuth2AccessToken idpOAuth2IdToken) {
         //validate issuer and audience
