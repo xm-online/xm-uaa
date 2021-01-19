@@ -15,6 +15,7 @@ import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
 import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpTokenGranter;
 import com.icthh.xm.uaa.security.provider.DefaultAuthenticationRefreshProvider;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
+import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -123,6 +124,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
 
     private final OtpStore otpStore;
     private final UserService userService;
+    private final UserLoginService userLoginService;
     private final JwtTokenStore tokenStore;
     private final OtpGenerator otpGenerator;
     private final PasswordEncoder passwordEncoder;
@@ -167,7 +169,10 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
             clientDetailsService,
             endpoints.getOAuth2RequestFactory(),
             jwkTokenStore,
-            domainUserDetailsService);
+            domainUserDetailsService,
+            tenantPropertiesService,
+            userService,
+            userLoginService);
 
         granters.add(tfaOtpTokenGranter);
         granters.add(idpTokenGranter);

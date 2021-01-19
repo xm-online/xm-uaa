@@ -39,16 +39,32 @@ public class DomainUserDetailsService implements UserDetailsService {
     public DomainUserDetails loadUserByUsername(final String login) {
         final String lowerLogin = login.toLowerCase().trim();
 
-        String tenantKey = tenantContextHolder.getContext()
-                                                 .getTenantKey()
-                                                 .map(TenantKey::getValue)
-            .orElseThrow(() -> new TenantNotProvidedException("Tenant not provided for authentication"));
+        String tenantKey = getTenantKey();
 
         log.debug("Authenticating login: {}, lowercase: {}, within tenant: {}", login, lowerLogin, tenantKey);
 
         return userLoginRepository.findOneByLogin(lowerLogin)
                                   .map(userLogin -> buildDomainUserDetails(lowerLogin, tenantKey, userLogin))
                                   .orElseThrow(buildException(lowerLogin, tenantKey));
+    }
+
+    public DomainUserDetails retrieveUserByUsername(final String login) {
+        final String lowerLogin = login.toLowerCase().trim();
+
+        String tenantKey = getTenantKey();
+
+        log.debug("Retrieving user with login: {}, lowercase: {}, within tenant: {}", login, lowerLogin, tenantKey);
+
+        return userLoginRepository.findOneByLogin(lowerLogin)
+                                  .map(userLogin -> buildDomainUserDetails(lowerLogin, tenantKey, userLogin))
+                                  .orElse(null);
+    }
+
+    private String getTenantKey() {
+        return tenantContextHolder.getContext()
+            .getTenantKey()
+            .map(TenantKey::getValue)
+            .orElseThrow(() -> new TenantNotProvidedException("Tenant not provided for authentication"));
     }
 
     private Supplier<UsernameNotFoundException> buildException(String lowerLogin, String tenantKey){
@@ -58,7 +74,7 @@ public class DomainUserDetailsService implements UserDetailsService {
         };
     }
 
-    private DomainUserDetails buildDomainUserDetails(String lowerLogin, String tenantKey, UserLogin userLogin) {
+    public static DomainUserDetails buildDomainUserDetails(String lowerLogin, String tenantKey, UserLogin userLogin) {
         User user = userLogin.getUser();
         if (!user.isActivated()) {
             throw new InvalidGrantException("User " + lowerLogin + " was not activated");

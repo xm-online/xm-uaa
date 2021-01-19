@@ -47,6 +47,10 @@ public class TenantPropertiesService implements RefreshableConfiguration {
         return tenantProps.get(cfgTenantKey);
     }
 
+    public TenantContextHolder getTenantContextHolder(){
+        return tenantContextHolder;
+    }
+
     @SneakyThrows
     public void updateTenantProps(String tenentPropertiesYml) {
         String tenantKey = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder);
