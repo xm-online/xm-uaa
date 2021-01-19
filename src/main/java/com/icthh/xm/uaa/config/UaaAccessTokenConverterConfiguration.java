@@ -25,6 +25,9 @@ import java.security.KeyFactory;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 
+import com.icthh.xm.uaa.security.oauth2.idp.CustomJwkTokenStore;
+import com.icthh.xm.uaa.security.oauth2.idp.converter.CustomJwkVerifyingJwtAccessTokenConverter;
+import com.icthh.xm.uaa.security.oauth2.idp.source.JwkDefinitionSource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -33,6 +36,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -128,6 +132,7 @@ public class UaaAccessTokenConverterConfiguration {
      * Apply the token converter (and enhancer) for token store.
      */
     @Bean
+    @Primary
     public JwtTokenStore tokenStore(JwtAccessTokenConverter jwtAccessTokenConverter) throws Exception {
         return new JwtTokenStore(jwtAccessTokenConverter);
     }
@@ -144,6 +149,16 @@ public class UaaAccessTokenConverterConfiguration {
         KeyFactory factory = KeyFactory.getInstance("RSA");
         PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encodedPrivateKey);
         return factory.generatePrivate(keySpec);
+    }
+
+    @Bean
+    public CustomJwkTokenStore jwkTokenStore() {
+
+        JwkDefinitionSource jwkDefinitionSource = new JwkDefinitionSource(keyUriRestTemplate, true);
+        CustomJwkVerifyingJwtAccessTokenConverter jwkVerifyingJwtAccessTokenConverter =
+            new CustomJwkVerifyingJwtAccessTokenConverter(jwkDefinitionSource, tenantContextHolder);
+
+        return new CustomJwkTokenStore(jwkVerifyingJwtAccessTokenConverter);
     }
 
 }

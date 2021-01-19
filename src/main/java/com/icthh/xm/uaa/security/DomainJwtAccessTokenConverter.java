@@ -43,7 +43,7 @@ public class DomainJwtAccessTokenConverter extends JwtAccessTokenConverter {
                 authentication.setDetails(authDetails);
             }
             enrichCustomDetails(authentication, authDetails);
-            DefaultOAuth2AccessToken.class.cast(accessToken).setAdditionalInformation(authDetails);
+            ((DefaultOAuth2AccessToken) accessToken).setAdditionalInformation(authDetails);
         }
         return super.enhance(accessToken, authentication);
     }

@@ -3,9 +3,12 @@ package com.icthh.xm.uaa.config;
 import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.security.DomainTokenServices;
+import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.security.TokenConstraintsService;
 import com.icthh.xm.uaa.security.UserSecurityValidator;
 import com.icthh.xm.uaa.security.oauth2.athorization.code.CustomAuthorizationCodeServices;
+import com.icthh.xm.uaa.security.oauth2.idp.CustomJwkTokenStore;
+import com.icthh.xm.uaa.security.oauth2.idp.IdpTokenGranter;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpGenerator;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
@@ -115,6 +118,9 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
     @Qualifier("authenticationManagerBean")
     private AuthenticationManager authenticationManager;
 
+    @Autowired
+    private DomainUserDetailsService domainUserDetailsService;
+
     private final OtpStore otpStore;
     private final UserService userService;
     private final JwtTokenStore tokenStore;
@@ -129,7 +135,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
     private final CustomAuthorizationCodeServices customAuthorizationCodeServices;
     private final DefaultAuthenticationRefreshProvider defaultAuthenticationRefreshProvider;
     private final UserSecurityValidator userSecurityValidator;
-
+    private final CustomJwkTokenStore jwkTokenStore;
 
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
@@ -155,7 +161,17 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
             endpoints.getOAuth2RequestFactory(),
             tokenStore,
             authenticationManager);
+
+        IdpTokenGranter idpTokenGranter = new IdpTokenGranter(
+            tokenServices(),
+            clientDetailsService,
+            endpoints.getOAuth2RequestFactory(),
+            jwkTokenStore,
+            domainUserDetailsService);
+
         granters.add(tfaOtpTokenGranter);
+        granters.add(idpTokenGranter);
+
         return new CompositeTokenGranter(granters);
     }
 
@@ -167,6 +183,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
 
         final DomainTokenServices tokenServices = new DomainTokenServices();
         tokenServices.setTokenStore(tokenStore);
+        tokenServices.setJwkTokenStore(jwkTokenStore);
         tokenServices.setTokenEnhancer(jwtAccessTokenConverter);
         tokenServices.setAuthenticationRefreshProvider(defaultAuthenticationRefreshProvider);
         tokenServices.setTenantPropertiesService(tenantPropertiesService);

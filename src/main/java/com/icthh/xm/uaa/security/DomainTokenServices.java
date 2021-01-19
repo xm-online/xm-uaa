@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.security;
 
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.domain.User;
+import com.icthh.xm.uaa.security.oauth2.idp.CustomJwkTokenStore;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpGenerator;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
@@ -48,6 +49,8 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
     @Setter
     private TokenStore tokenStore;
     @Setter
+    private CustomJwkTokenStore jwkTokenStore;
+    @Setter
     private TokenEnhancer tokenEnhancer;
     @Setter
     private AuthenticationManager authenticationManager;
@@ -76,6 +79,7 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
     @Override
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(tokenStore, "tokenStore must be set");
+        Assert.notNull(jwkTokenStore, "jwkTokenStore must be set");
         Assert.notNull(otpGenerator, "otpGenerator must be set");
         Assert.notNull(otpSendStrategy, "otpSendStrategy must be set");
         Assert.notNull(otpStore, "otpStore must be set");
@@ -92,7 +96,7 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         }
 
         boolean tenantTfaEnabled = tenantPropertiesService.getTenantProps().getSecurity().isTfaEnabled();
-        return tenantTfaEnabled && DomainUserDetails.class.cast(principal).isTfaEnabled();
+        return tenantTfaEnabled && ((DomainUserDetails) principal).isTfaEnabled();
     }
 
     @Override
