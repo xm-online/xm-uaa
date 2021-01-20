@@ -16,6 +16,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.icthh.xm.uaa.security.oauth2.idp.source.JwkDefinitionSource;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -53,6 +55,9 @@ public class TenantProperties {
 
         @JsonProperty("defaultUserRole")
         private String defaultUserRole;
+
+        @JsonProperty("jwksSourceType")
+        private JwkDefinitionSource.SourceDefinitionType jwksSourceType;
 
         @JsonProperty("tfaEnabled")
         private boolean tfaEnabled = false;

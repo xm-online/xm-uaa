@@ -86,7 +86,7 @@ public class CustomJwkVerifyingJwtAccessTokenConverter extends JwtAccessTokenCon
      * as the primary source for looking up {@link CustomJwkDefinition}(s).
      *
      * @param jwkDefinitionSource the source for {@link CustomJwkDefinition}(s)
-     * @param tenantContextHolder
+     * @param tenantContextHolder tenant context holder
      */
     public CustomJwkVerifyingJwtAccessTokenConverter(JwkDefinitionSource jwkDefinitionSource, TenantContextHolder tenantContextHolder) {
         this.jwkDefinitionSource = jwkDefinitionSource;
@@ -110,7 +110,8 @@ public class CustomJwkVerifyingJwtAccessTokenConverter extends JwtAccessTokenCon
         if (keyIdHeader == null) {
             throw new InvalidTokenException("Invalid JWT/JWS: " + KEY_ID + " is a required JOSE Header");
         }
-        JwkDefinitionSource.JwkDefinitionHolder jwkDefinitionHolder = this.jwkDefinitionSource.getDefinitionLoadIfNecessary(keyIdHeader);
+        JwkDefinitionSource.JwkDefinitionHolder jwkDefinitionHolder =
+            this.jwkDefinitionSource.getDefinitionLoadIfNecessary(keyIdHeader);
         if (jwkDefinitionHolder == null) {
             throw new InvalidTokenException("Invalid JOSE Header " + KEY_ID + " (" + keyIdHeader + ")");
         }

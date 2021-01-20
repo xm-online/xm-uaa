@@ -6,7 +6,6 @@ import com.icthh.xm.uaa.security.DomainJwtAccessTokenConverter;
 
 import com.icthh.xm.uaa.security.DomainJwtAccessTokenDetailsPostProcessor;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,8 +25,10 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 
 import com.icthh.xm.uaa.security.oauth2.idp.CustomJwkTokenStore;
+import com.icthh.xm.uaa.security.oauth2.idp.config.IdpConfigRepository;
 import com.icthh.xm.uaa.security.oauth2.idp.converter.CustomJwkVerifyingJwtAccessTokenConverter;
 import com.icthh.xm.uaa.security.oauth2.idp.source.JwkDefinitionSource;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -60,13 +61,19 @@ public class UaaAccessTokenConverterConfiguration {
     private final RestTemplate keyUriRestTemplate;
     private final TenantContextHolder tenantContextHolder;
     private final ApplicationProperties applicationProperties;
+    private final IdpConfigRepository idpConfigRepository;
+    private final TenantPropertiesService tenantPropertiesService;
 
     public UaaAccessTokenConverterConfiguration(TenantContextHolder tenantContextHolder,
                                                 @Qualifier("loadBalancedRestTemplate") RestTemplate keyUriRestTemplate,
-                                                ApplicationProperties applicationProperties) {
+                                                ApplicationProperties applicationProperties,
+                                                IdpConfigRepository idpConfigRepository,
+                                                TenantPropertiesService tenantPropertiesService) {
         this.tenantContextHolder = tenantContextHolder;
         this.keyUriRestTemplate = keyUriRestTemplate;
         this.applicationProperties = applicationProperties;
+        this.idpConfigRepository = idpConfigRepository;
+        this.tenantPropertiesService = tenantPropertiesService;
     }
 
     /**
@@ -122,7 +129,7 @@ public class UaaAccessTokenConverterConfiguration {
             log.info("Keystore location {}", applicationProperties.getKeystoreFile());
             try (InputStream stream = new ClassPathResource(applicationProperties.getKeystoreFile()).exists()
                 ? new ClassPathResource(applicationProperties.getKeystoreFile()).getInputStream()
-                : new FileInputStream(new File(applicationProperties.getKeystoreFile()))) {
+                : new FileInputStream(applicationProperties.getKeystoreFile())) {
                 return initPrivateKeyFromKeystore(stream);
             }
         }
@@ -154,7 +161,8 @@ public class UaaAccessTokenConverterConfiguration {
     @Bean
     public CustomJwkTokenStore jwkTokenStore() {
 
-        JwkDefinitionSource jwkDefinitionSource = new JwkDefinitionSource(keyUriRestTemplate, true);
+        JwkDefinitionSource jwkDefinitionSource =
+            new JwkDefinitionSource(keyUriRestTemplate, idpConfigRepository, tenantPropertiesService);
         CustomJwkVerifyingJwtAccessTokenConverter jwkVerifyingJwtAccessTokenConverter =
             new CustomJwkVerifyingJwtAccessTokenConverter(jwkDefinitionSource, tenantContextHolder);
 

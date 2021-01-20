@@ -110,24 +110,34 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         DomainUserDetails userDetails = domainUserDetailsService.retrieveUserByUsername(userEmail);
 
         if (userDetails == null) {
-            log.debug("User with login: {} not exists. Creating new user.", userEmail);
-
-            UserDTO userDTO = buildUserDTO(additionalInformation);
-            userLoginService.normalizeLogins(userDTO.getLogins());
-            userLoginService.verifyLoginsNotExist(userDTO.getLogins());
-            User newUser = userService.createUser(userDTO);
-
-            UserLogin userLogin = newUser.getLogins()
-                .stream()
-                .filter(login -> UserLoginType.EMAIL.getValue().equals(login.getTypeKey()))
-                .findFirst()
-                .orElseThrow(() -> new NoSuchElementException("UserLogin with type " +
-                    UserLoginType.EMAIL.getValue() + "not found"));
-
-            return DomainUserDetailsService.buildDomainUserDetails(userEmail, getTenantKey(), userLogin);
+            return buildDomainUserDetails(additionalInformation, userEmail);
         }
 
         return userDetails;
+    }
+
+    private DomainUserDetails buildDomainUserDetails(Map<String, Object> additionalInformation, String userEmail) {
+        log.debug("User with login: {} not exists. Creating new user.", userEmail);
+
+        User newUser = createUser(additionalInformation);
+
+        UserLogin userLogin = newUser.getLogins()
+            .stream()
+            .filter(login -> UserLoginType.EMAIL.getValue().equals(login.getTypeKey()))
+            .findFirst()
+            .orElseThrow(() -> new NoSuchElementException("UserLogin with type " +
+                UserLoginType.EMAIL.getValue() + "not found"));
+
+        return DomainUserDetailsService.buildDomainUserDetails(userEmail, getTenantKey(), userLogin);
+    }
+
+    private User createUser(Map<String, Object> additionalInformation) {
+        UserDTO userDTO = buildUserDTO(additionalInformation);
+
+        userLoginService.normalizeLogins(userDTO.getLogins());
+        userLoginService.verifyLoginsNotExist(userDTO.getLogins());
+
+        return userService.createUser(userDTO);
     }
 
     //TODO add claim validation: audience and issuer
