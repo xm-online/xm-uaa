@@ -56,9 +56,6 @@ public class TenantProperties {
         @JsonProperty("defaultUserRole")
         private String defaultUserRole;
 
-        @JsonProperty("jwksSourceType")
-        private JwkDefinitionSource.SourceDefinitionType jwksSourceType;
-
         @JsonProperty("tfaEnabled")
         private boolean tfaEnabled = false;
 

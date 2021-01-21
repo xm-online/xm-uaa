@@ -6,6 +6,6 @@ import java.util.Map;
 
 public interface DefinitionSourceLoader {
 
-    List<InputStream> retrieveRawPublicKeysDefinition(Map<String, String> params);
+    List<InputStream> retrieveRawPublicKeysDefinition(Map<String, Object> params);
 
 }

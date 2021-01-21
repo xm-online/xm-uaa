@@ -39,12 +39,14 @@ public class IdpConfigRepository implements RefreshableConfiguration {
      */
     private final Map<String, Map<String, IdpConfigContainer>> idpClientConfigs = new ConcurrentHashMap<>();
 
+    private final Map<String, Map<String, Object>> idpPublicConfigs = new ConcurrentHashMap<>();
+
     /**
      * In memory storage.
      * Stores information about tenant IDP clients public/private configuration that currently in process.
      * We need to store this information in memory cause:
-     *  - public/private configuration could be loaded and processed in random order.
-     *  - to avoid corruption previously registered in-memory tenant clients config
+     * - public/private configuration could be loaded and processed in random order.
+     * - to avoid corruption previously registered in-memory tenant clients config
      * For correct tenant IDP clients registration both configs should be loaded and processed.
      */
     private final Map<String, Map<String, IdpConfigContainer>> tmpIdpClientConfigs = new ConcurrentHashMap<>();
@@ -139,6 +141,15 @@ public class IdpConfigRepository implements RefreshableConfiguration {
                         idpConfigContainer.setIdpPublicClientConfig(publicIdpConf);
                     }
                 );
+
+            Map<String, Object> publicConfig = new HashMap<>();
+            publicConfig.put("directLogin", idpPublicConfig.getConfig().isDirectLogin());
+
+            if (idpPublicConfig.getConfig().getJwksSourceType() != null) {
+                publicConfig.put("jwksSourceType", idpPublicConfig.getConfig().getJwksSourceType());
+            }
+
+            idpPublicConfigs.put(tenantKey, publicConfig);
         }
 
         MutablePair<Boolean, Boolean> configProcessingState =
@@ -215,5 +226,9 @@ public class IdpConfigRepository implements RefreshableConfiguration {
 
     public Map<String, IdpConfigContainer> getIdpClientConfigsByTenantKey(String tenantKey) {
         return idpClientConfigs.get(tenantKey);
+    }
+
+    public Map<String, Object> getIdpPublicConfigByTenantKey(String tenantKey) {
+        return idpPublicConfigs.get(tenantKey);
     }
 }

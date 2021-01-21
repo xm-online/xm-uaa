@@ -1,8 +1,6 @@
 package com.icthh.xm.uaa.security.oauth2.idp.source;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.icthh.xm.uaa.domain.properties.TenantProperties;
-import com.icthh.xm.uaa.security.TenantNotProvidedException;
 import com.icthh.xm.uaa.security.oauth2.idp.config.IdpConfigRepository;
 import com.icthh.xm.uaa.security.oauth2.idp.converter.CustomJwkSetConverter;
 import com.icthh.xm.uaa.security.oauth2.idp.source.loaders.LocalStorageDefinitionSourceLoader;
@@ -56,7 +54,7 @@ public class JwkDefinitionSource {
      * then {@link DefinitionSourceLoader#retrieveRawPublicKeysDefinition(Map)} }
      * will be called (to re-load the cache) and then followed-up with a second attempt to locate the JWK definition.
      *
-     * @param keyId     the Key ID (&quot;kid&quot;)
+     * @param keyId the Key ID (&quot;kid&quot;)
      * @return the matching {@link JwkDefinitionHolder} or null if not found
      */
     public JwkDefinitionHolder getDefinitionLoadIfNecessary(String keyId) {
@@ -81,16 +79,15 @@ public class JwkDefinitionSource {
     private Map<String, JwkDefinitionHolder> updateJwkDefinitionHolders() {
         DefinitionSourceLoader definitionSourceLoader;
 
-        Map<String, String> params = new HashMap<>();
+        Map<String, Object> params = new HashMap<>();
 
-        String tenantKey = tenantPropertiesService.getTenantContextHolder().getTenantKey();
+        String tenantKey = getTenantKey();
         SourceDefinitionType sourceDefinitionType = getDefinitionSourceType();
 
+        definitionSourceLoader = getOrCreateDefinitionSourceLoader(tenantKey, sourceDefinitionType);
+
         if (SourceDefinitionType.REMOTE.equals(sourceDefinitionType)) {
-            definitionSourceLoader = getOrCreateDefinitionSourceLoader(tenantKey, sourceDefinitionType);
-            params.put("tenantKey", tenantKey);
-        } else {
-            definitionSourceLoader = getOrCreateDefinitionSourceLoader(tenantKey, sourceDefinitionType);
+            params.put("clientConfigs", idpConfigRepository.getIdpClientConfigsByTenantKey(tenantKey));
         }
 
         List<InputStream> publicKeysRawDefinition = definitionSourceLoader.retrieveRawPublicKeysDefinition(params);
@@ -100,20 +97,25 @@ public class JwkDefinitionSource {
         return newJwkDefinitions;
     }
 
+    private String getTenantKey() {
+        return tenantPropertiesService.getTenantContextHolder().getTenantKey();
+    }
+
     private SourceDefinitionType getDefinitionSourceType() {
-        TenantProperties tenantProps = tenantPropertiesService.getTenantProps();
-        TenantProperties.Security security = tenantProps.getSecurity();
+        Map<String, Object> idpPublicConfig = idpConfigRepository.getIdpPublicConfigByTenantKey(getTenantKey());
+        SourceDefinitionType jwksSourceType = SourceDefinitionType.fromValue(String.valueOf(idpPublicConfig.get("jwksSourceType")));
 
-        if (security == null) {
-            throw new TenantNotProvidedException("Tenant security config not provided");
-        }
-
-        SourceDefinitionType jwksSourceType = security.getJwksSourceType();
         log.debug("jwks source definition type: {}", jwksSourceType);
+
         return jwksSourceType;
     }
 
     private DefinitionSourceLoader getOrCreateDefinitionSourceLoader(String tenantKey, SourceDefinitionType type) {
+        if (type == null) {
+            throw new IllegalArgumentException("Definition loader type not specified " +
+                "in configuration for tenant [" + tenantKey + "]");
+        }
+
         Map<String, DefinitionSourceLoader> loader = definitionSourceLoaderContainer.getOrDefault(tenantKey, new HashMap<>());
 
         DefinitionSourceLoader definitionSourceLoader;
@@ -133,7 +135,7 @@ public class JwkDefinitionSource {
         DefinitionSourceLoader definitionSourceLoader;
         switch (type) {
             case REMOTE:
-                definitionSourceLoader = new RemoteDefinitionSourceLoader(idpConfigRepository);
+                definitionSourceLoader = new RemoteDefinitionSourceLoader();
                 break;
             case STORAGE:
                 definitionSourceLoader = new LocalStorageDefinitionSourceLoader(loadBalancedRestTemplate);
@@ -227,7 +229,7 @@ public class JwkDefinitionSource {
         public static SourceDefinitionType fromValue(String value) {
             SourceDefinitionType result = null;
             for (SourceDefinitionType type : values()) {
-                if (type.value().equals(value)) {
+                if (type.value().equalsIgnoreCase(value)) {
                     result = type;
                     break;
                 }

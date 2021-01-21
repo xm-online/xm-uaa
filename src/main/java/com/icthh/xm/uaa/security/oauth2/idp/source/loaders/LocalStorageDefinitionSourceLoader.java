@@ -25,7 +25,7 @@ public class LocalStorageDefinitionSourceLoader implements DefinitionSourceLoade
 
     @SneakyThrows
     @Override
-    public List<InputStream> retrieveRawPublicKeysDefinition(Map<String, String> params) {
+    public List<InputStream> retrieveRawPublicKeysDefinition(Map<String, Object> params) {
 
         HttpEntity<Void> request = new HttpEntity<>(new HttpHeaders());
         String publicKeyEndpointUri = "http://config/api/jwks";//TODO think how to get it

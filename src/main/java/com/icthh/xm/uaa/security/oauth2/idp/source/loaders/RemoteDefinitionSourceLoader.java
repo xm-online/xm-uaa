@@ -1,12 +1,11 @@
 package com.icthh.xm.uaa.security.oauth2.idp.source.loaders;
 
 import com.icthh.xm.uaa.security.oauth2.idp.config.IdpConfigContainer;
-import com.icthh.xm.uaa.security.oauth2.idp.config.IdpConfigRepository;
 import com.icthh.xm.uaa.security.oauth2.idp.config.IdpPublicConfig;
 import com.icthh.xm.uaa.security.oauth2.idp.source.DefinitionSourceLoader;
+import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.oauth2.provider.token.store.jwk.JwkException;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,19 +15,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@NoArgsConstructor
 public class RemoteDefinitionSourceLoader implements DefinitionSourceLoader {
 
-    private final IdpConfigRepository idpConfigRepository;
-
-    public RemoteDefinitionSourceLoader(IdpConfigRepository idpConfigRepository) {
-        this.idpConfigRepository = idpConfigRepository;
-    }
-
     @Override
-    public List<InputStream> retrieveRawPublicKeysDefinition(Map<String, String> params) {
+    public List<InputStream> retrieveRawPublicKeysDefinition(Map<String, Object> params) {
 
-        String tenantKey = params.get("tenantKey");
-        List<URL> jwkSetUrls = loadJwkSetUrls(tenantKey);
+        Map<String, IdpConfigContainer> idpClientConfig = (Map<String, IdpConfigContainer>) params.get("clientConfigs");
+
+        List<URL> jwkSetUrls = loadJwkSetUrls(getJwkSetEndpoints(idpClientConfig));
 
         return jwkSetUrls
             .stream()
@@ -41,9 +36,7 @@ public class RemoteDefinitionSourceLoader implements DefinitionSourceLoader {
             }).collect(Collectors.toList());
     }
 
-    public List<URL> loadJwkSetUrls(String tenantKey) {
-        List<String> jwkSetEndpoints = getJwkSetEndpoints(tenantKey);
-
+    public List<URL> loadJwkSetUrls(List<String> jwkSetEndpoints) {
         return jwkSetEndpoints
             .stream()
             .map(jwkSetEndpoint -> {
@@ -55,9 +48,7 @@ public class RemoteDefinitionSourceLoader implements DefinitionSourceLoader {
             }).collect(Collectors.toList());
     }
 
-    private List<String> getJwkSetEndpoints(String tenantKey) {
-        Map<String, IdpConfigContainer> idpClientConfig = idpConfigRepository.getIdpClientConfigsByTenantKey(tenantKey);
-
+    private List<String> getJwkSetEndpoints(Map<String, IdpConfigContainer> idpClientConfig) {
         return idpClientConfig.values()
             .stream()
             .map(IdpConfigContainer::getIdpPublicClientConfig)
