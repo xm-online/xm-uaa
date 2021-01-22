@@ -16,10 +16,16 @@
 package com.icthh.xm.uaa.security.oauth2.idp.converter;
 
 import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.uaa.security.oauth2.idp.config.IdpConfigContainer;
+import com.icthh.xm.uaa.security.oauth2.idp.config.IdpConfigRepository;
+import com.icthh.xm.uaa.security.oauth2.idp.config.IdpPublicConfig;
 import com.icthh.xm.uaa.security.oauth2.idp.source.JwkDefinitionSource;
 import com.icthh.xm.uaa.security.oauth2.idp.source.model.CustomJwkDefinition;
+import com.icthh.xm.uaa.security.oauth2.idp.validation.verifiers.AudienceClaimVerifier;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.SneakyThrows;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.jwt.Jwt;
 import org.springframework.security.jwt.JwtHelper;
 import org.springframework.security.jwt.crypto.sign.SignatureVerifier;
@@ -28,10 +34,18 @@ import org.springframework.security.oauth2.common.exceptions.InvalidTokenExcepti
 import org.springframework.security.oauth2.common.util.JsonParser;
 import org.springframework.security.oauth2.common.util.JsonParserFactory;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.security.oauth2.provider.token.store.IssuerClaimVerifier;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
+import org.springframework.security.oauth2.provider.token.store.JwtClaimsSetVerifier;
 import org.springframework.security.oauth2.provider.token.store.jwk.JwkException;
 
+import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import static com.icthh.xm.uaa.security.oauth2.idp.source.model.CustomJwkAttributes.ALGORITHM;
 import static com.icthh.xm.uaa.security.oauth2.idp.source.model.CustomJwkAttributes.KEY_ID;
@@ -77,7 +91,9 @@ import static com.icthh.xm.uaa.security.oauth2.idp.source.model.CustomJwkAttribu
 @EqualsAndHashCode(callSuper = true)
 public class CustomJwkVerifyingJwtAccessTokenConverter extends JwtAccessTokenConverter {
     private JwkDefinitionSource jwkDefinitionSource;
+    private Map<String, Map<String, JwtClaimsSetVerifier>> jwtClaimsSetVerifiers = new ConcurrentHashMap<>();
     private final TenantContextHolder tenantContextHolder;
+    private final IdpConfigRepository idpConfigRepository;
     private final CustomJwtHeaderConverter customJwtHeaderConverter = new CustomJwtHeaderConverter();
     private final JsonParser jsonParser = JsonParserFactory.create();
 
@@ -87,10 +103,14 @@ public class CustomJwkVerifyingJwtAccessTokenConverter extends JwtAccessTokenCon
      *
      * @param jwkDefinitionSource the source for {@link CustomJwkDefinition}(s)
      * @param tenantContextHolder tenant context holder
+     * @param idpConfigRepository
      */
-    public CustomJwkVerifyingJwtAccessTokenConverter(JwkDefinitionSource jwkDefinitionSource, TenantContextHolder tenantContextHolder) {
+    public CustomJwkVerifyingJwtAccessTokenConverter(JwkDefinitionSource jwkDefinitionSource,
+                                                     TenantContextHolder tenantContextHolder,
+                                                     IdpConfigRepository idpConfigRepository) {
         this.jwkDefinitionSource = jwkDefinitionSource;
         this.tenantContextHolder = tenantContextHolder;
+        this.idpConfigRepository = idpConfigRepository;
     }
 
     /**
@@ -129,16 +149,83 @@ public class CustomJwkVerifyingJwtAccessTokenConverter extends JwtAccessTokenCon
 
         // Verify signature
         SignatureVerifier verifier = jwkDefinitionHolder.getSignatureVerifier();
-        Jwt jwt = JwtHelper.decode(token);
-        jwt.verifySignature(verifier);
+        Jwt jwt = JwtHelper.decodeAndVerify(token, verifier);
 
         Map<String, Object> claims = this.jsonParser.parseMap(jwt.getClaims());
         if (claims.containsKey(EXP) && claims.get(EXP) instanceof Integer) {
             Integer expiryInt = (Integer) claims.get(EXP);
             claims.put(EXP, Long.valueOf(expiryInt));
         }
-        this.getJwtClaimsSetVerifier().verify(claims);
+
+        validateClaims(claims);
 
         return claims;
+    }
+
+    private void validateClaims(Map<String, Object> claims) {
+        List<JwtClaimsSetVerifier> claimVerifiers = buildClaimVerifiers(claims);
+
+        claimVerifiers.forEach(claimsSetVerifier -> claimsSetVerifier.verify(claims));
+    }
+
+    @SneakyThrows
+    private List<JwtClaimsSetVerifier> buildClaimVerifiers(Map<String, Object> claims) {
+        String tenantKey = tenantContextHolder.getTenantKey();
+        Map<String, JwtClaimsSetVerifier> tenantClaimVerifiers = this.jwtClaimsSetVerifiers.getOrDefault(tenantKey, new HashMap<>());
+
+        return buildDefaultClaimVerifiers(tenantKey, claims);
+    }
+
+    @SneakyThrows
+    private List<JwtClaimsSetVerifier> buildDefaultClaimVerifiers(String tenantKey,
+                                                                  Map<String, Object> claims) {
+        Map<String, IdpConfigContainer> configs = idpConfigRepository.getIdpClientConfigsByTenantKey(tenantKey);
+
+        String tokenAud = getTokenClaim(claims, "aud");
+        String issuerDefinition = getIssuerDefinition(tokenAud, configs);
+
+        if (StringUtils.isEmpty(issuerDefinition)) {
+            //TODO put valid exception
+            throw new Exception("Issuer not found for token with audience: " + tokenAud);
+        }
+
+        return List.of(new AudienceClaimVerifier(tokenAud), new IssuerClaimVerifier(new URL(issuerDefinition)));
+    }
+
+    private String getTokenClaim(Map<String, Object> claims, String targetClaim) throws Exception {
+        String tokenClaim = (String) claims.get(targetClaim);
+
+        if (StringUtils.isEmpty(tokenClaim)) {
+            //TODO put valid exception
+            throw new Exception("Claim not found: " + targetClaim);
+        }
+        return tokenClaim;
+    }
+
+    private List<String> getAudienceDefinitions(String tokenAud, Map<String, IdpConfigContainer> configs) {
+        return configs
+            .values()
+            .stream()
+            .map(IdpConfigContainer::getIdpPublicClientConfig)
+            .map(IdpPublicConfig.IdpConfigContainer.IdpPublicClientConfig::getClientId)
+            .filter(Objects::nonNull)
+            .filter(clientId -> clientId.equals(tokenAud))
+            .collect(Collectors.toList());
+    }
+
+    private String getIssuerDefinition(String tokenAud, Map<String, IdpConfigContainer> configs) {
+        List<IdpPublicConfig.IdpConfigContainer.IdpPublicClientConfig> publicClientConfigs = configs
+            .values()
+            .stream()
+            .map(IdpConfigContainer::getIdpPublicClientConfig)
+            .collect(Collectors.toList());
+
+        return publicClientConfigs
+            .stream()
+            .map(idpPublicClientConfig -> Map.entry(idpPublicClientConfig.getClientId(),
+                idpPublicClientConfig.getIssuer()))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+            .get(tokenAud);
+
     }
 }

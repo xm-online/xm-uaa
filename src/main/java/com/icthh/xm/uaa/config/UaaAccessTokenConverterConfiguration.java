@@ -164,7 +164,7 @@ public class UaaAccessTokenConverterConfiguration {
         JwkDefinitionSource jwkDefinitionSource =
             new JwkDefinitionSource(keyUriRestTemplate, idpConfigRepository, tenantPropertiesService);
         CustomJwkVerifyingJwtAccessTokenConverter jwkVerifyingJwtAccessTokenConverter =
-            new CustomJwkVerifyingJwtAccessTokenConverter(jwkDefinitionSource, tenantContextHolder);
+            new CustomJwkVerifyingJwtAccessTokenConverter(jwkDefinitionSource, tenantContextHolder, idpConfigRepository);
 
         return new CustomJwkTokenStore(jwkVerifyingJwtAccessTokenConverter);
     }

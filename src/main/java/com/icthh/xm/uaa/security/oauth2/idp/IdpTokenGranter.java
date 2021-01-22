@@ -27,12 +27,16 @@ import org.springframework.security.oauth2.provider.OAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.TokenRequest;
 import org.springframework.security.oauth2.provider.token.AbstractTokenGranter;
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
+import org.springframework.security.oauth2.provider.token.store.IssuerClaimVerifier;
+import org.springframework.security.oauth2.provider.token.store.JwtClaimsSetVerifier;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 @Slf4j
 public class IdpTokenGranter extends AbstractTokenGranter {
@@ -83,7 +87,7 @@ public class IdpTokenGranter extends AbstractTokenGranter {
     }
 
     private IdpAuthenticationToken getUserAuthenticationToken(Map<String, String> parameters) {
-
+        buildClaimsValidators();
         String idpToken = parameters.remove("token");
         // parse IDP id token
         OAuth2AccessToken idpOAuth2IdToken = jwkTokenStore.readAccessToken(idpToken);
@@ -103,6 +107,14 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         userAuthenticationToken.setDetails(parameters);
 
         return userAuthenticationToken;
+    }
+
+    //TODO LEP
+    private void buildClaimsValidators() {
+//        Map<String, Set<JwtClaimsSetVerifier>> claimsSetVerifiers = jwkTokenStore.getJwtTokenEnhancer().getJwtClaimsSetVerifiers();
+//
+//        Set<JwtClaimsSetVerifier> jwtClaimsSetVerifiers = Set.of(IssuerClaimVerifier);
+//        claimsSetVerifiers.put();
     }
 
     private DomainUserDetails retrieveDomainUserDetails(Map<String, Object> additionalInformation) {

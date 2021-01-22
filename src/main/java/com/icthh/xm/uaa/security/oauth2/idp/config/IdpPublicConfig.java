@@ -39,6 +39,9 @@ public class IdpPublicConfig {
             @JsonProperty("name")
             private String name;
 
+            @JsonProperty("issuer")
+            private String issuer;
+
             @JsonProperty("clientId")
             private String clientId;
 
