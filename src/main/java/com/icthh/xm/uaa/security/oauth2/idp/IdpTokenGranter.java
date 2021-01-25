@@ -34,7 +34,6 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 
 @Slf4j
 @LepService(group = "security.idp")
@@ -48,7 +47,6 @@ public class IdpTokenGranter extends AbstractTokenGranter {
     private final UserService userService;
     private final UserLoginService userLoginService;
     private final GrantedAuthoritiesMapper authoritiesMapper = new NullAuthoritiesMapper();
-
 
     public IdpTokenGranter(AuthorizationServerTokenServices tokenServices,
                            ClientDetailsService clientDetailsService,
@@ -81,13 +79,11 @@ public class IdpTokenGranter extends AbstractTokenGranter {
 
     @SneakyThrows
     private Authentication getOAuth2AuthenticationFromToken(Map<String, String> parameters) {
-
         return getUserAuthenticationToken(parameters);
     }
 
     private IdpAuthenticationToken getUserAuthenticationToken(Map<String, String> parameters) {
-        buildClaimsValidators();
-        String idpToken = parameters.remove("token"); //TODO why we remove this from parameter?
+        String idpToken = parameters.get("token");
         //TODO Also put all key, hardcoded names, etc to constant class (if more than one time it used) or to private static final variable
 
         // parse IDP id token
@@ -96,7 +92,6 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         validateIdpAccessToken(idpOAuth2IdToken);
 
         //user + role section
-        //TODO think about LEP + config
         DomainUserDetails userDetails = retrieveDomainUserDetails(idpOAuth2IdToken);
         Collection<? extends GrantedAuthority> authorities =
             authoritiesMapper.mapAuthorities(userDetails.getAuthorities());
@@ -108,27 +103,20 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         return userAuthenticationToken;
     }
 
-
-    //TODO do we really need this method, can we use only validateAccessToken
-    private void buildClaimsValidators() {
-//        Map<String, Set<JwtClaimsSetVerifier>> claimsSetVerifiers = jwkTokenStore.getJwtTokenEnhancer().getJwtClaimsSetVerifiers();
-//
-//        Set<JwtClaimsSetVerifier> jwtClaimsSetVerifiers = Set.of(IssuerClaimVerifier);
-//        claimsSetVerifiers.put();
-    }
-
     private DomainUserDetails retrieveDomainUserDetails(OAuth2AccessToken idpOAuth2IdToken) {
         String userIdentity = extractUserIdentity(idpOAuth2IdToken);
         DomainUserDetails userDetails = domainUserDetailsService.retrieveUserByUsername(userIdentity);
 
         if (userDetails == null) {
             log.info("User not found by identity: {}, new user will be created", userIdentity);
-            userDetails = buildDomainUserDetails(userIdentity, idpOAuth2IdToken);
+            User newUser = createUser(userIdentity, idpOAuth2IdToken);
+            userDetails = DomainUserDetailsService.buildDomainUserDetails(userIdentity, getTenantKey(), newUser);
         }
         log.info("Mapped user for identity:{} is {}", userIdentity, userDetails);
         return userDetails;
     }
 
+    //TODO Think about name for "identity" , principal?
     @LogicExtensionPoint(value = "ExtractUserIdentity")
     public String extractUserIdentity(OAuth2AccessToken idpOAuth2IdToken) {
         Map<String, Object> additionalInformation = idpOAuth2IdToken.getAdditionalInformation();
@@ -137,44 +125,27 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         return (String) additionalInformation.get("email");
     }
 
-    private DomainUserDetails buildDomainUserDetails(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
-        log.debug("User with login: {} not exists. Creating new user.", userIdentity);
-
-        User newUser = createUser(userIdentity, idpOAuth2IdToken);
-
-        //TODO think how to avoid this check. What we will do if login is not email
-        //TODO what the difference between userIdentity and userLogin
-        //TODO userLogin used only for getUser (buildDomainUserDetails ->   User user = userLogin.getUser();)
-        UserLogin userLogin = newUser.getLogins()
-            .stream()
-            .filter(login -> UserLoginType.EMAIL.getValue().equals(login.getTypeKey()))
-            .findFirst()
-            .orElseThrow(() -> new NoSuchElementException("UserLogin with type " +
-                UserLoginType.EMAIL.getValue() + "not found"));
-
-        return DomainUserDetailsService.buildDomainUserDetails(userIdentity, getTenantKey(), userLogin);
-    }
-
     private User createUser(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
-        UserDTO userDTO = convertIdpToXmUser(userIdentity, idpOAuth2IdToken);
+        UserDTO userDTO = convertIdpClaimsToXmUser(userIdentity, idpOAuth2IdToken);
 
         userLoginService.normalizeLogins(userDTO.getLogins());
         userLoginService.verifyLoginsNotExist(userDTO.getLogins());
 
-        userDTO.setRoleKey(mapIdpRole(userIdentity, idpOAuth2IdToken));
+        userDTO.setRoleKey(mapIdpIdTokenToRole(userIdentity, idpOAuth2IdToken));
 
         return userService.createUser(userDTO);
     }
 
     //TODO add claim validation: audience and issuer
+    // throw exception, define throw, javadoc
     @LogicExtensionPoint(value = "ValidateIdpAccessToken")
     public void validateIdpAccessToken(OAuth2AccessToken idpOAuth2IdToken) {
         //validate issuer and audience, etc, + LEP
     }
 
 
-    @LogicExtensionPoint(value = "ConvertIdpToXmUser")
-    public UserDTO convertIdpToXmUser(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
+    @LogicExtensionPoint(value = "ConvertIdpClaimsToXmUser")
+    public UserDTO convertIdpClaimsToXmUser(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
         Map<String, Object> additionalInformation = idpOAuth2IdToken.getAdditionalInformation();
         UserDTO userDTO = new UserDTO();
 
@@ -182,11 +153,11 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         /*
          * security:
          *   idp:
-         *     defaultAdditionalInformation:
-         *       userIdentity: email
-         *       userIdentityType: LOGIN.EMAIL
-         *       firstName:  given_name
-         *       lastName: family_name
+         *     defaultIdpClaimMapping:
+         *       userIdentityAttribute: email
+         *       userIdentityType:      LOGIN.EMAIL
+         *       firstNameAttribute:    given_name
+         *       lastNameAttribute:     family_name
          */
 
         //base info mapping
@@ -201,8 +172,9 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         return userDTO;
     }
 
-    @LogicExtensionPoint(value = "MapIdpRole")
-    public String mapIdpRole(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
+    //TODO think about name
+    @LogicExtensionPoint(value = "MapIdpIdTokenToRole")
+    public String mapIdpIdTokenToRole(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
         TenantProperties tenantProps = tenantPropertiesService.getTenantProps();
         TenantProperties.Security security = tenantProps.getSecurity();
 

@@ -16,8 +16,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * TODO will be reworked after implementation on ms-config side
  * Class from loading JWKS public keys from XM storage.
  */
+@Deprecated
 public class LocalStorageDefinitionSourceLoader implements DefinitionSourceLoader {
 
     private final RestTemplate loadBalancedRestTemplate;

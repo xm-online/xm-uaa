@@ -44,7 +44,7 @@ public class DomainUserDetailsService implements UserDetailsService {
         log.debug("Authenticating login: {}, lowercase: {}, within tenant: {}", login, lowerLogin, tenantKey);
 
         return userLoginRepository.findOneByLogin(lowerLogin)
-                                  .map(userLogin -> buildDomainUserDetails(lowerLogin, tenantKey, userLogin))
+                                  .map(userLogin -> buildDomainUserDetails(lowerLogin, tenantKey, userLogin.getUser()))
                                   .orElseThrow(buildException(lowerLogin, tenantKey));
     }
 
@@ -56,7 +56,7 @@ public class DomainUserDetailsService implements UserDetailsService {
         log.debug("Retrieving user with login: {}, lowercase: {}, within tenant: {}", login, lowerLogin, tenantKey);
 
         return userLoginRepository.findOneByLogin(lowerLogin)
-                                  .map(userLogin -> buildDomainUserDetails(lowerLogin, tenantKey, userLogin))
+                                  .map(userLogin -> buildDomainUserDetails(lowerLogin, tenantKey, userLogin.getUser()))
                                   .orElse(null);
     }
 
@@ -74,8 +74,7 @@ public class DomainUserDetailsService implements UserDetailsService {
         };
     }
 
-    public static DomainUserDetails buildDomainUserDetails(String lowerLogin, String tenantKey, UserLogin userLogin) {
-        User user = userLogin.getUser();
+    public static DomainUserDetails buildDomainUserDetails(String lowerLogin, String tenantKey, User user) {
         if (!user.isActivated()) {
             throw new InvalidGrantException("User " + lowerLogin + " was not activated");
         }

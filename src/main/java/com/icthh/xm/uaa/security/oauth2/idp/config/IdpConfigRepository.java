@@ -20,10 +20,10 @@ import java.util.stream.Collectors;
  * This class reads and process both IDP clients public and private configuration for each tenant.
  * Tenant IDP clients created for each successfully loaded config. If config not fully loaded it skipped.
  */
-//FIXME move to xm-commons-idp model for config file
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@Deprecated //TODO remove it
 public class IdpConfigRepository implements RefreshableConfiguration {
 
     //FIXME read only settings-public.yml + logic for init DefinitionSourceLoader
