@@ -7,7 +7,7 @@ import org.springframework.security.core.GrantedAuthority;
 import java.util.Collection;
 
 /**
- * The {@link IdpAuthenticationToken} class.
+ * Class for storing user details wrapped by {@link DomainUserDetails}.
  */
 public class IdpAuthenticationToken extends AbstractAuthenticationToken {
 

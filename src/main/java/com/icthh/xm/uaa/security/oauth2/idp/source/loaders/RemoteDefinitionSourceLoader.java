@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Class from loading JWKS public keys from remote host.
+ */
 @NoArgsConstructor
 public class RemoteDefinitionSourceLoader implements DefinitionSourceLoader {
 

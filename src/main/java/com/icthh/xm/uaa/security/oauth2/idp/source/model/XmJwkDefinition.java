@@ -19,13 +19,18 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * The base representation of a JSON Web Key (JWK).
+ * This class copied from org.springframework.security.oauth2.provider.token.store.jwk.JwkDefinition
+ * and couldn't be imported cause of package private access.
+ * Reason: we need custom implementation of JwkDefinitionSource class
+ * which impossible to import and override - it has package private access.
+ * <p>
+ * This class is base class for custom {@link XmRsaJwkDefinition} implementation.
  *
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7517">JSON Web Key (JWK)</a>
+ * What was changed: nothing was changed in this class.
  */
 @Data
 @NoArgsConstructor
-public class CustomJwkDefinition {
+public class XmJwkDefinition {
     private String keyId;
     private KeyType keyType;
     private PublicKeyUse publicKeyUse;
@@ -39,10 +44,10 @@ public class CustomJwkDefinition {
      * @param publicKeyUse the intended use of the Public Key
      * @param algorithm    the algorithm intended to be used
      */
-    protected CustomJwkDefinition(String keyId,
-                                  KeyType keyType,
-                                  PublicKeyUse publicKeyUse,
-                                  CryptoAlgorithm algorithm) {
+    protected XmJwkDefinition(String keyId,
+                              KeyType keyType,
+                              PublicKeyUse publicKeyUse,
+                              CryptoAlgorithm algorithm) {
         this.keyId = keyId;
         this.keyType = keyType;
         this.publicKeyUse = publicKeyUse;
@@ -86,7 +91,7 @@ public class CustomJwkDefinition {
             return false;
         }
 
-        CustomJwkDefinition that = (CustomJwkDefinition) obj;
+        XmJwkDefinition that = (XmJwkDefinition) obj;
         if (!this.getKeyId().equals(that.getKeyId())) {
             return false;
         }

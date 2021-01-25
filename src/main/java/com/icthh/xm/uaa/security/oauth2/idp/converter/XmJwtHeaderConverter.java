@@ -27,15 +27,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A {@link Converter} that converts the supplied <code>String</code> representation of a JWT
- * to a <code>Map</code> of JWT Header Parameters.
  *
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7519">JSON Web Token (JWT)</a>
- *
- * @author Joe Grandja
- * @author Vedran Pavic
+ * This class copied from org.springframework.security.oauth2.provider.token.store.jwk.JwtHeaderConverter
+ * and couldn't be imported cause of package private access.
+ * Reason: we need custom implementation of JwkDefinitionSource class
+ * which impossible to import and override - it has package private access.
+ * This class is required for {@link XmJwkVerifyingJwtAccessTokenConverter} implementation.
+ * <p>
+ * What was changed: nothing was changed in this implementation
  */
-class CustomJwtHeaderConverter implements Converter<String, Map<String, String>> {
+class XmJwtHeaderConverter implements Converter<String, Map<String, String>> {
 	private final JsonFactory factory = new JsonFactory();
 
 	/**

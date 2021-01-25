@@ -27,23 +27,19 @@ import org.springframework.security.oauth2.provider.OAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.TokenRequest;
 import org.springframework.security.oauth2.provider.token.AbstractTokenGranter;
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
-import org.springframework.security.oauth2.provider.token.store.IssuerClaimVerifier;
-import org.springframework.security.oauth2.provider.token.store.JwtClaimsSetVerifier;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Set;
 
 @Slf4j
 public class IdpTokenGranter extends AbstractTokenGranter {
 
     private static final String GRANT_TYPE = "idp_token";
 
-    private final CustomJwkTokenStore jwkTokenStore;
+    private final XmJwkTokenStore jwkTokenStore;
     private final DomainUserDetailsService domainUserDetailsService;
     private final TenantPropertiesService tenantPropertiesService;
     private final UserService userService;
@@ -54,7 +50,7 @@ public class IdpTokenGranter extends AbstractTokenGranter {
     public IdpTokenGranter(AuthorizationServerTokenServices tokenServices,
                            ClientDetailsService clientDetailsService,
                            OAuth2RequestFactory requestFactory,
-                           CustomJwkTokenStore jwkTokenStore,
+                           XmJwkTokenStore jwkTokenStore,
                            DomainUserDetailsService domainUserDetailsService,
                            TenantPropertiesService tenantPropertiesService,
                            UserService userService,

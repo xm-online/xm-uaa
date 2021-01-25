@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.icthh.xm.uaa.security.oauth2.idp.source.JwkDefinitionSource;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;

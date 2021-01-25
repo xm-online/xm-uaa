@@ -15,6 +15,9 @@ import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Class from loading JWKS public keys from XM storage.
+ */
 public class LocalStorageDefinitionSourceLoader implements DefinitionSourceLoader {
 
     private final RestTemplate loadBalancedRestTemplate;
