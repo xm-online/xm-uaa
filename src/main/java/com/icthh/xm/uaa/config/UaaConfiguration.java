@@ -7,7 +7,7 @@ import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.security.TokenConstraintsService;
 import com.icthh.xm.uaa.security.UserSecurityValidator;
 import com.icthh.xm.uaa.security.oauth2.athorization.code.CustomAuthorizationCodeServices;
-import com.icthh.xm.uaa.security.oauth2.idp.CustomJwkTokenStore;
+import com.icthh.xm.uaa.security.oauth2.idp.XmJwkTokenStore;
 import com.icthh.xm.uaa.security.oauth2.idp.IdpTokenGranter;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpGenerator;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
@@ -137,7 +137,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
     private final CustomAuthorizationCodeServices customAuthorizationCodeServices;
     private final DefaultAuthenticationRefreshProvider defaultAuthenticationRefreshProvider;
     private final UserSecurityValidator userSecurityValidator;
-    private final CustomJwkTokenStore jwkTokenStore;
+    private final XmJwkTokenStore jwkTokenStore;
 
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {

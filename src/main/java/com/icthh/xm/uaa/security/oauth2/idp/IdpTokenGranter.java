@@ -42,7 +42,7 @@ public class IdpTokenGranter extends AbstractTokenGranter {
 
     private static final String GRANT_TYPE = "idp_token";
 
-    private final CustomJwkTokenStore jwkTokenStore;
+    private final XmJwkTokenStore jwkTokenStore;
     private final DomainUserDetailsService domainUserDetailsService;
     private final TenantPropertiesService tenantPropertiesService;
     private final UserService userService;
@@ -53,7 +53,7 @@ public class IdpTokenGranter extends AbstractTokenGranter {
     public IdpTokenGranter(AuthorizationServerTokenServices tokenServices,
                            ClientDetailsService clientDetailsService,
                            OAuth2RequestFactory requestFactory,
-                           CustomJwkTokenStore jwkTokenStore,
+                           XmJwkTokenStore jwkTokenStore,
                            DomainUserDetailsService domainUserDetailsService,
                            TenantPropertiesService tenantPropertiesService,
                            UserService userService,

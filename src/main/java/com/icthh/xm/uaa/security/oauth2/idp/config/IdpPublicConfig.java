@@ -2,7 +2,7 @@ package com.icthh.xm.uaa.security.oauth2.idp.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.icthh.xm.uaa.security.oauth2.idp.source.JwkDefinitionSource;
+import com.icthh.xm.uaa.security.oauth2.idp.source.XmJwkDefinitionSource;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -24,7 +24,7 @@ public class IdpPublicConfig {
         private boolean directLogin;
 
         @JsonProperty("jwksSourceType")
-        private JwkDefinitionSource.SourceDefinitionType jwksSourceType;
+        private XmJwkDefinitionSource.SourceDefinitionType jwksSourceType;
 
         @JsonProperty("clients")
         private List<IdpPublicClientConfig> clients = new ArrayList<>();

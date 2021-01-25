@@ -2,7 +2,7 @@ package com.icthh.xm.uaa.security;
 
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.domain.User;
-import com.icthh.xm.uaa.security.oauth2.idp.CustomJwkTokenStore;
+import com.icthh.xm.uaa.security.oauth2.idp.XmJwkTokenStore;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpGenerator;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
@@ -49,7 +49,7 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
     @Setter
     private TokenStore tokenStore;
     @Setter
-    private CustomJwkTokenStore jwkTokenStore;
+    private XmJwkTokenStore jwkTokenStore;
     @Setter
     private TokenEnhancer tokenEnhancer;
     @Setter

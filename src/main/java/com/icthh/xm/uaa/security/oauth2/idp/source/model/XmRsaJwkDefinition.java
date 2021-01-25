@@ -19,16 +19,18 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * A JSON Web Key (JWK) representation of a RSA key.
- *
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7517">JSON Web Key (JWK)</a>
- * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7518#page-30">JSON Web Algorithms (JWA)</a>
- *
- * @author Joe Grandja
+ * This class copied from org.springframework.security.oauth2.provider.token.store.jwk.RsaJwkDefinition.
+ * and couldn't be imported cause of package private access.
+ * Reason: we need custom implementation of JwkDefinitionSource class
+ * which impossible to import and override - it has package private access.
+ * <p>
+ * This class is org.springframework.security.oauth2.provider.token.store.jwk.RsaJwkDefinition implementation.
+ * <p>
+ * What was changed: nothing was changed in this implementation
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-public final class CustomRsaJwkDefinition extends CustomJwkDefinition {
+public final class XmRsaJwkDefinition extends XmJwkDefinition {
 	private final String modulus;
 	private final String exponent;
 
@@ -41,11 +43,11 @@ public final class CustomRsaJwkDefinition extends CustomJwkDefinition {
 	 * @param modulus the modulus value for the Public Key
 	 * @param exponent the exponent value for the Public Key
 	 */
-    public CustomRsaJwkDefinition(String keyId,
-                                  PublicKeyUse publicKeyUse,
-                                  CryptoAlgorithm algorithm,
-                                  String modulus,
-                                  String exponent) {
+    public XmRsaJwkDefinition(String keyId,
+                              PublicKeyUse publicKeyUse,
+                              CryptoAlgorithm algorithm,
+                              String modulus,
+                              String exponent) {
 
 		super(keyId, KeyType.RSA, publicKeyUse, algorithm);
 		this.modulus = modulus;

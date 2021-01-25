@@ -24,10 +24,10 @@ import java.security.KeyFactory;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 
-import com.icthh.xm.uaa.security.oauth2.idp.CustomJwkTokenStore;
+import com.icthh.xm.uaa.security.oauth2.idp.XmJwkTokenStore;
 import com.icthh.xm.uaa.security.oauth2.idp.config.IdpConfigRepository;
-import com.icthh.xm.uaa.security.oauth2.idp.converter.CustomJwkVerifyingJwtAccessTokenConverter;
-import com.icthh.xm.uaa.security.oauth2.idp.source.JwkDefinitionSource;
+import com.icthh.xm.uaa.security.oauth2.idp.converter.XmJwkVerifyingJwtAccessTokenConverter;
+import com.icthh.xm.uaa.security.oauth2.idp.source.XmJwkDefinitionSource;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -159,14 +159,14 @@ public class UaaAccessTokenConverterConfiguration {
     }
 
     @Bean
-    public CustomJwkTokenStore jwkTokenStore() {
+    public XmJwkTokenStore jwkTokenStore() {
 
-        JwkDefinitionSource jwkDefinitionSource =
-            new JwkDefinitionSource(keyUriRestTemplate, idpConfigRepository, tenantPropertiesService);
-        CustomJwkVerifyingJwtAccessTokenConverter jwkVerifyingJwtAccessTokenConverter =
-            new CustomJwkVerifyingJwtAccessTokenConverter(jwkDefinitionSource, tenantContextHolder, idpConfigRepository);
+        XmJwkDefinitionSource XMJwkDefinitionSource =
+            new XmJwkDefinitionSource(keyUriRestTemplate, idpConfigRepository, tenantPropertiesService);
+        XmJwkVerifyingJwtAccessTokenConverter jwkVerifyingJwtAccessTokenConverter =
+            new XmJwkVerifyingJwtAccessTokenConverter(XMJwkDefinitionSource, tenantContextHolder, idpConfigRepository);
 
-        return new CustomJwkTokenStore(jwkVerifyingJwtAccessTokenConverter);
+        return new XmJwkTokenStore(jwkVerifyingJwtAccessTokenConverter);
     }
 
 }

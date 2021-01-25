@@ -2,11 +2,11 @@ package com.icthh.xm.uaa.security.oauth2.idp.source;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.icthh.xm.uaa.security.oauth2.idp.config.IdpConfigRepository;
-import com.icthh.xm.uaa.security.oauth2.idp.converter.CustomJwkSetConverter;
+import com.icthh.xm.uaa.security.oauth2.idp.converter.XmJwkSetConverter;
 import com.icthh.xm.uaa.security.oauth2.idp.source.loaders.LocalStorageDefinitionSourceLoader;
 import com.icthh.xm.uaa.security.oauth2.idp.source.loaders.RemoteDefinitionSourceLoader;
-import com.icthh.xm.uaa.security.oauth2.idp.source.model.CustomJwkDefinition;
-import com.icthh.xm.uaa.security.oauth2.idp.source.model.CustomRsaJwkDefinition;
+import com.icthh.xm.uaa.security.oauth2.idp.source.model.XmJwkDefinition;
+import com.icthh.xm.uaa.security.oauth2.idp.source.model.XmRsaJwkDefinition;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -28,21 +28,31 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * This class copied from org.springframework.security.oauth2.provider.token.store.jwk.JwkDefinitionSource.
+ * Reason: we need custom implementation of JwkDefinitionSource class which impossible to import and override - it has package private access.
+ * <p>
+ * What was changed:
+ * <ul>
+ * <li/>retrieving {@link DefinitionSourceLoader} implementation depended from tenant-uaa configuration.
+ * </ul>
+ */
+
 @Data
 @Slf4j
-public class JwkDefinitionSource {
+public class XmJwkDefinitionSource {
 
     private final RestTemplate loadBalancedRestTemplate;
     private final IdpConfigRepository idpConfigRepository;
     private final TenantPropertiesService tenantPropertiesService;
 
     private final Map<String, JwkDefinitionHolder> jwkDefinitions = new ConcurrentHashMap<>();
-    private static final CustomJwkSetConverter customJwkSetConverter = new CustomJwkSetConverter();
+    private static final XmJwkSetConverter xmJwkSetConverter = new XmJwkSetConverter();
     private Map<String, Map<String, DefinitionSourceLoader>> definitionSourceLoaderContainer = new ConcurrentHashMap<>();
 
-    public JwkDefinitionSource(RestTemplate loadBalancedRestTemplate,
-                               IdpConfigRepository idpConfigRepository,
-                               TenantPropertiesService tenantPropertiesService) {
+    public XmJwkDefinitionSource(RestTemplate loadBalancedRestTemplate,
+                                 IdpConfigRepository idpConfigRepository,
+                                 TenantPropertiesService tenantPropertiesService) {
         this.loadBalancedRestTemplate = loadBalancedRestTemplate;
         this.idpConfigRepository = idpConfigRepository;
         this.tenantPropertiesService = tenantPropertiesService;
@@ -151,28 +161,28 @@ public class JwkDefinitionSource {
      * Returns the JWK definition matching the provided keyId (&quot;kid&quot;).
      *
      * @param keyId the Key ID (&quot;kid&quot;)
-     * @return the matching {@link CustomJwkDefinition} or null if not found
+     * @return the matching {@link XmJwkDefinition} or null if not found
      */
     private JwkDefinitionHolder getDefinition(String keyId) {
         return this.jwkDefinitions.get(keyId);
     }
 
     private static Map<String, JwkDefinitionHolder> buildJwkDefinitions(InputStream jwkSetSource) {
-        Set<CustomJwkDefinition> jwkDefinitionSet = customJwkSetConverter.convert(jwkSetSource);
+        Set<XmJwkDefinition> jwkDefinitionSet = xmJwkSetConverter.convert(jwkSetSource);
 
         Map<String, JwkDefinitionHolder> jwkDefinitions = new LinkedHashMap<>();
 
-        for (CustomJwkDefinition jwkDefinition : jwkDefinitionSet) {
-            if (CustomJwkDefinition.KeyType.RSA.equals(jwkDefinition.getKeyType())) {
+        for (XmJwkDefinition jwkDefinition : jwkDefinitionSet) {
+            if (XmJwkDefinition.KeyType.RSA.equals(jwkDefinition.getKeyType())) {
                 jwkDefinitions.put(jwkDefinition.getKeyId(),
-                    new JwkDefinitionHolder(jwkDefinition, createRsaVerifier((CustomRsaJwkDefinition) jwkDefinition)));
+                    new JwkDefinitionHolder(jwkDefinition, createRsaVerifier((XmRsaJwkDefinition) jwkDefinition)));
             }
         }
 
         return jwkDefinitions;
     }
 
-    private static RsaVerifier createRsaVerifier(CustomRsaJwkDefinition rsaDefinition) {
+    private static RsaVerifier createRsaVerifier(XmRsaJwkDefinition rsaDefinition) {
         RsaVerifier result;
         try {
             BigInteger modulus = new BigInteger(1, Codecs.b64UrlDecode(rsaDefinition.getModulus()));
@@ -195,15 +205,15 @@ public class JwkDefinitionSource {
     }
 
     public static class JwkDefinitionHolder {
-        private final CustomJwkDefinition jwkDefinition;
+        private final XmJwkDefinition jwkDefinition;
         private final SignatureVerifier signatureVerifier;
 
-        private JwkDefinitionHolder(CustomJwkDefinition jwkDefinition, SignatureVerifier signatureVerifier) {
+        private JwkDefinitionHolder(XmJwkDefinition jwkDefinition, SignatureVerifier signatureVerifier) {
             this.jwkDefinition = jwkDefinition;
             this.signatureVerifier = signatureVerifier;
         }
 
-        public CustomJwkDefinition getJwkDefinition() {
+        public XmJwkDefinition getJwkDefinition() {
             return jwkDefinition;
         }
 
