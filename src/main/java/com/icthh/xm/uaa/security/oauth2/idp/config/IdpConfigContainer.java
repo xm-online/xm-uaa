@@ -4,6 +4,7 @@ import lombok.Data;
 import com.icthh.xm.uaa.security.oauth2.idp.config.IdpPublicConfig.IdpConfigContainer.IdpPublicClientConfig;
 import com.icthh.xm.uaa.security.oauth2.idp.config.IdpPrivateConfig.IdpConfigContainer.IdpPrivateClientConfig;
 
+//TODO move to commons
 @Data
 public class IdpConfigContainer {
 

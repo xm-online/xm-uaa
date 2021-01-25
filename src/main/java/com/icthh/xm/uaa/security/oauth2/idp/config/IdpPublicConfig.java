@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+//TODO move to commons
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class IdpPublicConfig {

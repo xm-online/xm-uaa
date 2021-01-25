@@ -28,6 +28,7 @@ import java.util.Map;
  *
  * @see JwtClaimsSetVerifier
  */
+//TODO copied or custom?
 public class AudienceClaimVerifier implements JwtClaimsSetVerifier {
 	private static final String AUD_CLAIM = "aud";
 	private final String audience;

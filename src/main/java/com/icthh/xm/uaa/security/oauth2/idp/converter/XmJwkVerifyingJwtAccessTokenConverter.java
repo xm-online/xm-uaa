@@ -182,6 +182,7 @@ public class XmJwkVerifyingJwtAccessTokenConverter extends JwtAccessTokenConvert
         return tokenClaim;
     }
 
+    //TODO unused method
     private List<String> getAudienceDefinitions(String tokenAud, Map<String, IdpConfigContainer> configs) {
         return configs
             .values()
