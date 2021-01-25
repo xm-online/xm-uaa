@@ -30,23 +30,30 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This class copied from org.springframework.security.oauth2.provider.token.store.jwk.JwkDefinitionSource.
- * Reason: we need custom implementation of JwkDefinitionSource class which impossible to import and override - it has package private access.
+ * Reason: we need custom implementation of JwkDefinitionSource class which impossible to import and override
+ * cause it has package private access.
  * <p>
  * What was changed:
  * <ul>
- * <li/>retrieving {@link DefinitionSourceLoader} implementation depended from tenant-uaa configuration.
+ * <li/>Added RestTemplate, IdpConfigRepository, TenantPropertiesService properties.
+ * <li/>Original property jwkSetUrls was removed as redundant.
+ * <li/>Original property JwkSetConverter has custom implementation.
+ * <li/>Original constructors was removed as redundant.
+ * <li/>Original method loadJwkDefinitions was removed as redundant.
+ * <li/>Method {@link XmJwkDefinitionSource#getDefinitionLoadIfNecessary(String)} was changed.
+ * <li/>Added retrieving {@link DefinitionSourceLoader} implementation depended from tenant configuration
+ * in method {@link XmJwkDefinitionSource#getOrCreateDefinitionSourceLoader(String, SourceDefinitionType)}.
  * </ul>
  */
 
 @Data
 @Slf4j
 public class XmJwkDefinitionSource {
-
     private final RestTemplate loadBalancedRestTemplate;
     private final IdpConfigRepository idpConfigRepository;
     private final TenantPropertiesService tenantPropertiesService;
 
-    private final Map<String, JwkDefinitionHolder> jwkDefinitions = new ConcurrentHashMap<>();
+    private final Map<String, XmJwkDefinitionHolder> jwkDefinitions = new ConcurrentHashMap<>();
     private static final XmJwkSetConverter xmJwkSetConverter = new XmJwkSetConverter();
     private Map<String, Map<String, DefinitionSourceLoader>> definitionSourceLoaderContainer = new ConcurrentHashMap<>();
 
@@ -65,10 +72,10 @@ public class XmJwkDefinitionSource {
      * will be called (to re-load the cache) and then followed-up with a second attempt to locate the JWK definition.
      *
      * @param keyId the Key ID (&quot;kid&quot;)
-     * @return the matching {@link JwkDefinitionHolder} or null if not found
+     * @return the matching {@link XmJwkDefinitionHolder} or null if not found
      */
-    public JwkDefinitionHolder getDefinitionLoadIfNecessary(String keyId) {
-        JwkDefinitionHolder result = this.getDefinition(keyId);
+    public XmJwkDefinitionHolder getDefinitionLoadIfNecessary(String keyId) {
+        XmJwkDefinitionHolder result = this.getDefinition(keyId);
         if (result != null) {
             return result;
         }
@@ -78,7 +85,7 @@ public class XmJwkDefinitionSource {
                 return result;
             }
 
-            Map<String, JwkDefinitionHolder> newJwkDefinitions = updateJwkDefinitionHolders();
+            Map<String, XmJwkDefinitionHolder> newJwkDefinitions = updateJwkDefinitionHolders();
 
             this.jwkDefinitions.clear();
             this.jwkDefinitions.putAll(newJwkDefinitions);
@@ -86,7 +93,7 @@ public class XmJwkDefinitionSource {
         }
     }
 
-    private Map<String, JwkDefinitionHolder> updateJwkDefinitionHolders() {
+    private Map<String, XmJwkDefinitionHolder> updateJwkDefinitionHolders() {
         DefinitionSourceLoader definitionSourceLoader;
 
         Map<String, Object> params = new HashMap<>();
@@ -101,7 +108,7 @@ public class XmJwkDefinitionSource {
         }
 
         List<InputStream> publicKeysRawDefinition = definitionSourceLoader.retrieveRawPublicKeysDefinition(params);
-        Map<String, JwkDefinitionHolder> newJwkDefinitions = new LinkedHashMap<>();
+        Map<String, XmJwkDefinitionHolder> newJwkDefinitions = new LinkedHashMap<>();
         publicKeysRawDefinition.forEach(rawDefinition -> newJwkDefinitions.putAll(buildJwkDefinitions(rawDefinition)));
 
         return newJwkDefinitions;
@@ -162,19 +169,19 @@ public class XmJwkDefinitionSource {
      * @param keyId the Key ID (&quot;kid&quot;)
      * @return the matching {@link XmJwkDefinition} or null if not found
      */
-    private JwkDefinitionHolder getDefinition(String keyId) {
+    private XmJwkDefinitionHolder getDefinition(String keyId) {
         return this.jwkDefinitions.get(keyId);
     }
 
-    private static Map<String, JwkDefinitionHolder> buildJwkDefinitions(InputStream jwkSetSource) {
+    private static Map<String, XmJwkDefinitionHolder> buildJwkDefinitions(InputStream jwkSetSource) {
         Set<XmJwkDefinition> jwkDefinitionSet = xmJwkSetConverter.convert(jwkSetSource);
 
-        Map<String, JwkDefinitionHolder> jwkDefinitions = new LinkedHashMap<>();
+        Map<String, XmJwkDefinitionHolder> jwkDefinitions = new LinkedHashMap<>();
 
         for (XmJwkDefinition jwkDefinition : jwkDefinitionSet) {
             if (XmJwkDefinition.KeyType.RSA.equals(jwkDefinition.getKeyType())) {
                 jwkDefinitions.put(jwkDefinition.getKeyId(),
-                    new JwkDefinitionHolder(jwkDefinition, createRsaVerifier((XmRsaJwkDefinition) jwkDefinition)));
+                    new XmJwkDefinitionHolder(jwkDefinition, createRsaVerifier((XmRsaJwkDefinition) jwkDefinition)));
             }
         }
 
@@ -203,11 +210,11 @@ public class XmJwkDefinitionSource {
         return result;
     }
 
-    public static class JwkDefinitionHolder {
+    public static class XmJwkDefinitionHolder {
         private final XmJwkDefinition jwkDefinition;
         private final SignatureVerifier signatureVerifier;
 
-        private JwkDefinitionHolder(XmJwkDefinition jwkDefinition, SignatureVerifier signatureVerifier) {
+        private XmJwkDefinitionHolder(XmJwkDefinition jwkDefinition, SignatureVerifier signatureVerifier) {
             this.jwkDefinition = jwkDefinition;
             this.signatureVerifier = signatureVerifier;
         }

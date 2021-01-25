@@ -56,7 +56,10 @@ import static com.icthh.xm.uaa.security.oauth2.idp.source.model.XmJwkAttributes.
  * <p>
  * What was changed:
  * <ul>
- * <li/>method validateClaims added to provide default validators
+ * <li/>Original properties JwkDefinitionSource, JwtHeaderConverter, JwtHeaderConverter have custom implementation.
+ * <li/>Property xmJwkDefinitionSource marked as non-final.
+ * <li/>Added TenantContextHolder, IdpConfigRepository properties.
+ * <li/>method {@link XmJwkVerifyingJwtAccessTokenConverter#validateClaims(Map)} added to build and run default validators for claims.
  * </ul>
  * <p>
  * A specialized extension of {@link JwtAccessTokenConverter} that is responsible for verifying
@@ -107,13 +110,13 @@ public class XmJwkVerifyingJwtAccessTokenConverter extends JwtAccessTokenConvert
         if (keyIdHeader == null) {
             throw new InvalidTokenException("Invalid JWT/JWS: " + KEY_ID + " is a required JOSE Header");
         }
-        XmJwkDefinitionSource.JwkDefinitionHolder jwkDefinitionHolder =
+        XmJwkDefinitionSource.XmJwkDefinitionHolder xmJwkDefinitionHolder =
             this.xmJwkDefinitionSource.getDefinitionLoadIfNecessary(keyIdHeader);
-        if (jwkDefinitionHolder == null) {
+        if (xmJwkDefinitionHolder == null) {
             throw new InvalidTokenException("Invalid JOSE Header " + KEY_ID + " (" + keyIdHeader + ")");
         }
 
-        XmJwkDefinition jwkDefinition = jwkDefinitionHolder.getJwkDefinition();
+        XmJwkDefinition jwkDefinition = xmJwkDefinitionHolder.getJwkDefinition();
         // Validate "alg" header
         String algorithmHeader = headers.get(ALGORITHM);
         if (algorithmHeader == null) {
@@ -125,7 +128,7 @@ public class XmJwkVerifyingJwtAccessTokenConverter extends JwtAccessTokenConvert
         }
 
         // Verify signature
-        SignatureVerifier verifier = jwkDefinitionHolder.getSignatureVerifier();
+        SignatureVerifier verifier = xmJwkDefinitionHolder.getSignatureVerifier();
         Jwt jwt = JwtHelper.decodeAndVerify(token, verifier);
 
         Map<String, Object> claims = this.jsonParser.parseMap(jwt.getClaims());
