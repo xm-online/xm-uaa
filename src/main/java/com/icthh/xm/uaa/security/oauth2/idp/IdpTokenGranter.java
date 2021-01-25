@@ -1,5 +1,7 @@
 package com.icthh.xm.uaa.security.oauth2.idp;
 
+import com.icthh.xm.commons.lep.LogicExtensionPoint;
+import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
@@ -35,6 +37,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 @Slf4j
+@LepService(group = "security.idp")
 public class IdpTokenGranter extends AbstractTokenGranter {
 
     private static final String GRANT_TYPE = "idp_token";
@@ -84,28 +87,29 @@ public class IdpTokenGranter extends AbstractTokenGranter {
 
     private IdpAuthenticationToken getUserAuthenticationToken(Map<String, String> parameters) {
         buildClaimsValidators();
-        String idpToken = parameters.remove("token");
+        String idpToken = parameters.remove("token"); //TODO why we remove this from parameter?
+        //TODO Also put all key, hardcoded names, etc to constant class (if more than one time it used) or to private static final variable
+
         // parse IDP id token
         OAuth2AccessToken idpOAuth2IdToken = jwkTokenStore.readAccessToken(idpToken);
 
-        validateAccessToken(idpOAuth2IdToken);
-
-        //TODO think about LEP + config
-        Map<String, Object> additionalInformation = idpOAuth2IdToken.getAdditionalInformation();
+        validateIdpAccessToken(idpOAuth2IdToken);
 
         //user + role section
         //TODO think about LEP + config
-        DomainUserDetails userDetails = retrieveDomainUserDetails(additionalInformation);
-        Collection<? extends GrantedAuthority> authorities = authoritiesMapper.mapAuthorities(userDetails.getAuthorities());
+        DomainUserDetails userDetails = retrieveDomainUserDetails(idpOAuth2IdToken);
+        Collection<? extends GrantedAuthority> authorities =
+            authoritiesMapper.mapAuthorities(userDetails.getAuthorities());
 
         //build container for user
-        IdpAuthenticationToken userAuthenticationToken = new IdpAuthenticationToken(userDetails, null, authorities);
+        IdpAuthenticationToken userAuthenticationToken = new IdpAuthenticationToken(userDetails, authorities);
         userAuthenticationToken.setDetails(parameters);
 
         return userAuthenticationToken;
     }
 
-    //TODO LEP
+
+    //TODO do we really need this method, can we use only validateAccessToken
     private void buildClaimsValidators() {
 //        Map<String, Set<JwtClaimsSetVerifier>> claimsSetVerifiers = jwkTokenStore.getJwtTokenEnhancer().getJwtClaimsSetVerifiers();
 //
@@ -113,22 +117,34 @@ public class IdpTokenGranter extends AbstractTokenGranter {
 //        claimsSetVerifiers.put();
     }
 
-    private DomainUserDetails retrieveDomainUserDetails(Map<String, Object> additionalInformation) {
-        String userEmail = (String) additionalInformation.get("email");
-        DomainUserDetails userDetails = domainUserDetailsService.retrieveUserByUsername(userEmail);
+    private DomainUserDetails retrieveDomainUserDetails(OAuth2AccessToken idpOAuth2IdToken) {
+        String userIdentity = extractUserIdentity(idpOAuth2IdToken);
+        DomainUserDetails userDetails = domainUserDetailsService.retrieveUserByUsername(userIdentity);
 
         if (userDetails == null) {
-            return buildDomainUserDetails(additionalInformation, userEmail);
+            log.info("User not found by identity: {}, new user will be created", userIdentity);
+            userDetails = buildDomainUserDetails(userIdentity, idpOAuth2IdToken);
         }
-
+        log.info("Mapped user for identity:{} is {}", userIdentity, userDetails);
         return userDetails;
     }
 
-    private DomainUserDetails buildDomainUserDetails(Map<String, Object> additionalInformation, String userEmail) {
-        log.debug("User with login: {} not exists. Creating new user.", userEmail);
+    @LogicExtensionPoint(value = "ExtractUserIdentity")
+    public String extractUserIdentity(OAuth2AccessToken idpOAuth2IdToken) {
+        Map<String, Object> additionalInformation = idpOAuth2IdToken.getAdditionalInformation();
+        //TODO "email" should be taken from uaa.yml: security.idp.defaultLoginAttribute whith default
+        // value: email if configuration not specified
+        return (String) additionalInformation.get("email");
+    }
 
-        User newUser = createUser(additionalInformation);
+    private DomainUserDetails buildDomainUserDetails(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
+        log.debug("User with login: {} not exists. Creating new user.", userIdentity);
 
+        User newUser = createUser(userIdentity, idpOAuth2IdToken);
+
+        //TODO think how to avoid this check. What we will do if login is not email
+        //TODO what the difference between userIdentity and userLogin
+        //TODO userLogin used only for getUser (buildDomainUserDetails ->   User user = userLogin.getUser();)
         UserLogin userLogin = newUser.getLogins()
             .stream()
             .filter(login -> UserLoginType.EMAIL.getValue().equals(login.getTypeKey()))
@@ -136,41 +152,57 @@ public class IdpTokenGranter extends AbstractTokenGranter {
             .orElseThrow(() -> new NoSuchElementException("UserLogin with type " +
                 UserLoginType.EMAIL.getValue() + "not found"));
 
-        return DomainUserDetailsService.buildDomainUserDetails(userEmail, getTenantKey(), userLogin);
+        return DomainUserDetailsService.buildDomainUserDetails(userIdentity, getTenantKey(), userLogin);
     }
 
-    private User createUser(Map<String, Object> additionalInformation) {
-        UserDTO userDTO = buildUserDTO(additionalInformation);
+    private User createUser(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
+        UserDTO userDTO = convertIdpToXmUser(userIdentity, idpOAuth2IdToken);
 
         userLoginService.normalizeLogins(userDTO.getLogins());
         userLoginService.verifyLoginsNotExist(userDTO.getLogins());
+
+        userDTO.setRoleKey(mapIdpRole(userIdentity, idpOAuth2IdToken));
 
         return userService.createUser(userDTO);
     }
 
     //TODO add claim validation: audience and issuer
-    private void validateAccessToken(OAuth2AccessToken idpOAuth2IdToken) {
-        //validate issuer and audience
+    @LogicExtensionPoint(value = "ValidateIdpAccessToken")
+    public void validateIdpAccessToken(OAuth2AccessToken idpOAuth2IdToken) {
+        //validate issuer and audience, etc, + LEP
     }
 
-    private UserDTO buildUserDTO(Map<String, Object> additionalInformation) {
+
+    @LogicExtensionPoint(value = "ConvertIdpToXmUser")
+    public UserDTO convertIdpToXmUser(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
+        Map<String, Object> additionalInformation = idpOAuth2IdToken.getAdditionalInformation();
         UserDTO userDTO = new UserDTO();
+
+        //TODO default configuration should be taken from uaa.yml with specified default values of some properties is missing
+        /*
+         * security:
+         *   idp:
+         *     defaultAdditionalInformation:
+         *       userIdentity: email
+         *       userIdentityType: LOGIN.EMAIL
+         *       firstName:  given_name
+         *       lastName: family_name
+         */
 
         //base info mapping
         userDTO.setFirstName((String) additionalInformation.get("given_name"));
         userDTO.setLastName((String) additionalInformation.get("family_name"));
         //login mapping
         UserLogin emailUserLogin = new UserLogin();
-        emailUserLogin.setLogin((String) additionalInformation.get("email"));
+        emailUserLogin.setLogin(userIdentity);
         emailUserLogin.setTypeKey(UserLoginType.EMAIL.getValue());
 
         userDTO.setLogins(List.of(emailUserLogin));
-        userDTO.setRoleKey(getDefaultUserRoleProp());
-
         return userDTO;
     }
 
-    private String getDefaultUserRoleProp() {
+    @LogicExtensionPoint(value = "MapIdpRole")
+    public String mapIdpRole(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
         TenantProperties tenantProps = tenantPropertiesService.getTenantProps();
         TenantProperties.Security security = tenantProps.getSecurity();
 

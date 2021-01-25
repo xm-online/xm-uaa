@@ -127,6 +127,7 @@ public class XmJwkDefinitionSource {
         return jwksSourceType;
     }
 
+    //FIXME do not do this on each request
     private DefinitionSourceLoader getOrCreateDefinitionSourceLoader(String tenantKey, SourceDefinitionType type) {
         if (type == null) {
             throw new IllegalArgumentException("Definition loader type not specified " +
