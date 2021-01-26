@@ -64,11 +64,11 @@ public class TenantPermissionServiceUnitTest {
         service.onInit(XM_PERMISSIONS, readConfigFile(XM_PERMISSIONS));
 
         assertNotNull(service.getEnabledPermissionByRole(null));
-        assertNotNull(service.getEnabledPermissionByRole(""));
+        assertNotNull(service.getEnabledPermissionByRole(List.of("")));
         assertTrue(service.getEnabledPermissionByRole(null).isEmpty());
-        assertTrue(service.getEnabledPermissionByRole("").isEmpty());
+        assertTrue(service.getEnabledPermissionByRole(List.of("")).isEmpty());
 
-        List<AccPermissionDTO> listAmin = service.getEnabledPermissionByRole(ROLE_ADMIN);
+        List<AccPermissionDTO> listAmin = service.getEnabledPermissionByRole(List.of(ROLE_ADMIN));
         System.out.println("ROLE_ADMIN: ");
         listAmin.forEach(System.out::println);
 
@@ -80,7 +80,7 @@ public class TenantPermissionServiceUnitTest {
         assertEquals("DASHBOARD.CREATE", listAmin.get(3).getPrivilegeKey());
         assertEquals("MISSING.PRIVILEGE", listAmin.get(4).getPrivilegeKey());
 
-        List<AccPermissionDTO> listAnonym = service.getEnabledPermissionByRole(ROLE_ANONYMOUS);
+        List<AccPermissionDTO> listAnonym = service.getEnabledPermissionByRole(List.of(ROLE_ANONYMOUS));
         System.out.println("ROLE_ANONYMOUS: ");
         listAnonym.forEach(System.out::println);
 
@@ -97,11 +97,11 @@ public class TenantPermissionServiceUnitTest {
 
         service.onInit(XM_PERMISSIONS, readConfigFile(XM_PERMISSIONS));
 
-        assertEquals(5, service.getEnabledPermissionByRole(ROLE_ADMIN).size());
+        assertEquals(5, service.getEnabledPermissionByRole(List.of(ROLE_ADMIN)).size());
 
         service.onRefresh(XM_PERMISSIONS, "");
 
-        assertTrue(service.getEnabledPermissionByRole(ROLE_ADMIN).isEmpty());
+        assertTrue(service.getEnabledPermissionByRole(List.of(ROLE_ADMIN)).isEmpty());
 
     }
 

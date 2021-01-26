@@ -1,11 +1,23 @@
 package com.icthh.xm.uaa.domain;
 
+import static java.util.stream.Collectors.joining;
+import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.collect.Iterables;
 import com.icthh.xm.uaa.domain.converter.MapToStringConverter;
+import com.icthh.xm.uaa.domain.converter.RoleKeyConverter;
 import com.icthh.xm.uaa.validator.JsonData;
 import com.icthh.xm.uaa.repository.converter.OtpChannelTypeAttributeConverter;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import javax.persistence.ElementCollection;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.IteratorUtils;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jboss.aerogear.security.otp.api.Base32;
@@ -117,8 +129,17 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "tfa_access_token_validity")
     private Integer tfaAccessTokenValiditySeconds;
 
+    /**
+     *
+     * @deprecated: use {@link #authorities} instead
+     */
+    @Getter(AccessLevel.PRIVATE)
     @Column(name = "role_key")
     private String roleKey;
+
+    @Convert(converter = RoleKeyConverter.class)
+    @Column
+    private List<String> authorities;
 
     @Convert(converter = MapToStringConverter.class)
     @Column(name = "data")
@@ -150,9 +171,23 @@ public class User extends AbstractAuditingEntity implements Serializable {
             .findFirst().map(UserLogin::getLogin).orElse(null);
     }
 
+    public void setAuthorities(List<String> authorities) {
+        this.roleKey = isNotEmpty(authorities) ? Iterables.getLast(authorities) : null;
+        this.authorities = authorities;
+    }
+
+    public List<String> getAuthorities() {
+        return isNotEmpty(authorities) ? authorities : List.of(roleKey);
+    }
+
     public void setActivationKey(String key) {
         this.activationKey = key;
         this.createActivationKeyDate = Instant.now();
+    }
+
+    public void setRoleKey(String role) {
+        this.roleKey = role;
+        this.authorities = List.of(role);
     }
 
     @Override

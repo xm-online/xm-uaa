@@ -32,7 +32,7 @@ public class UserMapper {
             user.setImageUrl(userDTO.getImageUrl());
             user.setActivated(userDTO.isActivated());
             user.setLangKey(userDTO.getLangKey());
-            user.setRoleKey(userDTO.getRoleKey());
+            user.setAuthorities(userDTO.getAuthorities());
             return user;
         }
     }

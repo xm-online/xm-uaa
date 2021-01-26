@@ -36,6 +36,7 @@ import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.KeyAndPasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
 import com.icthh.xm.uaa.web.rest.vm.ResetPasswordVM;
+import java.util.List;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -348,7 +349,9 @@ public class AccountResourceIntTest {
             null,                   // lastModifiedBy
             null,                   // lastModifiedDate
             ROLE_USER, "test",
-            null, null, null, null, Collections.singletonList(login), false, null, null);
+            null, null, null, null,
+            Collections.singletonList(login), false, null, null,
+            List.of("test"));
 
         restMvc.perform(
             post("/api/register")
@@ -382,7 +385,9 @@ public class AccountResourceIntTest {
             null,                   // lastModifiedBy
             null,                   // lastModifiedDate
             ROLE_USER, "test",
-            null, null, null, null, Collections.singletonList(login), false, null, null);
+            null, null, null,
+            null, Collections.singletonList(login), false,
+            null, null, List.of("test"));
 
         restMvc.perform(
             post("/api/register")
@@ -416,7 +421,9 @@ public class AccountResourceIntTest {
             null,                   // lastModifiedBy
             null,                   // lastModifiedDate
             ROLE_USER, "test",
-            null, null, null, null, Collections.singletonList(login), false, null, null);
+            null, null, null, null,
+            Collections.singletonList(login), false, null,
+            null, List.of("test"));
 
         restUserMockMvc.perform(
             post("/api/register")
@@ -450,7 +457,9 @@ public class AccountResourceIntTest {
             null,                   // lastModifiedBy
             null,                   // lastModifiedDate
             ROLE_USER, "test",
-            null, null, null, null, Collections.singletonList(login), false, null, null);
+            null, null, null,
+            null, Collections.singletonList(login), false, null,
+            null, List.of("test"));
 
         restUserMockMvc.perform(
             post("/api/register")
@@ -485,7 +494,9 @@ public class AccountResourceIntTest {
             null,                   // lastModifiedBy
             null,                   // lastModifiedDate
             ROLE_USER, "test",
-            null, null, null, null, Collections.singletonList(login), false, null, null);
+            null, null, null, null,
+            Collections.singletonList(login), false, null,
+            null, List.of("test"));
 
         // Duplicate login, different login
         UserLogin loginNew = new UserLogin();
@@ -498,10 +509,11 @@ public class AccountResourceIntTest {
             null, null,
             validUser.getImageUrl(), validUser.getLangKey(), validUser.getCreatedBy(),
             validUser.getCreatedDate(), validUser.getLastModifiedBy(), validUser.getLastModifiedDate(),
-            validUser.getRoleKey(), "test",
+            validUser.getAuthorities().get(0), "test",
             validUser.getAccessTokenValiditySeconds(), validUser.getRefreshTokenValiditySeconds(),
             validUser.getTfaAccessTokenValiditySeconds(),
-            null, Arrays.asList(login, loginNew), false, null, null);
+            null, Arrays.asList(login, loginNew), false, null,
+            null, validUser.getAuthorities());
 
         // Good user
         restMvc.perform(
@@ -544,7 +556,9 @@ public class AccountResourceIntTest {
             null,                   // lastModifiedBy
             null,                   // lastModifiedDate
             ROLE_USER, "test",
-            null, null, null, null, Collections.singletonList(loginOld), false, null, null);
+            null, null, null, null,
+            Collections.singletonList(loginOld), false, null,
+            null, List.of("test"));
 
         // Duplicate login, different login
         UserLogin loginNew = new UserLogin();
@@ -560,10 +574,11 @@ public class AccountResourceIntTest {
             null, null,
             validUser.getImageUrl(), validUser.getLangKey(), validUser.getCreatedBy(),
             validUser.getCreatedDate(), validUser.getLastModifiedBy(), validUser.getLastModifiedDate(),
-            validUser.getRoleKey(), "test",
+            validUser.getAuthorities().get(0), "test",
             validUser.getAccessTokenValiditySeconds(), validUser.getRefreshTokenValiditySeconds(),
             validUser.getTfaAccessTokenValiditySeconds(),
-            null, Arrays.asList(loginOldWithWhitespaces, loginNew), false, null, null);
+            null, Arrays.asList(loginOldWithWhitespaces, loginNew), false,
+            null, null, List.of("test"));
 
         // Good user
         restMvc.perform(
@@ -605,7 +620,9 @@ public class AccountResourceIntTest {
             null,                   // lastModifiedBy
             null,                   // lastModifiedDate
             RoleConstant.SUPER_ADMIN, "test",
-            null, null, null, null, Collections.singletonList(login), false, null, null);
+            null, null, null, null,
+            Collections.singletonList(login), false,
+            null, null, List.of("test"));
 
         restMvc.perform(
             post("/api/register")
@@ -615,7 +632,7 @@ public class AccountResourceIntTest {
 
         Optional<UserLogin> userDup = userLoginRepository.findOneByLoginIgnoreCase("joe@example.com");
         assertThat(userDup.isPresent()).isTrue();
-        assertThat(userDup.get().getUser().getRoleKey()).isEqualTo(ROLE_USER);
+        assertThat(userDup.get().getUser().getAuthorities()).isEqualTo(List.of(ROLE_USER));
     }
 
     @Test
@@ -678,9 +695,13 @@ public class AccountResourceIntTest {
                 null,                   // createdDate
                 null,                   // lastModifiedBy
                 null,                   // lastModifiedDate
-                RoleConstant.SUPER_ADMIN, "test",
-                null, null, null, null, Collections.singletonList(userLogin),
-                Collections.emptyList(), false, null, null);
+                RoleConstant.SUPER_ADMIN,
+                "test",
+                List.of("test"),
+                null, null, null,
+                null, Collections.singletonList(userLogin),
+                Collections.emptyList(), false, null,
+                null);
 
             try {
                 restMvc.perform(
@@ -702,7 +723,7 @@ public class AccountResourceIntTest {
             assertThat(updatedUser.getPassword()).isEqualTo(user.getPassword());
             assertThat(updatedUser.getImageUrl()).isEqualTo(userDTO.getImageUrl());
             assertThat(updatedUser.isActivated()).isEqualTo(true);
-            assertThat(updatedUser.getRoleKey()).isEqualTo(userDTO.getRoleKey());
+            assertThat(updatedUser.getAuthorities()).isEqualTo(userDTO.getAuthorities());
         });
     }
 
@@ -749,6 +770,7 @@ public class AccountResourceIntTest {
                 null,                   // lastModifiedDate
                 RoleConstant.SUPER_ADMIN,
                 "test1",
+                List.of("test1"),
                 null, null, null, null,
                 Collections.singletonList(userLogin),
                 Collections.emptyList(), false, null, null);

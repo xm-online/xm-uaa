@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserSpec;
 import com.icthh.xm.uaa.service.UserSpecService;
+import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -48,8 +49,8 @@ public class JsonDataValidatorUnitTest {
     @Test
     public void testValidationSuccessful() {
         // GIVEN
-        when(user.getRoleKey()).thenReturn(ROLE_USER);
-        when(userSpecService.getUserSpec(ROLE_USER)).thenReturn(Optional.of(new UserSpec(ROLE_USER, DATA_SPEC_TEMPLATE)));
+        when(user.getAuthorities()).thenReturn(List.of(ROLE_USER));
+        when(userSpecService.getUserSpec(List.of(ROLE_USER))).thenReturn(List.of(new UserSpec(ROLE_USER, DATA_SPEC_TEMPLATE)));
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("stringKey", "word");
@@ -66,8 +67,8 @@ public class JsonDataValidatorUnitTest {
     @Test
     public void testValidationErrorForSchemeNotMatch() {
         // GIVEN
-        when(user.getRoleKey()).thenReturn(ROLE_USER);
-        when(userSpecService.getUserSpec(ROLE_USER)).thenReturn(Optional.of(new UserSpec(ROLE_USER, DATA_SPEC_TEMPLATE)));
+        when(user.getAuthorities()).thenReturn(List.of(ROLE_USER));
+        when(userSpecService.getUserSpec(List.of(ROLE_USER))).thenReturn(List.of(new UserSpec(ROLE_USER, DATA_SPEC_TEMPLATE)));
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("stringKey", 1);
@@ -87,8 +88,8 @@ public class JsonDataValidatorUnitTest {
     @Test
     public void testValidationForEmptyDataButNotEmptySpec() {
         // GIVEN
-        when(user.getRoleKey()).thenReturn(ROLE_USER);
-        when(userSpecService.getUserSpec(ROLE_USER)).thenReturn(Optional.of(new UserSpec(ROLE_USER, DATA_SPEC_TEMPLATE)));
+        when(user.getAuthorities()).thenReturn(List.of(ROLE_USER));
+        when(userSpecService.getUserSpec(List.of(ROLE_USER))).thenReturn(List.of(new UserSpec(ROLE_USER, DATA_SPEC_TEMPLATE)));
 
         when(user.getData()).thenReturn(Collections.emptyMap());
 
@@ -102,8 +103,8 @@ public class JsonDataValidatorUnitTest {
     @Test
     public void testValidationForEmptySpec() {
         // GIVEN
-        when(user.getRoleKey()).thenReturn(ROLE_USER);
-        when(userSpecService.getUserSpec(ROLE_USER)).thenReturn(Optional.empty());
+        when(user.getAuthorities()).thenReturn(List.of(ROLE_USER));
+        when(userSpecService.getUserSpec(List.of(ROLE_USER))).thenReturn(Collections.emptyList());
 
         // WHEN
         boolean valid = jsonDataValidator.isValid(user, constraintValidatorContext);

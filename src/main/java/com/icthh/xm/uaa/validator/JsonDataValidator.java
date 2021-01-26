@@ -43,7 +43,7 @@ public class JsonDataValidator implements ConstraintValidator<com.icthh.xm.uaa.v
 
     @Override
     public boolean isValid(User user, ConstraintValidatorContext context) {
-        Optional<UserSpec> userSpec = userSpecService.getUserSpec(user.getRoleKey());
+        List<UserSpec> userSpec = userSpecService.getUserSpec(user.getAuthorities());
 
         if (userSpec.isEmpty()) {
             // if user specification is not found we return successful validation result
@@ -55,8 +55,7 @@ public class JsonDataValidator implements ConstraintValidator<com.icthh.xm.uaa.v
             log.error("User specification is not null, but data is null: {}", user.getData());
             return false;
         }
-
-        return validate(user.getData(), userSpec.get().getDataSpec(), context);
+        return  userSpec.stream().allMatch(spec -> validate(user.getData(), spec.getDataSpec(), context));
     }
 
     @SneakyThrows

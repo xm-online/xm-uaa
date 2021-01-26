@@ -12,59 +12,25 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
  * View Model extending the UserDTO, which is meant to be used in the user management UI.
  */
+@NoArgsConstructor
+@Getter
+@Setter
 public class ManagedUserVM extends UserDTO {
 
     public static final int PASSWORD_MIN_LENGTH = 4;
-
     public static final int PASSWORD_MAX_LENGTH = 100;
 
     @Size(min = PASSWORD_MIN_LENGTH, max = PASSWORD_MAX_LENGTH)
     @NotBlank
-    @Getter
-    @Setter
     private String password;
-
-    @Setter
-    @Getter
     private String captcha;
 
-    @SuppressWarnings("unused")
-    public ManagedUserVM() {
-        // Empty constructor needed for Jackson.
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param id
-     * @param password
-     * @param firstName
-     * @param lastName
-     * @param activated
-     * @param tfaEnabled
-     * @param tfaOtpChannelType
-     * @param tfaOtpChannelSpec
-     * @param imageUrl
-     * @param langKey
-     * @param createdBy
-     * @param createdDate
-     * @param lastModifiedBy
-     * @param lastModifiedDate
-     * @param userKey
-     * @param roleKey
-     * @param accessTokenValiditySeconds
-     * @param refreshTokenValiditySeconds
-     * @param tfaAccessTokenValiditySeconds
-     * @param data
-     * @param logins
-     * @param autoLogoutEnabled
-     * @param autoLogoutTimeoutSeconds
-     */
     public ManagedUserVM(Long id,
                          String password,
                          String firstName,
@@ -88,7 +54,8 @@ public class ManagedUserVM extends UserDTO {
                          List<UserLogin> logins,
                          boolean autoLogoutEnabled,
                          Integer autoLogoutTimeoutSeconds,
-                         Instant acceptTocTime) {
+                         Instant acceptTocTime,
+                         List<String> authorities) {
 
         super(id,
             firstName,
@@ -105,6 +72,7 @@ public class ManagedUserVM extends UserDTO {
             lastModifiedDate,
             userKey,
             roleKey,
+            authorities,
             accessTokenValiditySeconds,
             refreshTokenValiditySeconds,
             tfaAccessTokenValiditySeconds,

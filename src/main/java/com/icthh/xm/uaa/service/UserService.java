@@ -26,8 +26,10 @@ import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.util.RandomUtil;
 import com.icthh.xm.uaa.util.OtpUtils;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,7 +37,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
 import java.time.Instant;
 import java.util.*;
@@ -47,6 +48,8 @@ import static com.icthh.xm.uaa.service.util.RandomUtil.generateActivationKey;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.*;
 import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
 import static java.util.UUID.randomUUID;
+import static org.apache.commons.collections.CollectionUtils.isEqualCollection;
+import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
 
@@ -151,7 +154,7 @@ public class UserService {
         newUser.setLastName(user.getLastName());
         newUser.setImageUrl(user.getImageUrl());
         newUser.setLangKey(user.getLangKey() == null ? "en" : user.getLangKey());
-        newUser.setRoleKey(getRequiredRoleKey(user));
+        newUser.setAuthorities(getRequiredRoleKey(user));
         String encryptedPassword = passwordEncoder.encode(RandomUtil.generatePassword());
         newUser.setPassword(encryptedPassword);
         newUser.setResetKey(RandomUtil.generateResetKey());
@@ -217,11 +220,17 @@ public class UserService {
      */
     @LogicExtensionPoint("ChangeUserRole")
     public Optional<UserDTO> changeUserRole(final UserDTO updatedUser) {
-        Preconditions.checkArgument(StringUtils.isNotEmpty(updatedUser.getRoleKey()), "No roleKey provided");
+        Preconditions.checkArgument(isNotEmpty(updatedUser.getAuthorities()), "No roleKey provided");
+        Preconditions.checkArgument(
+            isNotEmpty(updatedUser.getAuthorities()
+                .stream()
+                .filter(Objects::nonNull)
+                .filter(StringUtils::isNoneBlank)
+                .collect(Collectors.toList())), "No roleKey provided");
         return userRepository.findById(updatedUser.getId())
             .map(user -> {
-                assertNotSuperAdmin(user.getRoleKey());
-                user.setRoleKey(updatedUser.getRoleKey());
+                assertNotSuperAdmin(user.getAuthorities());
+                user.setAuthorities(updatedUser.getAuthorities());
                 return user;
             })
             .map(UserDTO::new);
@@ -267,7 +276,7 @@ public class UserService {
             throw new BusinessException(ERROR_USER_DELETE_HIMSELF, "Forbidden to delete himself");
         }
         userRepository.findOneWithLoginsByUserKey(userKey).ifPresent(user -> {
-            assertNotSuperAdmin(user.getRoleKey());
+            assertNotSuperAdmin(user.getAuthorities());
             socialUserConnectionRepository.deleteByUserKey(user.getUserKey());
             userRepository.delete(user);
             notification.accept(new UserDTO(user));
@@ -356,9 +365,10 @@ public class UserService {
         return userLoginRepository.findOneByLoginIgnoreCase(login).map(UserLogin::getUser);
     }
 
-    private String getRequiredRoleKey(UserDTO user) {
-        return StringUtils.isBlank(user.getRoleKey()) ? tenantPropertiesService.getTenantProps()
-            .getSecurity().getDefaultUserRole() : user.getRoleKey();
+    private List<String> getRequiredRoleKey(UserDTO user) {
+        return CollectionUtils.isEmpty(user.getAuthorities()) ?
+            List.of(tenantPropertiesService.getTenantProps().getSecurity().getDefaultUserRole()) :
+            user.getAuthorities();
     }
 
     @Transactional
@@ -567,16 +577,16 @@ public class UserService {
             //use original user state
             dstUser.setActivated(dstUser.isActivated());
             //use original user role
-            dstUser.setRoleKey(dstUser.getRoleKey());
+            dstUser.setAuthorities(dstUser.getAuthorities());
         } else {
 
             //role update case
-            if (!StringUtils.equals(dstUser.getRoleKey(), srcDTO.getRoleKey())) {
-                if (StringUtils.isEmpty(srcDTO.getRoleKey())) {
+            if (!isEqualCollection(dstUser.getAuthorities(), srcDTO.getAuthorities())) {
+                if (CollectionUtils.isEmpty(srcDTO.getAuthorities())) {
                     log.warn("Role is empty and will not be allied to user");
                 } else {
-                    log.warn("Role [{}] will be allied to user.id={}. Evaluate strictUserManagement as option", srcDTO.getRoleKey(), dstUser.getId());
-                    dstUser.setRoleKey(srcDTO.getRoleKey());
+                    log.warn("Role [{}] will be allied to user.id={}. Evaluate strictUserManagement as option", srcDTO.getAuthorities(), dstUser.getId());
+                    dstUser.setAuthorities(srcDTO.getAuthorities());
                 }
             }
 

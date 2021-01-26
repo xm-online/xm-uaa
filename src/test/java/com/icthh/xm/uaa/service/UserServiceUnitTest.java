@@ -11,6 +11,7 @@ import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.security.TokenConstraintsService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -197,11 +198,11 @@ public class UserServiceUnitTest {
     @Test
     public void shouldFailIfRoleCodeIsEmptyOrNull() {
         UserDTO userDTO = new UserDTO();
-        userDTO.setRoleKey(null);
+        userDTO.setAuthorities(null);
         assertThatThrownBy(() -> {
             service.changeUserRole(userDTO);
         }).hasMessage("No roleKey provided");
-        userDTO.setRoleKey("");
+        userDTO.setAuthorities(List.of(""));
         assertThatThrownBy(() -> {
             service.changeUserRole(userDTO);
         }).hasMessage("No roleKey provided");
@@ -210,7 +211,7 @@ public class UserServiceUnitTest {
     @Test
     public void shouldFailForSuperAdmin() {
         UserDTO userDTO = new UserDTO();
-        userDTO.setRoleKey("X");
+        userDTO.setAuthorities(List.of("X"));
         userDTO.setId(ID);
         given(userRepository.findById(ID)).willReturn(Optional.of(createUser(USER_KEY, SUPER_ADMIN)));
         assertThatThrownBy(() -> {
@@ -221,12 +222,12 @@ public class UserServiceUnitTest {
     @Test
     public void shouldChangeUserRole() {
         UserDTO userDTO = new UserDTO();
-        userDTO.setRoleKey("X");
+        userDTO.setAuthorities(List.of("X"));
         userDTO.setId(ID);
         given(userRepository.findById(ID)).willReturn(Optional.of(createUser(USER_KEY, "Y")));
         Optional<UserDTO> result = service.changeUserRole(userDTO);
         assertThat(result.isPresent()).isTrue();
-        assertThat(result.get().getRoleKey()).isEqualTo(userDTO.getRoleKey());
+        assertThat(result.get().getAuthorities()).isEqualTo(userDTO.getAuthorities());
     }
 
     @Test
@@ -235,7 +236,7 @@ public class UserServiceUnitTest {
         UserDTO newUser = new UserDTO();
         newUser.setId(ID);
         newUser.setUserKey("USERX");
-        newUser.setRoleKey("ROLEX");
+        newUser.setAuthorities(List.of("ROLEX"));
         newUser.setFirstName("fn");
         newUser.setLastName("ln");
         newUser.setCreatedBy("cb");
@@ -268,7 +269,7 @@ public class UserServiceUnitTest {
         assertThat(result.getLangKey()).isEqualTo(newUser.getLangKey());
 
         assertThat(result.getCreatedBy()).isEqualTo(oldUser.getCreatedBy());
-        assertThat(result.getRoleKey()).isEqualTo("ROLEX");
+        assertThat(result.getAuthorities()).isEqualTo(List.of("ROLEX"));
         assertThat(result.isActivated()).isEqualTo(Boolean.FALSE);
 
     }
@@ -279,7 +280,7 @@ public class UserServiceUnitTest {
         UserDTO newUser = new UserDTO();
         newUser.setId(ID);
         newUser.setUserKey("USERX");
-        newUser.setRoleKey("ROLEX");
+        newUser.setAuthorities(List.of("ROLEX"));
         newUser.setFirstName("fn");
         newUser.setLastName("ln");
         newUser.setCreatedBy("cb");
@@ -314,7 +315,7 @@ public class UserServiceUnitTest {
         assertThat(result.getLangKey()).isEqualTo(newUser.getLangKey());
 
         assertThat(result.getCreatedBy()).isEqualTo(oldUser.getCreatedBy());
-        assertThat(result.getRoleKey()).isEqualTo("Y");
+        assertThat(result.getAuthorities()).isEqualTo(List.of("Y"));
         assertThat(result.isActivated()).isEqualTo(Boolean.TRUE);
 
     }

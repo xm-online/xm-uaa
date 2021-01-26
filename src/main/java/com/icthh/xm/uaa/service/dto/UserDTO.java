@@ -1,6 +1,10 @@
 package com.icthh.xm.uaa.service.dto;
 
+import static com.google.common.collect.Iterables.getLast;
+import static org.springframework.util.CollectionUtils.isEmpty;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.collect.Iterables;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
@@ -16,10 +20,12 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.util.CollectionUtils;
 
 /**
  * A DTO representing a user, with his authorities.
@@ -40,57 +46,32 @@ public class UserDTO {
 
     @Size(max = 256)
     private String imageUrl;
-
     private boolean activated = false;
-
-    /**
-     * Flag is TFA enabled for user. Use as read only!.
-     */
-    private boolean tfaEnabled = false;
-
-    /**
-     * User OTP channel type. Can be null. Use as read only!
-     */
-    private OtpChannelType tfaOtpChannelType;
-
-    /**
-     * Current user TFA channel. Can be null. Use as read only!
-     */
-    private TfaOtpChannelSpec tfaOtpChannelSpec;
+    private boolean tfaEnabled = false; //Flag is TFA enabled for user. Use as read only!.
+    private OtpChannelType tfaOtpChannelType; //User OTP channel type. Can be null. Use as read only!
+    private TfaOtpChannelSpec tfaOtpChannelSpec; //Current user TFA channel. Can be null. Use as read only!
 
     @Size(min = 2, max = 5)
     private String langKey;
-
     private String createdBy;
-
     private Instant createdDate;
-
     private String lastModifiedBy;
-
     private Instant lastModifiedDate;
-
     private String userKey;
 
     private String roleKey;
-
+    private List<String> authorities;
     private Integer accessTokenValiditySeconds;
-
     private Integer refreshTokenValiditySeconds;
-
     private Integer tfaAccessTokenValiditySeconds;
-
     private Map<String, Object> data = new HashMap<>();
 
     @NotEmpty
     @Valid
     private List<UserLogin> logins;
-
     private List<AccPermissionDTO> permissions;
-
     private boolean autoLogoutEnabled = false;
-
     private Integer autoLogoutTimeoutSeconds;
-
     private Instant acceptTocTime;
 
     @SuppressWarnings("unused")
@@ -118,7 +99,8 @@ public class UserDTO {
             user.getLastModifiedBy(),
             user.getLastModifiedDate(),
             user.getUserKey(),
-            user.getRoleKey(),
+            getLast(user.getAuthorities()),
+            user.getAuthorities(),
             user.getAccessTokenValiditySeconds(),
             user.getRefreshTokenValiditySeconds(),
             user.getTfaAccessTokenValiditySeconds(),
@@ -137,6 +119,15 @@ public class UserDTO {
     public String getEmail() {
         return getLogins().stream().filter(userLogin -> UserLoginType.EMAIL.getValue().equals(userLogin.getTypeKey()))
             .findFirst().map(UserLogin::getLogin).orElse(null);
+    }
+
+    public void setAuthorities(List<String> authorities){
+        this.authorities = authorities;
+        this.roleKey = isEmpty(authorities) ? null :  getLast(authorities);
+    }
+
+    public List<String> getAuthorities(){
+        return isEmpty(this.authorities) && roleKey != null ? List.of(this.roleKey) : authorities;
     }
 
 }
