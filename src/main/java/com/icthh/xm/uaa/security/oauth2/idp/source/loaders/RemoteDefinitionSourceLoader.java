@@ -1,10 +1,7 @@
 package com.icthh.xm.uaa.security.oauth2.idp.source.loaders;
 
-import com.icthh.xm.uaa.security.oauth2.idp.config.IdpConfigContainer;
-import com.icthh.xm.uaa.security.oauth2.idp.config.IdpPublicConfig;
 import com.icthh.xm.uaa.security.oauth2.idp.source.DefinitionSourceLoader;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.oauth2.provider.token.store.jwk.JwkException;
 
 import java.io.IOException;
@@ -24,9 +21,7 @@ public class RemoteDefinitionSourceLoader implements DefinitionSourceLoader {
     @Override
     public List<InputStream> retrieveRawPublicKeysDefinition(Map<String, Object> params) {
 
-        Map<String, IdpConfigContainer> idpClientConfig = (Map<String, IdpConfigContainer>) params.get("clientConfigs");
-
-        List<URL> jwkSetUrls = loadJwkSetUrls(getJwkSetEndpoints(idpClientConfig));
+        List<URL> jwkSetUrls = loadJwkSetUrls(getJwkSetEndpoints());
 
         return jwkSetUrls
             .stream()
@@ -51,13 +46,11 @@ public class RemoteDefinitionSourceLoader implements DefinitionSourceLoader {
             }).collect(Collectors.toList());
     }
 
-    private List<String> getJwkSetEndpoints(Map<String, IdpConfigContainer> idpClientConfig) {
-        return idpClientConfig.values()
-            .stream()
-            .map(IdpConfigContainer::getIdpPublicClientConfig)
-            .map(IdpPublicConfig.IdpConfigContainer.IdpPublicClientConfig::getJwksEndpoint)
-            .map(IdpPublicConfig.IdpConfigContainer.IdpPublicClientConfig.BaseEndpoint::getUri)
-            .filter(jwksUri -> !StringUtils.isEmpty(jwksUri))
-            .collect(Collectors.toList());
+    /**
+     * stubbed until {@link LocalStorageDefinitionSourceLoader} will not be implemented.
+     */
+
+    private List<String> getJwkSetEndpoints() {
+        return List.of("https://ticino-dev-co.eu.auth0.com/.well-known/jwks.json");
     }
 }

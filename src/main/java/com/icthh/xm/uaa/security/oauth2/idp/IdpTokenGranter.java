@@ -17,6 +17,7 @@ import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
@@ -40,6 +41,8 @@ import java.util.Map;
 public class IdpTokenGranter extends AbstractTokenGranter {
 
     private static final String GRANT_TYPE = "idp_token";
+    public static final String GIVEN_NAME_ATTR = "given_name";
+    public static final String FAMILY_NAME_ATTR = "family_name";
 
     private final XmJwkTokenStore jwkTokenStore;
     private final DomainUserDetailsService domainUserDetailsService;
@@ -50,7 +53,7 @@ public class IdpTokenGranter extends AbstractTokenGranter {
 
     public IdpTokenGranter(AuthorizationServerTokenServices tokenServices,
                            ClientDetailsService clientDetailsService,
-                           OAuth2RequestFactory requestFactory,
+                           @Lazy OAuth2RequestFactory requestFactory,
                            XmJwkTokenStore jwkTokenStore,
                            DomainUserDetailsService domainUserDetailsService,
                            TenantPropertiesService tenantPropertiesService,
@@ -161,8 +164,8 @@ public class IdpTokenGranter extends AbstractTokenGranter {
          */
 
         //base info mapping
-        userDTO.setFirstName((String) additionalInformation.get("given_name"));
-        userDTO.setLastName((String) additionalInformation.get("family_name"));
+        userDTO.setFirstName((String) additionalInformation.get(GIVEN_NAME_ATTR));
+        userDTO.setLastName((String) additionalInformation.get(FAMILY_NAME_ATTR));
         //login mapping
         UserLogin emailUserLogin = new UserLogin();
         emailUserLogin.setLogin(userIdentity);

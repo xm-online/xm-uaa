@@ -15,10 +15,9 @@
  */
 package com.icthh.xm.uaa.security.oauth2.idp.converter;
 
+import com.icthh.xm.commons.domain.idp.IdpPublicConfig;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
-import com.icthh.xm.uaa.security.oauth2.idp.config.IdpConfigContainer;
 import com.icthh.xm.uaa.security.oauth2.idp.config.IdpConfigRepository;
-import com.icthh.xm.uaa.security.oauth2.idp.config.IdpPublicConfig;
 import com.icthh.xm.uaa.security.oauth2.idp.source.XmJwkDefinitionSource;
 import com.icthh.xm.uaa.security.oauth2.idp.source.model.XmJwkDefinition;
 import com.icthh.xm.uaa.security.oauth2.idp.validation.verifiers.AudienceClaimVerifier;
@@ -38,10 +37,10 @@ import org.springframework.security.oauth2.provider.token.store.JwtClaimsSetVeri
 import org.springframework.security.oauth2.provider.token.store.jwk.JwkException;
 
 import java.net.URL;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -159,10 +158,11 @@ public class XmJwkVerifyingJwtAccessTokenConverter extends JwtAccessTokenConvert
     @SneakyThrows
     private List<JwtClaimsSetVerifier> buildDefaultClaimVerifiers(String tenantKey,
                                                                   Map<String, Object> claims) {
-        Map<String, IdpConfigContainer> configs = idpConfigRepository.getIdpClientConfigsByTenantKey(tenantKey);
+        Map<String, IdpPublicConfig.IdpConfigContainer.IdpPublicClientConfig> configs =
+            idpConfigRepository.getIdpClientConfigsByTenantKey(tenantKey);
 
         String tokenAud = getTokenClaim(claims, "aud");
-        String issuerDefinition = getIssuerDefinition(tokenAud, configs);
+        String issuerDefinition = getIssuerDefinition(tokenAud, configs.values());
 
         if (StringUtils.isEmpty(issuerDefinition)) {
             //TODO put valid exception
@@ -182,29 +182,13 @@ public class XmJwkVerifyingJwtAccessTokenConverter extends JwtAccessTokenConvert
         return tokenClaim;
     }
 
-    //TODO unused method
-    private List<String> getAudienceDefinitions(String tokenAud, Map<String, IdpConfigContainer> configs) {
-        return configs
-            .values()
-            .stream()
-            .map(IdpConfigContainer::getIdpPublicClientConfig)
-            .map(IdpPublicConfig.IdpConfigContainer.IdpPublicClientConfig::getClientId)
-            .filter(Objects::nonNull)
-            .filter(clientId -> clientId.equals(tokenAud))
-            .collect(Collectors.toList());
-    }
-
-    private String getIssuerDefinition(String tokenAud, Map<String, IdpConfigContainer> configs) {
-        List<IdpPublicConfig.IdpConfigContainer.IdpPublicClientConfig> publicClientConfigs = configs
-            .values()
-            .stream()
-            .map(IdpConfigContainer::getIdpPublicClientConfig)
-            .collect(Collectors.toList());
+    private String getIssuerDefinition(String tokenAud,
+                                       Collection<IdpPublicConfig.IdpConfigContainer.IdpPublicClientConfig> publicClientConfigs) {
 
         return publicClientConfigs
             .stream()
             .map(idpPublicClientConfig -> Map.entry(idpPublicClientConfig.getClientId(),
-                idpPublicClientConfig.getIssuer()))
+                idpPublicClientConfig.getOpenIdConfig().getIssuer()))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
             .get(tokenAud);
 
