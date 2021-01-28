@@ -26,8 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
- * This class reads and process both IDP clients public and private configuration for each tenant.
- * Tenant IDP clients created for each successfully loaded config. If config not fully loaded it skipped.
+ * This class reads and process IDP clients public configuration for each tenant.
+ * Tenant IDP clients created for each successfully loaded config. If config not loaded or invalid it skipped.
  */
 @Slf4j
 @Component

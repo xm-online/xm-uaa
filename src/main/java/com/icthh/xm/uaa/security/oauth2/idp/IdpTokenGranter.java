@@ -150,11 +150,11 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         return userService.createUser(userDTO);
     }
 
-    //TODO add claim validation: audience and issuer
+    //TODO add additional claim validation:
     // throw exception, define throw, javadoc
     @LogicExtensionPoint(value = "ValidateIdpAccessToken")
     public void validateIdpAccessToken(OAuth2AccessToken idpOAuth2IdToken) {
-        //validate issuer and audience, etc, + LEP
+        //validate any additional claims viaLEP
     }
 
 
