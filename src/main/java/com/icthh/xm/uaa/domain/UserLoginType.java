@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.domain;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -33,6 +34,12 @@ public enum UserLoginType {
         }
 
         return Optional.empty();
+    }
+
+    public static UserLoginType fromString(String value) {
+        return Arrays.stream(UserLoginType.values())
+            .filter(UserLoginType -> StringUtils.lowerCase(UserLoginType.getValue()).equals(StringUtils.lowerCase(value)))
+            .findAny().orElseThrow(IllegalArgumentException::new);
     }
 
 }

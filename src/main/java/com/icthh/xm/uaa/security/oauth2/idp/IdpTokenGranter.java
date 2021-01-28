@@ -17,6 +17,7 @@ import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -32,6 +33,7 @@ import org.springframework.security.oauth2.provider.token.AbstractTokenGranter;
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,8 +43,14 @@ import java.util.Map;
 public class IdpTokenGranter extends AbstractTokenGranter {
 
     private static final String GRANT_TYPE = "idp_token";
-    public static final String GIVEN_NAME_ATTR = "given_name";
-    public static final String FAMILY_NAME_ATTR = "family_name";
+    private static final String DEFAULT_FIRST_NAME_ATTRIBUTE = "given_name";
+    private static final String DEFAULT_LAST_NAME_ATTRIBUTE = "family_name";
+    private static final String DEFAULT_USER_IDENTITY_ATTRIBUTE = "email";
+
+    private static final String FIRST_NAME_CONFIG_ATTRIBUTE = "firstNameAttribute";
+    private static final String LAST_NAME_CONFIG_ATTRIBUTE = "lastNameAttribute";
+    private static final String USER_IDENTITY_CONFIG_TYPE = "userIdentityType";
+    private static final String USER_IDENTITY_CONFIG_ATTRIBUTE = "userIdentityAttribute";
 
     private final XmJwkTokenStore jwkTokenStore;
     private final DomainUserDetailsService domainUserDetailsService;
@@ -87,7 +95,6 @@ public class IdpTokenGranter extends AbstractTokenGranter {
 
     private IdpAuthenticationToken getUserAuthenticationToken(Map<String, String> parameters) {
         String idpToken = parameters.get("token");
-        //TODO Also put all key, hardcoded names, etc to constant class (if more than one time it used) or to private static final variable
 
         // parse IDP id token
         OAuth2AccessToken idpOAuth2IdToken = jwkTokenStore.readAccessToken(idpToken);
@@ -105,7 +112,8 @@ public class IdpTokenGranter extends AbstractTokenGranter {
 
         return userAuthenticationToken;
     }
-
+    //TODO think about move retrieveDomainUserDetails() and other related methods
+    // to separate service for creating DomainUserDetails cause IdpTokenGranter shouldn't do this inside.
     private DomainUserDetails retrieveDomainUserDetails(OAuth2AccessToken idpOAuth2IdToken) {
         String userIdentity = extractUserIdentity(idpOAuth2IdToken);
         DomainUserDetails userDetails = domainUserDetailsService.retrieveUserByUsername(userIdentity);
@@ -123,9 +131,12 @@ public class IdpTokenGranter extends AbstractTokenGranter {
     @LogicExtensionPoint(value = "ExtractUserIdentity")
     public String extractUserIdentity(OAuth2AccessToken idpOAuth2IdToken) {
         Map<String, Object> additionalInformation = idpOAuth2IdToken.getAdditionalInformation();
-        //TODO "email" should be taken from uaa.yml: security.idp.defaultLoginAttribute whith default
-        // value: email if configuration not specified
-        return (String) additionalInformation.get("email");
+        Map<String, String> defaultClaimsMapping = getDefaultClaimsMapping();
+
+        String userIdentityAttribute = StringUtils.isEmpty(defaultClaimsMapping.get(USER_IDENTITY_CONFIG_ATTRIBUTE))
+            ? DEFAULT_USER_IDENTITY_ATTRIBUTE : defaultClaimsMapping.get(USER_IDENTITY_CONFIG_ATTRIBUTE);
+
+        return (String) additionalInformation.get(userIdentityAttribute);
     }
 
     private User createUser(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
@@ -152,24 +163,23 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         Map<String, Object> additionalInformation = idpOAuth2IdToken.getAdditionalInformation();
         UserDTO userDTO = new UserDTO();
 
-        //TODO default configuration should be taken from uaa.yml with specified default values of some properties is missing
-        /*
-         * security:
-         *   idp:
-         *     defaultIdpClaimMapping:
-         *       userIdentityAttribute: email
-         *       userIdentityType:      LOGIN.EMAIL
-         *       firstNameAttribute:    given_name
-         *       lastNameAttribute:     family_name
-         */
-
         //base info mapping
-        userDTO.setFirstName((String) additionalInformation.get(GIVEN_NAME_ATTR));
-        userDTO.setLastName((String) additionalInformation.get(FAMILY_NAME_ATTR));
+        Map<String, String> defaultClaimsMapping = getDefaultClaimsMapping();
+        String userFirstNameAttribute = StringUtils.isEmpty(defaultClaimsMapping.get(FIRST_NAME_CONFIG_ATTRIBUTE))
+            ? DEFAULT_FIRST_NAME_ATTRIBUTE : defaultClaimsMapping.get(FIRST_NAME_CONFIG_ATTRIBUTE);
+
+        String userLastNameAttribute = StringUtils.isEmpty(defaultClaimsMapping.get(LAST_NAME_CONFIG_ATTRIBUTE))
+            ? DEFAULT_LAST_NAME_ATTRIBUTE : defaultClaimsMapping.get(LAST_NAME_CONFIG_ATTRIBUTE);
+
+        userDTO.setFirstName((String) additionalInformation.get(userFirstNameAttribute));
+        userDTO.setLastName((String) additionalInformation.get(userLastNameAttribute));
         //login mapping
+        String userIdentityType = StringUtils.isEmpty(defaultClaimsMapping.get(USER_IDENTITY_CONFIG_TYPE))
+            ? UserLoginType.EMAIL.getValue() : UserLoginType.fromString(defaultClaimsMapping.get(USER_IDENTITY_CONFIG_TYPE)).getValue();
+
         UserLogin emailUserLogin = new UserLogin();
         emailUserLogin.setLogin(userIdentity);
-        emailUserLogin.setTypeKey(UserLoginType.EMAIL.getValue());
+        emailUserLogin.setTypeKey(userIdentityType);
 
         userDTO.setLogins(List.of(emailUserLogin));
         return userDTO;
@@ -189,6 +199,26 @@ public class IdpTokenGranter extends AbstractTokenGranter {
 
     private String getTenantKey() {
         return TenantContextUtils.getRequiredTenantKeyValue(tenantPropertiesService.getTenantContextHolder());
+    }
+
+    private Map<String, String> getDefaultClaimsMapping() {
+        TenantProperties tenantProps = tenantPropertiesService.getTenantProps();
+        TenantProperties.Security security = tenantProps.getSecurity();
+
+        TenantProperties.Security.Idp idp = security.getIdp();
+        if (security.getIdp() == null || security.getIdp().getDefaultIdpClaimMapping() == null) {
+            log.debug("Default ipd claims mapping attribute names not specified in configuration. " +
+                "Default mappings will be used.");
+            return new HashMap<>();
+        }
+        TenantProperties.Security.Idp.DefaultIdpClaimMapping defaultIdpClaimMapping = idp.getDefaultIdpClaimMapping();
+
+        return Map.of(
+            FIRST_NAME_CONFIG_ATTRIBUTE, defaultIdpClaimMapping.getFirstNameAttribute(),
+            LAST_NAME_CONFIG_ATTRIBUTE, defaultIdpClaimMapping.getLastNameAttribute(),
+            USER_IDENTITY_CONFIG_ATTRIBUTE, defaultIdpClaimMapping.getUserIdentityAttribute(),
+            USER_IDENTITY_CONFIG_TYPE, defaultIdpClaimMapping.getUserIdentityType()
+        );
     }
 
 }

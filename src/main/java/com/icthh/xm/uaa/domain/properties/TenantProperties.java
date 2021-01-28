@@ -91,6 +91,26 @@ public class TenantProperties {
         public void setRefreshTokenValiditySeconds(Integer refreshTokenValiditySeconds) {
             this.refreshTokenValiditySeconds = refreshTokenValiditySeconds;
         }
+
+        @JsonProperty("idp")
+        private Idp idp;
+
+        @Data
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        public static class Idp {
+
+            @JsonProperty("defaultIdpClaimMapping")
+            private DefaultIdpClaimMapping defaultIdpClaimMapping;
+
+            @Data
+            public static class DefaultIdpClaimMapping {
+                private String userIdentityAttribute;
+                private String userIdentityType;
+                private String firstNameAttribute;
+                private String lastNameAttribute;
+            }
+        }
+
     }
 
     private PublicSettings publicSettings;

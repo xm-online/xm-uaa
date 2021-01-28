@@ -119,8 +119,8 @@ public class XmJwkDefinitionSource {
     }
 
     private SourceDefinitionType getDefinitionSourceType() {
-        Map<String, Object> idpPublicConfig = idpConfigRepository.getIdpPublicConfigByTenantKey(getTenantKey());
-        SourceDefinitionType jwksSourceType = SourceDefinitionType.fromValue(String.valueOf(idpPublicConfig.get("jwksSourceType")));
+        //fixme stubbed until refactor on ms-config will be done
+        SourceDefinitionType jwksSourceType = SourceDefinitionType.REMOTE;
 
         log.debug("jwks source definition type: {}", jwksSourceType);
 
