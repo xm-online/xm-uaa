@@ -9,6 +9,7 @@ import com.icthh.xm.commons.permission.annotation.FindWithPermission;
 import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.commons.permission.repository.PermittedRepository;
 import com.icthh.xm.uaa.domain.Client;
+import com.icthh.xm.uaa.domain.ClientState;
 import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
 import java.util.Optional;
@@ -51,6 +52,7 @@ public class ClientService {
      * @param client the entity to create
      * @return the persisted entity
      */
+    @LogicExtensionPoint("CreateClient")
     public Client createClient(ClientDTO client) {
         if (getClient(client.getClientId()) != null) {
             throw new BusinessException("client.already.exists",
@@ -79,6 +81,7 @@ public class ClientService {
      * @param updatedClient the entity to update
      * @return the persisted entity
      */
+    @LogicExtensionPoint("UpdateClient")
     public Client updateClient(ClientDTO updatedClient) {
         return clientRepository.findById(updatedClient.getId()).map(client -> {
             String newClientSecret = updatedClient.getClientSecret();
@@ -141,5 +144,22 @@ public class ClientService {
     public Page<ClientDTO> findAllByClientIdContains(String clientId, Pageable pageable) {
         return clientRepository.findAllByClientIdContainingIgnoreCase(clientId, pageable)
               .map(client -> new ClientDTO(client.clientSecret(PSWRD_MASK)));
+    }
+
+    public Optional<ClientDTO> blockClient(String clientKey) {
+        return changeClientState(clientKey, ClientState.BLOCKED);
+    }
+
+    public Optional<ClientDTO> activateClient(String clientKey) {
+        return changeClientState(clientKey, ClientState.ACTIVE);
+    }
+
+    private Optional<ClientDTO> changeClientState(String clientKey, ClientState clientState){
+        return Optional.ofNullable(getClient(clientKey))
+            .map(client-> {
+                client.setState(clientState);
+                return client;
+            })
+            .map(ClientDTO::new);
     }
 }
