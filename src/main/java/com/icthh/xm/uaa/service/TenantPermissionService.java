@@ -76,8 +76,8 @@ public class TenantPermissionService implements RefreshableConfiguration {
                 Map<String, List<Permission>> tenantPermissions = new HashMap<>();
 
                 permissions.values()
-                    .forEach(p -> tenantPermissions.computeIfAbsent(p.getRoleKey(), role -> new LinkedList<>())
-                        .add(p));
+                           .forEach(p -> tenantPermissions.computeIfAbsent(p.getRoleKey(), role -> new LinkedList<>())
+                                                          .add(p));
 
                 tenantRolePermissions.put(tenant, Collections.unmodifiableMap(tenantPermissions));
 

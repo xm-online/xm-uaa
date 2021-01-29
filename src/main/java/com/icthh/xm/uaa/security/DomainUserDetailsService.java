@@ -40,18 +40,18 @@ public class DomainUserDetailsService implements UserDetailsService {
         final String lowerLogin = login.toLowerCase().trim();
 
         String tenantKey = tenantContextHolder.getContext()
-            .getTenantKey()
-            .map(TenantKey::getValue)
+                                                 .getTenantKey()
+                                                 .map(TenantKey::getValue)
             .orElseThrow(() -> new TenantNotProvidedException("Tenant not provided for authentication"));
 
         log.debug("Authenticating login: {}, lowercase: {}, within tenant: {}", login, lowerLogin, tenantKey);
 
         return userLoginRepository.findOneByLogin(lowerLogin)
-            .map(userLogin -> buildDomainUserDetails(lowerLogin, tenantKey, userLogin))
-            .orElseThrow(buildException(lowerLogin, tenantKey));
+                                  .map(userLogin -> buildDomainUserDetails(lowerLogin, tenantKey, userLogin))
+                                  .orElseThrow(buildException(lowerLogin, tenantKey));
     }
 
-    private Supplier<UsernameNotFoundException> buildException(String lowerLogin, String tenantKey) {
+    private Supplier<UsernameNotFoundException> buildException(String lowerLogin, String tenantKey){
         return () -> {
             log.error("User [{}] was not found for tenant [{}]", lowerLogin, tenantKey);
             return new UsernameNotFoundException("User " + lowerLogin + " was not found for tenant " + tenantKey);
@@ -66,9 +66,9 @@ public class DomainUserDetailsService implements UserDetailsService {
 
         // get user login's
         List<UserLoginDto> logins = user.getLogins().stream()
-            .filter(l -> !l.isRemoved())
-            .map(UserLoginDto::new)
-            .collect(toList());
+                                        .filter(l -> !l.isRemoved())
+                                        .map(UserLoginDto::new)
+                                        .collect(toList());
 
         // get user role authority
         List<SimpleGrantedAuthority> authorities = user.getAuthorities()
@@ -77,19 +77,19 @@ public class DomainUserDetailsService implements UserDetailsService {
             .collect(toList());
 
         return new DomainUserDetails(lowerLogin,
-            user.getPassword(),
-            authorities,
-            tenantKey,
-            user.getUserKey(),
-            user.isTfaEnabled(),
-            user.getTfaOtpSecret(),
-            user.getTfaOtpChannelType(),
-            user.getAccessTokenValiditySeconds(),
-            user.getRefreshTokenValiditySeconds(),
-            user.getTfaAccessTokenValiditySeconds(),
-            user.isAutoLogoutEnabled(),
-            user.getAutoLogoutTimeoutSeconds(),
-            logins);
+                                     user.getPassword(),
+                                     authorities,
+                                     tenantKey,
+                                     user.getUserKey(),
+                                     user.isTfaEnabled(),
+                                     user.getTfaOtpSecret(),
+                                     user.getTfaOtpChannelType(),
+                                     user.getAccessTokenValiditySeconds(),
+                                     user.getRefreshTokenValiditySeconds(),
+                                     user.getTfaAccessTokenValiditySeconds(),
+                                     user.isAutoLogoutEnabled(),
+                                     user.getAutoLogoutTimeoutSeconds(),
+                                     logins);
     }
 
 }
