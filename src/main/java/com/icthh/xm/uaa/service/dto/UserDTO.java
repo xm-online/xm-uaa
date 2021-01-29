@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.service.dto;
 
+import static com.google.common.collect.Iterables.getFirst;
 import static com.google.common.collect.Iterables.getLast;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
@@ -119,7 +120,7 @@ public class UserDTO {
             user.getLastModifiedBy(),
             user.getLastModifiedDate(),
             user.getUserKey(),
-            getLast(user.getAuthorities()),
+            getFirst(user.getAuthorities(), null),
             user.getAuthorities(),
             user.getAccessTokenValiditySeconds(),
             user.getRefreshTokenValiditySeconds(),
@@ -143,7 +144,7 @@ public class UserDTO {
 
     public void setAuthorities(List<String> authorities){
         this.authorities = authorities;
-        this.roleKey = isEmpty(authorities) ? null :  getLast(authorities);
+        this.roleKey = getFirst(authorities, null);
     }
 
     public List<String> getAuthorities(){

@@ -1,27 +1,20 @@
 package com.icthh.xm.uaa.domain;
 
-import static java.util.stream.Collectors.joining;
+import static com.google.common.collect.Iterables.getFirst;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.collect.Iterables;
 import com.icthh.xm.uaa.domain.converter.MapToStringConverter;
 import com.icthh.xm.uaa.domain.converter.RoleKeyConverter;
-import com.icthh.xm.uaa.validator.JsonData;
 import com.icthh.xm.uaa.repository.converter.OtpChannelTypeAttributeConverter;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import javax.persistence.ElementCollection;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.IteratorUtils;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.jboss.aerogear.security.otp.api.Base32;
-
+import com.icthh.xm.uaa.validator.JsonData;
+import java.io.Serializable;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Convert;
@@ -36,13 +29,12 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.io.Serializable;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jboss.aerogear.security.otp.api.Base32;
 
 /**
  * A user.
@@ -172,7 +164,7 @@ public class User extends AbstractAuditingEntity implements Serializable {
     }
 
     public void setAuthorities(List<String> authorities) {
-        this.roleKey = isNotEmpty(authorities) ? Iterables.getLast(authorities) : null;
+        this.roleKey = getFirst(authorities, null);
         this.authorities = authorities;
     }
 
