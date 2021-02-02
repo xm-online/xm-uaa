@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.config;
 
+import com.icthh.xm.commons.repository.JwksRepository;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.spring.config.TenantContextConfiguration;
 import com.icthh.xm.uaa.security.DomainJwtAccessTokenConverter;
@@ -63,17 +64,20 @@ public class UaaAccessTokenConverterConfiguration {
     private final ApplicationProperties applicationProperties;
     private final IdpConfigRepository idpConfigRepository;
     private final TenantPropertiesService tenantPropertiesService;
+    private final JwksRepository jwksRepository;
 
     public UaaAccessTokenConverterConfiguration(TenantContextHolder tenantContextHolder,
                                                 @Qualifier("loadBalancedRestTemplate") RestTemplate keyUriRestTemplate,
                                                 ApplicationProperties applicationProperties,
                                                 IdpConfigRepository idpConfigRepository,
-                                                TenantPropertiesService tenantPropertiesService) {
+                                                TenantPropertiesService tenantPropertiesService,
+                                                JwksRepository jwksRepository) {
         this.tenantContextHolder = tenantContextHolder;
         this.keyUriRestTemplate = keyUriRestTemplate;
         this.applicationProperties = applicationProperties;
         this.idpConfigRepository = idpConfigRepository;
         this.tenantPropertiesService = tenantPropertiesService;
+        this.jwksRepository = jwksRepository;
     }
 
     /**
@@ -161,10 +165,10 @@ public class UaaAccessTokenConverterConfiguration {
     @Bean
     public XmJwkTokenStore jwkTokenStore() {
 
-        XmJwkDefinitionSource XMJwkDefinitionSource =
-            new XmJwkDefinitionSource(keyUriRestTemplate, idpConfigRepository, tenantPropertiesService);
+        XmJwkDefinitionSource xmJwkDefinitionSource =
+            new XmJwkDefinitionSource(idpConfigRepository, tenantPropertiesService, jwksRepository);
         XmJwkVerifyingJwtAccessTokenConverter jwkVerifyingJwtAccessTokenConverter =
-            new XmJwkVerifyingJwtAccessTokenConverter(XMJwkDefinitionSource, tenantContextHolder, idpConfigRepository);
+            new XmJwkVerifyingJwtAccessTokenConverter(xmJwkDefinitionSource, tenantContextHolder, idpConfigRepository);
 
         return new XmJwkTokenStore(jwkVerifyingJwtAccessTokenConverter);
     }

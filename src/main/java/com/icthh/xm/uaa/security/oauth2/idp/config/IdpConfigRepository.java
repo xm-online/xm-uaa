@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import static com.icthh.xm.commons.domain.idp.IdpConstants.IDP_PUBLIC_SETTINGS_CONFIG_PATH_PATTERN;
+
 /**
  * This class reads and process IDP clients public configuration for each tenant.
  * Tenant IDP clients created for each successfully loaded config. If config not loaded or invalid it skipped.
@@ -34,8 +36,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class IdpConfigRepository implements RefreshableConfiguration {
 
-    //FIXME logic for init DefinitionSourceLoader
-    private static final String PUBLIC_SETTINGS_CONFIG_PATH_PATTERN = "/config/tenants/{tenant}/webapp/settings-public.yml";
     private static final String KEY_TENANT = "tenant";
 
     private final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
@@ -70,7 +70,7 @@ public class IdpConfigRepository implements RefreshableConfiguration {
 
     @Override
     public boolean isListeningConfiguration(String updatedKey) {
-        return matcher.match(PUBLIC_SETTINGS_CONFIG_PATH_PATTERN, updatedKey);
+        return matcher.match(IDP_PUBLIC_SETTINGS_CONFIG_PATH_PATTERN, updatedKey);
     }
 
     @Override
@@ -95,7 +95,7 @@ public class IdpConfigRepository implements RefreshableConfiguration {
     }
 
     private void processPublicConfiguration(String tenantKey, String configKey, String config) {
-        if (!matcher.match(PUBLIC_SETTINGS_CONFIG_PATH_PATTERN, configKey)) {
+        if (!matcher.match(IDP_PUBLIC_SETTINGS_CONFIG_PATH_PATTERN, configKey)) {
             return;
         }
         IdpPublicConfig idpPublicConfig = parseConfig(tenantKey, config, IdpPublicConfig.class);
@@ -142,7 +142,7 @@ public class IdpConfigRepository implements RefreshableConfiguration {
 
     private String extractTenantKeyFromPath(String configKey) {
         Map<String, String> configKeyParams =
-            matcher.extractUriTemplateVariables(IdpConfigRepository.PUBLIC_SETTINGS_CONFIG_PATH_PATTERN, configKey);
+            matcher.extractUriTemplateVariables(IDP_PUBLIC_SETTINGS_CONFIG_PATH_PATTERN, configKey);
 
         return configKeyParams.get(KEY_TENANT);
     }
