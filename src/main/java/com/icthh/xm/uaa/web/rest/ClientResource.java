@@ -5,10 +5,13 @@ import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.uaa.domain.Client;
 import com.icthh.xm.uaa.service.ClientService;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
+import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.web.rest.util.HeaderUtil;
 import com.icthh.xm.uaa.web.rest.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import io.swagger.annotations.ApiParam;
+import java.util.Optional;
+import javax.validation.constraints.NotEmpty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -152,5 +155,37 @@ public class ClientResource {
     public ResponseEntity<Void> deleteClient(@PathVariable Long id) {
         clientService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+    }
+
+    /**
+     * PUT  /clients/{clientKey}/block : Blocks user account
+     *
+     * @param clientKey the client to block
+     * @return the ResponseEntity with status 200 (OK) and with body the updated client
+     */
+    @PutMapping("/clients/{clientKey}/block")
+    @Timed
+    @PreAuthorize("hasPermission(null, 'CLIENT.BLOCK')")
+    @PrivilegeDescription("Privilege to blocks client")
+    public ResponseEntity<ClientDTO> blockClient(@NotEmpty @PathVariable String clientKey) {
+        Optional<ClientDTO> updatedClient = clientService.blockClient(clientKey);
+        return ResponseUtil.wrapOrNotFound(updatedClient,
+            HeaderUtil.createAlert("clientManagement.blocked", clientKey));
+    }
+
+    /**
+     * PUT  /clients/{clientKey}/activate : Unblock user account
+     *
+     * @param clientKey the client to unblock
+     * @return the ResponseEntity with status 200 (OK) and with body the updated client
+     */
+    @PutMapping("/clients/{clientKey}/activate")
+    @Timed
+    @PreAuthorize("hasPermission(null, 'CLIENT.UNBLOCK')")
+    @PrivilegeDescription("Privilege to unblocks user")
+    public ResponseEntity<ClientDTO> unblockClient(@NotEmpty @PathVariable String clientKey) {
+        Optional<ClientDTO> updatedClient = clientService.activateClient(clientKey);
+        return ResponseUtil.wrapOrNotFound(updatedClient,
+            HeaderUtil.createAlert("clientManagement.unblocked", clientKey));
     }
 }

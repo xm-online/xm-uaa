@@ -1,8 +1,11 @@
 package com.icthh.xm.uaa.domain;
 
 import com.icthh.xm.uaa.domain.converter.ListToStringConverter;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -23,6 +26,9 @@ import java.util.List;
 @Entity
 @Table(name = "client")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@Getter
+@Setter
+@ToString(exclude = {"scopes"})
 public class Client extends AbstractAuditingEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -44,6 +50,10 @@ public class Client extends AbstractAuditingEntity implements Serializable {
     @Column(name = "description")
     private String description;
 
+    @Column(name="state")
+    @Enumerated(EnumType.STRING)
+    private ClientState state;
+
     @Column(name = "access_token_validity")
     private Integer accessTokenValiditySeconds;
 
@@ -52,29 +62,9 @@ public class Client extends AbstractAuditingEntity implements Serializable {
     @Setter
     private List<String> scopes;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-
     public Client clientId(String clientId) {
         this.clientId = clientId;
         return this;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public String getClientSecret() {
-        return clientSecret;
     }
 
     public Client clientSecret(String clientSecret) {
@@ -82,42 +72,14 @@ public class Client extends AbstractAuditingEntity implements Serializable {
         return this;
     }
 
-    public void setClientSecret(String clientSecret) {
-        this.clientSecret = clientSecret;
-    }
-
-    public String getRoleKey() {
-        return roleKey;
-    }
-
     public Client roleKey(String roleKey) {
         this.roleKey = roleKey;
         return this;
     }
 
-    public void setRoleKey(String roleKey) {
-        this.roleKey = roleKey;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
     public Client description(String description) {
         this.description = description;
         return this;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Integer getAccessTokenValiditySeconds() {
-        return accessTokenValiditySeconds;
-    }
-
-    public void setAccessTokenValiditySeconds(Integer accessTokenValiditySeconds) {
-        this.accessTokenValiditySeconds = accessTokenValiditySeconds;
     }
 
     public void scopes(List<String> scopes) {
@@ -128,15 +90,5 @@ public class Client extends AbstractAuditingEntity implements Serializable {
         return scopes;
     }
 
-    @Override
-    public String toString() {
-        return "Client{"
-            + "id=" + getId()
-            + ", clientId='" + getClientId() + "'"
-            + ", clientSecret='" + getClientSecret() + "'"
-            + ", roleKey='" + getRoleKey() + "'"
-            + ", description='" + getDescription() + "'"
-            + ", accessTokenValiditySeconds='" + getAccessTokenValiditySeconds() + "'"
-            + "}";
-    }
+
 }
