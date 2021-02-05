@@ -9,9 +9,13 @@ import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.UserAuthPasswordEncoderConfiguration;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.Client;
+import com.icthh.xm.uaa.domain.ClientState;
+import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.service.ClientService;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
+import java.nio.charset.Charset;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -41,6 +45,8 @@ import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CON
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.junit.Assert.assertTrue;
+import static org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -437,6 +443,30 @@ public class ClientResourceIntTest {
               .andExpect(status().isOk())
               .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
               .andExpect(content().json("[]"));
+    }
+
+    @Test
+    @Transactional
+    public void blockUnblockClientTest() throws Exception {
+
+        Client savedClient = clientService.save(client);
+
+        restClientMockMvc.perform(put("/api/clients/{clientId}/block", savedClient.getClientId())
+            .accept(TestUtil.APPLICATION_JSON_UTF8))
+            .andExpect(status().isOk());
+
+        Optional<Client> blockedClient = clientService.findOne(savedClient.getId());
+        assertTrue(blockedClient.isPresent());
+        assertThat(blockedClient.get().getState()).isEqualTo(ClientState.BLOCKED);
+
+
+        restClientMockMvc.perform(put("/api/clients/{clientId}/activate", savedClient.getClientId())
+            .accept(TestUtil.APPLICATION_JSON_UTF8))
+            .andExpect(status().isOk());
+
+        Optional<Client> unblockedClient = clientService.findOne(savedClient.getId());
+        assertTrue(unblockedClient.isPresent());
+        assertThat(unblockedClient.get().getState()).isEqualTo(ClientState.ACTIVE);
     }
 
     private void getUserByLoginContainsMatcher(String clientId) throws Exception {
