@@ -198,7 +198,7 @@ spotbugs {
 
 pmd {
     rulePriority = 3
-    toolVersion = '6.31.10'
+    toolVersion = '6.31.0'
     ignoreFailures = true
     ruleSetFiles = files("./qa/pmd.xml")
 }
