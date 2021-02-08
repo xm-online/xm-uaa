@@ -9,13 +9,16 @@ import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
 import com.icthh.xm.uaa.security.CustomizableLepTokenStorage;
 import com.icthh.xm.uaa.security.oauth2.athorization.code.CustomAuthorizationCodeServices;
 import com.icthh.xm.uaa.service.AccountService;
+import com.icthh.xm.uaa.service.ClientService;
 import com.icthh.xm.uaa.service.LdapService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.mail.MailService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -27,10 +30,13 @@ import static com.icthh.xm.uaa.lep.XmUaaLepConstants.*;
  * The {@link XmUaaLepProcessingApplicationListener} class.
  */
 @RequiredArgsConstructor
+@Component
 public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingApplicationListener {
 
     private final MailService mailService;
     private final UserService userService;
+    private final ClientService clientService;
+    @Qualifier("loadBalancedRestTemplate")
     private final RestTemplate restTemplate;
     private final CommonsService commonsService;
     private final AccountService accountService;
@@ -49,6 +55,7 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
 
         Map<String, Object> services = new HashMap<>();
 
+        services.put(BINDING_SUB_KEY_SERVICE_CLIENT, clientService);
         services.put(BINDING_SUB_KEY_SERVICE_USER, userService);
         services.put(BINDING_SUB_KEY_SERVICE_MAIL, mailService);
         services.put(BINDING_SUB_KEY_SERVICE_ACCOUNT, accountService);
