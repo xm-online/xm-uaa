@@ -40,7 +40,7 @@ public class ClientDetailsServiceImpl implements ClientDetailsService {
         if (applicationProperties.getDefaultClientId().contains(clientId)) {
             principal = new Client();
             principal.setClientId(clientId);
-            log.info("========Client secret:[{}]=========", tenantPropertiesService.getTenantProps().getSecurity().getDefaultClientSecret());//TODO REMOVE
+
             principal.setClientSecret(passwordEncoder.encode(
                 tenantPropertiesService.getTenantProps().getSecurity().getDefaultClientSecret()));
 
@@ -48,7 +48,6 @@ public class ClientDetailsServiceImpl implements ClientDetailsService {
         } else {
             try {
                 principal = clientService.getClient(clientId);
-                log.info("==========principal:[{}]========", principal);//TODO REMOVE
             } catch (Exception e) {
                 log.error("Exception on getting client", e);
                 throw new ClientRegistrationException("Client was not found: " + clientId, e);
