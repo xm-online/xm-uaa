@@ -38,6 +38,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * TODO add java doc and test's, maybe with lep's?
+ */
 @Slf4j
 @LepService(group = "security.idp")
 public class IdpTokenGranter extends AbstractTokenGranter {

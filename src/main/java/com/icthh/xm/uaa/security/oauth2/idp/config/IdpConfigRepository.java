@@ -30,6 +30,7 @@ import static com.icthh.xm.commons.domain.idp.IdpConstants.IDP_PUBLIC_SETTINGS_C
 /**
  * This class reads and process IDP clients public configuration for each tenant.
  * Tenant IDP clients created for each successfully loaded config. If config not loaded or invalid it skipped.
+ * TODO add unit test
  */
 @Slf4j
 @Component
