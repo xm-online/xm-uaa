@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.domain;
 
 import static com.google.common.collect.Iterables.getFirst;
+import static com.google.common.collect.Iterables.getLast;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -164,7 +165,7 @@ public class User extends AbstractAuditingEntity implements Serializable {
     }
 
     public void setAuthorities(List<String> authorities) {
-        this.roleKey = getFirst(authorities, null);
+        this.roleKey = getLast(authorities, null);
         this.authorities = authorities;
     }
 

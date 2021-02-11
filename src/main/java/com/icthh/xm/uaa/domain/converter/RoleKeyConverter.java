@@ -1,7 +1,7 @@
 package com.icthh.xm.uaa.domain.converter;
 
 
-import static com.google.common.collect.Iterables.getFirst;
+import static com.google.common.collect.Iterables.getLast;
 import static java.util.Collections.emptyList;
 import static org.apache.commons.lang3.StringUtils.isNoneBlank;
 
@@ -41,7 +41,7 @@ public class RoleKeyConverter implements AttributeConverter<List<String>, String
         if(multiRoles.isEmpty()) return multiRoles;
         return tenantPropertiesService.getTenantProps().isMultiRoleEnabled() ?
             multiRoles :
-            List.of(getFirst(multiRoles, null));
+            List.of(getLast(multiRoles, null));
     }
 
     @Autowired
