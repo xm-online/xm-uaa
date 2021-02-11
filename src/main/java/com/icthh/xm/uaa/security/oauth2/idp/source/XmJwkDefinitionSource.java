@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
- * This class copied from org.springframework.security.oauth2.provider.token.store.jwk.JwkDefinitionSource.
+ * This class copied from {@link org.springframework.security.oauth2.provider.token.store.jwk.JwkDefinitionSource}.
  * Reason: we need custom implementation of JwkDefinitionSource class which impossible to import and override
  * cause it has package private access.
  * <p>
@@ -94,6 +94,8 @@ public class XmJwkDefinitionSource {
     private Map<String, XmJwkDefinitionHolder> updateJwkDefinitionHolders() {
         String tenantKey = getTenantKey();
 
+        // FIXME: maybe it worth to refactor jwksRepository.getIdpJwksByTenantKey() to resolve tenant internally
+        //  in this case we will not need to do getTenantKey() in this class.
         Map<String, String> idpJwksByTenantKey = jwksRepository.getIdpJwksByTenantKey(tenantKey);
         List<ByteArrayInputStream> publicKeysRawDefinition = idpJwksByTenantKey.values()
             .stream()

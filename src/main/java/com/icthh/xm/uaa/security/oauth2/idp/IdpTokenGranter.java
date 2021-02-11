@@ -128,6 +128,7 @@ public class IdpTokenGranter extends AbstractTokenGranter {
     }
 
     //TODO Think about name for "identity" , principal?
+    // FIXME: suggest renaming method to mapIdpIdTokenToIdentity
     @LogicExtensionPoint(value = "ExtractUserIdentity")
     public String extractUserIdentity(OAuth2AccessToken idpOAuth2IdToken) {
         Map<String, Object> additionalInformation = idpOAuth2IdToken.getAdditionalInformation();
@@ -135,6 +136,9 @@ public class IdpTokenGranter extends AbstractTokenGranter {
 
         String userIdentityAttribute = StringUtils.isEmpty(defaultClaimsMapping.get(USER_IDENTITY_CONFIG_ATTRIBUTE))
             ? DEFAULT_USER_IDENTITY_ATTRIBUTE : defaultClaimsMapping.get(USER_IDENTITY_CONFIG_ATTRIBUTE);
+        // FIXME: seems it may be simplified as:
+        //  String userIdentityAttribute = defaultClaimsMapping.getOrDefault(USER_IDENTITY_CONFIG_ATTRIBUTE,
+        //                                                                  DEFAULT_USER_IDENTITY_ATTRIBUTE);
 
         return (String) additionalInformation.get(userIdentityAttribute);
     }
@@ -152,12 +156,14 @@ public class IdpTokenGranter extends AbstractTokenGranter {
 
     //TODO add additional claim validation:
     // throw exception, define throw, javadoc
+    // FIXME: suggest renaming to validateIdpIdToken
     @LogicExtensionPoint(value = "ValidateIdpAccessToken")
     public void validateIdpAccessToken(OAuth2AccessToken idpOAuth2IdToken) {
         //validate any additional claims viaLEP
     }
 
 
+    // FIXME: suggest method renaming to mapIdpIdTokenToXmUser
     @LogicExtensionPoint(value = "ConvertIdpClaimsToXmUser")
     public UserDTO convertIdpClaimsToXmUser(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
         Map<String, Object> additionalInformation = idpOAuth2IdToken.getAdditionalInformation();
@@ -165,6 +171,8 @@ public class IdpTokenGranter extends AbstractTokenGranter {
 
         //base info mapping
         Map<String, String> defaultClaimsMapping = getDefaultClaimsMapping();
+        //FIXME: why do not use map.getOrDefault() method? Is you thin that there may be empty strings then probably we need
+        // to apply validation to ApplicationProperties to avoid such situation
         String userFirstNameAttribute = StringUtils.isEmpty(defaultClaimsMapping.get(FIRST_NAME_CONFIG_ATTRIBUTE))
             ? DEFAULT_FIRST_NAME_ATTRIBUTE : defaultClaimsMapping.get(FIRST_NAME_CONFIG_ATTRIBUTE);
 
@@ -192,6 +200,7 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         TenantProperties.Security security = tenantProps.getSecurity();
 
         if (security == null) {
+            // FIXME: why we are throwing TenantNotProvidedException? seems we need just AuthenticationException
             throw new TenantNotProvidedException("Default role for tenant " + getTenantKey() + " not specified.");
         }
         return security.getDefaultUserRole();
@@ -207,6 +216,7 @@ public class IdpTokenGranter extends AbstractTokenGranter {
 
         TenantProperties.Security.Idp idp = security.getIdp();
         if (security.getIdp() == null || security.getIdp().getDefaultIdpClaimMapping() == null) {
+            //FIXME: if I would see this message in the log I wold stack :) need to change to avoid misunderstanding
             log.debug("Default ipd claims mapping attribute names not specified in configuration. " +
                 "Default mappings will be used.");
             return new HashMap<>();

@@ -19,9 +19,11 @@ import org.springframework.util.CollectionUtils;
 
 import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -44,6 +46,7 @@ public class IdpConfigRepository implements RefreshableConfiguration {
     /**
      * In memory storage for storing information tenant IDP clients public.
      */
+    // FIXME: describe what keys represent explicitly
     private final Map<String, Map<String, IdpPublicClientConfig>> idpClientConfigs = new ConcurrentHashMap<>();
 
     /**
@@ -52,6 +55,7 @@ public class IdpConfigRepository implements RefreshableConfiguration {
      * <p/>
      * We need to store this information in memory to avoid corruption previously registered in-memory tenant clients config
      */
+    // FIXME: describe what keys represent explicitly
     private final Map<String, Map<String, IdpPublicClientConfig>> tmpIdpClientPublicConfigs = new ConcurrentHashMap<>();
 
     /**
@@ -61,6 +65,7 @@ public class IdpConfigRepository implements RefreshableConfiguration {
      * We need to store this information in memory to avoid initialization on each token claims verification
      * and store actual verifiers.
      */
+    // FIXME: describe what keys represent explicitly
     private final Map<String, Map<String, List<JwtClaimsSetVerifier>>> jwtClaimsSetVerifiers = new ConcurrentHashMap<>();
 
     @Override
@@ -98,6 +103,7 @@ public class IdpConfigRepository implements RefreshableConfiguration {
         if (!matcher.match(IDP_PUBLIC_SETTINGS_CONFIG_PATH_PATTERN, configKey)) {
             return;
         }
+        // FIXME: seems this complex inner lambda can be simplified as proposed:
         IdpPublicConfig idpPublicConfig = parseConfig(tenantKey, config, IdpPublicConfig.class);
 
         if (idpPublicConfig != null && idpPublicConfig.getConfig() != null) {
@@ -115,6 +121,21 @@ public class IdpConfigRepository implements RefreshableConfiguration {
                     }
                 );
         }
+        // FIXME: proposal
+//        Optional.ofNullable(parseConfig(tenantKey, config, IdpPublicConfig.class))
+//                .map(IdpPublicConfig::getConfig)
+//                .map(IdpPublicConfig.IdpConfigContainer::getClients)
+//                .orElseGet(Collections::emptyList)
+//                .stream()
+//                .filter(conf -> IdpConfigUtils.isPublicConfigValid(tenantKey, conf))
+//                .forEach(publicIdpConf -> putTmpIdpPublicConfig(tenantKey, publicIdpConf));
+
+    }
+
+    private void putTmpIdpPublicConfig(final String tenantKey, final IdpPublicClientConfig publicIdpConf) {
+        tmpIdpClientPublicConfigs
+            .computeIfAbsent(tenantKey, key -> new HashMap<>())
+            .put(publicIdpConf.getKey(), publicIdpConf);
     }
 
     private <T> T parseConfig(String tenantKey, String config, Class<T> configType) {
@@ -122,6 +143,7 @@ public class IdpConfigRepository implements RefreshableConfiguration {
         try {
             parsedConfig = objectMapper.readValue(config, configType);
         } catch (JsonProcessingException e) {
+            // FIXME: suggest replace `Something went wrong` with just `Error` statement in log
             log.error("Something went wrong during attempt to read {} for tenant:{}", config.getClass(), tenantKey, e);
         }
         return parsedConfig;
@@ -147,6 +169,7 @@ public class IdpConfigRepository implements RefreshableConfiguration {
         return configKeyParams.get(KEY_TENANT);
     }
 
+    // FIXME: why this method is public? seems it can be private
     public Map<String, IdpPublicClientConfig> getIdpClientConfigsByTenantKey(String tenantKey) {
         return idpClientConfigs.get(tenantKey);
     }
@@ -155,7 +178,6 @@ public class IdpConfigRepository implements RefreshableConfiguration {
         return jwtClaimsSetVerifiers.getOrDefault(tenantKey, new HashMap<>()).get(clientId);
     }
 
-
     private void buildJwtClaimsSetVerifiers(String tenantKey) {
         Map<String, IdpPublicClientConfig> configs = getIdpClientConfigsByTenantKey(tenantKey);
 
@@ -163,24 +185,23 @@ public class IdpConfigRepository implements RefreshableConfiguration {
             return;
         }
 
-        Collection<IdpPublicClientConfig> publicClientConfigs = configs.values();
-        Map<String, List<JwtClaimsSetVerifier>> verifiers = publicClientConfigs
-            .stream()
-            .map(idpPublicClientConfig -> {
-                    List<JwtClaimsSetVerifier> jwtClaimsSetVerifiers = getJwtClaimsSetVerifiers(idpPublicClientConfig);
-                    return Map.entry(idpPublicClientConfig.getClientId(), jwtClaimsSetVerifiers);
-                }
-            )
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        // FIXME: propose such improvement for code readability. Check that it does not break the logic
+        Map<String, List<JwtClaimsSetVerifier>> verifiers =
+            configs.values()
+                   .stream()
+                   .map(this::getJwtClaimsSetVerifiers)
+                   .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         jwtClaimsSetVerifiers.put(tenantKey, verifiers);
     }
 
     @SneakyThrows
-    private List<JwtClaimsSetVerifier> getJwtClaimsSetVerifiers(IdpPublicClientConfig idpPublicClientConfig) {
+    private Map.Entry<String, List<JwtClaimsSetVerifier>> getJwtClaimsSetVerifiers(
+        IdpPublicClientConfig idpPublicClientConfig) {
         URL issuerUrl = new URL(idpPublicClientConfig.getOpenIdConfig().getIssuer());
         IssuerClaimVerifier issuerClaimVerifier = new IssuerClaimVerifier(issuerUrl);
 
-        return List.of(new AudienceClaimVerifier(idpPublicClientConfig.getClientId()), issuerClaimVerifier);
+        String clientId = idpPublicClientConfig.getClientId();
+        return Map.entry(clientId, List.of(new AudienceClaimVerifier(clientId), issuerClaimVerifier));
     }
 }

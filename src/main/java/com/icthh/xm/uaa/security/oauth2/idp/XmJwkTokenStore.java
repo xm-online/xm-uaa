@@ -12,6 +12,7 @@ import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 @Setter
 public class XmJwkTokenStore extends JwtTokenStore {
 
+    // FIXME: so what the correct name 'enhancer' or 'converter'?
     private XmJwkVerifyingJwtAccessTokenConverter jwtTokenEnhancer;
 
     /**

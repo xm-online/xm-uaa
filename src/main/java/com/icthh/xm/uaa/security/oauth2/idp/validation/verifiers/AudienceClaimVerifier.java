@@ -1,3 +1,4 @@
+// FIXME - seems this clas is not a copy. should we have this license here?
 /*
  * Copyright 2012-2017 the original author or authors.
  *
