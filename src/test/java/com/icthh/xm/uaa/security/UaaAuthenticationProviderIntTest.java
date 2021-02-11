@@ -210,7 +210,7 @@ public class UaaAuthenticationProviderIntTest {
         Authentication authentication = uaaAuthenticationProvider.authenticate(
             new UsernamePasswordAuthenticationToken(TEST_USER_MANY_ROLE, TEST_PASSWORD));
 
-        //the last one must be assigned
+        //the first one must be assigned
         commonAsserts(TEST_USER_MANY_ROLE, DEFAULT_ADMIN_ROLE_KEY, authentication);
     }
 

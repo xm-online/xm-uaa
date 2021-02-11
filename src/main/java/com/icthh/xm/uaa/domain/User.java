@@ -165,7 +165,7 @@ public class User extends AbstractAuditingEntity implements Serializable {
     }
 
     public void setAuthorities(List<String> authorities) {
-        this.roleKey = getLast(authorities, null);
+        this.roleKey = getFirst(authorities, null);
         this.authorities = authorities;
     }
 
