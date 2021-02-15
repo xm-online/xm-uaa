@@ -28,7 +28,7 @@ import java.util.Map;
 
 /**
  *
- * This class copied from org.springframework.security.oauth2.provider.token.store.jwk.JwtHeaderConverter
+ * This class copied from {@link org.springframework.security.oauth2.provider.token.store.jwk.JwtHeaderConverter}
  * and couldn't be imported cause of package private access.
  * Reason: we need custom implementation of JwkDefinitionSource class
  * which impossible to import and override - it has package private access.

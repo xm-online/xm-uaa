@@ -47,6 +47,7 @@ public class TenantPropertiesService implements RefreshableConfiguration {
         return tenantProps.get(cfgTenantKey);
     }
 
+    // FIXME: suggest not ot return TenantContextHolder and just inject where needed
     public TenantContextHolder getTenantContextHolder(){
         return tenantContextHolder;
     }

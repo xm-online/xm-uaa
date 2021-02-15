@@ -34,8 +34,14 @@ import java.util.Set;
 
 import static com.icthh.xm.uaa.security.oauth2.idp.source.model.XmJwkAttributes.*;
 
+// FIXME: for all copied classes i suggest do the next:
+//  a) Copy them without ANY modifications (except make them not final for extension) and put all of them to one package - jwk
+//  b) then extend these classes with Xm specific implementations (using different packages as now). Like XmJwkSetConverter extend JwtHeaderConverter
+//  - it will allow as to see clearly what we have overridden and in future we may update base class if need more easily
+//  - also we can write unit tests for our extensions classes because they wil contain only custom code
 /**
- * This class copied from org.springframework.security.oauth2.provider.token.store.jwk.JwtHeaderConverter
+ *
+ * This class copied from {@link org.springframework.security.oauth2.provider.token.store.jwk.JwtHeaderConverter}
  * and couldn't be imported cause of package private access.
  * Reason: we need custom implementation of JwkDefinitionSource class
  * which impossible to import and override - it has package private access.

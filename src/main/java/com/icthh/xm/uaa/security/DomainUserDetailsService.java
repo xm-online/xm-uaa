@@ -4,7 +4,6 @@ import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.domain.User;
-import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.service.dto.UserLoginDto;
 import lombok.AllArgsConstructor;
@@ -48,6 +47,9 @@ public class DomainUserDetailsService implements UserDetailsService {
                                   .orElseThrow(buildException(lowerLogin, tenantKey));
     }
 
+    // FIXME: this method is full duplicate for loadUserByUsername except throwing an exception!
+    //   suggest refactor to Optional<DomainUserDetails>retrieveUserByUsername()
+    //   and then in loadUserByUsername call retrieveUserByUsername(...).orElseThrow(buildException(lowerLogin, tenantKey));
     public DomainUserDetails retrieveUserByUsername(final String login) {
         final String lowerLogin = login.toLowerCase().trim();
 

@@ -42,7 +42,7 @@ import static com.icthh.xm.uaa.security.oauth2.idp.source.model.XmJwkAttributes.
 import static com.icthh.xm.uaa.security.oauth2.idp.source.model.XmJwkAttributes.KEY_ID;
 
 /**
- * This class copied from org.springframework.security.oauth2.provider.token.store.jwk.JwkVerifyingJwtAccessTokenConverter.
+ * This class copied from {@link org.springframework.security.oauth2.provider.token.store.jwk.JwkVerifyingJwtAccessTokenConverter}.
  * <p>
  * Reasons: we need custom implementation of JwkDefinitionSource class
  * which impossible to import and override - it has package private access.
@@ -50,7 +50,7 @@ import static com.icthh.xm.uaa.security.oauth2.idp.source.model.XmJwkAttributes.
  * What was changed:
  * <ul>
  * <li/>Original properties JwkDefinitionSource, JwtHeaderConverter, JwtHeaderConverter have custom implementation.
- * <li/>Property xmJwkDefinitionSource marked as non-final.
+ * <li/>Property xmJwkDefinitionSource marked as non-final. //FIXME why?
  * <li/>Added TenantContextHolder, IdpConfigRepository properties.
  * <li/>method {@link XmJwkVerifyingJwtAccessTokenConverter#validateClaims(Map)} added to build and run default validators for claims.
  * </ul>
@@ -62,6 +62,7 @@ import static com.icthh.xm.uaa.security.oauth2.idp.source.model.XmJwkAttributes.
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
+// FIXME: seems we need to cover the class by Unit test as we have changed it.
 public class XmJwkVerifyingJwtAccessTokenConverter extends JwtAccessTokenConverter {
     private XmJwkDefinitionSource xmJwkDefinitionSource;
     private final TenantContextHolder tenantContextHolder;
@@ -140,6 +141,8 @@ public class XmJwkVerifyingJwtAccessTokenConverter extends JwtAccessTokenConvert
         claimVerifiers.forEach(claimsSetVerifier -> claimsSetVerifier.verify(claims));
     }
 
+    //FIXME: i think tenantContextHolder, buildClaimVerifiers() and buildDefaultClaimVerifiers()
+    // can be removed from this class into idpConfigRepository
     @SneakyThrows
     private List<JwtClaimsSetVerifier> buildClaimVerifiers(Map<String, Object> claims) {
         String tenantKey = tenantContextHolder.getTenantKey();
