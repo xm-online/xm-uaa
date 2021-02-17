@@ -47,10 +47,14 @@ public class UserQueryService extends QueryService<User> {
         Specification<User> firstNameSpec = ofNullable(filterQuery.getFirstName())
             .map(fn -> buildStringSpecification(fn, User_.firstName))
             .orElse(null);
+        Specification<User> roleKey = ofNullable(filterQuery.getRoleKey())
+            .map(fn -> buildStringSpecification(fn, User_.roleKey))
+            .orElse(null);
 
         initialSpec = and(initialSpec, loginSpec);
         initialSpec = and(initialSpec, lastNameSpec);
         initialSpec = and(initialSpec, firstNameSpec);
+        initialSpec = and(initialSpec, roleKey);
         return initialSpec;
     }
 

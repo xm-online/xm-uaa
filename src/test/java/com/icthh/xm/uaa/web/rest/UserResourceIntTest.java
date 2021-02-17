@@ -456,7 +456,7 @@ public class UserResourceIntTest {
         String lastName = "simpson";
         String login = "al-homero";
         userRepository.saveAndFlush(user);
-        User userHomer = createEntity(ROLE_USER);
+        User userHomer = createEntity("ROLE_ADMIN");
         userHomer.setFirstName(firstName);
         userHomer.setLastName(lastName);
         userHomer.getLogins().get(0).setLogin(login);
@@ -493,6 +493,12 @@ public class UserResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$[0].firstName").value(firstName))
             .andExpect(jsonPath("$", hasSize(2)));
+
+        restUserMockMvc.perform(get("/api/users/filter?roleKey.contains=ADMIN", userHomer.getUserKey()))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+            .andExpect(jsonPath("$[0].firstName").value(firstName))
+            .andExpect(jsonPath("$", hasSize(1)));
     }
 
     @Test

@@ -9,4 +9,5 @@ public class UserFilterQuery implements Serializable {
     private StringFilter firstName;
     private StringFilter lastName;
     private StringFilter login;
+    private StringFilter roleKey;
 }
