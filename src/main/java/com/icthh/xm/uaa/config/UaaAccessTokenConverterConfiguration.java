@@ -165,10 +165,10 @@ public class UaaAccessTokenConverterConfiguration {
     @Bean
     public XmJwkTokenStore jwkTokenStore() {
 
-        XmJwkDefinitionSource xmJwkDefinitionSource =
-            new XmJwkDefinitionSource(idpConfigRepository, tenantPropertiesService, jwksRepository);
+        XmJwkDefinitionSource xmJwkDefinitionSource = new XmJwkDefinitionSource(idpConfigRepository, jwksRepository);
+
         XmJwkVerifyingJwtAccessTokenConverter jwkVerifyingJwtAccessTokenConverter =
-            new XmJwkVerifyingJwtAccessTokenConverter(xmJwkDefinitionSource, tenantContextHolder, idpConfigRepository);
+            new XmJwkVerifyingJwtAccessTokenConverter(xmJwkDefinitionSource, idpConfigRepository);
 
         return new XmJwkTokenStore(jwkVerifyingJwtAccessTokenConverter);
     }

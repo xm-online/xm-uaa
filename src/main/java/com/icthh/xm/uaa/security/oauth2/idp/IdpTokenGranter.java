@@ -9,7 +9,6 @@ import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.security.DomainUserDetails;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
-import com.icthh.xm.uaa.security.TenantNotProvidedException;
 import com.icthh.xm.uaa.security.oauth2.idp.source.model.IdpAuthenticationToken;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserLoginService;
@@ -17,8 +16,8 @@ import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
@@ -33,10 +32,10 @@ import org.springframework.security.oauth2.provider.token.AbstractTokenGranter;
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * TODO add java doc and test's, maybe with lep's?
@@ -46,9 +45,6 @@ import java.util.Map;
 public class IdpTokenGranter extends AbstractTokenGranter {
 
     private static final String GRANT_TYPE = "idp_token";
-    private static final String DEFAULT_FIRST_NAME_ATTRIBUTE = "given_name";
-    private static final String DEFAULT_LAST_NAME_ATTRIBUTE = "family_name";
-    private static final String DEFAULT_USER_IDENTITY_ATTRIBUTE = "email";
 
     private static final String FIRST_NAME_CONFIG_ATTRIBUTE = "firstNameAttribute";
     private static final String LAST_NAME_CONFIG_ATTRIBUTE = "lastNameAttribute";
@@ -102,7 +98,7 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         // parse IDP id token
         OAuth2AccessToken idpOAuth2IdToken = jwkTokenStore.readAccessToken(idpToken);
 
-        validateIdpAccessToken(idpOAuth2IdToken);
+        validateIdpIdToken(idpOAuth2IdToken);
 
         //user + role section
         DomainUserDetails userDetails = retrieveDomainUserDetails(idpOAuth2IdToken);
@@ -115,39 +111,32 @@ public class IdpTokenGranter extends AbstractTokenGranter {
 
         return userAuthenticationToken;
     }
-    //TODO think about move retrieveDomainUserDetails() and other related methods
-    // to separate service for creating DomainUserDetails cause IdpTokenGranter shouldn't do this inside.
-    private DomainUserDetails retrieveDomainUserDetails(OAuth2AccessToken idpOAuth2IdToken) {
-        String userIdentity = extractUserIdentity(idpOAuth2IdToken);
-        DomainUserDetails userDetails = domainUserDetailsService.retrieveUserByUsername(userIdentity);
 
-        if (userDetails == null) {
+    private DomainUserDetails retrieveDomainUserDetails(OAuth2AccessToken idpOAuth2IdToken) {
+        String userIdentity = mapIdpIdTokenToIdentity(idpOAuth2IdToken);
+        Optional<DomainUserDetails> userDetails = domainUserDetailsService.retrieveUserByUsername(userIdentity);
+
+        if (userDetails.isEmpty()) {
             log.info("User not found by identity: {}, new user will be created", userIdentity);
             User newUser = createUser(userIdentity, idpOAuth2IdToken);
-            userDetails = DomainUserDetailsService.buildDomainUserDetails(userIdentity, getTenantKey(), newUser);
+            userDetails = Optional.of(DomainUserDetailsService.buildDomainUserDetails(userIdentity, getTenantKey(), newUser));
         }
         log.info("Mapped user for identity:{} is {}", userIdentity, userDetails);
-        return userDetails;
+        return userDetails.get();
     }
 
-    //TODO Think about name for "identity" , principal?
-    // FIXME: suggest renaming method to mapIdpIdTokenToIdentity
-    @LogicExtensionPoint(value = "ExtractUserIdentity")
-    public String extractUserIdentity(OAuth2AccessToken idpOAuth2IdToken) {
+    @LogicExtensionPoint(value = "MapIdpIdTokenToIdentity")
+    public String mapIdpIdTokenToIdentity(OAuth2AccessToken idpOAuth2IdToken) {
         Map<String, Object> additionalInformation = idpOAuth2IdToken.getAdditionalInformation();
         Map<String, String> defaultClaimsMapping = getDefaultClaimsMapping();
 
-        String userIdentityAttribute = StringUtils.isEmpty(defaultClaimsMapping.get(USER_IDENTITY_CONFIG_ATTRIBUTE))
-            ? DEFAULT_USER_IDENTITY_ATTRIBUTE : defaultClaimsMapping.get(USER_IDENTITY_CONFIG_ATTRIBUTE);
-        // FIXME: seems it may be simplified as:
-        //  String userIdentityAttribute = defaultClaimsMapping.getOrDefault(USER_IDENTITY_CONFIG_ATTRIBUTE,
-        //                                                                  DEFAULT_USER_IDENTITY_ATTRIBUTE);
+        String userIdentityAttribute = defaultClaimsMapping.get(USER_IDENTITY_CONFIG_ATTRIBUTE);
 
         return (String) additionalInformation.get(userIdentityAttribute);
     }
 
     private User createUser(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
-        UserDTO userDTO = convertIdpClaimsToXmUser(userIdentity, idpOAuth2IdToken);
+        UserDTO userDTO = mapIdpIdTokenToXmUser(userIdentity, idpOAuth2IdToken);
 
         userLoginService.normalizeLogins(userDTO.getLogins());
         userLoginService.verifyLoginsNotExist(userDTO.getLogins());
@@ -157,36 +146,29 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         return userService.createUser(userDTO);
     }
 
-    //TODO add additional claim validation:
-    // throw exception, define throw, javadoc
-    // FIXME: suggest renaming to validateIdpIdToken
-    @LogicExtensionPoint(value = "ValidateIdpAccessToken")
-    public void validateIdpAccessToken(OAuth2AccessToken idpOAuth2IdToken) {
+    @LogicExtensionPoint(value = "ValidateIdpIdToken")
+    public void validateIdpIdToken(OAuth2AccessToken idpOAuth2IdToken) {
         //validate any additional claims viaLEP
     }
 
-
-    // FIXME: suggest method renaming to mapIdpIdTokenToXmUser
-    @LogicExtensionPoint(value = "ConvertIdpClaimsToXmUser")
-    public UserDTO convertIdpClaimsToXmUser(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
+    @LogicExtensionPoint(value = "MapIdpIdTokenToXmUser")
+    public UserDTO mapIdpIdTokenToXmUser(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
         Map<String, Object> additionalInformation = idpOAuth2IdToken.getAdditionalInformation();
         UserDTO userDTO = new UserDTO();
 
         //base info mapping
         Map<String, String> defaultClaimsMapping = getDefaultClaimsMapping();
-        //FIXME: why do not use map.getOrDefault() method? Is you thin that there may be empty strings then probably we need
-        // to apply validation to ApplicationProperties to avoid such situation
-        String userFirstNameAttribute = StringUtils.isEmpty(defaultClaimsMapping.get(FIRST_NAME_CONFIG_ATTRIBUTE))
-            ? DEFAULT_FIRST_NAME_ATTRIBUTE : defaultClaimsMapping.get(FIRST_NAME_CONFIG_ATTRIBUTE);
+        String userFirstNameAttribute = defaultClaimsMapping.get(FIRST_NAME_CONFIG_ATTRIBUTE);
 
-        String userLastNameAttribute = StringUtils.isEmpty(defaultClaimsMapping.get(LAST_NAME_CONFIG_ATTRIBUTE))
-            ? DEFAULT_LAST_NAME_ATTRIBUTE : defaultClaimsMapping.get(LAST_NAME_CONFIG_ATTRIBUTE);
+        String userLastNameAttribute = defaultClaimsMapping.get(LAST_NAME_CONFIG_ATTRIBUTE);
 
         userDTO.setFirstName((String) additionalInformation.get(userFirstNameAttribute));
         userDTO.setLastName((String) additionalInformation.get(userLastNameAttribute));
         //login mapping
-        String userIdentityType = StringUtils.isEmpty(defaultClaimsMapping.get(USER_IDENTITY_CONFIG_TYPE))
-            ? UserLoginType.EMAIL.getValue() : UserLoginType.fromString(defaultClaimsMapping.get(USER_IDENTITY_CONFIG_TYPE)).getValue();
+
+        String userIdentityType = UserLoginType
+            .fromString(defaultClaimsMapping.get(USER_IDENTITY_CONFIG_TYPE))
+            .getValue();
 
         UserLogin emailUserLogin = new UserLogin();
         emailUserLogin.setLogin(userIdentity);
@@ -196,15 +178,16 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         return userDTO;
     }
 
-    //TODO think about name
+    @SneakyThrows
     @LogicExtensionPoint(value = "MapIdpIdTokenToRole")
     public String mapIdpIdTokenToRole(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
         TenantProperties tenantProps = tenantPropertiesService.getTenantProps();
         TenantProperties.Security security = tenantProps.getSecurity();
 
         if (security == null) {
-            // FIXME: why we are throwing TenantNotProvidedException? seems we need just AuthenticationException
-            throw new TenantNotProvidedException("Default role for tenant " + getTenantKey() + " not specified.");
+            log.debug("Default role for tenant [{}] not specified.", getTenantKey());
+            throw new AuthenticationServiceException("Authentication failed " +
+                "cause of tenant configuration lack [" + getTenantKey() + "].");
         }
         return security.getDefaultUserRole();
     }
@@ -218,11 +201,16 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         TenantProperties.Security security = tenantProps.getSecurity();
 
         TenantProperties.Security.Idp idp = security.getIdp();
-        if (security.getIdp() == null || security.getIdp().getDefaultIdpClaimMapping() == null) {
-            //FIXME: if I would see this message in the log I wold stack :) need to change to avoid misunderstanding
-            log.debug("Default ipd claims mapping attribute names not specified in configuration. " +
-                "Default mappings will be used.");
-            return new HashMap<>();
+
+        if (idp == null || idp.getDefaultIdpClaimMapping() == null
+            || idp.getDefaultIdpClaimMapping().getFirstNameAttribute() == null
+            || idp.getDefaultIdpClaimMapping().getLastNameAttribute() == null
+            || idp.getDefaultIdpClaimMapping().getUserIdentityAttribute() == null
+            || idp.getDefaultIdpClaimMapping().getUserIdentityType() == null
+        ) {
+            log.debug("User Identity mapping not fully specified in tenant [{}] configuration.", getTenantKey());
+            throw new AuthenticationServiceException("Authentication failed " +
+                "cause of tenant configuration lack [" + getTenantKey() + "].");
         }
         TenantProperties.Security.Idp.DefaultIdpClaimMapping defaultIdpClaimMapping = idp.getDefaultIdpClaimMapping();
 

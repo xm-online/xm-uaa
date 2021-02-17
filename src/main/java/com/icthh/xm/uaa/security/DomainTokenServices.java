@@ -177,7 +177,6 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
             return;
         }
 
-        // FIXME: if you pay attention to casts with () in other places then change this as well.
         DomainUserDetails userDetails = DomainUserDetails.class.cast(principal);
 
         String otp = otpGenerator.generate(authentication);

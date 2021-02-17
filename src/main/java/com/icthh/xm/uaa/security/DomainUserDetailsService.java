@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import static java.util.stream.Collectors.toList;
@@ -42,24 +43,19 @@ public class DomainUserDetailsService implements UserDetailsService {
 
         log.debug("Authenticating login: {}, lowercase: {}, within tenant: {}", login, lowerLogin, tenantKey);
 
-        return userLoginRepository.findOneByLogin(lowerLogin)
-                                  .map(userLogin -> buildDomainUserDetails(lowerLogin, tenantKey, userLogin.getUser()))
-                                  .orElseThrow(buildException(lowerLogin, tenantKey));
+        return retrieveUserByUsername(login).orElseThrow(buildException(lowerLogin, tenantKey));
     }
 
-    // FIXME: this method is full duplicate for loadUserByUsername except throwing an exception!
-    //   suggest refactor to Optional<DomainUserDetails>retrieveUserByUsername()
-    //   and then in loadUserByUsername call retrieveUserByUsername(...).orElseThrow(buildException(lowerLogin, tenantKey));
-    public DomainUserDetails retrieveUserByUsername(final String login) {
+    public Optional<DomainUserDetails> retrieveUserByUsername(final String login) {
         final String lowerLogin = login.toLowerCase().trim();
 
         String tenantKey = getTenantKey();
 
         log.debug("Retrieving user with login: {}, lowercase: {}, within tenant: {}", login, lowerLogin, tenantKey);
 
-        return userLoginRepository.findOneByLogin(lowerLogin)
-                                  .map(userLogin -> buildDomainUserDetails(lowerLogin, tenantKey, userLogin.getUser()))
-                                  .orElse(null);
+        return userLoginRepository
+            .findOneByLogin(lowerLogin)
+            .map(userLogin -> buildDomainUserDetails(lowerLogin, tenantKey, userLogin.getUser()));
     }
 
     private String getTenantKey() {
@@ -69,7 +65,7 @@ public class DomainUserDetailsService implements UserDetailsService {
             .orElseThrow(() -> new TenantNotProvidedException("Tenant not provided for authentication"));
     }
 
-    private Supplier<UsernameNotFoundException> buildException(String lowerLogin, String tenantKey){
+    private Supplier<UsernameNotFoundException> buildException(String lowerLogin, String tenantKey) {
         return () -> {
             log.error("User [{}] was not found for tenant [{}]", lowerLogin, tenantKey);
             return new UsernameNotFoundException("User " + lowerLogin + " was not found for tenant " + tenantKey);

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.icthh.xm.uaa.security.oauth2.idp.source.model;
+package com.icthh.xm.uaa.security.oauth2.idp.jwk;
 
 import com.icthh.xm.uaa.security.oauth2.idp.converter.XmJwkVerifyingJwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.jwk.JwkTokenStore;
@@ -21,17 +21,18 @@ import org.springframework.security.oauth2.provider.token.store.jwk.JwkTokenStor
 /**
  * Shared attribute values used by {@link JwkTokenStore} and associated collaborators.
  * <p>
- * This class copied from org.springframework.security.oauth2.provider.token.store.jwk.JwtHeaderConverter
+ * This class copied from {@link org.springframework.security.oauth2.provider.token.store.jwk.JwkAttributes}
  * and couldn't be imported cause of package private access.
  * <p>
  * Reason: we need custom implementation of JwkDefinitionSource class
  * which impossible to import and override - it has package private access.
  * <p>
  * This class is required for {@link XmJwkVerifyingJwtAccessTokenConverter} implementation.
- * <p>
- * What was changed: nothing was changed in this implementation
+ *
+ * @author Joe Grandja
+ * @author Michael Duergner
  */
-public class XmJwkAttributes {
+public final class JwkAttributes {
 
 	/**
 	 * The &quot;kid&quot; (key ID) parameter used in a JWT header and in a JWK.

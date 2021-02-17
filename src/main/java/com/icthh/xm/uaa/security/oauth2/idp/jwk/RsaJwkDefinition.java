@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.icthh.xm.uaa.security.oauth2.idp.source.model;
-
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+package com.icthh.xm.uaa.security.oauth2.idp.jwk;
 
 /**
  * This class copied from {@link org.springframework.security.oauth2.provider.token.store.jwk.RsaJwkDefinition}.
@@ -26,11 +23,14 @@ import lombok.EqualsAndHashCode;
  * <p>
  * This class is org.springframework.security.oauth2.provider.token.store.jwk.RsaJwkDefinition implementation.
  * <p>
- * What was changed: nothing was changed in this implementation
+ * A JSON Web Key (JWK) representation of a RSA key.
+ *
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7517">JSON Web Key (JWK)</a>
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7518#page-30">JSON Web Algorithms (JWA)</a>
+ *
+ * @author Joe Grandja
  */
-@Data
-@EqualsAndHashCode(callSuper = true)
-public final class XmRsaJwkDefinition extends XmJwkDefinition {
+public class RsaJwkDefinition extends JwkDefinition {
 	private final String modulus;
 	private final String exponent;
 
@@ -43,11 +43,11 @@ public final class XmRsaJwkDefinition extends XmJwkDefinition {
 	 * @param modulus the modulus value for the Public Key
 	 * @param exponent the exponent value for the Public Key
 	 */
-    public XmRsaJwkDefinition(String keyId,
-                              PublicKeyUse publicKeyUse,
-                              CryptoAlgorithm algorithm,
-                              String modulus,
-                              String exponent) {
+    public RsaJwkDefinition(String keyId,
+					 PublicKeyUse publicKeyUse,
+					 CryptoAlgorithm algorithm,
+					 String modulus,
+					 String exponent) {
 
 		super(keyId, KeyType.RSA, publicKeyUse, algorithm);
 		this.modulus = modulus;

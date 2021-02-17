@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.icthh.xm.uaa.security.oauth2.idp.converter;
+package com.icthh.xm.uaa.security.oauth2.idp.jwk;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.icthh.xm.uaa.security.oauth2.idp.converter.XmJwkVerifyingJwtAccessTokenConverter;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.jwt.codec.Codecs;
 import org.springframework.security.oauth2.common.exceptions.InvalidTokenException;
@@ -27,16 +28,22 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
  * This class copied from {@link org.springframework.security.oauth2.provider.token.store.jwk.JwtHeaderConverter}
  * and couldn't be imported cause of package private access.
  * Reason: we need custom implementation of JwkDefinitionSource class
  * which impossible to import and override - it has package private access.
  * This class is required for {@link XmJwkVerifyingJwtAccessTokenConverter} implementation.
  * <p>
- * What was changed: nothing was changed in this implementation
+ *
+ * A {@link Converter} that converts the supplied <code>String</code> representation of a JWT
+ * to a <code>Map</code> of JWT Header Parameters.
+ *
+ * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7519">JSON Web Token (JWT)</a>
+ *
+ * @author Joe Grandja
+ * @author Vedran Pavic
  */
-class XmJwtHeaderConverter implements Converter<String, Map<String, String>> {
+public class JwtHeaderConverter implements Converter<String, Map<String, String>> {
 	private final JsonFactory factory = new JsonFactory();
 
 	/**
