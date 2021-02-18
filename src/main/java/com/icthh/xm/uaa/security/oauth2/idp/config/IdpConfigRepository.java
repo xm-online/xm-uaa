@@ -32,8 +32,7 @@ import static com.icthh.xm.commons.domain.idp.IdpConstants.IDP_PUBLIC_SETTINGS_C
 
 /**
  * This class reads and process IDP clients public configuration for each tenant.
- * Tenant IDP clients created for each successfully loaded config. If config not loaded or invalid it skipped.
- * TODO add unit test
+ * Tenant IDP clients created for each successfully loaded and valid config. If config not present or invalid it skipped.
  */
 @Slf4j
 @Component
@@ -47,8 +46,13 @@ public class IdpConfigRepository implements RefreshableConfiguration {
 
     /**
      * In memory storage for storing information tenant IDP clients public.
+     * idpClientConfigs structure Map< tenantKey, Map< clientKey, IdpPublicClientConfig>> where:
+     * <ul>
+     *   <li/> tenantKey - tenant id
+     *   <li/> clientKey - client id
+     *   <li/> IdpPublicClientConfig - tenant specific idp public client Config
+     * </ul>
      */
-    // FIXME: describe what keys represent explicitly
     private final Map<String, Map<String, IdpPublicClientConfig>> idpClientConfigs = new ConcurrentHashMap<>();
 
     /**
@@ -56,8 +60,13 @@ public class IdpConfigRepository implements RefreshableConfiguration {
      * Stores information about tenant IDP clients public configuration that currently in process.
      * <p/>
      * We need to store this information in memory to avoid corruption previously registered in-memory tenant clients config
+     * tmpIdpClientPublicConfigs structure Map< tenantKey, Map< clientKey, IdpPublicClientConfig>> where:
+     * <ul>
+     *   <li/> tenantKey - tenant id
+     *   <li/> clientKey - client id
+     *   <li/> IdpPublicClientConfig - tenant specific idp public client Config
+     * </ul>
      */
-    // FIXME: describe what keys represent explicitly
     private final Map<String, Map<String, IdpPublicClientConfig>> tmpIdpClientPublicConfigs = new ConcurrentHashMap<>();
 
     /**
@@ -66,8 +75,14 @@ public class IdpConfigRepository implements RefreshableConfiguration {
      * <p/>
      * We need to store this information in memory to avoid initialization on each token claims verification
      * and store actual verifiers.
+     * <p/>
+     * jwtClaimsSetVerifiersHolder structure Map< tenantKey, Map< clientKey, List< JwtClaimsSetVerifier >>> where:
+     * <ul>
+     *   <li/> tenantKey - tenant id
+     *   <li/> clientKey - client id
+     *   <li/> List< JwtClaimsSetVerifier> - list of default token claim verifiers
+     * </ul>
      */
-    // FIXME: describe what keys represent explicitly
     private final Map<String, Map<String, List<JwtClaimsSetVerifier>>> jwtClaimsSetVerifiersHolder = new ConcurrentHashMap<>();
 
     private final TenantContextHolder tenantContextHolder;
@@ -104,6 +119,7 @@ public class IdpConfigRepository implements RefreshableConfiguration {
     }
 
     private void processPublicConfiguration(String tenantKey, String configKey, String config) {
+        log.debug("Processing public config for tenant [{}]: configKey {}, config {}", tenantKey, configKey, config);
         if (!matcher.match(IDP_PUBLIC_SETTINGS_CONFIG_PATH_PATTERN, configKey)) {
             return;
         }
@@ -127,7 +143,7 @@ public class IdpConfigRepository implements RefreshableConfiguration {
         try {
             parsedConfig = objectMapper.readValue(config, configType);
         } catch (JsonProcessingException e) {
-            log.error("Error occurred during attempt to read {} for tenant:{}", config.getClass(), tenantKey, e);
+            log.error("Error occurred during attempt to read idp configuration {} for tenant:{}", config.getClass(), tenantKey, e);
         }
         return parsedConfig;
     }
@@ -141,8 +157,7 @@ public class IdpConfigRepository implements RefreshableConfiguration {
      * @param tenantKey tenant key
      */
     private void updateInMemoryConfig(String tenantKey) {
-        idpClientConfigs.put(tenantKey, tmpIdpClientPublicConfigs.get(tenantKey));
-        tmpIdpClientPublicConfigs.remove(tenantKey);
+        idpClientConfigs.put(tenantKey, tmpIdpClientPublicConfigs.remove(tenantKey));
     }
 
     private String extractTenantKeyFromPath(String configKey) {
@@ -152,7 +167,7 @@ public class IdpConfigRepository implements RefreshableConfiguration {
         return configKeyParams.get(KEY_TENANT);
     }
 
-    private Map<String, IdpPublicClientConfig> getIdpClientConfigsByTenantKey(String tenantKey) {
+    public Map<String, IdpPublicClientConfig> getIdpClientConfigsByTenantKey(String tenantKey) {
         return idpClientConfigs.get(tenantKey);
     }
 
@@ -182,17 +197,19 @@ public class IdpConfigRepository implements RefreshableConfiguration {
                 .stream()
                 .map(this::getJwtClaimsSetVerifiers)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
+        log.debug("Register claim verifiers for tenant [{}]. Verifiers [{}]", tenantKey, verifiers);
         jwtClaimsSetVerifiersHolder.put(tenantKey, verifiers);
     }
 
     @SneakyThrows
     private Map.Entry<String, List<JwtClaimsSetVerifier>> getJwtClaimsSetVerifiers(
         IdpPublicClientConfig idpPublicClientConfig) {
+
         URL issuerUrl = new URL(idpPublicClientConfig.getOpenIdConfig().getIssuer());
         IssuerClaimVerifier issuerClaimVerifier = new IssuerClaimVerifier(issuerUrl);
 
         String clientId = idpPublicClientConfig.getClientId();
+        log.debug("Build claim verifiers for client with id [{}].", clientId);
         return Map.entry(clientId, List.of(new AudienceClaimVerifier(clientId), issuerClaimVerifier));
     }
 }

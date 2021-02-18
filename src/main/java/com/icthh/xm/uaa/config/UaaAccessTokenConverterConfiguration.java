@@ -165,7 +165,7 @@ public class UaaAccessTokenConverterConfiguration {
     @Bean
     public XmJwkTokenStore jwkTokenStore() {
 
-        XmJwkDefinitionSource xmJwkDefinitionSource = new XmJwkDefinitionSource(idpConfigRepository, jwksRepository);
+        XmJwkDefinitionSource xmJwkDefinitionSource = new XmJwkDefinitionSource(jwksRepository);
 
         XmJwkVerifyingJwtAccessTokenConverter jwkVerifyingJwtAccessTokenConverter =
             new XmJwkVerifyingJwtAccessTokenConverter(xmJwkDefinitionSource, idpConfigRepository);

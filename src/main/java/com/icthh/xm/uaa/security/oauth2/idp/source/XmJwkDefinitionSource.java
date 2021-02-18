@@ -28,12 +28,9 @@ import java.util.stream.Collectors;
 @Slf4j
 // FIXME: seems we need to cover the class by Unit test as we have changed it.
 public class XmJwkDefinitionSource extends JwkDefinitionSource {
-    private final IdpConfigRepository idpConfigRepository;
     private final JwksRepository jwksRepository;
 
-    public XmJwkDefinitionSource(IdpConfigRepository idpConfigRepository,
-                                 JwksRepository jwksRepository) {
-        this.idpConfigRepository = idpConfigRepository;
+    public XmJwkDefinitionSource(JwksRepository jwksRepository) {
         this.jwksRepository = jwksRepository;
     }
 
