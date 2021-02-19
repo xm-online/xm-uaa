@@ -2,7 +2,6 @@ package com.icthh.xm.uaa.config;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.cloud.client.loadbalancer.RestTemplateCustomizer;
-import org.springframework.cloud.consul.ConditionalOnConsulEnabled;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
