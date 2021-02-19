@@ -16,7 +16,7 @@ import static org.springframework.core.Ordered.HIGHEST_PRECEDENCE;
 @Configuration
 public class RestTemplateConfiguration {
 
-    @Bean
+    /*@Bean
     @Order(HIGHEST_PRECEDENCE)
     @ConditionalOnConsulEnabled
     public RestTemplate loadBalancedRestTemplate(RestTemplateCustomizer customizer) {
@@ -29,5 +29,5 @@ public class RestTemplateConfiguration {
     @ConditionalOnMissingBean
     public RestTemplate defaultRestTemplate() {
         return new RestTemplate();
-    }
+    }*/
 }
