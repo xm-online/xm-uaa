@@ -23,11 +23,10 @@ public class RestTemplateConfiguration {
         RestTemplate restTemplate = new RestTemplate();
         customizer.customize(restTemplate);
         return restTemplate;
-    }
+    }*/
 
     @Bean
-    @ConditionalOnMissingBean
     public RestTemplate defaultRestTemplate() {
         return new RestTemplate();
-    }*/
+    }
 }
