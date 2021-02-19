@@ -58,7 +58,7 @@ public class UaaAccessTokenConverterConfiguration {
     private final ApplicationProperties applicationProperties;
 
     public UaaAccessTokenConverterConfiguration(TenantContextHolder tenantContextHolder,
-                                                @Qualifier("loadBalancedRestTemplate") RestTemplate keyUriRestTemplate,
+                                                RestTemplate keyUriRestTemplate,
                                                 ApplicationProperties applicationProperties) {
         this.tenantContextHolder = tenantContextHolder;
         this.keyUriRestTemplate = keyUriRestTemplate;

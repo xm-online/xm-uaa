@@ -36,7 +36,6 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
     private final MailService mailService;
     private final UserService userService;
     private final ClientService clientService;
-    @Qualifier("loadBalancedRestTemplate")
     private final RestTemplate restTemplate;
     private final CommonsService commonsService;
     private final AccountService accountService;
