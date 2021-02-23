@@ -7,12 +7,14 @@ import static com.icthh.xm.uaa.config.Constants.AUTH_ROLE_KEY;
 import static com.icthh.xm.uaa.config.Constants.AUTH_TENANT_KEY;
 import static com.icthh.xm.uaa.config.Constants.AUTH_USER_KEY;
 import static com.icthh.xm.uaa.config.Constants.CREATE_TOKEN_TIME;
+import static com.icthh.xm.uaa.config.Constants.MULTI_ROLE_ENABLED;
 import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_OTP_CHANNEL_TYPE;
 import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_VERIFICATION_OTP_KEY;
 import static org.apache.commons.collections.MapUtils.isNotEmpty;
 
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.domain.OtpChannelType;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +33,7 @@ import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenCo
 public class DomainJwtAccessTokenConverter extends JwtAccessTokenConverter {
 
     private final TenantContextHolder tenantContextHolder;
+    private final TenantPropertiesService tenantPropertiesService;
     private final DomainJwtAccessTokenDetailsPostProcessor tokenDetailsProcessor;
 
     @Override
@@ -70,11 +73,12 @@ public class DomainJwtAccessTokenConverter extends JwtAccessTokenConverter {
             } else {
                 details.put(AUTH_LOGINS_KEY, userDetails.getLogins());
                 details.put(AUTH_ROLE_KEY, getOptionalRoleKey(userDetails.getAuthorities()));
+                details.putIfAbsent(AUTH_ADDITIONAL_DETAILS, new HashMap<>());
+                Map<String, Object> additionalDetails = (Map<String, Object>) details.get(AUTH_ADDITIONAL_DETAILS);
                 if (isNotEmpty(userDetails.getAdditionalDetails())) {
-                    details.putIfAbsent(AUTH_ADDITIONAL_DETAILS, new HashMap<>());
-                    Map<String, Object> additionalDetails = (Map<String, Object>) details.get(AUTH_ADDITIONAL_DETAILS);
                     additionalDetails.putAll(userDetails.getAdditionalDetails());
                 }
+                additionalDetails.put(MULTI_ROLE_ENABLED, tenantPropertiesService.getTenantProps().isMultiRoleEnabled());
             }
         }
     }
