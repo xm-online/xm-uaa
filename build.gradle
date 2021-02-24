@@ -118,6 +118,7 @@ test {
     // uncomment if the tests reports are not generated
     // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
     // ignoreFailures true
+    useJUnitPlatform()
     reports.html.enabled = true
     testLogging {
         exceptionFormat = 'full'
@@ -348,6 +349,7 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-test"
     testImplementation "org.junit.jupiter:junit-jupiter-engine"
     testImplementation "org.junit.vintage:junit-vintage-engine"
+    testImplementation "org.mockito:mockito-junit-jupiter"
     testImplementation "com.tngtech.archunit:archunit-junit5-api:${archunit_junit5_version}"
     testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:${archunit_junit5_version}"
     testImplementation "org.assertj:assertj-core"
