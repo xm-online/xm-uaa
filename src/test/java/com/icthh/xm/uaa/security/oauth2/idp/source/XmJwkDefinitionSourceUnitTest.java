@@ -8,6 +8,7 @@ import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.commons.tenant.internal.DefaultTenantContextHolder;
 import com.icthh.xm.uaa.security.oauth2.idp.jwk.JwkDefinition;
 import com.icthh.xm.uaa.security.oauth2.idp.jwk.JwkDefinitionSource;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -33,6 +34,10 @@ public class XmJwkDefinitionSourceUnitTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @AfterEach
+    void setUp() {
+        tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
+    }
 
     @Test
     public void test_shouldFailToFindJwkDefinitionHolder() throws JsonProcessingException {

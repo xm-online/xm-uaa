@@ -10,7 +10,7 @@ import com.icthh.xm.commons.tenant.internal.DefaultTenantContextHolder;
 import com.icthh.xm.uaa.security.oauth2.idp.IdpTestUtils;
 import com.icthh.xm.uaa.security.oauth2.idp.config.IdpConfigRepository;
 import com.icthh.xm.uaa.security.oauth2.idp.source.XmJwkDefinitionSource;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -40,7 +40,7 @@ public class XmJwkVerifyingJwtAccessTokenConverterUnitTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @BeforeEach
+    @AfterEach
     void setUp() {
         tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
     }

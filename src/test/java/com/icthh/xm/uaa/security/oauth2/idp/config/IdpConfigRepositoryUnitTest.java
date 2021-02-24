@@ -6,7 +6,7 @@ import com.icthh.xm.commons.domain.idp.model.IdpPublicConfig;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.commons.tenant.internal.DefaultTenantContextHolder;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -26,7 +26,7 @@ public class IdpConfigRepositoryUnitTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @BeforeEach
+    @AfterEach
     void setUp() {
         tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
     }
