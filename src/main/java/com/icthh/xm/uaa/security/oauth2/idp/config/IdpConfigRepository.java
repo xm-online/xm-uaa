@@ -116,6 +116,7 @@ public class IdpConfigRepository implements RefreshableConfiguration {
                 "Removing client configs and claim verifiers from storage", tenantKey);
             idpClientConfigs.remove(tenantKey);
             jwtClaimsSetVerifiersHolder.remove(tenantKey);
+            tmpValidIdpClientPublicConfigs.remove(tenantKey);
             return;
         }
         if (isValidClientsConfigurationEmpty) {
@@ -178,8 +179,8 @@ public class IdpConfigRepository implements RefreshableConfiguration {
      * Basing on input configuration method removes all previously registered clients for specified tenant
      * to avoid redundant clients registration presence
      * </p>
-     *  @param tenantKey         tenant key
      *
+     * @param tenantKey tenant key
      */
     private void updateInMemoryClientConfig(String tenantKey) {
         idpClientConfigs.put(tenantKey, tmpValidIdpClientPublicConfigs.remove(tenantKey));
