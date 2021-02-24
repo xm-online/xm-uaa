@@ -96,7 +96,7 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         }
 
         boolean tenantTfaEnabled = tenantPropertiesService.getTenantProps().getSecurity().isTfaEnabled();
-        return tenantTfaEnabled && ((DomainUserDetails) principal).isTfaEnabled();
+        return tenantTfaEnabled && DomainUserDetails.class.cast(principal).isTfaEnabled();
     }
 
     @Override
