@@ -22,6 +22,7 @@ import com.icthh.xm.uaa.security.oauth2.idp.source.XmJwkDefinitionSource;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -82,6 +83,11 @@ public class IdpTokenGranterUnitTest {
     private final XmJwkTokenStore jwkTokenStore = new XmJwkTokenStore(xmJwkVerifyingJwtAccessTokenConverter);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @AfterEach
+    void setUp() {
+        tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
+    }
 
     @Test
     public void test_Success() throws JsonProcessingException {
@@ -170,7 +176,7 @@ public class IdpTokenGranterUnitTest {
         }
 
         assertNotNull(exception);
-        assertEquals("Authentication failed cause of tenant [tenant1] configuration lack.", exception.getMessage());
+        assertEquals("Authentication failed cause of tenant [tenant4] configuration lack.", exception.getMessage());
     }
 
     @Test
@@ -205,11 +211,11 @@ public class IdpTokenGranterUnitTest {
         }
 
         assertNotNull(exception);
-        assertEquals("Authentication failed cause of tenant [tenant1] configuration lack.", exception.getMessage());
+        assertEquals("Authentication failed cause of tenant [tenant4] configuration lack.", exception.getMessage());
     }
 
     private String instantiateConfigs() throws JsonProcessingException {
-        String tenantKey = "tenant1";
+        String tenantKey = "tenant4";
         String clientKeyPrefix = "Auth0_";
         String clientId = "I4h5vnAEDwXAnkpun2b9mq3bywHsp71w";
         TenantContextUtils.setTenant(tenantContextHolder, tenantKey);
