@@ -18,6 +18,8 @@ package com.icthh.xm.uaa.security.oauth2.idp.jwk;
 import org.springframework.security.oauth2.common.exceptions.OAuth2Exception;
 
 /**
+ * This class copied from {@link org.springframework.security.oauth2.provider.token.store.jwk.JwkException}
+ * and couldn't be imported cause of package private access.
  * General exception for JSON Web Key (JWK) related errors.
  *
  * @author Joe Grandja

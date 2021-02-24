@@ -16,6 +16,8 @@
 package com.icthh.xm.uaa.security.oauth2.idp.jwk;
 
 /**
+ * This class copied from {@link org.springframework.security.oauth2.provider.token.store.jwk.EllipticCurveJwkDefinition}.
+ * and couldn't be imported cause of package private access.
  * A JSON Web Key (JWK) representation of an Elliptic Curve key.
  *
  * @author Michael Duergner <michael@sprucehill.io>

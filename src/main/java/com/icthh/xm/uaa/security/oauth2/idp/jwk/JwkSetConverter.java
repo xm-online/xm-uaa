@@ -31,6 +31,8 @@ import java.util.Set;
 import static com.icthh.xm.uaa.security.oauth2.idp.jwk.JwkAttributes.*;
 
 /**
+ * This class copied from {@link org.springframework.security.oauth2.provider.token.store.jwk.JwkSetConverter}
+ * and couldn't be imported cause of package private access.
  * A {@link Converter} that converts the supplied <code>InputStream</code> to a <code>Set</code> of {@link JwkDefinition}(s).
  * The source of the <code>InputStream</code> <b>must be</b> a JWK Set representation which is a JSON object
  * that has a &quot;keys&quot; member and its value is an array of JWKs.

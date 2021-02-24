@@ -33,6 +33,8 @@ import static com.icthh.xm.uaa.security.oauth2.idp.jwk.JwkAttributes.ALGORITHM;
 
 
 /**
+ * This class copied from {@link org.springframework.security.oauth2.provider.token.store.jwk.JwkVerifyingJwtAccessTokenConverter}
+ * and couldn't be imported cause of package private access.
  * A specialized extension of {@link JwtAccessTokenConverter} that is responsible for verifying
  * the JSON Web Signature (JWS) for a JSON Web Token (JWT) using the corresponding JSON Web Key (JWK).
  * This implementation is associated with a {@link JwkDefinitionSource} for looking up

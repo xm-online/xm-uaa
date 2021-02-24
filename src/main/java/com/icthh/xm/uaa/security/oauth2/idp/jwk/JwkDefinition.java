@@ -16,6 +16,8 @@
 package com.icthh.xm.uaa.security.oauth2.idp.jwk;
 
 /**
+ * This class copied from {@link org.springframework.security.oauth2.provider.token.store.jwk.JwkDefinition}
+ * and couldn't be imported cause of package private access.
  * The base representation of a JSON Web Key (JWK).
  *
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7517">JSON Web Key (JWK)</a>
