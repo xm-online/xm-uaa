@@ -47,7 +47,7 @@ public class XmJwkVerifyingJwtAccessTokenConverterUnitTest {
 
     @Test
     public void test_shouldFailToFindTokenDefaultClaimsVerifiers() throws JsonProcessingException {
-        String tenantKey = "tenant1";
+        String tenantKey = "tenant3";
         String clientKeyPrefix = "Auth0_";
         String clientId = "I4h5vnAEDwXAnkpun2b9mq3bywHsp711";
         IdpPublicConfig idpPublicConfig = buildPublicConfig(clientKeyPrefix, clientId, true);
@@ -65,13 +65,13 @@ public class XmJwkVerifyingJwtAccessTokenConverterUnitTest {
         }
 
         assertNotNull(exception);
-        assertEquals("Jwt claims verifiers for tenant [tenant1] not found with clientId " +
+        assertEquals("Jwt claims verifiers for tenant [tenant3] not found with clientId " +
             "[I4h5vnAEDwXAnkpun2b9mq3bywHsp71w]. Check tenant idp configuration.", exception.getMessage());
     }
 
     @Test
     public void test_shouldSuccessfullyDecodeAndValidateToken() throws JsonProcessingException {
-        String tenantKey = "tenant1";
+        String tenantKey = "tenant3";
         String clientKeyPrefix = "Auth0_";
         String clientId = "I4h5vnAEDwXAnkpun2b9mq3bywHsp71w";
         IdpPublicConfig idpPublicConfig = buildPublicConfig(clientKeyPrefix, clientId, true);

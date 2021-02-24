@@ -41,7 +41,7 @@ public class XmJwkDefinitionSourceUnitTest {
 
     @Test
     public void test_shouldFailToFindJwkDefinitionHolder() throws JsonProcessingException {
-        String tenantKey = "tenant1";
+        String tenantKey = "tenant2";
         String clientKeyPrefix = "Auth0_";
         String keyId = "ozRd0JdfWHAmxvtcbqpxX";
 
@@ -56,7 +56,7 @@ public class XmJwkDefinitionSourceUnitTest {
 
     @Test
     public void test_shouldSuccessfullyBuildJwkDefinitionHolder() throws JsonProcessingException {
-        String tenantKey = "tenant1";
+        String tenantKey = "tenant2";
         String clientKeyPrefix = "Auth0_";
         String keyId = "ozRd0JdbWHAmxvtcbqpxX";
 
