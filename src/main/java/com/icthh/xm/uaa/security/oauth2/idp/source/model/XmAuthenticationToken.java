@@ -9,15 +9,14 @@ import java.util.Collection;
 /**
  * Class for storing user details wrapped by {@link DomainUserDetails}.
  */
-//TODO think about name, this should be XM oriented
-public class IdpAuthenticationToken extends AbstractAuthenticationToken {
+public class XmAuthenticationToken extends AbstractAuthenticationToken {
 
     private final DomainUserDetails principal;
     private Object credentials;
 
 
-    public IdpAuthenticationToken(DomainUserDetails principal,
-                                  Collection<? extends GrantedAuthority> authorities) {
+    public XmAuthenticationToken(DomainUserDetails principal,
+                                 Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
         this.principal = principal;
         super.setAuthenticated(true); // must use super, as we override

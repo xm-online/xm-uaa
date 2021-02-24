@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-// FIXME: seems we need to cover the class by Unit test as we have changed it.
 public class XmJwkDefinitionSource extends JwkDefinitionSource {
     private final JwksRepository jwksRepository;
 

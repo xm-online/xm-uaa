@@ -18,7 +18,6 @@ import java.util.Map;
  * This class responsible for managing basic token signature and claim verification
  */
 @EqualsAndHashCode(callSuper = true)
-// FIXME: seems we need to cover the class by Unit test as we have changed it.
 public class XmJwkVerifyingJwtAccessTokenConverter extends JwkVerifyingJwtAccessTokenConverter {
     private final IdpConfigRepository idpConfigRepository;
 

@@ -114,7 +114,7 @@ public abstract class JwkDefinition {
 			this.value = value;
 		}
 
-		String value() {
+		public String value() {
 			return this.value;
 		}
 
@@ -143,7 +143,7 @@ public abstract class JwkDefinition {
 			this.value = value;
 		}
 
-		String value() {
+		public String value() {
 			return this.value;
 		}
 

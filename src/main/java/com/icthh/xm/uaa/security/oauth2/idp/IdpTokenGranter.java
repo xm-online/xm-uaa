@@ -9,13 +9,14 @@ import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.security.DomainUserDetails;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
-import com.icthh.xm.uaa.security.oauth2.idp.source.model.IdpAuthenticationToken;
+import com.icthh.xm.uaa.security.oauth2.idp.source.model.XmAuthenticationToken;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.Authentication;
@@ -38,13 +39,13 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * TODO add java doc and test's, maybe with lep's?
+ * This class responsible for handling requests with idp token
  */
 @Slf4j
 @LepService(group = "security.idp")
 public class IdpTokenGranter extends AbstractTokenGranter {
 
-    private static final String GRANT_TYPE = "idp_token";
+    public static final String GRANT_TYPE_IDP_TOKEN = "idp_token";
 
     private static final String FIRST_NAME_CONFIG_ATTRIBUTE = "firstNameAttribute";
     private static final String LAST_NAME_CONFIG_ATTRIBUTE = "lastNameAttribute";
@@ -66,7 +67,7 @@ public class IdpTokenGranter extends AbstractTokenGranter {
                            TenantPropertiesService tenantPropertiesService,
                            UserService userService,
                            UserLoginService userLoginService) {
-        super(tokenServices, clientDetailsService, requestFactory, GRANT_TYPE);
+        super(tokenServices, clientDetailsService, requestFactory, GRANT_TYPE_IDP_TOKEN);
         this.jwkTokenStore = jwkTokenStore;
         this.domainUserDetailsService = domainUserDetailsService;
         this.tenantPropertiesService = tenantPropertiesService;
@@ -92,7 +93,7 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         return getUserAuthenticationToken(parameters);
     }
 
-    private IdpAuthenticationToken getUserAuthenticationToken(Map<String, String> parameters) {
+    private XmAuthenticationToken getUserAuthenticationToken(Map<String, String> parameters) {
         String idpToken = parameters.get("token");
 
         // parse IDP id token
@@ -106,7 +107,7 @@ public class IdpTokenGranter extends AbstractTokenGranter {
             authoritiesMapper.mapAuthorities(userDetails.getAuthorities());
 
         //build container for user
-        IdpAuthenticationToken userAuthenticationToken = new IdpAuthenticationToken(userDetails, authorities);
+        XmAuthenticationToken userAuthenticationToken = new XmAuthenticationToken(userDetails, authorities);
         userAuthenticationToken.setDetails(parameters);
 
         return userAuthenticationToken;
@@ -184,10 +185,10 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         TenantProperties tenantProps = tenantPropertiesService.getTenantProps();
         TenantProperties.Security security = tenantProps.getSecurity();
 
-        if (security == null) {
-            log.debug("Default role for tenant [{}] not specified.", getTenantKey());
+        if (security == null || StringUtils.isEmpty(security.getDefaultUserRole())) {
+            log.debug("Default user role for tenant [{}] not specified in configuration.", getTenantKey());
             throw new AuthenticationServiceException("Authentication failed " +
-                "cause of tenant configuration lack [" + getTenantKey() + "].");
+                "cause of tenant [" + getTenantKey() + "] configuration lack.");
         }
         return security.getDefaultUserRole();
     }
@@ -210,7 +211,7 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         ) {
             log.debug("User Identity mapping not fully specified in tenant [{}] configuration.", getTenantKey());
             throw new AuthenticationServiceException("Authentication failed " +
-                "cause of tenant configuration lack [" + getTenantKey() + "].");
+                "cause of tenant [" + getTenantKey() + "] configuration lack.");
         }
         TenantProperties.Security.Idp.DefaultIdpClaimMapping defaultIdpClaimMapping = idp.getDefaultIdpClaimMapping();
 

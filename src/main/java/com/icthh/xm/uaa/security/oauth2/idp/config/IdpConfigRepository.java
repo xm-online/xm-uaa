@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.config.client.api.RefreshableConfiguration;
 import com.icthh.xm.commons.domain.idp.IdpConfigUtils;
-import com.icthh.xm.commons.domain.idp.IdpPublicConfig;
+import com.icthh.xm.commons.domain.idp.model.IdpPublicConfig;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.security.oauth2.idp.validation.verifiers.AudienceClaimVerifier;
 import javassist.NotFoundException;
@@ -14,7 +14,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.provider.token.store.IssuerClaimVerifier;
 import org.springframework.security.oauth2.provider.token.store.JwtClaimsSetVerifier;
-import com.icthh.xm.commons.domain.idp.IdpPublicConfig.IdpConfigContainer.IdpPublicClientConfig;
+import com.icthh.xm.commons.domain.idp.model.IdpPublicConfig.IdpConfigContainer.IdpPublicClientConfig;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.CollectionUtils;
@@ -67,7 +67,7 @@ public class IdpConfigRepository implements RefreshableConfiguration {
      *   <li/> IdpPublicClientConfig - tenant specific idp public client Config
      * </ul>
      */
-    private final Map<String, Map<String, IdpPublicClientConfig>> tmpIdpClientPublicConfigs = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, IdpPublicClientConfig>> tmpValidIdpClientPublicConfigs = new ConcurrentHashMap<>();
 
     /**
      * In memory storage.
@@ -88,11 +88,6 @@ public class IdpConfigRepository implements RefreshableConfiguration {
     private final TenantContextHolder tenantContextHolder;
 
     @Override
-    public void onRefresh(String updatedKey, String config) {
-        updateIdpConfigs(updatedKey, config);
-    }
-
-    @Override
     public boolean isListeningConfiguration(String updatedKey) {
         return matcher.match(IDP_PUBLIC_SETTINGS_CONFIG_PATH_PATTERN, updatedKey);
     }
@@ -102,38 +97,57 @@ public class IdpConfigRepository implements RefreshableConfiguration {
         updateIdpConfigs(configKey, configValue);
     }
 
+    @Override
+    public void onRefresh(String updatedKey, String config) {
+        updateIdpConfigs(updatedKey, config);
+    }
+
     private void updateIdpConfigs(String configKey, String config) {
         String tenantKey = extractTenantKeyFromPath(configKey);
 
-        processPublicConfiguration(tenantKey, configKey, config);
+        List<IdpPublicClientConfig> rawIdpPublicClientConfigs =
+            processPublicClientsConfiguration(tenantKey, configKey, config);
 
-        boolean isClientConfigurationEmpty = CollectionUtils.isEmpty(tmpIdpClientPublicConfigs.get(tenantKey));
+        boolean isRawClientsConfigurationEmpty = CollectionUtils.isEmpty(rawIdpPublicClientConfigs);
+        boolean isValidClientsConfigurationEmpty = CollectionUtils.isEmpty(tmpValidIdpClientPublicConfigs.get(tenantKey));
 
-        if (isClientConfigurationEmpty) {
-            log.info("For tenant [{}] provided IDP public client configs not applied.", tenantKey);
+        if (isRawClientsConfigurationEmpty && isValidClientsConfigurationEmpty) {
+            log.warn("For tenant [{}] provided IDP public client configs not present." +
+                "Removing client configs and claim verifiers from storage", tenantKey);
+            idpClientConfigs.remove(tenantKey);
+            jwtClaimsSetVerifiersHolder.remove(tenantKey);
+            return;
+        }
+        if (isValidClientsConfigurationEmpty) {
+            log.warn("For tenant [{}] provided IDP public client configs not applied.", tenantKey);
             return;
         }
 
-        updateInMemoryConfig(tenantKey);
+        updateInMemoryClientConfig(tenantKey);
         buildJwtClaimsSetVerifiers(tenantKey);
     }
 
-    private void processPublicConfiguration(String tenantKey, String configKey, String config) {
+    private List<IdpPublicClientConfig> processPublicClientsConfiguration(String tenantKey, String configKey, String config) {
         log.debug("Processing public config for tenant [{}]: configKey {}, config {}", tenantKey, configKey, config);
         if (!matcher.match(IDP_PUBLIC_SETTINGS_CONFIG_PATH_PATTERN, configKey)) {
-            return;
+            return Collections.emptyList();
         }
-        Optional.ofNullable(parseConfig(tenantKey, config, IdpPublicConfig.class))
+        IdpPublicConfig idpPublicConfig = parseConfig(tenantKey, config, IdpPublicConfig.class);
+
+        List<IdpPublicClientConfig> rawIdpPublicClientConfigs = Optional.ofNullable(idpPublicConfig)
             .map(IdpPublicConfig::getConfig)
             .map(IdpPublicConfig.IdpConfigContainer::getClients)
-            .orElseGet(Collections::emptyList)
+            .orElseGet(Collections::emptyList);
+
+        rawIdpPublicClientConfigs
             .stream()
-            .filter(conf -> IdpConfigUtils.isPublicConfigValid(tenantKey, conf))
+            .filter(IdpConfigUtils::isPublicClientConfigValid)
             .forEach(publicIdpConf -> putTmpIdpPublicConfig(tenantKey, publicIdpConf));
+        return rawIdpPublicClientConfigs;
     }
 
     private void putTmpIdpPublicConfig(final String tenantKey, final IdpPublicClientConfig publicIdpConf) {
-        tmpIdpClientPublicConfigs
+        tmpValidIdpClientPublicConfigs
             .computeIfAbsent(tenantKey, key -> new HashMap<>())
             .put(publicIdpConf.getKey(), publicIdpConf);
     }
@@ -148,18 +162,6 @@ public class IdpConfigRepository implements RefreshableConfiguration {
         return parsedConfig;
     }
 
-    /**
-     * <p>
-     * Basing on input configuration method removes all previously registered clients for specified tenant
-     * to avoid redundant clients registration presence
-     * </p>
-     *
-     * @param tenantKey tenant key
-     */
-    private void updateInMemoryConfig(String tenantKey) {
-        idpClientConfigs.put(tenantKey, tmpIdpClientPublicConfigs.remove(tenantKey));
-    }
-
     private String extractTenantKeyFromPath(String configKey) {
         Map<String, String> configKeyParams =
             matcher.extractUriTemplateVariables(IDP_PUBLIC_SETTINGS_CONFIG_PATH_PATTERN, configKey);
@@ -167,22 +169,20 @@ public class IdpConfigRepository implements RefreshableConfiguration {
         return configKeyParams.get(KEY_TENANT);
     }
 
-    public Map<String, IdpPublicClientConfig> getIdpClientConfigsByTenantKey(String tenantKey) {
+    Map<String, IdpPublicClientConfig> getIdpClientConfigsByTenantKey(String tenantKey) {
         return idpClientConfigs.get(tenantKey);
     }
 
-    @SneakyThrows
-    public List<JwtClaimsSetVerifier> getJwtClaimsSetVerifiers(String clientId) {
-        String tenantKey = tenantContextHolder.getTenantKey();
-
-        List<JwtClaimsSetVerifier> jwtClaimsSetVerifiers =
-            jwtClaimsSetVerifiersHolder.getOrDefault(tenantKey, new HashMap<>()).get(clientId);
-
-        if (CollectionUtils.isEmpty(jwtClaimsSetVerifiers)) {
-            throw new NotFoundException("Jwt claims verifiers for tenant: [" + tenantKey
-                + "] not found. Check tenant idp configuration.");
-        }
-        return jwtClaimsSetVerifiers;
+    /**
+     * <p>
+     * Basing on input configuration method removes all previously registered clients for specified tenant
+     * to avoid redundant clients registration presence
+     * </p>
+     *  @param tenantKey         tenant key
+     *
+     */
+    private void updateInMemoryClientConfig(String tenantKey) {
+        idpClientConfigs.put(tenantKey, tmpValidIdpClientPublicConfigs.remove(tenantKey));
     }
 
     private void buildJwtClaimsSetVerifiers(String tenantKey) {
@@ -199,6 +199,20 @@ public class IdpConfigRepository implements RefreshableConfiguration {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         log.debug("Register claim verifiers for tenant [{}]. Verifiers [{}]", tenantKey, verifiers);
         jwtClaimsSetVerifiersHolder.put(tenantKey, verifiers);
+    }
+
+    @SneakyThrows
+    public List<JwtClaimsSetVerifier> getJwtClaimsSetVerifiers(String clientId) {
+        String tenantKey = tenantContextHolder.getTenantKey();
+
+        List<JwtClaimsSetVerifier> jwtClaimsSetVerifiers =
+            jwtClaimsSetVerifiersHolder.getOrDefault(tenantKey, new HashMap<>()).get(clientId);
+
+        if (CollectionUtils.isEmpty(jwtClaimsSetVerifiers)) {
+            throw new NotFoundException("Jwt claims verifiers for tenant [" + tenantKey
+                + "] not found with clientId [" + clientId + "]. Check tenant idp configuration.");
+        }
+        return jwtClaimsSetVerifiers;
     }
 
     @SneakyThrows
