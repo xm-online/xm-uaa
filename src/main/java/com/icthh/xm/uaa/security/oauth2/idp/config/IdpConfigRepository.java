@@ -103,28 +103,33 @@ public class IdpConfigRepository implements RefreshableConfiguration {
     }
 
     private void updateIdpConfigs(String configKey, String config) {
-        String tenantKey = extractTenantKeyFromPath(configKey);
+        try {
+            String tenantKey = extractTenantKeyFromPath(configKey);
 
-        List<IdpPublicClientConfig> rawIdpPublicClientConfigs =
-            processPublicClientsConfiguration(tenantKey, configKey, config);
+            List<IdpPublicClientConfig> rawIdpPublicClientConfigs =
+                processPublicClientsConfiguration(tenantKey, configKey, config);
 
-        boolean isRawClientsConfigurationEmpty = CollectionUtils.isEmpty(rawIdpPublicClientConfigs);
-        boolean isValidClientsConfigurationEmpty = CollectionUtils.isEmpty(tmpValidIdpClientPublicConfigs.get(tenantKey));
+            boolean isRawClientsConfigurationEmpty = CollectionUtils.isEmpty(rawIdpPublicClientConfigs);
+            boolean isValidClientsConfigurationEmpty = CollectionUtils.isEmpty(tmpValidIdpClientPublicConfigs.get(tenantKey));
 
-        if (isRawClientsConfigurationEmpty && isValidClientsConfigurationEmpty) {
-            log.warn("For tenant [{}] provided IDP public client configs not present." +
-                "Removing client configs and claim verifiers from storage", tenantKey);
-            idpClientConfigs.remove(tenantKey);
-            jwtClaimsSetVerifiersHolder.remove(tenantKey);
-            return;
+            if (isRawClientsConfigurationEmpty && isValidClientsConfigurationEmpty) {
+                log.warn("For tenant [{}] provided IDP public client configs not present." +
+                    "Removing client configs and claim verifiers from storage", tenantKey);
+                idpClientConfigs.remove(tenantKey);
+                jwtClaimsSetVerifiersHolder.remove(tenantKey);
+                return;
+            }
+            if (isValidClientsConfigurationEmpty) {
+                log.warn("For tenant [{}] provided IDP public client configs not applied.", tenantKey);
+                return;
+            }
+
+            updateInMemoryClientConfig(tenantKey);
+            buildJwtClaimsSetVerifiers(tenantKey);
+        } catch (Exception e) {
+            log.error("Error occurred during processing idp config: {}, {}", e.getMessage(), e);
         }
-        if (isValidClientsConfigurationEmpty) {
-            log.warn("For tenant [{}] provided IDP public client configs not applied.", tenantKey);
-            return;
-        }
 
-        updateInMemoryClientConfig(tenantKey);
-        buildJwtClaimsSetVerifiers(tenantKey);
     }
 
     private List<IdpPublicClientConfig> processPublicClientsConfiguration(String tenantKey, String configKey, String config) {
