@@ -16,6 +16,7 @@ public class XmUaaLepConstants {
     public static final String BINDING_SUB_KEY_SERVICE_USER_LOGIN_SERVICE = "userLoginService";
     public static final String BINDING_SUB_KEY_PROFILE_EVEBT_PRODUCER_SERVICE = "profileEventProducer";
     public static final String BINDING_SUB_KEY_SERVICE_USER = "userService";
+    public static final String BINDING_SUB_KEY_SERVICE_CLIENT = "clientService";
     public static final String BINDING_SUB_KEY_SERVICE_MAIL = "mailService";
     public static final String BINDING_SUB_KEY_SERVICE_CUSTOM_AUTHORIZATION_CODE = "customAuthorizationCodeServices";
     public static final String BINDING_SUB_KEY_SERVICE_CUSTOMIZABLE_TOKE_STORAGE = "customizableTokeStorage";
