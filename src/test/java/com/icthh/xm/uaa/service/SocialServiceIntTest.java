@@ -105,6 +105,8 @@ public class SocialServiceIntTest {
     private XmRequestContextHolder xmRequestContextHolder;
     @Mock
     private TenantContextHolder tenantContextHolder;
+    @Mock
+    TenantProperties tenantProperties;
 
     private MockRestServiceServer oAuth2TemplateMockServer;
     private List<Consumer<?>> oAuth2RestMoks = new ArrayList<>();
@@ -117,8 +119,10 @@ public class SocialServiceIntTest {
         MockitoAnnotations.initMocks(this);
         userDetailsService = new DomainUserDetailsService(userLoginRepository, tenantContextHolder);
         tokenServices = new DomainTokenServices();
+        when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProperties);
         DomainJwtAccessTokenDetailsPostProcessor processor = new DomainJwtAccessTokenDetailsPostProcessor();
         DomainJwtAccessTokenConverter accessTokenEnhancer = new DomainJwtAccessTokenConverter(tenantContextHolder,
+                                                                                              tenantPropertiesService,
                                                                                               processor);
         tokenServices.setTokenStore(new JwtTokenStore(accessTokenEnhancer));
         tokenServices.setTokenConstraintsService(mock(TokenConstraintsService.class));

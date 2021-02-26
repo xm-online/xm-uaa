@@ -1,21 +1,20 @@
 package com.icthh.xm.uaa.domain;
 
 import static com.google.common.collect.Iterables.getFirst;
-import static com.google.common.collect.Iterables.getLast;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.icthh.xm.uaa.domain.converter.MapToStringConverter;
 import com.icthh.xm.uaa.domain.converter.RoleKeyConverter;
-import com.icthh.xm.uaa.repository.converter.OtpChannelTypeAttributeConverter;
 import com.icthh.xm.uaa.validator.JsonData;
-import java.io.Serializable;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import com.icthh.xm.uaa.repository.converter.OtpChannelTypeAttributeConverter;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jboss.aerogear.security.otp.api.Base32;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Convert;
@@ -30,12 +29,13 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.jboss.aerogear.security.otp.api.Base32;
+import java.io.Serializable;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * A user.
@@ -122,10 +122,6 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "tfa_access_token_validity")
     private Integer tfaAccessTokenValiditySeconds;
 
-    /**
-     *
-     * @deprecated: use {@link #authorities} instead
-     */
     @Getter(AccessLevel.PRIVATE)
     @Column(name = "role_key")
     private String roleKey;

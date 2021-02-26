@@ -26,7 +26,7 @@ public class RoleKeyConverter implements AttributeConverter<List<String>, String
     private TenantPropertiesService tenantPropertiesService;
     private ObjectMapper mapper = new ObjectMapper();
 
-    {
+    public RoleKeyConverter(){
         mapper.registerModule(new JavaTimeModule());
     }
 
@@ -38,7 +38,9 @@ public class RoleKeyConverter implements AttributeConverter<List<String>, String
     @Override
     public List<String> convertToEntityAttribute(String roles) {
         List<String> multiRoles = fromJson(roles);
-        if(multiRoles.isEmpty()) return multiRoles;
+        if(multiRoles.isEmpty()) {
+            return multiRoles;
+        }
         return tenantPropertiesService.getTenantProps().isMultiRoleEnabled() ?
             multiRoles :
             List.of(getFirst(multiRoles, null));

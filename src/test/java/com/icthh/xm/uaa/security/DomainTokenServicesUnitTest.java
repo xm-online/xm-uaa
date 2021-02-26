@@ -104,7 +104,9 @@ public class DomainTokenServicesUnitTest {
         when(tenantContextHolder.getContext()).thenReturn(tenantContext);
 
         doCallRealMethod().when(domainJwtAccessTokenDetailsPostProcessor).processJwtAccessTokenDetails(any(), any());
-        JwtAccessTokenConverter converter = new DomainJwtAccessTokenConverter(tenantContextHolder, domainJwtAccessTokenDetailsPostProcessor);
+        when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProperties);
+        JwtAccessTokenConverter converter = new DomainJwtAccessTokenConverter(tenantContextHolder, tenantPropertiesService,
+            domainJwtAccessTokenDetailsPostProcessor);
         KeyPair keyPair = new KeyStoreKeyFactory(
             new ClassPathResource(KEYSTORE_PATH), KEYSTORE_PSWRD.toCharArray())
             .getKeyPair(KEYSTORE_ALIAS);
@@ -112,7 +114,7 @@ public class DomainTokenServicesUnitTest {
         converter.afterPropertiesSet();
         TokenStore tokenStore = new JwtTokenStore(converter);
 
-        when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProperties);
+
         when(tenantProperties.getSecurity()).thenReturn(security);
 
         when(applicationProperties.getSecurity()).thenReturn(appSecurity);
