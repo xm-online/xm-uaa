@@ -31,6 +31,7 @@
     <include file="classpath:config/liquibase/changelog/20191209160000_add_unique_client_id.xml" relativeToChangelogFile="false"/>
 
     <include file="classpath:config/liquibase/changelog/20200512132800_update_client_scopes_column.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20210127160400_block_client.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20210126122300_add_authorities_column_to_user.xml" relativeToChangelogFile="false"/>
 
     <!-- jhipster-needle-liquibase-add-changelog - JHipster will add liquibase changelogs here -->

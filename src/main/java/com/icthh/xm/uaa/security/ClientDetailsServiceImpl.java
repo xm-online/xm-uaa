@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.Client;
+import com.icthh.xm.uaa.domain.ClientState;
 import com.icthh.xm.uaa.service.ClientService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.AllArgsConstructor;
@@ -56,6 +57,10 @@ public class ClientDetailsServiceImpl implements ClientDetailsService {
         if (principal == null) {
             log.error("Client was not found: {}", clientId);
             throw new ClientRegistrationException("Client was not found: " + clientId);
+        }
+
+        if (ClientState.BLOCKED.equals(principal.getState())) {
+            throw new ClientRegistrationException("Client " + clientId + " is blocked");
         }
 
         return new ClientDetailsImpl(principal, applicationProperties.getClientGrantTypes(),
