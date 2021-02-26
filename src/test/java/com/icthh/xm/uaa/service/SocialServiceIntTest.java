@@ -238,6 +238,7 @@ public class SocialServiceIntTest {
         jwt.put("user_key", "USER_KEY");
         jwt.put("logins", logins);
         jwt.put("authorities", singletonList("ROLE_USER"));
+        jwt.put("additionalDetails", Map.of("multiRoleEnabled", false));
         jwt.put("tenant", "TEST_T");
         jwt.put("client_id", "webapp");
 

@@ -145,7 +145,8 @@ public class DomainTokenServicesUnitTest {
         OAuth2AccessToken token = tokenServices.createAccessToken(authentication);
 
         assertTokenAttributes(token);
-        assertEquals(token.getAdditionalInformation().get(AUTH_ADDITIONAL_DETAILS), of("param1", "value1"));
+        assertEquals(((Map)token.getAdditionalInformation().get(AUTH_ADDITIONAL_DETAILS)).get("param1"), "value1");
+        assertEquals(((Map)token.getAdditionalInformation().get(AUTH_ADDITIONAL_DETAILS)).get("multiRoleEnabled"), false);
     }
 
     private void assertTokenAttributes(OAuth2AccessToken token) {
