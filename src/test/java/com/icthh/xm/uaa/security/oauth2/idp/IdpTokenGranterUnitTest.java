@@ -19,6 +19,7 @@ import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.security.oauth2.idp.config.IdpConfigRepository;
 import com.icthh.xm.uaa.security.oauth2.idp.converter.XmJwkVerifyingJwtAccessTokenConverter;
 import com.icthh.xm.uaa.security.oauth2.idp.source.XmJwkDefinitionSource;
+import com.icthh.xm.uaa.service.IdpIdTokenMappingService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
@@ -57,6 +58,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class IdpTokenGranterUnitTest {
+
     @Mock
     private AuthorizationServerTokenServices tokenServices;
     @Mock
@@ -100,7 +102,6 @@ public class IdpTokenGranterUnitTest {
         TenantProperties tenantProps = buildTenantProps();
         tenantProps.getSecurity().setDefaultUserRole("SUPER-ADMIN");
         tenantProps.getSecurity().setIdp(buildIdpUserMappingConfig());
-        when(tenantPropertiesService.getTenantContextHolder()).thenReturn(tenantContextHolder);
         when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProps);
         when(userService.createUser(any())).thenReturn(buildUser());
 
@@ -111,9 +112,10 @@ public class IdpTokenGranterUnitTest {
                 requestFactory,
                 jwkTokenStore,
                 domainUserDetailsService,
-                tenantPropertiesService,
                 userService,
-                userLoginService);
+                userLoginService,
+                new IdpIdTokenMappingService(tenantContextHolder, tenantPropertiesService),
+                tenantContextHolder);
 
         ClientDetails client = buildClientDetails();
         TokenRequest tokenRequest = buildTokenRequest();
@@ -151,7 +153,6 @@ public class IdpTokenGranterUnitTest {
 
         TenantProperties tenantProps = buildTenantProps();
         tenantProps.getSecurity().setIdp(buildIdpUserMappingConfig());
-        when(tenantPropertiesService.getTenantContextHolder()).thenReturn(tenantContextHolder);
         when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProps);
 
         IdpTokenGranter idpTokenGranter =
@@ -161,9 +162,10 @@ public class IdpTokenGranterUnitTest {
                 requestFactory,
                 jwkTokenStore,
                 domainUserDetailsService,
-                tenantPropertiesService,
                 userService,
-                userLoginService);
+                userLoginService,
+                new IdpIdTokenMappingService(tenantContextHolder, tenantPropertiesService),
+                tenantContextHolder);
 
         ClientDetails client = buildClientDetails();
         TokenRequest tokenRequest = buildTokenRequest();
@@ -186,7 +188,6 @@ public class IdpTokenGranterUnitTest {
         UserLoginService userLoginService = new UserLoginService(userLoginRepository);
 
         TenantProperties tenantProps = buildTenantProps();
-        when(tenantPropertiesService.getTenantContextHolder()).thenReturn(tenantContextHolder);
         when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProps);
 
         IdpTokenGranter idpTokenGranter =
@@ -196,9 +197,10 @@ public class IdpTokenGranterUnitTest {
                 requestFactory,
                 jwkTokenStore,
                 domainUserDetailsService,
-                tenantPropertiesService,
                 userService,
-                userLoginService);
+                userLoginService,
+                new IdpIdTokenMappingService(tenantContextHolder, tenantPropertiesService),
+                tenantContextHolder);
 
         ClientDetails client = buildClientDetails();
         TokenRequest tokenRequest = buildTokenRequest();
@@ -284,7 +286,7 @@ public class IdpTokenGranterUnitTest {
         return new TokenRequest(requestParameters, clientId, scope, grantType);
     }
 
-    private IdpPublicConfig buildPublicConfig(String clientKeyPrefix, String clientId, boolean buildValidConfig) throws JsonProcessingException {
+    private IdpPublicConfig buildPublicConfig(String clientKeyPrefix, String clientId, boolean buildValidConfig) {
         IdpPublicConfig idpPublicConfig =
             IdpTestUtils.buildPublicConfig(clientKeyPrefix, clientId, "", 0, buildValidConfig);
 

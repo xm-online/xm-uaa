@@ -14,6 +14,7 @@ import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
 import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpTokenGranter;
 import com.icthh.xm.uaa.security.provider.DefaultAuthenticationRefreshProvider;
+import com.icthh.xm.uaa.service.IdpIdTokenMappingService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
@@ -119,9 +120,6 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
     @Qualifier("authenticationManagerBean")
     private AuthenticationManager authenticationManager;
 
-    @Autowired
-    private DomainUserDetailsService domainUserDetailsService;
-
     private final OtpStore otpStore;
     private final UserService userService;
     private final UserLoginService userLoginService;
@@ -134,6 +132,8 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
     private final TenantPropertiesService tenantPropertiesService;
     private final JwtAccessTokenConverter jwtAccessTokenConverter;
     private final TokenConstraintsService tokenConstraintsService;
+    private final IdpIdTokenMappingService idpIdTokenMappingService;
+    private final DomainUserDetailsService domainUserDetailsService;
     private final CustomAuthorizationCodeServices customAuthorizationCodeServices;
     private final DefaultAuthenticationRefreshProvider defaultAuthenticationRefreshProvider;
     private final UserSecurityValidator userSecurityValidator;
@@ -155,7 +155,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
         ;
     }
 
-    private TokenGranter tokenGranter(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
+    private TokenGranter tokenGranter(AuthorizationServerEndpointsConfigurer endpoints) {
         List<TokenGranter> granters = new ArrayList<>(Collections.singletonList(endpoints.getTokenGranter()));
         TfaOtpTokenGranter tfaOtpTokenGranter = new TfaOtpTokenGranter(tenantContextHolder,
             tokenServices(),
@@ -170,9 +170,10 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
             endpoints.getOAuth2RequestFactory(),
             jwkTokenStore,
             domainUserDetailsService,
-            tenantPropertiesService,
             userService,
-            userLoginService);
+            userLoginService,
+            idpIdTokenMappingService,
+            tenantContextHolder);
 
         granters.add(tfaOtpTokenGranter);
         granters.add(idpTokenGranter);
