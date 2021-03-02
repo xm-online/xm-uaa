@@ -1,6 +1,5 @@
 package com.icthh.xm.uaa.security.oauth2.idp;
 
-import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.security.DomainUserDetails;
@@ -37,7 +36,6 @@ import static com.icthh.xm.uaa.security.DomainUserDetailsService.buildDomainUser
  * This class responsible for handling requests with idp token
  */
 @Slf4j
-@LepService(group = "security.idp")
 public class IdpTokenGranter extends AbstractTokenGranter {
 
     public static final String GRANT_TYPE_IDP_TOKEN = "idp_token";
