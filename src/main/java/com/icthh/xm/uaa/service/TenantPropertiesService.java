@@ -26,7 +26,7 @@ public class TenantPropertiesService implements RefreshableConfiguration {
 
     private static final String TENANT_NAME = "tenantName";
 
-    private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+    private final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
     private final ConcurrentHashMap<String, TenantProperties> tenantProps = new ConcurrentHashMap<>();
 
@@ -45,10 +45,6 @@ public class TenantPropertiesService implements RefreshableConfiguration {
             throw new IllegalArgumentException("Tenant '" + cfgTenantKey + "' - configuration is empty");
         }
         return tenantProps.get(cfgTenantKey);
-    }
-
-    public TenantContextHolder getTenantContextHolder(){
-        return tenantContextHolder;
     }
 
     @SneakyThrows

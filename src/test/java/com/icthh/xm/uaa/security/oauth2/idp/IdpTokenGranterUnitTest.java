@@ -213,7 +213,7 @@ public class IdpTokenGranterUnitTest {
         }
 
         assertNotNull(exception);
-        assertEquals("Authentication failed cause of tenant [tenant4] configuration lack.", exception.getMessage());
+        assertEquals("Authentication failed for [tenant4] because DefaultIdpClaimMapping is not defined.", exception.getMessage());
     }
 
     private String instantiateConfigs() throws JsonProcessingException {

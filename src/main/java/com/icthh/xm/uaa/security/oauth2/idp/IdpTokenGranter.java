@@ -116,7 +116,7 @@ public class IdpTokenGranter extends AbstractTokenGranter {
             User newUser = createUser(userIdentity, idpOAuth2IdToken);
             userDetails = Optional.of(buildDomainUserDetails(userIdentity, tenantContextHolder.getTenantKey(), newUser));
         }
-        log.info("Mapped user for identity:{} is {}", userIdentity, userDetails);
+        log.info("Mapped user for identity: {} is {}", userIdentity, userDetails);
         return userDetails.get();
     }
 

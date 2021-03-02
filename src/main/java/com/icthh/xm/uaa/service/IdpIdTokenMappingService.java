@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -27,19 +29,11 @@ public class IdpIdTokenMappingService {
     private final TenantContextHolder tenantContextHolder;
     private final TenantPropertiesService tenantPropertiesService;
 
-    private static final String FIRST_NAME_CONFIG_ATTRIBUTE = "firstNameAttribute";
-    private static final String LAST_NAME_CONFIG_ATTRIBUTE = "lastNameAttribute";
-    private static final String USER_IDENTITY_CONFIG_TYPE = "userIdentityType";
-    private static final String USER_IDENTITY_CONFIG_ATTRIBUTE = "userIdentityAttribute";
-
     @LogicExtensionPoint(value = "MapIdpIdTokenToIdentity")
     public String mapIdpIdTokenToIdentity(OAuth2AccessToken idpOAuth2IdToken) {
-        Map<String, Object> additionalInformation = idpOAuth2IdToken.getAdditionalInformation();
-        Map<String, String> defaultClaimsMapping = getDefaultClaimsMapping();
-
-        String userIdentityAttribute = defaultClaimsMapping.get(USER_IDENTITY_CONFIG_ATTRIBUTE);
-
-        return (String) additionalInformation.get(userIdentityAttribute);
+        return ClaimsExtractor.with(tenantPropertiesService,
+                                    idpOAuth2IdToken.getAdditionalInformation(),
+                                    getTenantKey()).getUserIdentity();
     }
 
     @LogicExtensionPoint(value = "ValidateIdpIdToken")
@@ -49,26 +43,19 @@ public class IdpIdTokenMappingService {
 
     @LogicExtensionPoint(value = "MapIdpIdTokenToXmUser")
     public UserDTO mapIdpIdTokenToXmUser(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
-        Map<String, Object> additionalInformation = idpOAuth2IdToken.getAdditionalInformation();
+        ClaimsExtractor extractor = ClaimsExtractor.with(tenantPropertiesService,
+                                                         idpOAuth2IdToken.getAdditionalInformation(),
+                                                         getTenantKey());
         UserDTO userDTO = new UserDTO();
 
         //base info mapping
-        Map<String, String> defaultClaimsMapping = getDefaultClaimsMapping();
-        String userFirstNameAttribute = defaultClaimsMapping.get(FIRST_NAME_CONFIG_ATTRIBUTE);
+        userDTO.setFirstName(extractor.getFirstName());
+        userDTO.setLastName(extractor.getLastName());
 
-        String userLastNameAttribute = defaultClaimsMapping.get(LAST_NAME_CONFIG_ATTRIBUTE);
-
-        userDTO.setFirstName((String) additionalInformation.get(userFirstNameAttribute));
-        userDTO.setLastName((String) additionalInformation.get(userLastNameAttribute));
         //login mapping
-
-        String userIdentityType = UserLoginType
-            .fromString(defaultClaimsMapping.get(USER_IDENTITY_CONFIG_TYPE))
-            .getValue();
-
         UserLogin emailUserLogin = new UserLogin();
         emailUserLogin.setLogin(userIdentity);
-        emailUserLogin.setTypeKey(userIdentityType);
+        emailUserLogin.setTypeKey(extractor.getUserIdentityType().getValue());
 
         userDTO.setLogins(List.of(emailUserLogin));
         return userDTO;
@@ -88,33 +75,60 @@ public class IdpIdTokenMappingService {
         return security.getDefaultUserRole();
     }
 
-    private Map<String, String> getDefaultClaimsMapping() {
-        TenantProperties tenantProps = tenantPropertiesService.getTenantProps();
-        TenantProperties.Security security = tenantProps.getSecurity();
-
-        TenantProperties.Security.Idp idp = security.getIdp();
-
-        if (idp == null || idp.getDefaultIdpClaimMapping() == null
-            || idp.getDefaultIdpClaimMapping().getFirstNameAttribute() == null
-            || idp.getDefaultIdpClaimMapping().getLastNameAttribute() == null
-            || idp.getDefaultIdpClaimMapping().getUserIdentityAttribute() == null
-            || idp.getDefaultIdpClaimMapping().getUserIdentityType() == null
-        ) {
-            log.debug("User Identity mapping not fully specified in tenant [{}] configuration.", getTenantKey());
-            throw new AuthenticationServiceException("Authentication failed " +
-                "cause of tenant [" + getTenantKey() + "] configuration lack.");
-        }
-        TenantProperties.Security.Idp.DefaultIdpClaimMapping defaultIdpClaimMapping = idp.getDefaultIdpClaimMapping();
-
-        return Map.of(
-            FIRST_NAME_CONFIG_ATTRIBUTE, defaultIdpClaimMapping.getFirstNameAttribute(),
-            LAST_NAME_CONFIG_ATTRIBUTE, defaultIdpClaimMapping.getLastNameAttribute(),
-            USER_IDENTITY_CONFIG_ATTRIBUTE, defaultIdpClaimMapping.getUserIdentityAttribute(),
-            USER_IDENTITY_CONFIG_TYPE, defaultIdpClaimMapping.getUserIdentityType()
-        );
-    }
-
     private String getTenantKey() {
         return tenantContextHolder.getTenantKey();
     }
+
+
+    @RequiredArgsConstructor
+    private static class ClaimsExtractor {
+
+        private final Map<String, Object> data;
+        private final TenantProperties.Security.Idp.DefaultIdpClaimMapping mapping;
+
+        public String getFirstName(){
+            return getRequiredValue(mapping.getFirstNameAttribute(), "firstName");
+        }
+        public String getLastName(){
+            return getRequiredValue(mapping.getLastNameAttribute(), "lastName");
+        }
+        public String getUserIdentity(){
+            return getRequiredValue(mapping.getUserIdentityAttribute(), "userIdentity");
+        }
+        public UserLoginType getUserIdentityType(){
+            return UserLoginType.fromString(mapping.getUserIdentityType());
+        }
+
+        @SuppressWarnings("unchecked")
+        private <T> T getRequiredValue(String key, String attributeName) {
+            return (T) Objects.requireNonNull(data.get(key),
+                                              "can not extract attribute [" + attributeName + "] from token claim: " + key);
+        }
+
+        public static ClaimsExtractor with(TenantPropertiesService tenantPropertiesService, Map<String, Object> data,
+                                           String tenant) {
+            return Optional.of(tenantPropertiesService.getTenantProps())
+                           .map(TenantProperties::getSecurity)
+                           .map(TenantProperties.Security::getIdp)
+                           .filter(ClaimsExtractor::isClaimMappingValid)
+                           .map(TenantProperties.Security.Idp::getDefaultIdpClaimMapping)
+                           .map(mapping -> new ClaimsExtractor(data, mapping))
+                           .orElseThrow(() -> buildException(tenant));
+        }
+
+       static boolean isClaimMappingValid(TenantProperties.Security.Idp idp) {
+            return idp != null && idp.getDefaultIdpClaimMapping() != null
+                   && idp.getDefaultIdpClaimMapping().getFirstNameAttribute() != null
+                   && idp.getDefaultIdpClaimMapping().getLastNameAttribute() != null
+                   && idp.getDefaultIdpClaimMapping().getUserIdentityAttribute() != null
+                   && idp.getDefaultIdpClaimMapping().getUserIdentityType() != null;
+        }
+
+        private static AuthenticationServiceException buildException(String tenant) {
+            return new AuthenticationServiceException(
+                "Authentication failed for [" + tenant + "] because DefaultIdpClaimMapping is not defined.");
+        }
+
+    }
+
 }

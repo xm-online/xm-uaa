@@ -2,15 +2,17 @@ package com.icthh.xm.uaa.domain;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 @SuppressWarnings("unused")
 public enum UserLoginType {
     EMAIL("LOGIN.EMAIL"),
     MSISDN("LOGIN.MSISDN"),
     NICKNAME("LOGIN.NICKNAME");
+
+    private static final Set<UserLoginType> VALUES = Set.of(values());
 
     private final String value;
 
@@ -27,7 +29,7 @@ public enum UserLoginType {
             return Optional.empty();
         }
 
-        for (UserLoginType type : UserLoginType.values()) {
+        for (UserLoginType type : VALUES) {
             if (Objects.equals(value, type.getValue())) {
                 return Optional.of(type);
             }
@@ -37,9 +39,11 @@ public enum UserLoginType {
     }
 
     public static UserLoginType fromString(String value) {
-        return Arrays.stream(UserLoginType.values())
-            .filter(UserLoginType -> StringUtils.lowerCase(UserLoginType.getValue()).equals(StringUtils.lowerCase(value)))
-            .findAny().orElseThrow(IllegalArgumentException::new);
+        return VALUES.stream()
+                     .filter(UserLoginType -> UserLoginType.getValue().equalsIgnoreCase(value))
+                     .findAny()
+                     .orElseThrow(() -> new IllegalArgumentException(
+                         "can not build UserLoginType from value: " + value));
     }
 
 }
