@@ -328,6 +328,7 @@ dependencies {
 
     implementation "org.springframework.security:spring-security-ldap"
     implementation "org.freemarker:freemarker:${freemarker_version}"
+    // FIXME: do we need these social related libraries?
     implementation "org.springframework.social:spring-social-security:${spring_social_version}"
     implementation "org.springframework.social:spring-social-core:${spring_social_version}"
     implementation "org.springframework.social:spring-social-config:${spring_social_version}"
