@@ -187,20 +187,36 @@ liquibase {
 }
 
 checkstyle {
-    toolVersion = "7.6.1"
-    ignoreFailures = true
+    checkstyleNohttp.enabled = false
+    toolVersion = "8.26"
+    ignoreFailures = false
     configFile = rootProject.file('./qa/checkstyle.xml')
+    configProperties.checkstyleSuppressionsPath = rootProject.file('./qa/suppressions.xml').absolutePath
 }
 
 spotbugs {
-    ignoreFailures = true
+    ignoreFailures = false
 }
 
 pmd {
     rulePriority = 3
     toolVersion = '5.5.4'
-    ignoreFailures = true
+    ignoreFailures = false
     ruleSetFiles = files("./qa/pmd.xml")
+}
+
+tasks.withType(Pmd){
+    reports{
+        xml.enabled=false
+        html.enabled=true
+    }
+}
+
+tasks.withType(com.github.spotbugs.SpotBugsTask){
+    reports{
+        xml.enabled=false
+        html.enabled=true
+    }
 }
 
 configurations {
@@ -303,6 +319,7 @@ dependencies {
     }
 
     // XM custom dependencies
+    implementation "org.projectlombok:lombok:${lombok_version}"
     compileOnly "org.projectlombok:lombok:${lombok_version}"
     annotationProcessor "org.projectlombok:lombok:${lombok_version}"
 
