@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.service;
 
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
+import com.icthh.xm.commons.logging.LoggingAspectConfig;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
@@ -29,6 +30,7 @@ public class IdpIdTokenMappingService {
     private final TenantContextHolder tenantContextHolder;
     private final TenantPropertiesService tenantPropertiesService;
 
+    @LoggingAspectConfig(inputDetails = false)
     @LogicExtensionPoint(value = "MapIdpIdTokenToIdentity")
     public String mapIdpIdTokenToIdentity(OAuth2AccessToken idpOAuth2IdToken) {
         return ClaimsExtractor.with(tenantPropertiesService,
@@ -36,11 +38,13 @@ public class IdpIdTokenMappingService {
                                     getTenantKey()).getUserIdentity();
     }
 
+    @LoggingAspectConfig(inputDetails = false)
     @LogicExtensionPoint(value = "ValidateIdpIdToken")
     public void validateIdpIdToken(OAuth2AccessToken idpOAuth2IdToken) {
         log.info("No additional LEP for IDP id token validation is applied");
     }
 
+    @LoggingAspectConfig(inputExcludeParams = "idpOAuth2IdToken")
     @LogicExtensionPoint(value = "MapIdpIdTokenToXmUser")
     public UserDTO mapIdpIdTokenToXmUser(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
         ClaimsExtractor extractor = ClaimsExtractor.with(tenantPropertiesService,
@@ -62,6 +66,7 @@ public class IdpIdTokenMappingService {
     }
 
     @SneakyThrows
+    @LoggingAspectConfig(inputExcludeParams = "idpOAuth2IdToken")
     @LogicExtensionPoint(value = "MapIdpIdTokenToRole")
     public String mapIdpIdTokenToRole(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
         TenantProperties tenantProps = tenantPropertiesService.getTenantProps();
