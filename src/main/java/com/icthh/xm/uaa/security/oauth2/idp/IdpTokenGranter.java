@@ -28,7 +28,6 @@ import org.springframework.security.oauth2.provider.token.AuthorizationServerTok
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import static com.icthh.xm.uaa.security.DomainUserDetailsService.buildDomainUserDetails;
 
@@ -94,7 +93,7 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         idpIdTokenMappingService.validateIdpIdToken(idpOAuth2IdToken);
 
         //user + role section
-        DomainUserDetails userDetails = retrieveDomainUserDetails(idpOAuth2IdToken);
+        DomainUserDetails userDetails = getOrCreateDomainUserDetails(idpOAuth2IdToken);
         Collection<? extends GrantedAuthority> authorities =
             authoritiesMapper.mapAuthorities(userDetails.getAuthorities());
 
@@ -105,20 +104,18 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         return userAuthenticationToken;
     }
 
-    private DomainUserDetails retrieveDomainUserDetails(OAuth2AccessToken idpOAuth2IdToken) {
+    private DomainUserDetails getOrCreateDomainUserDetails(OAuth2AccessToken idpOAuth2IdToken) {
         String userIdentity = idpIdTokenMappingService.mapIdpIdTokenToIdentity(idpOAuth2IdToken);
-        Optional<DomainUserDetails> userDetails = domainUserDetailsService.retrieveUserByUsername(userIdentity);
+        DomainUserDetails userDetails = domainUserDetailsService
+            .retrieveUserByUsername(userIdentity)
+            .orElseGet(() -> createUser(userIdentity, idpOAuth2IdToken));
 
-        if (userDetails.isEmpty()) {
-            log.info("User not found by identity: {}, new user will be created", userIdentity);
-            User newUser = createUser(userIdentity, idpOAuth2IdToken);
-            userDetails = Optional.of(buildDomainUserDetails(userIdentity, tenantContextHolder.getTenantKey(), newUser));
-        }
-        log.info("Mapped user for identity: {} is {}", userIdentity, userDetails);
-        return userDetails.get();
+        log.info("User identity: [{}] is mapped to {}", userIdentity, userDetails);
+        return userDetails;
     }
 
-    private User createUser(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
+    private DomainUserDetails createUser(String userIdentity, OAuth2AccessToken idpOAuth2IdToken) {
+        log.info("Create user for identity: {}", userIdentity);
         UserDTO userDTO = idpIdTokenMappingService.mapIdpIdTokenToXmUser(userIdentity, idpOAuth2IdToken);
 
         userLoginService.normalizeLogins(userDTO.getLogins());
@@ -126,6 +123,7 @@ public class IdpTokenGranter extends AbstractTokenGranter {
 
         userDTO.setRoleKey(idpIdTokenMappingService.mapIdpIdTokenToRole(userIdentity, idpOAuth2IdToken));
 
-        return userService.createUser(userDTO);
+        User newUser = userService.createUser(userDTO);
+        return buildDomainUserDetails(userIdentity, tenantContextHolder.getTenantKey(), newUser);
     }
 }
