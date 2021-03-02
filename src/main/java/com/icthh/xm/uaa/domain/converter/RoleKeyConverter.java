@@ -51,7 +51,7 @@ public class RoleKeyConverter implements AttributeConverter<List<String>, String
         this.tenantPropertiesService = tenantPropertiesService;
     }
 
-    public String toJson(List<String> data) {
+    private String toJson(List<String> data) {
         try {
             return mapper.writeValueAsString(data != null ? data : emptyList());
         } catch (JsonProcessingException e) {
@@ -60,7 +60,7 @@ public class RoleKeyConverter implements AttributeConverter<List<String>, String
         return "";
     }
 
-    public List<String> fromJson(String dbValue) {
+    private List<String> fromJson(String dbValue) {
         try {
             return mapper.readValue(isNoneBlank(dbValue) ? dbValue : "[]", new TypeReference<>() {
             });

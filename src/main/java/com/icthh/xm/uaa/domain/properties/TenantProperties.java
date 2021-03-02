@@ -38,6 +38,8 @@ public class TenantProperties {
      */
     @JsonProperty("strictUserManagement")
     private boolean strictUserManagement;
+
+    @JsonProperty("multiRoleEnabled")
     private boolean multiRoleEnabled;
 
     @JsonProperty("security")
