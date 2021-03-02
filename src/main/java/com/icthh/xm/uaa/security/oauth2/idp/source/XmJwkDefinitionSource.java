@@ -1,7 +1,6 @@
 package com.icthh.xm.uaa.security.oauth2.idp.source;
 
 import com.icthh.xm.commons.repository.JwksRepository;
-import com.icthh.xm.uaa.security.oauth2.idp.config.IdpConfigRepository;
 import com.icthh.xm.uaa.security.oauth2.idp.jwk.EllipticCurveJwkDefinition;
 import com.icthh.xm.uaa.security.oauth2.idp.jwk.JwkDefinition;
 import com.icthh.xm.uaa.security.oauth2.idp.jwk.JwkDefinitionSource;

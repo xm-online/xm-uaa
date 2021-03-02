@@ -63,7 +63,6 @@ public class UaaAccessTokenConverterConfiguration {
     private final TenantContextHolder tenantContextHolder;
     private final ApplicationProperties applicationProperties;
     private final IdpConfigRepository idpConfigRepository;
-    private final TenantPropertiesService tenantPropertiesService;
     private final JwksRepository jwksRepository;
 
     public UaaAccessTokenConverterConfiguration(TenantContextHolder tenantContextHolder,
@@ -76,7 +75,6 @@ public class UaaAccessTokenConverterConfiguration {
         this.keyUriRestTemplate = keyUriRestTemplate;
         this.applicationProperties = applicationProperties;
         this.idpConfigRepository = idpConfigRepository;
-        this.tenantPropertiesService = tenantPropertiesService;
         this.jwksRepository = jwksRepository;
     }
 
