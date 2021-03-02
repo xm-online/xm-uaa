@@ -1,6 +1,5 @@
 package com.icthh.xm.uaa.service.query;
 
-import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 
 import com.icthh.xm.uaa.domain.User;
@@ -12,7 +11,10 @@ import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.query.filter.UserFilterQuery;
 import io.github.jhipster.service.QueryService;
 import io.github.jhipster.service.filter.StringFilter;
+
+import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Root;
@@ -36,22 +38,19 @@ public class UserQueryService extends QueryService<User> {
     }
 
     private Specification<User> createSpecification(UserFilterQuery filterQuery) {
+        return createSpecs(filterQuery)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .reduce(Specification.where(null), Specification::and);
+    }
 
-        Specification<User> initialSpec = Specification.where(null);
-        Specification<User> loginSpec = ofNullable(filterQuery.getLogin())
-            .map(l -> getLoginSpecification(l))
-            .orElse(null);
-        Specification<User> lastNameSpec = ofNullable(filterQuery.getLastName())
-            .map(ln -> buildStringSpecification(ln, User_.lastName))
-            .orElse(null);
-        Specification<User> firstNameSpec = ofNullable(filterQuery.getFirstName())
-            .map(fn -> buildStringSpecification(fn, User_.firstName))
-            .orElse(null);
-
-        initialSpec = and(initialSpec, loginSpec);
-        initialSpec = and(initialSpec, lastNameSpec);
-        initialSpec = and(initialSpec, firstNameSpec);
-        return initialSpec;
+    private Stream<Optional<Specification<User>>> createSpecs(UserFilterQuery filterQuery) {
+        return Stream.of(
+            ofNullable(filterQuery.getLogin()).map(this::getLoginSpecification),
+            ofNullable(filterQuery.getLastName()).map(ln -> buildStringSpecification(ln, User_.lastName)),
+            ofNullable(filterQuery.getFirstName()).map(fn -> buildStringSpecification(fn, User_.firstName)),
+            ofNullable(filterQuery.getRoleKey()).map(fn -> buildStringSpecification(fn, User_.roleKey))
+        );
     }
 
     private Specification<User> getLoginSpecification(StringFilter loginFilter) {
@@ -60,7 +59,4 @@ public class UserQueryService extends QueryService<User> {
         return buildSpecification(loginFilter, functionToEntity.andThen(entityToColumn));
     }
 
-    private Specification<User> and(Specification<User> initSpec, Specification<User> andSpec){
-        return nonNull(andSpec) ? initSpec.and(andSpec) : initSpec;
-    }
 }
