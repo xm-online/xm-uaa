@@ -10,7 +10,7 @@ import com.icthh.xm.commons.permission.domain.mapper.PermissionMapper;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.service.dto.AccPermissionDTO;
-import java.util.Optional;
+import java.util.Collection;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -56,8 +56,10 @@ public class TenantPermissionService implements RefreshableConfiguration {
                 .map(AccPermissionDTO::new)
                 .collect(Collectors.toList()))
             .filter(CollectionUtils::isNotEmpty)
-            .findFirst()
-            .orElse(emptyList());
+            .flatMap(Collection::stream)
+            .collect(Collectors.toSet())
+            .stream()
+            .collect(Collectors.toList());
     }
 
     @Override

@@ -1020,7 +1020,10 @@ public class UserResourceIntTest {
     @Transactional
     public void createUserWithMultipleRoles() throws Exception {
 
-        setTenantProps(tenantProperties -> tenantProperties.setMultiRoleEnabled(true));
+        setTenantProps(tenantProperties -> tenantProperties
+            .setSecurity(new TenantProperties.Security() {{
+                setMultiRoleEnabled(true);
+            }}));
         int databaseSizeBeforeCreate = userRepository.findAll().size();
 
         // Create the User

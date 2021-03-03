@@ -73,12 +73,17 @@ public class DomainJwtAccessTokenConverter extends JwtAccessTokenConverter {
             } else {
                 details.put(AUTH_LOGINS_KEY, userDetails.getLogins());
                 details.put(AUTH_ROLE_KEY, getOptionalRoleKey(userDetails.getAuthorities()));
-                details.putIfAbsent(AUTH_ADDITIONAL_DETAILS, new HashMap<>());
-                Map<String, Object> additionalDetails = (Map<String, Object>) details.get(AUTH_ADDITIONAL_DETAILS);
+                Map<String, Object> additionalDetails =
+                    (Map<String, Object>) details.getOrDefault(AUTH_ADDITIONAL_DETAILS, new HashMap<>());
                 if (isNotEmpty(userDetails.getAdditionalDetails())) {
                     additionalDetails.putAll(userDetails.getAdditionalDetails());
                 }
-                additionalDetails.put(MULTI_ROLE_ENABLED, tenantPropertiesService.getTenantProps().isMultiRoleEnabled());
+                if(tenantPropertiesService.getTenantProps().getSecurity().isMultiRoleEnabled()){
+                    additionalDetails.put(MULTI_ROLE_ENABLED, true);
+                }
+                if(additionalDetails.size() > 0){
+                    details.put(AUTH_ADDITIONAL_DETAILS, additionalDetails);
+                }
             }
         }
     }

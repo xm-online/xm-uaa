@@ -1,7 +1,6 @@
 package com.icthh.xm.uaa.service.dto;
 
 import static com.google.common.collect.Iterables.getFirst;
-import static com.google.common.collect.Iterables.getLast;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;

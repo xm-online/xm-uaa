@@ -16,7 +16,6 @@ import org.springframework.security.oauth2.common.exceptions.InvalidGrantExcepti
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -73,7 +72,7 @@ public class DomainUserDetailsService implements UserDetailsService {
         // get user role authority
         List<SimpleGrantedAuthority> authorities = user.getAuthorities()
             .stream()
-            .map(role -> new SimpleGrantedAuthority(role))
+            .map(SimpleGrantedAuthority::new)
             .collect(toList());
 
         return new DomainUserDetails(lowerLogin,

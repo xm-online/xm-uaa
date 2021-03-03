@@ -3,6 +3,7 @@ package com.icthh.xm.uaa.domain.converter;
 
 import static com.google.common.collect.Iterables.getFirst;
 import static java.util.Collections.emptyList;
+import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.isNoneBlank;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -11,7 +12,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 import lombok.extern.slf4j.Slf4j;
@@ -41,9 +45,11 @@ public class RoleKeyConverter implements AttributeConverter<List<String>, String
         if(multiRoles.isEmpty()) {
             return multiRoles;
         }
-        return tenantPropertiesService.getTenantProps().isMultiRoleEnabled() ?
+        return tenantPropertiesService.getTenantProps().getSecurity().isMultiRoleEnabled() ?
             multiRoles :
-            List.of(getFirst(multiRoles, null));
+            ofNullable(getFirst(multiRoles, null))
+                .map(List::of)
+                .orElse(emptyList());
     }
 
     @Autowired

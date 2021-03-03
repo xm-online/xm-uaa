@@ -39,9 +39,6 @@ public class TenantProperties {
     @JsonProperty("strictUserManagement")
     private boolean strictUserManagement;
 
-    @JsonProperty("multiRoleEnabled")
-    private boolean multiRoleEnabled;
-
     @JsonProperty("security")
     private Security security = new Security();
 
@@ -53,6 +50,9 @@ public class TenantProperties {
     @Setter
     @ToString
     public static class Security {
+
+        @JsonProperty("multiRoleEnabled")
+        private boolean multiRoleEnabled;
 
         @JsonProperty("defaultUserRole")
         private String defaultUserRole;
