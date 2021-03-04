@@ -15,7 +15,6 @@ import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings.PasswordSettings;
-import com.icthh.xm.uaa.repository.SocialUserConnectionRepository;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserPermittedRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
@@ -65,7 +64,6 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserLoginRepository userLoginRepository;
     private final PasswordEncoder passwordEncoder;
-    private final SocialUserConnectionRepository socialUserConnectionRepository;
     private final AccountMailService accountMailService;
     private final TenantPropertiesService tenantPropertiesService;
     private final XmAuthenticationContextHolder xmAuthenticationContextHolder;
@@ -268,7 +266,6 @@ public class UserService {
         }
         userRepository.findOneWithLoginsByUserKey(userKey).ifPresent(user -> {
             assertNotSuperAdmin(user.getRoleKey());
-            socialUserConnectionRepository.deleteByUserKey(user.getUserKey());
             userRepository.delete(user);
             notification.accept(new UserDTO(user));
         });

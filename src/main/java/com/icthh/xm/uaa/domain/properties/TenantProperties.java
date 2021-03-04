@@ -144,37 +144,6 @@ public class TenantProperties {
         }
     }
 
-    @JsonProperty("social")
-    private List<Social> social;
-
-    @JsonProperty("socialBaseUrl")
-    private String socialBaseUrl;
-
-    @Data
-    @ToString(of = {"providerId"})
-    public static class Social {
-
-        private String providerId;
-        private String clientId;
-        private String clientSecret;
-        private String authorizeUrl;
-        private String accessTokenUrl;
-        private String scope;
-        private String userInfoUri;
-        private UserInfoMapping userInfoMapping;
-        private String tokenStrategy;
-        private Boolean createAccountAutomatically;
-        private Boolean useParametersForClientAuthentication;
-
-        public Boolean getUseParametersForClientAuthentication() {
-            return ofNullable(useParametersForClientAuthentication).orElse(true);
-        }
-
-        public Boolean getCreateAccountAutomatically() {
-            return ofNullable(createAccountAutomatically).orElse(true);
-        }
-    }
-
     @Data
     @NoArgsConstructor
     public static class UserInfoMapping {
