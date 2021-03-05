@@ -144,27 +144,6 @@ public class TenantProperties {
         }
     }
 
-    @Data
-    @NoArgsConstructor
-    public static class UserInfoMapping {
-        private String id;
-        private String name;
-        private String firstName;
-        private String lastName;
-        private String email;
-        private String username;
-
-        private String profileUrl;
-        private String imageUrl;
-
-        private String phoneNumber;
-        private String langKey;
-
-        // It's field detect is email verified in provider.
-        // If field null or empty verification wiil be disabled.
-        private String emailVerifiedCheckField;
-    }
-
     @JsonProperty("registrationCaptchaPeriodSeconds")
     private Long registrationCaptchaPeriodSeconds;
 
