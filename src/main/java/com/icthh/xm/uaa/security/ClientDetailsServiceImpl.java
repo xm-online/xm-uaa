@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.security;
 
 import com.google.common.base.Preconditions;
+import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.Client;
@@ -30,6 +31,7 @@ public class ClientDetailsServiceImpl implements ClientDetailsService {
 
     private final TenantPropertiesService tenantPropertiesService;
 
+    @LogicExtensionPoint("LoadClientByClientId")
     @Override
     public ClientDetails loadClientByClientId(String clientId) throws ClientRegistrationException {
 
