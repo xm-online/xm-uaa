@@ -47,7 +47,7 @@ public class ClientDetailsImpl implements ClientDetails {
                              Set<String> registeredRedirectUris,
                              Set<String> autoApproveScopes) {
 
-        this(client, grantTypes,scope);
+        this(client, grantTypes, scope);
         this.registeredRedirectUris = Collections.unmodifiableSet(registeredRedirectUris);
         this.autoApproveScopes = Collections.unmodifiableSet(autoApproveScopes);
     }
