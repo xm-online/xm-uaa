@@ -1,6 +1,8 @@
 package com.icthh.xm.uaa.security;
 
 import com.google.common.base.Preconditions;
+import com.icthh.xm.commons.lep.LogicExtensionPoint;
+import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.Client;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 @AllArgsConstructor
+@LepService(group = "service.client.details")
 public class ClientDetailsServiceImpl implements ClientDetailsService {
 
     private final ClientService clientService;
@@ -30,6 +33,7 @@ public class ClientDetailsServiceImpl implements ClientDetailsService {
 
     private final TenantPropertiesService tenantPropertiesService;
 
+    @LogicExtensionPoint("LoadClientByClientId")
     @Override
     public ClientDetails loadClientByClientId(String clientId) throws ClientRegistrationException {
 

@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import static java.util.Collections.emptySet;
@@ -23,6 +24,10 @@ public class ClientDetailsImpl implements ClientDetails {
 
     private Set<String> scope;
 
+    private Set<String> registeredRedirectUris;
+
+    private Set<String> autoApproveScopes;
+
     public ClientDetailsImpl(Client client, Set<String> grantTypes, Set<String> scope) {
         super();
         if (client == null) {
@@ -34,6 +39,17 @@ public class ClientDetailsImpl implements ClientDetails {
         Set<String> scopes = new HashSet<>(firstNonNull(client.getScopes(), emptySet()));
         scopes.addAll(scope);
         this.scope = Collections.unmodifiableSet(scopes);
+    }
+
+    public ClientDetailsImpl(Client client,
+                             Set<String> grantTypes,
+                             Set<String> scope,
+                             Set<String> registeredRedirectUris,
+                             Set<String> autoApproveScopes) {
+
+        this(client, grantTypes, scope);
+        this.registeredRedirectUris = Collections.unmodifiableSet(registeredRedirectUris);
+        this.autoApproveScopes = Collections.unmodifiableSet(autoApproveScopes);
     }
 
     @Override
@@ -73,7 +89,7 @@ public class ClientDetailsImpl implements ClientDetails {
 
     @Override
     public Set<String> getRegisteredRedirectUri() {
-        return emptySet();
+        return Objects.requireNonNullElse(registeredRedirectUris, emptySet());
     }
 
     @Override
@@ -93,7 +109,10 @@ public class ClientDetailsImpl implements ClientDetails {
 
     @Override
     public boolean isAutoApprove(String scope) {
-        return false;
+        if (autoApproveScopes == null) {
+            return false;
+        }
+        return autoApproveScopes.stream().anyMatch(auto -> auto.equals("true") || scope.matches(auto));
     }
 
     @Override
