@@ -84,7 +84,6 @@ public class TenantManagerConfigurationUnitTest {
         configurations.add(Configuration.of().path("/config/tenants/{tenantName}/uaa/emails/en/activationEmail.ftl").build());
         configurations.add(Configuration.of().path("/config/tenants/{tenantName}/uaa/emails/en/creationEmail.ftl").build());
         configurations.add(Configuration.of().path("/config/tenants/{tenantName}/uaa/emails/en/passwordResetEmail.ftl").build());
-        configurations.add(Configuration.of().path("/config/tenants/{tenantName}/uaa/emails/en/socialRegistrationValidationEmail.ftl").build());
 
 
         verify(tenantConfigRepository).createConfigsFullPath(eq("newtenant"), eq(configurations));

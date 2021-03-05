@@ -198,36 +198,6 @@ public class MailService {
         });
     }
 
-
-    /**
-     * Send social registration validation email.
-     */
-    @Async
-    public void sendSocialRegistrationValidationEmail(User user,
-                                                      String provider,
-                                                      String applicationUrl,
-                                                      TenantKey tenantKey,
-                                                      String rid) {
-        execForCustomRid(rid, () -> {
-            log.info("Sending social registration validation email to {}", user.getEmail());
-
-            Map<String, Object> objectModel = new HashMap<>();
-            objectModel.put(USER, user);
-            objectModel.put(BASE_URL, applicationUrl);
-            objectModel.put("provider", StringUtils.capitalize(provider));
-
-            sendEmailFromTemplate(
-                tenantKey,
-                user,
-                "socialRegistrationValidationEmail",
-                "email.social.registration.title",
-                user.getEmail(),
-                objectModel
-            );
-
-        });
-    }
-
     public void sendEmailFromTemplate(User user,
                                       String templateName,
                                       String subject,
