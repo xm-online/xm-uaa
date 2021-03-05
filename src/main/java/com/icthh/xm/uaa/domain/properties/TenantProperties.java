@@ -1,7 +1,6 @@
 package com.icthh.xm.uaa.domain.properties;
 
 import static java.lang.Boolean.TRUE;
-import static java.util.Optional.ofNullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
