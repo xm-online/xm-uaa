@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.service;
 
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
+import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.uaa.domain.EnrichedHttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -36,11 +37,13 @@ public class LepRequestEnrichmentService {
         return request;
     }
 
+    @IgnoreLogginAspect
     @LogicExtensionPoint(value = "GetCustomHeaders")
     public Map<String, String> getCustomHeaders(HttpServletRequest request) {
         return Collections.emptyMap();
     }
 
+    @IgnoreLogginAspect
     @LogicExtensionPoint(value = "GetCustomParameters")
     public Map<String, String[]> getCustomParameters(HttpServletRequest request) {
         return Collections.emptyMap();
