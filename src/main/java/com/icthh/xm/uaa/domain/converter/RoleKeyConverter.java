@@ -25,11 +25,8 @@ import org.springframework.stereotype.Component;
 public class RoleKeyConverter implements AttributeConverter<List<String>, String> {
 
     private TenantPropertiesService tenantPropertiesService;
-    private final ObjectMapper mapper = new ObjectMapper();
-
-    public RoleKeyConverter(){
-        mapper.registerModule(new JavaTimeModule());
-    }
+    private final ObjectMapper mapper = new ObjectMapper()
+        .registerModule(new JavaTimeModule());
 
     @Override
     public String convertToDatabaseColumn(List<String> s) {
