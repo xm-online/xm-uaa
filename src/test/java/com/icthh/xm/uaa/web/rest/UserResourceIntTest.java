@@ -15,7 +15,6 @@ import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
-import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
@@ -25,8 +24,8 @@ import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.mapper.UserMapper;
 import com.icthh.xm.uaa.service.query.UserQueryService;
-import com.icthh.xm.uaa.service.query.filter.UserFilterQuery;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
+import java.util.function.Consumer;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
@@ -72,7 +71,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.springframework.http.converter.json.Jackson2ObjectMapperBuilder.json;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -188,14 +186,7 @@ public class UserResourceIntTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
         TenantContextUtils.setTenant(tenantContextHolder, DEFAULT_TENANT_KEY_VALUE);
-
-        TenantProperties properties = new TenantProperties();
-        TenantProperties.Security security = new TenantProperties.Security();
-        security.setDefaultUserRole(ROLE_USER);
-        properties.setSecurity(security);
-        tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
-            new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
-
+        setTenantProps(tenantProperties -> {});
         doNothing().when(profileEventProducer).send(any());
         UserResource userResource = new UserResource(userLoginService,
             mailService,
@@ -275,7 +266,7 @@ public class UserResourceIntTest {
             ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLogin),
             AUTO_LOGOUT_ENABLED,
             AUTO_LOGOUT_TIME,
-            null);
+            null, List.of("test"));
 
         restUserMockMvc.perform(post("/api/users")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -317,7 +308,10 @@ public class UserResourceIntTest {
             null,
             null,
             null,
-            ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLogin), false, null, null);
+            ROLE_USER, "test", null, null,
+            null, null, Collections.singletonList(userLogin),
+            false,
+            null, null, List.of("test"));
 
         // An entity with an existing ID cannot be created, so this API call must fail
         restUserMockMvc.perform(post("/api/users")
@@ -356,7 +350,8 @@ public class UserResourceIntTest {
             null,
             null,
             null,
-            "test", RoleConstant.SUPER_ADMIN, null, null, null, null, Collections.singletonList(userLogin), false, null, null);
+            "test", RoleConstant.SUPER_ADMIN, null, null, null, null,
+            Collections.singletonList(userLogin), false, null, null, List.of(RoleConstant.SUPER_ADMIN));
 
 
         // SUPER-ADMIN entity cannot be created, so this API call must fail
@@ -396,7 +391,8 @@ public class UserResourceIntTest {
             null,
             null,
             null,
-            ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLogin), false, null, null);
+            ROLE_USER, "test", null, null, null, null,
+            Collections.singletonList(userLogin), false, null, null, List.of("test"));
 
         // Create the User
         restUserMockMvc.perform(post("/api/users")
@@ -460,7 +456,7 @@ public class UserResourceIntTest {
         userHomer.setFirstName(firstName);
         userHomer.setLastName(lastName);
         userHomer.getLogins().get(0).setLogin(login);
-        userHomer.getLogins().add(new UserLogin(){{
+        userHomer.getLogins().add(new UserLogin() {{
             setLogin("donutEater");
             setTypeKey(UserLoginType.EMAIL.getValue());
             setUser(userHomer);
@@ -588,7 +584,7 @@ public class UserResourceIntTest {
             ROLE_USER + "XXX", null, null, null, null, Collections.singletonList(userLogin),
             AUTO_LOGOUT_ENABLED,
             AUTO_LOGOUT_TIME,
-            null);
+            null, List.of(ROLE_USER + "XXX"));
 
         restUserMockMvc.perform(put("/api/users")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -608,7 +604,7 @@ public class UserResourceIntTest {
         //ASSERT THAT STATE IS CHANGED
         assertThat(testUser.isActivated()).isEqualTo(managedUserVM.isActivated());
         //ASSERT THAT ROLE IS CHANGED
-        assertThat(testUser.getRoleKey()).isEqualTo(managedUserVM.getRoleKey());
+        assertThat(testUser.getAuthorities()).isEqualTo(managedUserVM.getAuthorities());
     }
 
     @Test
@@ -641,7 +637,8 @@ public class UserResourceIntTest {
             updatedUser.getCreatedDate(),
             updatedUser.getLastModifiedBy(),
             updatedUser.getLastModifiedDate(),
-            ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLoginNew), false, null, null);
+            ROLE_USER, "test", null, null, null, null,
+            Collections.singletonList(userLoginNew), false, null, null, List.of("test"));
 
         restUserMockMvc.perform(put("/api/users")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -706,7 +703,8 @@ public class UserResourceIntTest {
             updatedUser.getCreatedDate(),
             updatedUser.getLastModifiedBy(),
             updatedUser.getLastModifiedDate(),
-            ROLE_USER, "testNew", null, null, null, null, Collections.singletonList(userLoginNew), false, null, null);
+            ROLE_USER, "testNew", null, null, null, null,
+            Collections.singletonList(userLoginNew), false, null, null, List.of("testNew"));
 
         restUserMockMvc.perform(put("/api/users/logins")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -735,8 +733,9 @@ public class UserResourceIntTest {
             null,
             null,
             null,
-            "test", RoleConstant.SUPER_ADMIN, null, null, null, null, Collections.singletonList(userLogin), false, null,
-            null);
+            "test", RoleConstant.SUPER_ADMIN, null, null, null,
+            null, Collections.singletonList(userLogin), false, null,
+            null, List.of(RoleConstant.SUPER_ADMIN));
 
         restUserMockMvc.perform(put("/api/users")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -776,7 +775,7 @@ public class UserResourceIntTest {
             updatedUser.getLastModifiedBy(),
             updatedUser.getLastModifiedDate(),
             updatedUser.getUserKey(), RoleConstant.SUPER_ADMIN, null, null, null, null, Collections.singletonList(userLoginNew), false, null,
-            null);
+            null, List.of(RoleConstant.SUPER_ADMIN));
 
         restUserMockMvc.perform(put("/api/users/logins")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -974,7 +973,9 @@ public class UserResourceIntTest {
             null,
             DEFAULT_LOGIN,
             null,
-            "test", "testRoleKey", null, null, null, null, null, null, false, null,
+            "test", "testRoleKey", List.of("testRoleKey"),
+            null, null, null, null,
+            null, null, false, null,
             null);
         User user = userMapper.userDTOToUser(userDTO);
         assertThat(user.getId()).isEqualTo(DEFAULT_ID);
@@ -987,7 +988,7 @@ public class UserResourceIntTest {
         assertThat(user.getCreatedDate()).isNotNull();
         assertThat(user.getLastModifiedBy()).isNull();
         assertThat(user.getLastModifiedDate()).isNotNull();
-        assertThat(user.getRoleKey()).isEqualTo("testRoleKey");
+        assertThat(user.getAuthorities()).isEqualTo(List.of("testRoleKey"));
     }
 
     @Test
@@ -1011,8 +1012,61 @@ public class UserResourceIntTest {
         assertThat(userDTO.getCreatedDate()).isEqualTo(user.getCreatedDate());
         assertThat(userDTO.getLastModifiedBy()).isEqualTo(DEFAULT_LOGIN);
         assertThat(userDTO.getLastModifiedDate()).isEqualTo(user.getLastModifiedDate());
-        assertThat(userDTO.getRoleKey()).isEqualTo(ROLE_USER);
+        assertThat(userDTO.getAuthorities()).isEqualTo(List.of(ROLE_USER));
         assertThat(userDTO.toString()).isNotNull();
+    }
+
+    @Test
+    @Transactional
+    public void createUserWithMultipleRoles() throws Exception {
+
+        setTenantProps(tenantProperties -> tenantProperties
+            .setSecurity(new TenantProperties.Security() {{
+                setMultiRoleEnabled(true);
+            }}));
+        int databaseSizeBeforeCreate = userRepository.findAll().size();
+
+        // Create the User
+        UserLogin userLogin = new UserLogin();
+        userLogin.setLogin("test");
+        userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
+        ManagedUserVM managedUserVM = new ManagedUserVM(
+            null,
+            DEFAULT_PASSWORD,
+            DEFAULT_FIRSTNAME,
+            DEFAULT_LASTNAME,
+            true,
+            false,
+            null,
+            null,
+            DEFAULT_IMAGEURL,
+            DEFAULT_LANGKEY,
+            null,
+            null,
+            null,
+            null,
+            ROLE_USER, "test", null, null,
+            null, null, Collections.singletonList(userLogin),
+            AUTO_LOGOUT_ENABLED,
+            AUTO_LOGOUT_TIME,
+            null, List.of("test", "ROLE_ADMIN"));
+
+        restUserMockMvc.perform(post("/api/users")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
+            .andExpect(status().isCreated());
+
+        // Validate the User in the database
+        List<User> userList = userRepository.findAll();
+        assertThat(userList).hasSize(databaseSizeBeforeCreate + 1);
+        User testUser = userList.get(userList.size() - 1);
+        assertThat(testUser.getFirstName()).isEqualTo(DEFAULT_FIRSTNAME);
+        assertThat(testUser.getLastName()).isEqualTo(DEFAULT_LASTNAME);
+        assertThat(testUser.getImageUrl()).isEqualTo(DEFAULT_IMAGEURL);
+        assertThat(testUser.getLangKey()).isEqualTo(DEFAULT_LANGKEY);
+        assertThat(testUser.isAutoLogoutEnabled()).isEqualTo(AUTO_LOGOUT_ENABLED);
+        assertThat(testUser.getAutoLogoutTimeoutSeconds()).isEqualTo(AUTO_LOGOUT_TIME);
+        assertThat(testUser.getAuthorities()).contains("test", "ROLE_ADMIN");
     }
 
     private void initSecurityContextWithUserKey(String userKey) {
@@ -1024,5 +1078,16 @@ public class UserResourceIntTest {
         OAuth2Authentication authentication = mock(OAuth2Authentication.class);
         when(authentication.getDetails()).thenReturn(details);
         SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    @SneakyThrows
+    private void setTenantProps(Consumer<TenantProperties> consumer){
+        TenantProperties properties = new TenantProperties();
+        TenantProperties.Security security = new TenantProperties.Security();
+        security.setDefaultUserRole(ROLE_USER);
+        properties.setSecurity(security);
+        consumer.accept(properties);
+        tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
+            new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
     }
 }

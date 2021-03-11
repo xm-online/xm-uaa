@@ -18,8 +18,8 @@ ldap:
     role:
       defaultRole: ROLE-DEFAULT-USER
       mapping:
-        role-user: ROLE-USER
         role-admin: SUPER-ADMIN
+        role-user: ROLE-USER
     attribute:
       firstName: givenName
       lastName: sn

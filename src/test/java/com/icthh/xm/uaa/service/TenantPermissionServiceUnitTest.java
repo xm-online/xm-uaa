@@ -5,6 +5,7 @@ import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.service.dto.AccPermissionDTO;
+import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -64,31 +65,33 @@ public class TenantPermissionServiceUnitTest {
         service.onInit(XM_PERMISSIONS, readConfigFile(XM_PERMISSIONS));
 
         assertNotNull(service.getEnabledPermissionByRole(null));
-        assertNotNull(service.getEnabledPermissionByRole(""));
+        assertNotNull(service.getEnabledPermissionByRole(List.of("")));
         assertTrue(service.getEnabledPermissionByRole(null).isEmpty());
-        assertTrue(service.getEnabledPermissionByRole("").isEmpty());
+        assertTrue(service.getEnabledPermissionByRole(List.of("")).isEmpty());
 
-        List<AccPermissionDTO> listAmin = service.getEnabledPermissionByRole(ROLE_ADMIN);
+        List<AccPermissionDTO> listAmin = service.getEnabledPermissionByRole(List.of(ROLE_ADMIN));
         System.out.println("ROLE_ADMIN: ");
         listAmin.forEach(System.out::println);
 
         assertTrue(listAmin.stream().allMatch(p -> ROLE_ADMIN.equals(p.getRoleKey())));
 
-        assertEquals("ACCOUNT.CREATE", listAmin.get(0).getPrivilegeKey());
-        assertEquals("ACCOUNT.GET_LIST.ITEM", listAmin.get(1).getPrivilegeKey());
-        assertEquals("ATTACHMENT.CREATE", listAmin.get(2).getPrivilegeKey());
-        assertEquals("DASHBOARD.CREATE", listAmin.get(3).getPrivilegeKey());
-        assertEquals("MISSING.PRIVILEGE", listAmin.get(4).getPrivilegeKey());
+        List<String> privileges = listAmin.stream().map(AccPermissionDTO::getPrivilegeKey).collect(Collectors.toList());
+        assertTrue(privileges.contains("ACCOUNT.CREATE"));
+        assertTrue(privileges.contains("ACCOUNT.GET_LIST.ITEM"));
+        assertTrue(privileges.contains("ATTACHMENT.CREATE"));
+        assertTrue(privileges.contains("DASHBOARD.CREATE"));
+        assertTrue(privileges.contains("MISSING.PRIVILEGE"));
 
-        List<AccPermissionDTO> listAnonym = service.getEnabledPermissionByRole(ROLE_ANONYMOUS);
+        List<AccPermissionDTO> listAnonym = service.getEnabledPermissionByRole(List.of(ROLE_ANONYMOUS));
+        privileges = listAnonym.stream().map(AccPermissionDTO::getPrivilegeKey).collect(Collectors.toList());
         System.out.println("ROLE_ANONYMOUS: ");
         listAnonym.forEach(System.out::println);
 
         assertTrue(listAnonym.stream().allMatch(p -> ROLE_ANONYMOUS.equals(p.getRoleKey())));
 
-        assertEquals("ACCOUNT.GET", listAnonym.get(0).getPrivilegeKey());
-        assertEquals("ATTACHMENT.CREATE", listAnonym.get(1).getPrivilegeKey());
-        assertEquals("DASHBOARD.GET_LIST.ITEM", listAnonym.get(2).getPrivilegeKey());
+        assertTrue(privileges.contains("ACCOUNT.GET"));
+        assertTrue(privileges.contains("ATTACHMENT.CREATE"));
+        assertTrue(privileges.contains("DASHBOARD.GET_LIST.ITEM"));
 
     }
 
@@ -97,11 +100,11 @@ public class TenantPermissionServiceUnitTest {
 
         service.onInit(XM_PERMISSIONS, readConfigFile(XM_PERMISSIONS));
 
-        assertEquals(5, service.getEnabledPermissionByRole(ROLE_ADMIN).size());
+        assertEquals(5, service.getEnabledPermissionByRole(List.of(ROLE_ADMIN)).size());
 
         service.onRefresh(XM_PERMISSIONS, "");
 
-        assertTrue(service.getEnabledPermissionByRole(ROLE_ADMIN).isEmpty());
+        assertTrue(service.getEnabledPermissionByRole(List.of(ROLE_ADMIN)).isEmpty());
 
     }
 

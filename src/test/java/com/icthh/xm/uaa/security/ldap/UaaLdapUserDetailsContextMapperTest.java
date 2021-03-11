@@ -36,7 +36,8 @@ public class UaaLdapUserDetailsContextMapperTest {
     private static final String LOGIN = "Homer";
     public static final Map<String, String> GROUP_MAPPING = Map.of(
         "GROUP1", "SUPER_ADMIN",
-        "GROUP2", "LOSER"
+        "GROUP2", "LOSER",
+        "GROUP3", "ROLE_USER"
     );
     @Mock
     UserService userService;
@@ -60,7 +61,24 @@ public class UaaLdapUserDetailsContextMapperTest {
         uaaLdapUserDetailsContextMapper.mapUserFromContext(ctx, LOGIN, List.of());
         verify(userDetailsService).loadUserByUsername(eq(LOGIN));
         verify(userService, never()).saveUser(any(User.class));
-        assertEquals(user.getRoleKey(), "ROLE_ADMIN");
+        assertTrue(user.getAuthorities().contains("ROLE_ADMIN"));
+    }
+
+    @Test
+    public void userMustBeCreatedWithMultipleRoles() {
+        whenFindUserByLogin();
+        when(ldapConf.getRole()).thenReturn(new TenantProperties.Ldap.Role("DEFAULT_ROLE", GROUP_MAPPING));
+        uaaLdapUserDetailsContextMapper.mapUserFromContext(ctx, LOGIN,
+            newArrayList((GrantedAuthority) () -> "GROUP1", (GrantedAuthority) () -> "GROUP3"));
+        verify(userDetailsService).loadUserByUsername(eq(LOGIN));
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userService, times(1))
+            .saveUser(captor.capture());
+        User user = captor.getValue();
+        assertTrue(user.getAuthorities().size() == 2);
+        assertTrue(user.getAuthorities().contains("SUPER_ADMIN"));
+        assertTrue(user.getAuthorities().contains("ROLE_USER"));
     }
 
     @Test
@@ -74,7 +92,7 @@ public class UaaLdapUserDetailsContextMapperTest {
         verify(userService, times(1))
             .saveUser(captor.capture());
         User user = captor.getValue();
-        assertEquals(user.getRoleKey(), "SUPER_ADMIN");
+        assertTrue(user.getAuthorities().contains("SUPER_ADMIN"));
     }
 
 
@@ -89,7 +107,7 @@ public class UaaLdapUserDetailsContextMapperTest {
         verify(userService, times(1))
             .createUser(captor.capture());
         UserDTO user = captor.getValue();
-        assertEquals(user.getRoleKey(), "DEFAULT_ROLE");
+        assertTrue(user.getAuthorities().contains("DEFAULT_ROLE"));
     }
 
     private User whenFindUserByLogin() {

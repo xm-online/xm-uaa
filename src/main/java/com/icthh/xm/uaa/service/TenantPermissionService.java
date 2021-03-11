@@ -1,5 +1,7 @@
 package com.icthh.xm.uaa.service;
 
+import static java.util.Optional.ofNullable;
+
 import com.icthh.xm.commons.config.client.api.RefreshableConfiguration;
 import com.icthh.xm.commons.permission.config.PermissionProperties;
 import com.icthh.xm.commons.permission.domain.Permission;
@@ -7,6 +9,8 @@ import com.icthh.xm.commons.permission.domain.mapper.PermissionMapper;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.service.dto.AccPermissionDTO;
+import java.util.Collection;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -39,16 +43,24 @@ public class TenantPermissionService implements RefreshableConfiguration {
     // Map structure: <Tenant, <Role, [Permission]>>
     final Map<String, Map<String, List<Permission>>> tenantRolePermissions = new ConcurrentHashMap<>();
 
-    public List<AccPermissionDTO> getEnabledPermissionByRole(String role) {
+    public List<AccPermissionDTO> getEnabledPermissionByRole(List<String> roles) {
 
-        String tenant = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder.getContext());
+        Map<String, List<Permission>> tenantRoles = getTenantRoles();
 
-        return tenantRolePermissions.getOrDefault(tenant, Collections.emptyMap())
-                                    .getOrDefault(role, Collections.emptyList())
-                                    .stream()
-                                    .filter(permission -> !permission.isDisabled())
-                                    .map(AccPermissionDTO::new)
-                                    .collect(Collectors.toList());
+        return ofNullable(roles)
+            .stream()
+            .flatMap(Collection::stream)
+            .map(tenantRoles::get)
+            .filter(Objects::nonNull)
+            .flatMap(Collection::stream)
+            .filter(permission -> !permission.isDisabled())
+            .map(AccPermissionDTO::new)
+            .collect(Collectors.toList());
+    }
+
+    private Map<String, List<Permission>> getTenantRoles(){
+        String tenant = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder);
+        return tenantRolePermissions.getOrDefault(tenant, Collections.emptyMap());
     }
 
     @Override

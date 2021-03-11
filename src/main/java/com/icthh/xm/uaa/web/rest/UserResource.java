@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.web.rest;
 
 import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
+import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
@@ -190,8 +191,8 @@ public class UserResource {
     @PreAuthorize("hasPermission({'id': #user.userKey, 'newUser': #user}, 'user', 'USER.CHANGE.ROLE')")
     @PrivilegeDescription("Privilege to change roleKey for user")
     public ResponseEntity<UserDTO> changeRoleKey(@Valid @RequestBody UserDTO user) {
-        Preconditions.checkArgument(StringUtils.isNotEmpty(user.getRoleKey()));
-        assertNotSuperAdmin(user.getRoleKey());
+        Preconditions.checkArgument(isNotEmpty(user.getAuthorities()));
+        assertNotSuperAdmin(user.getAuthorities());
         Optional<UserDTO> updatedUser = userService.changeUserRole(user);
         updatedUser.ifPresent(this::produceUpdateEvent);
         return ResponseUtil.wrapOrNotFound(updatedUser,
