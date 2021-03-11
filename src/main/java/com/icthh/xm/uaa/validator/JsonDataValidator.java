@@ -20,7 +20,6 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static com.github.fge.jsonschema.core.report.LogLevel.ERROR;
 import static java.util.stream.Collectors.toList;
