@@ -12,10 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +25,7 @@ import org.springframework.stereotype.Component;
 public class RoleKeyConverter implements AttributeConverter<List<String>, String> {
 
     private TenantPropertiesService tenantPropertiesService;
-    private ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public RoleKeyConverter(){
         mapper.registerModule(new JavaTimeModule());

@@ -84,7 +84,7 @@ public class UserSpecService implements RefreshableConfiguration {
         return spec != null ?
             roleKeys
                 .stream()
-                .map(role -> spec.get(role))
+                .map(spec::get)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList()) :
             emptyList();

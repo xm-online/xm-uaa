@@ -11,6 +11,7 @@ import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.service.dto.AccPermissionDTO;
 import java.util.Collection;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -46,20 +47,22 @@ public class TenantPermissionService implements RefreshableConfiguration {
 
     public List<AccPermissionDTO> getEnabledPermissionByRole(List<String> roles) {
 
-        String tenant = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder.getContext());
+        Map<String, List<Permission>> tenantRoles = getTenantRoles();
 
-        return ofNullable(roles).orElse(emptyList()).stream().map(role ->
-            tenantRolePermissions.getOrDefault(tenant, Collections.emptyMap())
-                .getOrDefault(role, emptyList())
-                .stream()
-                .filter(permission -> !permission.isDisabled())
-                .map(AccPermissionDTO::new)
-                .collect(Collectors.toList()))
-            .filter(CollectionUtils::isNotEmpty)
-            .flatMap(Collection::stream)
-            .collect(Collectors.toSet())
+        return ofNullable(roles)
             .stream()
+            .flatMap(Collection::stream)
+            .map(tenantRoles::get)
+            .filter(Objects::nonNull)
+            .flatMap(Collection::stream)
+            .filter(permission -> !permission.isDisabled())
+            .map(AccPermissionDTO::new)
             .collect(Collectors.toList());
+    }
+
+    private Map<String, List<Permission>> getTenantRoles(){
+        String tenant = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder);
+        return tenantRolePermissions.getOrDefault(tenant, Collections.emptyMap());
     }
 
     @Override

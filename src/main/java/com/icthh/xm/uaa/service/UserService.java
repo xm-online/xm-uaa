@@ -224,7 +224,6 @@ public class UserService {
         Preconditions.checkArgument(
             isNotEmpty(updatedUser.getAuthorities()
                 .stream()
-                .filter(Objects::nonNull)
                 .filter(StringUtils::isNoneBlank)
                 .collect(Collectors.toList())), "No roleKey provided");
         return userRepository.findById(updatedUser.getId())
