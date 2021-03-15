@@ -11,5 +11,6 @@ public class UserSpec {
 
     private String roleKey;
     private String dataSpec;
+    private String dataForm;
 
 }

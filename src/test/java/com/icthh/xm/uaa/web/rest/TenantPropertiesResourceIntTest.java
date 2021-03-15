@@ -7,6 +7,7 @@ import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
+import com.icthh.xm.uaa.domain.UserSpec;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings.PasswordPolicy;
@@ -80,6 +81,11 @@ public class TenantPropertiesResourceIntTest {
         publicSettings.setPasswordPoliciesMinimalMatchCount(PASSWORD_POLICIES_MINIMAL_MATCH_COUNT);
         properties.setPublicSettings(publicSettings);
 
+        properties.setUserSpec(List.of(
+                new UserSpec("ROLE_1", "someDataSpec", "someDataForm"),
+                new UserSpec("ROLE_2", "someDataSpec2", "someDataForm2")
+        ));
+
         tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
             new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
 
@@ -100,6 +106,29 @@ public class TenantPropertiesResourceIntTest {
             .andExpect(jsonPath("$.passwordPolicies[0].pattern").value(PASSWORD_PATTERN))
             .andExpect(jsonPath("$.passwordPoliciesMinimalMatchCount").value(PASSWORD_POLICIES_MINIMAL_MATCH_COUNT))
             .andExpect(jsonPath("$.passwordPolicies[0].patternMessage.en").value(PATTERN_MESSAGE));
+
+    }
+
+    @Test
+    public void testGetUserSpec() throws Exception {
+
+        restMvc.perform(get("/api/uaa/properties/data-schema/ROLE_1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.roleKey").value("ROLE_1"))
+                .andExpect(jsonPath("$.dataSpec").value("someDataSpec"))
+                .andExpect(jsonPath("$.dataForm").value("someDataForm"));
+
+        restMvc.perform(get("/api/uaa/properties/data-schema/ROLE_2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.roleKey").value("ROLE_2"))
+                .andExpect(jsonPath("$.dataSpec").value("someDataSpec2"))
+                .andExpect(jsonPath("$.dataForm").value("someDataForm2"));
+
+        restMvc.perform(get("/api/uaa/properties/data-schema/ROLE_3"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.roleKey").value("ROLE_3"))
+                .andExpect(jsonPath("$.dataSpec").doesNotExist())
+                .andExpect(jsonPath("$.dataForm").doesNotExist());
 
     }
 
