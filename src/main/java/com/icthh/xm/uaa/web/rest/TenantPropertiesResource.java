@@ -89,7 +89,7 @@ public class TenantPropertiesResource {
             @ApiResponse(code = 200, message = "Uaa public settings", response = UserSpec.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     @Timed
-    @PreAuthorize("hasPermission({'roleKey': #roleKey}, 'UAA.TENANT.PROPERTIES.UPDATE')")
+    @PreAuthorize("hasPermission({'roleKey': #roleKey}, 'UAA.TENANT.USER_SPEC.GET')")
     @PrivilegeDescription("Privilege to get role data schema")
     public UserSpec getRoleUserSpec(@PathVariable String roleKey) {
         return tenantPropertiesService.getTenantProps().getUserSpec()
