@@ -49,8 +49,6 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
     @Setter
     private TokenStore tokenStore;
     @Setter
-    private XmJwkTokenStore jwkTokenStore;
-    @Setter
     private TokenEnhancer tokenEnhancer;
     @Setter
     private AuthenticationManager authenticationManager;
@@ -79,7 +77,6 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
     @Override
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(tokenStore, "tokenStore must be set");
-        Assert.notNull(jwkTokenStore, "jwkTokenStore must be set");
         Assert.notNull(otpGenerator, "otpGenerator must be set");
         Assert.notNull(otpSendStrategy, "otpSendStrategy must be set");
         Assert.notNull(otpStore, "otpStore must be set");

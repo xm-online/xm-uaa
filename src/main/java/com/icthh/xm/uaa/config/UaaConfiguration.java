@@ -189,7 +189,6 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
 
         final DomainTokenServices tokenServices = new DomainTokenServices();
         tokenServices.setTokenStore(tokenStore);
-        tokenServices.setJwkTokenStore(jwkTokenStore);
         tokenServices.setTokenEnhancer(jwtAccessTokenConverter);
         tokenServices.setAuthenticationRefreshProvider(defaultAuthenticationRefreshProvider);
         tokenServices.setTenantPropertiesService(tenantPropertiesService);
