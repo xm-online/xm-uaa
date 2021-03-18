@@ -3,6 +3,7 @@ package com.icthh.xm.uaa.security;
 import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_AUTH_CONTEXT;
 import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
 import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
+import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -30,6 +31,8 @@ import java.nio.charset.Charset;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
+import java.util.function.Consumer;
+import lombok.SneakyThrows;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -87,6 +90,9 @@ public class UaaAuthenticationProviderIntTest {
     private DaoAuthenticationProvider daoAuthenticationProvider;
 
     @Autowired
+    private TenantPropertiesService tenantPropertiesService;
+
+    @Autowired
     private DomainUserDetailsService userDetailsService;
 
     @Autowired
@@ -127,6 +133,8 @@ public class UaaAuthenticationProviderIntTest {
         String conf = StreamUtils.copyToString(spec.getInputStream(), Charset.defaultCharset());
         tenantProperties = mapper.readValue(conf, TenantProperties.class);
         when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProperties);
+
+        setTenantProps(tenantProperties1 -> {});
 
         LdapAuthenticationProviderBuilder providerBuilder =
             new LdapAuthenticationProviderBuilder(tenantPropertiesService, userDetailsService, userService);
@@ -202,7 +210,7 @@ public class UaaAuthenticationProviderIntTest {
         Authentication authentication = uaaAuthenticationProvider.authenticate(
             new UsernamePasswordAuthenticationToken(TEST_USER_MANY_ROLE, TEST_PASSWORD));
 
-        //the last one must be assigned
+        //the first one must be assigned
         commonAsserts(TEST_USER_MANY_ROLE, DEFAULT_ADMIN_ROLE_KEY, authentication);
     }
 
@@ -227,7 +235,7 @@ public class UaaAuthenticationProviderIntTest {
 
         assertEquals(newUser.getFirstName(), DEFAULT_FIRSTNAME);
         assertEquals(newUser.getLastName(), DEFAULT_LASTNAME);
-        assertEquals(newUser.getRoleKey(), role);
+        assertTrue(newUser.getAuthorities().contains(role));
         assertFalse(newUser.getLogins().isEmpty());
         assertEquals(newUser.getLogins().iterator().next().getLogin(), login);
     }
@@ -280,6 +288,16 @@ public class UaaAuthenticationProviderIntTest {
         Authentication authentication = uaaAuthenticationProvider.authenticate(token);
         assertTrue(authentication.isAuthenticated());
         assertFalse(authentication.getAuthorities().isEmpty());
+    }
+
+    @SneakyThrows
+    private void setTenantProps(Consumer<TenantProperties> consumer){
+        TenantProperties properties = new TenantProperties();
+        TenantProperties.Security security = new TenantProperties.Security();
+        properties.setSecurity(security);
+        consumer.accept(properties);
+        tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
+            new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
     }
 
 }

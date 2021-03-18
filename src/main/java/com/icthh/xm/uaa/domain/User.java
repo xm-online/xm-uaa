@@ -1,9 +1,14 @@
 package com.icthh.xm.uaa.domain;
 
+import static com.google.common.collect.Iterables.getFirst;
+import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.icthh.xm.uaa.domain.converter.MapToStringConverter;
+import com.icthh.xm.uaa.domain.converter.RoleKeyConverter;
 import com.icthh.xm.uaa.validator.JsonData;
 import com.icthh.xm.uaa.repository.converter.OtpChannelTypeAttributeConverter;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.Cache;
@@ -117,8 +122,13 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "tfa_access_token_validity")
     private Integer tfaAccessTokenValiditySeconds;
 
+    @Getter(AccessLevel.PRIVATE)
     @Column(name = "role_key")
     private String roleKey;
+
+    @Convert(converter = RoleKeyConverter.class)
+    @Column
+    private List<String> authorities;
 
     @Convert(converter = MapToStringConverter.class)
     @Column(name = "data")
@@ -150,9 +160,23 @@ public class User extends AbstractAuditingEntity implements Serializable {
             .findFirst().map(UserLogin::getLogin).orElse(null);
     }
 
+    public void setAuthorities(List<String> authorities) {
+        this.roleKey = getFirst(authorities, null);
+        this.authorities = authorities;
+    }
+
+    public List<String> getAuthorities() {
+        return isNotEmpty(authorities) ? authorities : List.of(roleKey);
+    }
+
     public void setActivationKey(String key) {
         this.activationKey = key;
         this.createActivationKeyDate = Instant.now();
+    }
+
+    public void setRoleKey(String role) {
+        this.roleKey = role;
+        this.authorities = List.of(role);
     }
 
     @Override

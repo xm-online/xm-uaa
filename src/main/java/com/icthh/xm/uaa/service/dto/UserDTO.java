@@ -1,12 +1,14 @@
 package com.icthh.xm.uaa.service.dto;
 
+import static com.google.common.collect.Iterables.getFirst;
+import static org.springframework.util.CollectionUtils.isEmpty;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.util.OtpUtils;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,7 +17,6 @@ import java.util.Map;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -72,7 +73,7 @@ public class UserDTO {
     private String userKey;
 
     private String roleKey;
-
+    private List<String> authorities;
     private Integer accessTokenValiditySeconds;
 
     private Integer refreshTokenValiditySeconds;
@@ -118,7 +119,8 @@ public class UserDTO {
             user.getLastModifiedBy(),
             user.getLastModifiedDate(),
             user.getUserKey(),
-            user.getRoleKey(),
+            getFirst(user.getAuthorities(), null),
+            user.getAuthorities(),
             user.getAccessTokenValiditySeconds(),
             user.getRefreshTokenValiditySeconds(),
             user.getTfaAccessTokenValiditySeconds(),
@@ -137,6 +139,15 @@ public class UserDTO {
     public String getEmail() {
         return getLogins().stream().filter(userLogin -> UserLoginType.EMAIL.getValue().equals(userLogin.getTypeKey()))
             .findFirst().map(UserLogin::getLogin).orElse(null);
+    }
+
+    public void setAuthorities(List<String> authorities){
+        this.authorities = authorities;
+        this.roleKey = getFirst(authorities, null);
+    }
+
+    public List<String> getAuthorities(){
+        return isEmpty(this.authorities) && roleKey != null ? List.of(this.roleKey) : authorities;
     }
 
 }

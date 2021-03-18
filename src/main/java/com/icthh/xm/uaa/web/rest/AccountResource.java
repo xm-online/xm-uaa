@@ -170,7 +170,7 @@ public class AccountResource {
         return ResponseUtil.wrapOrNotFound(userService.findOneWithLoginsByUserKey(getRequiredUserKey())
                                                .map(user -> {
                                                    UserDTO userDto = new UserDTO(user);
-                                                   userDto.getPermissions().addAll(tenantPermissionService.getEnabledPermissionByRole(user.getRoleKey()));
+                                                   userDto.getPermissions().addAll(tenantPermissionService.getEnabledPermissionByRole(user.getAuthorities()));
                                                    return userDto;
                                                }));
     }

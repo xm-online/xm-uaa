@@ -6,6 +6,7 @@ import com.icthh.xm.commons.tenant.spring.config.TenantContextConfiguration;
 import com.icthh.xm.uaa.security.DomainJwtAccessTokenConverter;
 
 import com.icthh.xm.uaa.security.DomainJwtAccessTokenDetailsPostProcessor;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -86,7 +87,8 @@ public class UaaAccessTokenConverterConfiguration {
      */
     @Bean
     @SneakyThrows
-    public JwtAccessTokenConverter jwtAccessTokenConverter(DomainJwtAccessTokenDetailsPostProcessor tokenDetailsProcessor) {
+    public JwtAccessTokenConverter jwtAccessTokenConverter(DomainJwtAccessTokenDetailsPostProcessor tokenDetailsProcessor,
+                                                           TenantPropertiesService tenantPropertiesService) {
 
         // get public key
         final PublicKey publicKey = getKeyFromConfigServer(keyUriRestTemplate);
@@ -98,7 +100,7 @@ public class UaaAccessTokenConverterConfiguration {
         KeyPair keyPair = new KeyPair(publicKey, privateKey);
 
         DomainJwtAccessTokenConverter accessTokenConverter = new DomainJwtAccessTokenConverter(tenantContextHolder,
-            tokenDetailsProcessor);
+            tenantPropertiesService, tokenDetailsProcessor);
         accessTokenConverter.setKeyPair(keyPair);
         return accessTokenConverter;
     }

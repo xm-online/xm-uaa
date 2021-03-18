@@ -1,7 +1,8 @@
 package com.icthh.xm.uaa.security.ldap;
 
 import static java.util.Objects.nonNull;
-import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
+import static org.apache.commons.collections.CollectionUtils.isEqualCollection;
+import static org.springframework.util.CollectionUtils.isEmpty;
 
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
@@ -10,7 +11,6 @@ import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
-import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -67,29 +67,32 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
         userLogin.setLogin(username);
         userLogin.setTypeKey(UserLoginType.NICKNAME.getValue());
         userDTO.setLogins(Collections.singletonList(userLogin));
-        userDTO.setRoleKey(mapRole(roleConf, authorities).orElse(roleConf.getDefaultRole()));
+        List<String> roles = mapRole(roleConf, authorities);
+        userDTO.setAuthorities(roles.isEmpty() ? List.of(roleConf.getDefaultRole()) : roles);
         userService.createUser(userDTO);
     }
 
     private void updateUser(DirContextOperations ctx, User user, Collection<? extends GrantedAuthority> authorities) {
         TenantProperties.Ldap.Role roleConf = ldapConf.getRole();
-        String mappedRole = mapRole(roleConf, authorities)
-            .orElseGet(() -> defaultIfEmpty(user.getRoleKey(), roleConf.getDefaultRole()));
-        log.info("Mapped role from ldap [{}], current role [{}]", mappedRole, user.getRoleKey());
+        List<String> mappedRoles = mapRole(roleConf, authorities);
+        mappedRoles = mappedRoles.isEmpty() ?
+            (isEmpty(user.getAuthorities()) ? List.of(roleConf.getDefaultRole()) : user.getAuthorities()) :
+            mappedRoles;
+        log.info("Mapped role from ldap [{}], current role [{}]", mappedRoles, user.getAuthorities());
         String imageUrl = parseImageUrl(ctx);
 
-        if (needUpdate(mappedRole, user, imageUrl)) {
+        if (needUpdate(mappedRoles, user, imageUrl)) {
             user.setImageUrl(imageUrl);
-            user.setRoleKey(mappedRole);
+            user.setAuthorities(mappedRoles);
             userService.saveUser(user);
         }
     }
 
-    private boolean needUpdate(String mappedRole, User user, String imageUrl) {
-        return !mappedRole.equals(user.getRoleKey()) || !StringUtils.equals(user.getImageUrl(), imageUrl);
+    private boolean needUpdate(List<String> mappedRoles, User user, String imageUrl) {
+        return !isEqualCollection(mappedRoles, user.getAuthorities()) || !StringUtils.equals(user.getImageUrl(), imageUrl);
     }
 
-    private Optional<String> mapRole(TenantProperties.Ldap.Role roleConf, Collection<? extends GrantedAuthority> authorities) {
+    private List<String> mapRole(TenantProperties.Ldap.Role roleConf, Collection<? extends GrantedAuthority> authorities) {
         LinkedList<String> mappedRoles = new LinkedList<>();
         Map<String, String> mappingConf = roleConf.getMapping();
 
@@ -101,13 +104,8 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
                 }
             });
         }
-        Optional<String> mappedXmRole = mappedRoles.isEmpty() ? Optional.empty() : Optional.of(mappedRoles.getLast());
-        if (mappedRoles.size() > BigInteger.ONE.intValue()) {
-            log.warn("More than 1 role was matched: {}. Will be used the latest one: {}", mappedRoles, mappedXmRole);
-        }
-
-        log.info("Mapped role: {}", mappedXmRole.orElse(null));
-        return mappedXmRole;
+        log.info("Mapped role: {}", mappedRoles);
+        return mappedRoles;
     }
 
     private String parseImageUrl(DirContextOperations ctx) {
