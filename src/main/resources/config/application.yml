@@ -174,6 +174,7 @@ xm-config:
 # ===================================================================
 
 application:
+    timeline-ignored-http-methods:
     audit-events-enabled: false
     scheduler-enabled: false
     tenant-properties-path-pattern: /config/tenants/{tenantName}/uaa/${application.tenant-properties-name}
@@ -195,7 +196,7 @@ application:
         secretKey:
         publicKey:
         registration-captcha-period-seconds: 21600
-    client-grant-types: client_credentials, refresh_token, password, tfa_otp_token, authorization_code
+    client-grant-types: client_credentials, refresh_token, password, tfa_otp_token, authorization_code, idp_token
     client-scope: openid
     default-client-id: internal
     timelines-enabled: true

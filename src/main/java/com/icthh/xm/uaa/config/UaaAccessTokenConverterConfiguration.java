@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.config;
 
+import com.icthh.xm.commons.repository.JwksRepository;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.spring.config.TenantContextConfiguration;
 import com.icthh.xm.uaa.security.DomainJwtAccessTokenConverter;
@@ -7,7 +8,6 @@ import com.icthh.xm.uaa.security.DomainJwtAccessTokenConverter;
 import com.icthh.xm.uaa.security.DomainJwtAccessTokenDetailsPostProcessor;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +26,11 @@ import java.security.KeyFactory;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 
+import com.icthh.xm.uaa.security.oauth2.idp.XmJwkTokenStore;
+import com.icthh.xm.uaa.security.oauth2.idp.config.IdpConfigRepository;
+import com.icthh.xm.uaa.security.oauth2.idp.converter.XmJwkVerifyingJwtAccessTokenConverter;
+import com.icthh.xm.uaa.security.oauth2.idp.source.XmJwkDefinitionSource;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -34,6 +39,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -57,13 +63,20 @@ public class UaaAccessTokenConverterConfiguration {
     private final RestTemplate keyUriRestTemplate;
     private final TenantContextHolder tenantContextHolder;
     private final ApplicationProperties applicationProperties;
+    private final IdpConfigRepository idpConfigRepository;
+    private final JwksRepository jwksRepository;
 
     public UaaAccessTokenConverterConfiguration(TenantContextHolder tenantContextHolder,
                                                 @Qualifier("loadBalancedRestTemplate") RestTemplate keyUriRestTemplate,
-                                                ApplicationProperties applicationProperties) {
+                                                ApplicationProperties applicationProperties,
+                                                IdpConfigRepository idpConfigRepository,
+                                                TenantPropertiesService tenantPropertiesService,
+                                                JwksRepository jwksRepository) {
         this.tenantContextHolder = tenantContextHolder;
         this.keyUriRestTemplate = keyUriRestTemplate;
         this.applicationProperties = applicationProperties;
+        this.idpConfigRepository = idpConfigRepository;
+        this.jwksRepository = jwksRepository;
     }
 
     /**
@@ -120,7 +133,7 @@ public class UaaAccessTokenConverterConfiguration {
             log.info("Keystore location {}", applicationProperties.getKeystoreFile());
             try (InputStream stream = new ClassPathResource(applicationProperties.getKeystoreFile()).exists()
                 ? new ClassPathResource(applicationProperties.getKeystoreFile()).getInputStream()
-                : new FileInputStream(new File(applicationProperties.getKeystoreFile()))) {
+                : new FileInputStream(applicationProperties.getKeystoreFile())) {
                 return initPrivateKeyFromKeystore(stream);
             }
         }
@@ -130,6 +143,7 @@ public class UaaAccessTokenConverterConfiguration {
      * Apply the token converter (and enhancer) for token store.
      */
     @Bean
+    @Primary
     public JwtTokenStore tokenStore(JwtAccessTokenConverter jwtAccessTokenConverter) throws Exception {
         return new JwtTokenStore(jwtAccessTokenConverter);
     }
@@ -146,6 +160,17 @@ public class UaaAccessTokenConverterConfiguration {
         KeyFactory factory = KeyFactory.getInstance("RSA");
         PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encodedPrivateKey);
         return factory.generatePrivate(keySpec);
+    }
+
+    @Bean
+    public XmJwkTokenStore jwkTokenStore() {
+
+        XmJwkDefinitionSource xmJwkDefinitionSource = new XmJwkDefinitionSource(jwksRepository);
+
+        XmJwkVerifyingJwtAccessTokenConverter jwkVerifyingJwtAccessTokenConverter =
+            new XmJwkVerifyingJwtAccessTokenConverter(xmJwkDefinitionSource, idpConfigRepository);
+
+        return new XmJwkTokenStore(jwkVerifyingJwtAccessTokenConverter);
     }
 
 }
