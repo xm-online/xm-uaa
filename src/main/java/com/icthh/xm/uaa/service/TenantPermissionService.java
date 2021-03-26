@@ -5,7 +5,7 @@ import static java.util.Optional.ofNullable;
 import com.icthh.xm.commons.config.client.api.RefreshableConfiguration;
 import com.icthh.xm.commons.permission.config.PermissionProperties;
 import com.icthh.xm.commons.permission.domain.Permission;
-import com.icthh.xm.commons.permission.domain.mapper.PermissionMapper;
+import com.icthh.xm.commons.permission.service.PermissionMappingService;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.service.dto.AccPermissionDTO;
@@ -37,6 +37,7 @@ public class TenantPermissionService implements RefreshableConfiguration {
 
     private final PermissionProperties permissionProperties;
     private final TenantContextHolder tenantContextHolder;
+    private final PermissionMappingService permissionMappingService;
 
     private final AntPathMatcher matcher = new AntPathMatcher();
 
@@ -74,7 +75,7 @@ public class TenantPermissionService implements RefreshableConfiguration {
                 tenantRolePermissions.remove(tenant);
                 log.info("Permission configuration was removed for tenant [{}] by key [{}]", tenant, updatedKey);
             } else {
-                Map<String, Permission> permissions = PermissionMapper.ymlToPermissions(config);
+                Map<String, Permission> permissions = permissionMappingService.ymlToPermissions(config);
 
                 Map<String, List<Permission>> tenantPermissions = new HashMap<>();
 

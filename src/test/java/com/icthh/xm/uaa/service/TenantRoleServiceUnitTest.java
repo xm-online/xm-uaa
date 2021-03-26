@@ -3,6 +3,9 @@ package com.icthh.xm.uaa.service;
 import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
 import com.icthh.xm.commons.permission.config.PermissionProperties;
+import com.icthh.xm.commons.permission.service.PermissionMappingService;
+import com.icthh.xm.commons.permission.service.filter.EqualsOrNullPermissionMsNameFilter;
+import com.icthh.xm.commons.permission.service.filter.PermissionMsNameFilter;
 import com.icthh.xm.commons.security.XmAuthenticationContext;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContext;
@@ -20,7 +23,9 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.Optional;
@@ -78,6 +83,12 @@ public class TenantRoleServiceUnitTest {
     @Mock
     EnvironmentService environmentService;
 
+    @Spy
+    PermissionMsNameFilter filter = new EqualsOrNullPermissionMsNameFilter();
+
+    @Spy
+    PermissionMappingService permissionMappingService = new PermissionMappingService(filter);
+
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -90,6 +101,7 @@ public class TenantRoleServiceUnitTest {
         when(permissionProperties.getPermissionsSpecPath()).thenReturn("/config/tenants/{tenantName}/permissions.yml");
         when(permissionProperties.getPrivilegesSpecPath()).thenReturn("/config/tenants/privileges.yml");
 
+        ReflectionTestUtils.setField(filter, "msName", "uaa", String.class);
     }
 
     @Test

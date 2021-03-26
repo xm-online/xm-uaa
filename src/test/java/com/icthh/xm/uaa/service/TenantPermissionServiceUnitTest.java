@@ -1,6 +1,9 @@
 package com.icthh.xm.uaa.service;
 
 import com.icthh.xm.commons.permission.config.PermissionProperties;
+import com.icthh.xm.commons.permission.service.PermissionMappingService;
+import com.icthh.xm.commons.permission.service.filter.EqualsOrNullPermissionMsNameFilter;
+import com.icthh.xm.commons.permission.service.filter.PermissionMsNameFilter;
 import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
@@ -14,6 +17,8 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.List;
 import java.util.Optional;
+import org.mockito.Spy;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static com.icthh.xm.uaa.utils.FileUtil.readConfigFile;
 import static org.junit.Assert.*;
@@ -42,6 +47,12 @@ public class TenantPermissionServiceUnitTest {
     @Mock
     private TenantContextHolder tenantContextHolder;
 
+    @Spy
+    private PermissionMsNameFilter filter = new EqualsOrNullPermissionMsNameFilter();
+
+    @Spy
+    private PermissionMappingService permissionMappingService = new PermissionMappingService(filter);
+
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -57,6 +68,7 @@ public class TenantPermissionServiceUnitTest {
         when(permissionProperties.getPermissionsSpecPath()).thenReturn(
             "/config/tenants/{tenantName}/permissions_serviceTest.yml");
 
+        ReflectionTestUtils.setField(filter, "msName", "uaa", String.class);
     }
 
     @Test
