@@ -40,6 +40,7 @@ import static com.icthh.xm.commons.domain.idp.IdpConstants.IDP_PUBLIC_SETTINGS_C
 public class IdpConfigRepository implements RefreshableConfiguration {
 
     private static final String KEY_TENANT = "tenant";
+    private static final String IDP_EMPTY_CONFIG = "idp:";
 
     private final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
     private final AntPathMatcher matcher = new AntPathMatcher();
@@ -157,12 +158,15 @@ public class IdpConfigRepository implements RefreshableConfiguration {
             .put(publicIdpConf.getKey(), publicIdpConf);
     }
 
+    @SneakyThrows
     private <T> T parseConfig(String tenantKey, String config, Class<T> configType) {
-        T parsedConfig = null;
+        T parsedConfig;
         try {
             parsedConfig = objectMapper.readValue(config, configType);
         } catch (JsonProcessingException e) {
-            log.error("Error occurred during attempt to read idp configuration {} for tenant:{}", config.getClass(), tenantKey, e);
+            log.error("Something went wrong during attempt to read config [{}] for tenant [{}]. " +
+                "Creating default config.", config, tenantKey, e);
+            parsedConfig = objectMapper.readValue(IDP_EMPTY_CONFIG, configType);
         }
         return parsedConfig;
     }

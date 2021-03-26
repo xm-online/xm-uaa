@@ -21,7 +21,6 @@ public class DomainJwtAccessTokenDetailsPostProcessor {
         // password and client_secret removed by spring
         additionalDetails.remove("grant_type");
         additionalDetails.remove("username");
-        additionalDetails.remove("token");
         if (!additionalDetails.isEmpty()) {
             details.put(AUTH_ADDITIONAL_DETAILS, additionalDetails);
         }

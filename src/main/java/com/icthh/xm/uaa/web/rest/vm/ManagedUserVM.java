@@ -88,7 +88,8 @@ public class ManagedUserVM extends UserDTO {
                          List<UserLogin> logins,
                          boolean autoLogoutEnabled,
                          Integer autoLogoutTimeoutSeconds,
-                         Instant acceptTocTime) {
+                         Instant acceptTocTime,
+                         List<String> authorities) {
 
         super(id,
             firstName,
@@ -105,6 +106,7 @@ public class ManagedUserVM extends UserDTO {
             lastModifiedDate,
             userKey,
             roleKey,
+            authorities,
             accessTokenValiditySeconds,
             refreshTokenValiditySeconds,
             tfaAccessTokenValiditySeconds,

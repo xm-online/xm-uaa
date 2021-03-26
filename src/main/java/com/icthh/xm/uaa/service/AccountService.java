@@ -18,7 +18,7 @@ import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -124,8 +124,8 @@ public class AccountService {
             user.setLastName(updatedUser.getLastName());
             user.setLangKey(updatedUser.getLangKey());
             user.setImageUrl(updatedUser.getImageUrl());
-            if (StringUtils.isNoneBlank(updatedUser.getRoleKey())) {
-                user.setRoleKey(updatedUser.getRoleKey());
+            if(CollectionUtils.isNotEmpty(updatedUser.getAuthorities())){
+                user.setAuthorities(updatedUser.getAuthorities());
             }
             user.setData(updatedUser.getData());
             user.setAccessTokenValiditySeconds(updatedUser.getAccessTokenValiditySeconds());

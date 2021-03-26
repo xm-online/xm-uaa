@@ -47,6 +47,7 @@ public final class Constants {
     public static final String AUTH_ADDITIONAL_DETAILS = "additionalDetails";
 
     public static final String CREATE_TOKEN_TIME = "createTokenTime";
+    public static final String MULTI_ROLE_ENABLED = "multiRoleEnabled";
     public static final String TOKEN_AUTH_DETAILS_TFA_VERIFICATION_OTP_KEY = "tfaVerificationKey";
     public static final String TOKEN_AUTH_DETAILS_TFA_OTP_CHANNEL_TYPE = "tfaOtpChannel";
 

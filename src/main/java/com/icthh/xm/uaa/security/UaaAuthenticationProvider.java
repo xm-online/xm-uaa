@@ -93,7 +93,7 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
         }
 
         User user = getUser(authentication);
-        if (!self.isTermsOfConditionsAccepted(user) && !SUPER_ADMIN.equals(user.getRoleKey())) {
+        if (!self.isTermsOfConditionsAccepted(user) && !user.getAuthorities().contains(SUPER_ADMIN)) {
             User userWithUpdatedToken = userService.updateAcceptTermsOfConditionsToken(user);
             throw new NeedTermsOfConditionsException(userWithUpdatedToken.getAcceptTocOneTimeToken());
         }
@@ -113,7 +113,7 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
             log.info("check password expiration, passwordUpdateDate: {}, currentDate: {}, expirationPeriod: {}",
                 updatePasswordDate, currentDate, expirationPeriod);
             long period = DAYS.between(updatePasswordDate, currentDate);
-            if (period > expirationPeriod && !SUPER_ADMIN.equals(user.getRoleKey())) {
+            if (period > expirationPeriod && !user.getAuthorities().contains(SUPER_ADMIN)) {
                 throw new CredentialsExpiredException("Password expiration period is over, please change password");
             }
         }
