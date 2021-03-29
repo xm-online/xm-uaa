@@ -12,8 +12,8 @@ import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.commons.permission.domain.Permission;
 import com.icthh.xm.commons.permission.domain.Privilege;
 import com.icthh.xm.commons.permission.domain.Role;
-import com.icthh.xm.commons.permission.domain.mapper.PermissionMapper;
 import com.icthh.xm.commons.permission.domain.mapper.PrivilegeMapper;
+import com.icthh.xm.commons.permission.service.PermissionMappingService;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
@@ -74,6 +74,7 @@ public class TenantRoleService {
     private final EnvironmentService environmentService;
     private final CommonConfigRepository commonConfigRepository;
     private final TenantPropertiesService tenantPropertiesService;
+    private final PermissionMappingService permissionMappingService;
 
     /**
      * Get roles properties.
@@ -207,7 +208,7 @@ public class TenantRoleService {
             return Collections.emptyList();
         }
 
-        Map<String, Permission> permissions = PermissionMapper.ymlToPermissions(permissionsFile);
+        Map<String, Permission> permissions = permissionMappingService.ymlToPermissions(permissionsFile);
 
         return permissions.values()
                           .stream()
