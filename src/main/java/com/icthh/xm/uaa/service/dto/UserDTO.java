@@ -151,7 +151,9 @@ public class UserDTO {
         List<String> authorities = this.authorities == null ? new ArrayList<>() : new ArrayList<>(this.authorities);
         authorities.remove(this.roleKey);
         authorities.remove(roleKey);
-        authorities.add(0, roleKey);
+        if (roleKey != null) {
+            authorities.add(0, roleKey);
+        }
         this.authorities = authorities;
         this.roleKey = roleKey;
     }
