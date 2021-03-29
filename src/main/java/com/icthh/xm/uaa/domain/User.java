@@ -122,6 +122,7 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "tfa_access_token_validity")
     private Integer tfaAccessTokenValiditySeconds;
 
+    @Getter(AccessLevel.PRIVATE)
     @Column(name = "role_key")
     private String roleKey;
 

@@ -119,7 +119,7 @@ public class UserDTO {
             user.getLastModifiedBy(),
             user.getLastModifiedDate(),
             user.getUserKey(),
-            user.getRoleKey(),
+            getFirst(user.getRoleKey(), null),
             user.getAuthorities(),
             user.getAccessTokenValiditySeconds(),
             user.getRefreshTokenValiditySeconds(),
