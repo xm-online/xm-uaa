@@ -62,8 +62,8 @@ public class JacksonConfiguration {
     }
 
     @Bean
-    public MultiroleSupportModule multiroleSupportModule(TenantPropertiesService tenantPropertiesService) {
-        return new MultiroleSupportModule(tenantPropertiesService);
+    public MultiroleSupportModule multiroleSupportModule() {
+        return new MultiroleSupportModule();
     }
 
 }

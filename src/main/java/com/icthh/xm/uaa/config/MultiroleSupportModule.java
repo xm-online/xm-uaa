@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MultiroleSupportModule extends SimpleModule {
 
-    public MultiroleSupportModule(TenantPropertiesService tenantPropertiesService) {
+    public MultiroleSupportModule() {
         addDeserializer(UserDTO.class, new UserDtoDeserializer());
     }
 
