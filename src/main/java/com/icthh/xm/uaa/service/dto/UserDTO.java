@@ -4,6 +4,7 @@ import static com.google.common.collect.Iterables.getFirst;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
@@ -73,6 +74,7 @@ public class UserDTO {
     private String userKey;
 
     private String roleKey;
+
     private List<String> authorities;
     private Integer accessTokenValiditySeconds;
 
@@ -146,9 +148,12 @@ public class UserDTO {
     }
 
     public void setRoleKey(String roleKey) {
-        if (roleKey != null && !this.authorities.contains(roleKey)) {
-            this.authorities.add(0, roleKey);
-        }
+        List<String> authorities = this.authorities == null ? new ArrayList<>() : new ArrayList<>(this.authorities);
+        authorities.remove(this.roleKey);
+        authorities.remove(roleKey);
+        authorities.add(0, roleKey);
+        this.authorities = authorities;
+        this.roleKey = roleKey;
     }
 
     public List<String> getAuthorities(){

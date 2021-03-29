@@ -5,6 +5,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 
+import com.icthh.xm.uaa.service.TenantPropertiesService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.zalando.problem.ProblemModule;
@@ -58,6 +59,11 @@ public class JacksonConfiguration {
     @Bean
     ConstraintViolationProblemModule constraintViolationProblemModule() {
         return new ConstraintViolationProblemModule();
+    }
+
+    @Bean
+    public MultiroleSupportModule multiroleSupportModule(TenantPropertiesService tenantPropertiesService) {
+        return new MultiroleSupportModule(tenantPropertiesService);
     }
 
 }

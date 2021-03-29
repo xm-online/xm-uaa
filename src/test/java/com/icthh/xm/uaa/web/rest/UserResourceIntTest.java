@@ -25,6 +25,8 @@ import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.mapper.UserMapper;
 import com.icthh.xm.uaa.service.query.UserQueryService;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
+
+import java.lang.reflect.Field;
 import java.util.function.Consumer;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -49,6 +51,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ReflectionUtils;
 
 import javax.persistence.EntityManager;
 import java.time.Instant;
@@ -66,6 +69,7 @@ import static com.icthh.xm.uaa.web.constant.ErrorConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -113,6 +117,7 @@ public class UserResourceIntTest {
     private static final String UPDATED_LANGKEY = "fr";
 
     private static final String ROLE_USER = "ROLE_USER";
+    private static final String UPDATE_ROLE_USER = "UPDATED_ROLE_USER";
 
     private static final boolean AUTO_LOGOUT_ENABLED = true;
     private static final int AUTO_LOGOUT_TIME = 10;
@@ -605,6 +610,38 @@ public class UserResourceIntTest {
         assertThat(testUser.isActivated()).isEqualTo(managedUserVM.isActivated());
         //ASSERT THAT ROLE IS CHANGED
         assertThat(testUser.getAuthorities()).isEqualTo(managedUserVM.getAuthorities());
+    }
+
+    @Test
+    @Transactional
+    public void updateUserRole() throws Exception {
+        // Initialize the database
+        userRepository.saveAndFlush(user);
+        int databaseSizeBeforeUpdate = userRepository.findAll().size();
+
+        // Update the user
+        Optional<User> userForUpdateOpt = userRepository.findById(user.getId());
+        assertTrue(userForUpdateOpt.isPresent());
+        User userForUpdate = userForUpdateOpt.get();
+
+        UserDTO dto = new UserDTO(userForUpdate);
+        Field roleKey = dto.getClass().getDeclaredField("roleKey");
+        roleKey.setAccessible(true);
+        roleKey.set(dto, UPDATE_ROLE_USER);
+        assertEquals(List.of(ROLE_USER), dto.getAuthorities());
+        assertEquals(UPDATE_ROLE_USER, dto.getRoleKey());
+
+        restUserMockMvc.perform(put("/api/users")
+                .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                .content(TestUtil.convertObjectToJsonBytes(dto)))
+                .andExpect(status().isOk());
+
+        // Validate the User in the database
+        List<User> userList = userRepository.findAll();
+        assertThat(userList).hasSize(databaseSizeBeforeUpdate);
+        User testUser = userList.get(userList.size() - 1);
+
+        assertThat(new UserDTO(testUser).getRoleKey()).isEqualTo(UPDATE_ROLE_USER);
     }
 
     @Test
