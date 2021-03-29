@@ -26,7 +26,7 @@ public class TenantPropertiesService implements RefreshableConfiguration {
 
     private static final String TENANT_NAME = "tenantName";
 
-    private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+    private final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
     private final ConcurrentHashMap<String, TenantProperties> tenantProps = new ConcurrentHashMap<>();
 

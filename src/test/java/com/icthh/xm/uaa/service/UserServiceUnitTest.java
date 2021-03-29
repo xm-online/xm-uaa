@@ -6,7 +6,6 @@ import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
-import com.icthh.xm.uaa.repository.SocialUserConnectionRepository;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.security.TokenConstraintsService;
@@ -47,15 +46,11 @@ public class UserServiceUnitTest {
     @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
-    private SocialService socialService;
-    @Mock
     private TenantPropertiesService tenantPropertiesService;
     @Mock
     private XmAuthenticationContextHolder xmAuthenticationContextHolder;
     @Mock
     private TokenConstraintsService tokenConstraintsService;
-    @Mock
-    private SocialUserConnectionRepository socialUserConnectionRepository;
 
     @Before
     public void setUp() throws Exception {
@@ -153,7 +148,6 @@ public class UserServiceUnitTest {
         given(xmAuthenticationContextHolder.getContext()).willReturn(getDummyCTX());
         given(userRepository.findOneWithLoginsByUserKey(userKey)).willReturn(Optional.of(createUser(userKey, "dummyRole")));
         service.deleteUser(userKey);
-        verify(socialUserConnectionRepository, times(1)).deleteByUserKey(userKey);
         verify(userRepository, times(1)).delete(any());
     }
 
@@ -164,7 +158,6 @@ public class UserServiceUnitTest {
         given(userRepository.findOneWithLoginsByUserKey(userKey)).willReturn(Optional.of(createUser(userKey, "dummyRole")));
         Consumer<UserDTO> callBack = mockLambda(Consumer.class, userDto -> System.out.println("userKey=" + userDto));
         service.deleteUser(userKey, callBack);
-        verify(socialUserConnectionRepository, times(1)).deleteByUserKey(userKey);
         verify(userRepository, times(1)).delete(any());
         verify(callBack, times(1)).accept(any());
     }
@@ -176,7 +169,6 @@ public class UserServiceUnitTest {
         given(userRepository.findOneWithLoginsByUserKey(userKey)).willReturn(Optional.of(createUser(userKey, "dummyRole")));
         Consumer<UserDTO> callBack = mockLambda(Consumer.class, userDto -> System.out.println("userKey=" + userDto));
         service.deleteUser("UNDEFINED_KEY", callBack);
-        verify(socialUserConnectionRepository, times(0)).deleteByUserKey(userKey);
         verify(userRepository, times(0)).delete(any());
         verify(callBack, times(0)).accept(any());
     }

@@ -145,6 +145,12 @@ public class UserDTO {
         this.authorities = authorities;
     }
 
+    public void setRoleKey(String roleKey) {
+        if (roleKey != null && !this.authorities.contains(roleKey)) {
+            this.authorities.add(0, roleKey);
+        }
+    }
+
     public List<String> getAuthorities(){
         return isEmpty(this.authorities) && roleKey != null ? List.of(this.roleKey) : authorities;
     }
