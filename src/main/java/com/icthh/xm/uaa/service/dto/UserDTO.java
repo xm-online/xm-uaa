@@ -143,7 +143,6 @@ public class UserDTO {
 
     public void setAuthorities(List<String> authorities){
         this.authorities = authorities;
-        this.roleKey = getFirst(authorities, null);
     }
 
     public List<String> getAuthorities(){
