@@ -145,7 +145,7 @@ public class UserDTO {
 
     public void setAuthorities(List<String> authorities){
         this.authorities = authorities;
-        setRoleKey(getRoleKey());
+        setRoleKey(this.roleKey);
     }
 
     public void setRoleKey(String roleKey) {
