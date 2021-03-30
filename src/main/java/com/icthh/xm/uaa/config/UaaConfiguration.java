@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.config;
 
 import com.icthh.xm.commons.permission.constants.RoleConstant;
+import com.icthh.xm.commons.permission.service.PermissionMappingService;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.security.DomainTokenServices;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
@@ -216,5 +217,10 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
         provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
         return provider;
+    }
+
+    @Bean(name = "allPermissionMappingService")
+    public PermissionMappingService allPermissionMappingService() {
+        return new PermissionMappingService(p -> true);
     }
 }

@@ -14,6 +14,7 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
 
@@ -37,6 +38,7 @@ public class TenantPermissionService implements RefreshableConfiguration {
 
     private final PermissionProperties permissionProperties;
     private final TenantContextHolder tenantContextHolder;
+    @Qualifier("allPermissionMappingService")
     private final PermissionMappingService permissionMappingService;
 
     private final AntPathMatcher matcher = new AntPathMatcher();
