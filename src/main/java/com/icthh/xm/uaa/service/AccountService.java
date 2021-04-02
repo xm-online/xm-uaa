@@ -95,6 +95,8 @@ public class AccountService {
         }
 
         user.setActivated(true);
+        // for avoid second use of activation link in case when user retired, but activation link not expired
+        user.setActivationKey(RandomUtil.generateActivationKey());
         return user;
     }
 
