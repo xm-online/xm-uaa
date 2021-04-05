@@ -1,0 +1,32 @@
+---
+entity:
+  ROLE_ADMIN:
+  - privilegeKey: "ATTACHMENT.DELETE"
+    disabled: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: "SKIP"
+  ROLE_PRODUCT_MANAGER:
+  - privilegeKey: "ATTACHMENT.CREATE"
+    disabled: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: "SKIP"
+uaa:
+  ROLE_ADMIN:
+  - privilegeKey: "ATTACHMENT.CREATE"
+    disabled: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: "SKIP"
+  - privilegeKey: "MISSING.PRIVILEGE"
+    disabled: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: "SKIP"
+  ROLE_ANONYMOUS:
+  - privilegeKey: "ATTACHMENT.CREATE"
+    disabled: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: "SKIP"

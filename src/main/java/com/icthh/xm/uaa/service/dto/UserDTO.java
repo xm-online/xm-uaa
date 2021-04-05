@@ -73,6 +73,7 @@ public class UserDTO {
     private String userKey;
 
     private String roleKey;
+
     private List<String> authorities;
     private Integer accessTokenValiditySeconds;
 
@@ -143,7 +144,18 @@ public class UserDTO {
 
     public void setAuthorities(List<String> authorities){
         this.authorities = authorities;
-        this.roleKey = getFirst(authorities, null);
+        setRoleKey(this.roleKey);
+    }
+
+    public void setRoleKey(String roleKey) {
+        List<String> authorities = this.authorities == null ? new ArrayList<>() : new ArrayList<>(this.authorities);
+        authorities.remove(this.roleKey);
+        authorities.remove(roleKey);
+        if (roleKey != null) {
+            authorities.add(0, roleKey);
+        }
+        this.authorities = authorities;
+        this.roleKey = roleKey;
     }
 
     public List<String> getAuthorities(){

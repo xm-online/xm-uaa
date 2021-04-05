@@ -72,6 +72,7 @@ import java.util.Optional;
 import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
 import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
+import static com.icthh.xm.uaa.utils.FileUtil.readConfigFile;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -142,7 +143,7 @@ public class AccountResourceIntTest {
     @Mock
     private TenantRoleService tenantRoleService;
 
-    @Mock
+    @Autowired
     private TenantPermissionService tenantPermissionService;
 
     @Mock
@@ -306,6 +307,49 @@ public class AccountResourceIntTest {
                     .andExpect(jsonPath("$.langKey").value("en"))
                     .andExpect(jsonPath("$.logins[0].login").value("email"))
                     .andExpect(jsonPath("$.roleKey").value(RoleConstant.SUPER_ADMIN));
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        });
+    }
+
+    @Test
+    public void testGetExistingAccount_shouldReturnPermissionsFromAllApps() {
+        executeForUserKey(DEF_USER_KEY, () -> {
+            UserLogin userLogin = new UserLogin();
+            userLogin.setLogin("email");
+            userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
+
+            User user = new User();
+            user.setUserKey("test");
+            user.setFirstName("john");
+            user.setLastName("doe");
+            user.setImageUrl("http://placehold.it/50x50");
+            user.setLangKey("en");
+            user.setRoleKey("ROLE_ADMIN");
+            user.getLogins().add(userLogin);
+            when(mockUserService.findOneWithLoginsByUserKey(anyString())).thenReturn(Optional.of(user));
+
+            tenantPermissionService.onRefresh("/config/tenants/XM/permissions.yml",
+                readConfigFile("/config/tenants/XM/permissions_multiple_apps.yml"));
+
+            try {
+                restUserMockMvc.perform(get("/api/account")
+                    .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                    .andExpect(jsonPath("$.firstName").value("john"))
+                    .andExpect(jsonPath("$.lastName").value("doe"))
+                    .andExpect(jsonPath("$.imageUrl").value("http://placehold.it/50x50"))
+                    .andExpect(jsonPath("$.langKey").value("en"))
+                    .andExpect(jsonPath("$.logins[0].login").value("email"))
+                    .andExpect(jsonPath("$.permissions[0].msName").value("uaa"))
+                    .andExpect(jsonPath("$.permissions[0].privilegeKey").value("ATTACHMENT.CREATE"))
+                    .andExpect(jsonPath("$.permissions[1].msName").value("entity"))
+                    .andExpect(jsonPath("$.permissions[1].privilegeKey").value("ATTACHMENT.DELETE"))
+                    .andExpect(jsonPath("$.permissions[2].msName").value("uaa"))
+                    .andExpect(jsonPath("$.permissions[2].privilegeKey").value("MISSING.PRIVILEGE"))
+                    .andExpect(jsonPath("$.roleKey").value("ROLE_ADMIN"));
             } catch (Exception e) {
                 throw new IllegalStateException(e);
             }

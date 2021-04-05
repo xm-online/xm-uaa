@@ -17,8 +17,7 @@ public class DomainJwtAccessTokenDetailsPostProcessor {
 
     @LogicExtensionPoint(value = "ProcessJwtAccessTokenDetails", resolver = OptionalProfileHeaderResolver.class)
     public void processJwtAccessTokenDetails(OAuth2Authentication authentication, Map<String, Object> details) {
-        Map<String, Object> additionalDetails = new HashMap<>();
-        additionalDetails.putAll(authentication.getOAuth2Request().getRequestParameters());
+        Map<String, Object> additionalDetails = new HashMap<>(authentication.getOAuth2Request().getRequestParameters());
         // password and client_secret removed by spring
         additionalDetails.remove("grant_type");
         additionalDetails.remove("username");

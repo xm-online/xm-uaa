@@ -50,7 +50,7 @@ public class JsonDataValidatorUnitTest {
     public void testValidationSuccessful() {
         // GIVEN
         when(user.getAuthorities()).thenReturn(List.of(ROLE_USER));
-        when(userSpecService.getUserSpec(List.of(ROLE_USER))).thenReturn(List.of(new UserSpec(ROLE_USER, DATA_SPEC_TEMPLATE)));
+        when(userSpecService.getUserSpec(List.of(ROLE_USER))).thenReturn(List.of(new UserSpec(ROLE_USER, DATA_SPEC_TEMPLATE, null)));
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("stringKey", "word");
@@ -68,7 +68,7 @@ public class JsonDataValidatorUnitTest {
     public void testValidationErrorForSchemeNotMatch() {
         // GIVEN
         when(user.getAuthorities()).thenReturn(List.of(ROLE_USER));
-        when(userSpecService.getUserSpec(List.of(ROLE_USER))).thenReturn(List.of(new UserSpec(ROLE_USER, DATA_SPEC_TEMPLATE)));
+        when(userSpecService.getUserSpec(List.of(ROLE_USER))).thenReturn(List.of(new UserSpec(ROLE_USER, DATA_SPEC_TEMPLATE, null)));
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("stringKey", 1);
@@ -89,7 +89,7 @@ public class JsonDataValidatorUnitTest {
     public void testValidationForEmptyDataButNotEmptySpec() {
         // GIVEN
         when(user.getAuthorities()).thenReturn(List.of(ROLE_USER));
-        when(userSpecService.getUserSpec(List.of(ROLE_USER))).thenReturn(List.of(new UserSpec(ROLE_USER, DATA_SPEC_TEMPLATE)));
+        when(userSpecService.getUserSpec(List.of(ROLE_USER))).thenReturn(List.of(new UserSpec(ROLE_USER, DATA_SPEC_TEMPLATE, null)));
 
         when(user.getData()).thenReturn(Collections.emptyMap());
 

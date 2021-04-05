@@ -1,17 +1,23 @@
 package com.icthh.xm.uaa.config;
 
 import com.icthh.xm.commons.permission.constants.RoleConstant;
+import com.icthh.xm.commons.permission.service.PermissionMappingService;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.security.DomainTokenServices;
+import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.security.TokenConstraintsService;
 import com.icthh.xm.uaa.security.UserSecurityValidator;
 import com.icthh.xm.uaa.security.oauth2.athorization.code.CustomAuthorizationCodeServices;
+import com.icthh.xm.uaa.security.oauth2.idp.XmJwkTokenStore;
+import com.icthh.xm.uaa.security.oauth2.idp.IdpTokenGranter;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpGenerator;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
 import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpTokenGranter;
 import com.icthh.xm.uaa.security.provider.DefaultAuthenticationRefreshProvider;
+import com.icthh.xm.uaa.service.IdpIdTokenMappingService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
+import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,7 +91,6 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/social/**").permitAll()
                 .antMatchers("/api/register").permitAll()
                 .antMatchers("/api/activate").permitAll()
                 .antMatchers("/api/authenticate").permitAll()
@@ -117,6 +122,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
 
     private final OtpStore otpStore;
     private final UserService userService;
+    private final UserLoginService userLoginService;
     private final JwtTokenStore tokenStore;
     private final OtpGenerator otpGenerator;
     private final PasswordEncoder passwordEncoder;
@@ -126,10 +132,12 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
     private final TenantPropertiesService tenantPropertiesService;
     private final JwtAccessTokenConverter jwtAccessTokenConverter;
     private final TokenConstraintsService tokenConstraintsService;
+    private final IdpIdTokenMappingService idpIdTokenMappingService;
+    private final DomainUserDetailsService domainUserDetailsService;
     private final CustomAuthorizationCodeServices customAuthorizationCodeServices;
     private final DefaultAuthenticationRefreshProvider defaultAuthenticationRefreshProvider;
     private final UserSecurityValidator userSecurityValidator;
-
+    private final XmJwkTokenStore jwkTokenStore;
 
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
@@ -147,7 +155,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
         ;
     }
 
-    private TokenGranter tokenGranter(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
+    private TokenGranter tokenGranter(AuthorizationServerEndpointsConfigurer endpoints) {
         List<TokenGranter> granters = new ArrayList<>(Collections.singletonList(endpoints.getTokenGranter()));
         TfaOtpTokenGranter tfaOtpTokenGranter = new TfaOtpTokenGranter(tenantContextHolder,
             tokenServices(),
@@ -155,7 +163,21 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
             endpoints.getOAuth2RequestFactory(),
             tokenStore,
             authenticationManager);
+
+        IdpTokenGranter idpTokenGranter = new IdpTokenGranter(
+            tokenServices(),
+            clientDetailsService,
+            endpoints.getOAuth2RequestFactory(),
+            jwkTokenStore,
+            domainUserDetailsService,
+            userService,
+            userLoginService,
+            idpIdTokenMappingService,
+            tenantContextHolder);
+
         granters.add(tfaOtpTokenGranter);
+        granters.add(idpTokenGranter);
+
         return new CompositeTokenGranter(granters);
     }
 
@@ -195,5 +217,10 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
         provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
         return provider;
+    }
+
+    @Bean(name = "allPermissionMappingService")
+    public PermissionMappingService allPermissionMappingService() {
+        return new PermissionMappingService(p -> true);
     }
 }
