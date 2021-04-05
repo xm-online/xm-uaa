@@ -698,6 +698,7 @@ public class AccountResourceIntTest {
         Optional<User> result = userRepository.findById(user.getId());
         assertTrue(result.isPresent());
         assertThat(result.get().isActivated()).isTrue();
+        assertThat(result.get().getActivationKey()).isNotEqualTo(activationKey);
     }
 
     @Test
