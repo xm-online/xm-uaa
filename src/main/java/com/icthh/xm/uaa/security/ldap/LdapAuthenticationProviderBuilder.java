@@ -98,7 +98,7 @@ public class LdapAuthenticationProviderBuilder {
         adLdapAuthenticationProvider.setUserDetailsContextMapper(
             new UaaLdapUserDetailsContextMapper(userDetailsService, userService, conf));
 
-        if (isNotBlank(conf.getSearchFields()) && isBlank(conf.getAuthField())) {
+        if (isNotBlank(conf.getSearchFields())) {
             adLdapAuthenticationProvider.setSearchFilter(conf.getSearchFields());
         }
 

@@ -1,5 +1,7 @@
 package com.icthh.xm.uaa.security;
 
+import com.icthh.xm.commons.lep.LogicExtensionPoint;
+import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
@@ -24,6 +26,7 @@ import static java.util.stream.Collectors.toList;
 /**
  * Authenticate a user from the database.
  */
+@LepService(group = "service.user.details")
 @Service("userDetailsService")
 @AllArgsConstructor
 @Slf4j
@@ -35,6 +38,7 @@ public class DomainUserDetailsService implements UserDetailsService {
     @Override
     @Transactional
     @IgnoreLogginAspect
+    @LogicExtensionPoint("LoadUserByUsername")
     public DomainUserDetails loadUserByUsername(final String login) {
         final String lowerLogin = login.toLowerCase().trim();
 

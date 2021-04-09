@@ -357,6 +357,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    @LogicExtensionPoint(("FindOneByLogin"))
     public Optional<User> findOneByLogin(String login) {
         return userLoginRepository.findOneByLoginIgnoreCase(login).map(UserLogin::getUser);
     }
