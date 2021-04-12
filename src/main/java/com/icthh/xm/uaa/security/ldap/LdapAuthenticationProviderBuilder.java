@@ -7,9 +7,11 @@ import com.icthh.xm.uaa.domain.properties.TenantProperties.Ldap;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -98,7 +100,7 @@ public class LdapAuthenticationProviderBuilder {
         adLdapAuthenticationProvider.setUserDetailsContextMapper(
             new UaaLdapUserDetailsContextMapper(userDetailsService, userService, conf));
 
-        if (isNotBlank(conf.getSearchFields())) {
+        if (isNotBlank(conf.getSearchFields()) && isBlank(conf.getAuthField())) {
             adLdapAuthenticationProvider.setSearchFilter(conf.getSearchFields());
         }
 
