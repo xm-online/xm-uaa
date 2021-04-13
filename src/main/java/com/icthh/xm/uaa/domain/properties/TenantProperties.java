@@ -84,6 +84,8 @@ public class TenantProperties {
         @JsonProperty("removeDefaultPermissions")
         private Boolean removeDefaultPermissions = false;
 
+        private boolean reIssueRefreshToken = false;
+
         @JsonSetter("accessTokenValiditySeconds")
         public void setAccessTokenValiditySeconds(Integer accessTokenValiditySeconds) {
             this.accessTokenValiditySeconds = accessTokenValiditySeconds;
