@@ -2,7 +2,6 @@ package com.icthh.xm.uaa.security;
 
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.domain.User;
-import com.icthh.xm.uaa.security.oauth2.idp.XmJwkTokenStore;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpGenerator;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
@@ -229,14 +228,14 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
             authentication = new OAuth2Authentication(authentication.getOAuth2Request(), user);
         }
 
-        if (!tokenConstraintsService.isReuseRefreshToken()) {
+        if (tenantPropertiesService.getTenantProps().getSecurity().isReIssueRefreshToken()) {
             tokenStore.removeRefreshToken(refreshToken);
             refreshToken = createRefreshToken(authentication);
         }
 
         OAuth2AccessToken accessToken = createAccessToken(authentication, refreshToken);
         tokenStore.storeAccessToken(accessToken, authentication);
-        if (!tokenConstraintsService.isReuseRefreshToken()) {
+        if (tenantPropertiesService.getTenantProps().getSecurity().isReIssueRefreshToken()) {
             tokenStore.storeRefreshToken(accessToken.getRefreshToken(), authentication);
         }
         return accessToken;

@@ -10,6 +10,7 @@ import static com.icthh.xm.uaa.config.Constants.KEYSTORE_PATH;
 import static com.icthh.xm.uaa.config.Constants.KEYSTORE_PSWRD;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
@@ -30,6 +31,7 @@ import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
 import java.security.KeyPair;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -45,7 +47,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.common.DefaultExpiringOAuth2RefreshToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.oauth2.common.OAuth2RefreshToken;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.OAuth2Request;
@@ -96,6 +100,8 @@ public class DomainTokenServicesUnitTest {
     @InjectMocks
     private DomainTokenServices tokenServices;
 
+    private TokenStore tokenStore;
+
     @Before
     public void setup() throws Exception {
         when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(TENANT)));
@@ -112,7 +118,7 @@ public class DomainTokenServicesUnitTest {
             .getKeyPair(KEYSTORE_ALIAS);
         converter.setKeyPair(keyPair);
         converter.afterPropertiesSet();
-        TokenStore tokenStore = new JwtTokenStore(converter);
+        tokenStore = new JwtTokenStore(converter);
 
 
         when(tenantProperties.getSecurity()).thenReturn(security);
@@ -184,6 +190,63 @@ public class DomainTokenServicesUnitTest {
 
         OAuth2AccessToken refreshedToken = tokenServices.refreshAccessToken(refreshTokenValue, tokenRequest);
         assertTokenAttributes(refreshedToken);
+    }
+
+    @Test
+    public void testByDefaultNewRefreshTokenShouldHaveTheSameExpirationAsPrevious() {
+        whenFindUserByLogin(true);
+        when(security.getRefreshTokenValiditySeconds()).thenReturn(60 * 60);
+        when(authenticationRefreshProvider.refresh(any(OAuth2Authentication.class))).thenCallRealMethod();
+
+        OAuth2AccessToken accessToken = tokenServices.createAccessToken(createAuthentication(LOGIN, TENANT, ROLE));
+        assertTokenAttributes(accessToken);
+
+        OAuth2RefreshToken parsedRefreshToken = tokenStore.readRefreshToken(accessToken.getRefreshToken().getValue());
+        assertTrue("Refresh token should be with expiration date", parsedRefreshToken instanceof DefaultExpiringOAuth2RefreshToken);
+        Date originalRefreshTokenExpiration = ((DefaultExpiringOAuth2RefreshToken) parsedRefreshToken).getExpiration();
+        String refreshTokenValue = accessToken.getRefreshToken().getValue();
+
+        Map<String, String> params = new HashMap<>();
+        params.put("grant_type", "refresh_token");
+        params.put("refresh_token", refreshTokenValue);
+
+        TokenRequest tokenRequest = new TokenRequest(params, CLIENT, null, "refresh_token");
+
+        when(security.getRefreshTokenValiditySeconds()).thenReturn(2 * 60 * 60);
+        OAuth2AccessToken refreshedToken = tokenServices.refreshAccessToken(refreshTokenValue, tokenRequest);
+        assertTokenAttributes(refreshedToken);
+
+        assertTrue(refreshedToken.getRefreshToken() instanceof DefaultExpiringOAuth2RefreshToken);
+        assertEquals(originalRefreshTokenExpiration, ((DefaultExpiringOAuth2RefreshToken) refreshedToken.getRefreshToken()).getExpiration());
+    }
+
+    @Test
+    public void testWithReIssueSettingNewRefreshTokenShouldNotHaveTheSameExpirationAsPrevious() {
+        whenFindUserByLogin(true);
+        when(security.getRefreshTokenValiditySeconds()).thenReturn(60 * 60);
+        when(security.isReIssueRefreshToken()).thenReturn(true);
+        when(authenticationRefreshProvider.refresh(any(OAuth2Authentication.class))).thenCallRealMethod();
+
+        OAuth2AccessToken accessToken = tokenServices.createAccessToken(createAuthentication(LOGIN, TENANT, ROLE));
+        assertTokenAttributes(accessToken);
+
+        OAuth2RefreshToken parsedRefreshToken = tokenStore.readRefreshToken(accessToken.getRefreshToken().getValue());
+        assertTrue("Refresh token should be with expiration date", parsedRefreshToken instanceof DefaultExpiringOAuth2RefreshToken);
+        Date originalRefreshTokenExpiration = ((DefaultExpiringOAuth2RefreshToken) parsedRefreshToken).getExpiration();
+        String refreshTokenValue = accessToken.getRefreshToken().getValue();
+
+        Map<String, String> params = new HashMap<>();
+        params.put("grant_type", "refresh_token");
+        params.put("refresh_token", refreshTokenValue);
+
+        TokenRequest tokenRequest = new TokenRequest(params, CLIENT, null, "refresh_token");
+
+        when(security.getRefreshTokenValiditySeconds()).thenReturn(2 * 60 * 60);
+        OAuth2AccessToken refreshedToken = tokenServices.refreshAccessToken(refreshTokenValue, tokenRequest);
+        assertTokenAttributes(refreshedToken);
+
+        assertTrue(refreshedToken.getRefreshToken() instanceof DefaultExpiringOAuth2RefreshToken);
+        assertTrue(originalRefreshTokenExpiration.before(((DefaultExpiringOAuth2RefreshToken) refreshedToken.getRefreshToken()).getExpiration()));
     }
 
     @Test
