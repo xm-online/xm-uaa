@@ -16,12 +16,14 @@ import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
+import org.springframework.security.oauth2.common.ExpiringOAuth2RefreshToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
@@ -31,6 +33,8 @@ import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenCo
  */
 @RequiredArgsConstructor
 public class DomainJwtAccessTokenConverter extends JwtAccessTokenConverter {
+
+    private static final String REFRESH_TOKEN_EXPIRES_IN = "refresh_token_expires_in";
 
     private final TenantContextHolder tenantContextHolder;
     private final TenantPropertiesService tenantPropertiesService;
@@ -48,7 +52,27 @@ public class DomainJwtAccessTokenConverter extends JwtAccessTokenConverter {
             enrichCustomDetails(authentication, authDetails);
             DefaultOAuth2AccessToken.class.cast(accessToken).setAdditionalInformation(authDetails);
         }
-        return super.enhance(accessToken, authentication);
+
+        OAuth2AccessToken enhancedAccessToken = super.enhance(accessToken, authentication);
+        postProcessAccessToken(enhancedAccessToken);
+
+        return enhancedAccessToken;
+    }
+
+    /**
+     * The idea of this method is to add fields to the token which shouldn't be converted to JWT BASE64 view
+     * But should be present at create access token response, so the method should executed immediately after converting token to JWT view
+     *
+     * @param accessToken access token to process
+     */
+    private void postProcessAccessToken(OAuth2AccessToken accessToken) {
+        if (accessToken.getRefreshToken() != null) {
+            if (accessToken.getRefreshToken() instanceof ExpiringOAuth2RefreshToken) {
+                Date expiration = ((ExpiringOAuth2RefreshToken) accessToken.getRefreshToken()).getExpiration();
+                long now = System.currentTimeMillis();
+                accessToken.getAdditionalInformation().put(REFRESH_TOKEN_EXPIRES_IN, (expiration.getTime() - now) / 1000);
+            }
+        }
     }
 
     private void enrichCustomDetails(OAuth2Authentication authentication, Map<String, Object> details) {
