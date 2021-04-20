@@ -9,6 +9,7 @@ import static com.icthh.xm.uaa.config.Constants.KEYSTORE_ALIAS;
 import static com.icthh.xm.uaa.config.Constants.KEYSTORE_PATH;
 import static com.icthh.xm.uaa.config.Constants.KEYSTORE_PSWRD;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -20,6 +21,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
@@ -35,6 +38,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import lombok.SneakyThrows;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,6 +51,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.jwt.JwtHelper;
 import org.springframework.security.oauth2.common.DefaultExpiringOAuth2RefreshToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2RefreshToken;
@@ -67,6 +72,7 @@ public class DomainTokenServicesUnitTest {
     private static final String CLIENT = "testClient";
     private static final String LOGIN = "testLogin";
     private static final String ROLE = "testRole";
+    public static final String REFRESH_TOKEN_EXPIRES_IN = "refresh_token_expires_in";
 
     @Mock
     private TenantPropertiesService tenantPropertiesService;
@@ -99,6 +105,8 @@ public class DomainTokenServicesUnitTest {
 
     @InjectMocks
     private DomainTokenServices tokenServices;
+
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     private TokenStore tokenStore;
 
@@ -200,6 +208,7 @@ public class DomainTokenServicesUnitTest {
 
         OAuth2AccessToken accessToken = tokenServices.createAccessToken(createAuthentication(LOGIN, TENANT, ROLE));
         assertTokenAttributes(accessToken);
+        assertRefreshTokenExpiresInAttributes(accessToken);
 
         OAuth2RefreshToken parsedRefreshToken = tokenStore.readRefreshToken(accessToken.getRefreshToken().getValue());
         assertTrue("Refresh token should be with expiration date", parsedRefreshToken instanceof DefaultExpiringOAuth2RefreshToken);
@@ -217,7 +226,22 @@ public class DomainTokenServicesUnitTest {
         assertTokenAttributes(refreshedToken);
 
         assertTrue(refreshedToken.getRefreshToken() instanceof DefaultExpiringOAuth2RefreshToken);
+        assertRefreshTokenExpiresInAttributes(refreshedToken);
         assertEquals(originalRefreshTokenExpiration, ((DefaultExpiringOAuth2RefreshToken) refreshedToken.getRefreshToken()).getExpiration());
+    }
+
+    @SneakyThrows
+    private void assertRefreshTokenExpiresInAttributes(OAuth2AccessToken accessToken) {
+        assertTrue(accessToken.getAdditionalInformation().containsKey(REFRESH_TOKEN_EXPIRES_IN));
+
+        String accessJwt = accessToken.getValue();
+        String refreshJwt = accessToken.getRefreshToken().getValue();
+
+        Map<String, Object> accessPayload = objectMapper.readValue(JwtHelper.decode(accessJwt).getClaims(), new TypeReference<>() {});
+        Map<String, Object> refreshPayload = objectMapper.readValue(JwtHelper.decode(refreshJwt).getClaims(), new TypeReference<>() {});
+
+        assertFalse(accessPayload.containsKey(REFRESH_TOKEN_EXPIRES_IN));
+        assertFalse(refreshPayload.containsKey(REFRESH_TOKEN_EXPIRES_IN));
     }
 
     @Test
