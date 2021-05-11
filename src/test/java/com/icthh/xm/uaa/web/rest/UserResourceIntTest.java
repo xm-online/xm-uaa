@@ -504,6 +504,55 @@ public class UserResourceIntTest {
 
     @Test
     @Transactional
+    public void findUserBySoftFilter() throws Exception {
+        String firstName = "homer";
+        String lastName = "simpson";
+        String login = "al-homero";
+        userRepository.saveAndFlush(user);
+        User userHomer = createEntity("ROLE_ADMIN");
+        userHomer.setFirstName(firstName);
+        userHomer.setLastName(lastName);
+        userHomer.getLogins().get(0).setLogin(login);
+        userHomer.getLogins().add(new UserLogin() {{
+            setLogin("donutEater");
+            setTypeKey(UserLoginType.EMAIL.getValue());
+            setUser(userHomer);
+        }});
+        userRepository.saveAndFlush(userHomer);
+
+        restUserMockMvc.perform(get("/api/users/filter-soft?query=simps"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+            .andExpect(jsonPath("$[0].userKey").value(userHomer.getUserKey()))
+            .andExpect(jsonPath("$[0].firstName").value(firstName))
+            .andExpect(jsonPath("$[0].lastName").value(lastName))
+            .andExpect(jsonPath("$[0].imageUrl").value(DEFAULT_IMAGEURL))
+            .andExpect(jsonPath("$[0].langKey").value(DEFAULT_LANGKEY))
+            .andExpect(jsonPath("$[0].logins[0].login").value(login));
+
+        restUserMockMvc.perform(get("/api/users/filter-soft?query=SiMpS"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+            .andExpect(jsonPath("$[0].userKey").value(userHomer.getUserKey()));
+
+        restUserMockMvc.perform(get("/api/users/filter-soft?query=hom"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+            .andExpect(jsonPath("$[0].userKey").value(userHomer.getUserKey()));
+
+        restUserMockMvc.perform(get("/api/users/filter-soft?query=nut"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+            .andExpect(jsonPath("$[0].userKey").value(userHomer.getUserKey()));
+
+        restUserMockMvc.perform(get("/api/users/filter-soft?query=nu"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+            .andExpect(content().string("[]"));
+    }
+
+    @Test
+    @Transactional
     public void getUserByLoginContains() throws Exception {
         userRepository.saveAndFlush(user);
         getUsersByLoginContainsMatcher("test");

@@ -17,7 +17,9 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Root;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,16 +34,31 @@ public class UserQueryService extends QueryService<User> {
 
     private final UserRepository userRepository;
 
-    public Page<UserDTO> findAllUsers(UserFilterQuery filterQuery, Pageable pageable) {
-        Specification<User> specification = createSpecification(filterQuery);
+    public Page<UserDTO> findAllUsersByStrictMatch(UserFilterQuery filterQuery, Pageable pageable) {
+        Specification<User> specification = createStrictSpecification(filterQuery);
         return userRepository.findAll(specification, pageable).map(UserDTO::new);
     }
 
-    private Specification<User> createSpecification(UserFilterQuery filterQuery) {
+    public Page<UserDTO> findAllUsersBySoftMatch(String query, Pageable pageable) {
+        Specification<User> specification = createSoftSpecification(query);
+        return userRepository.findAll(specification, pageable).map(UserDTO::new);
+    }
+
+    private Specification<User> createStrictSpecification(UserFilterQuery filterQuery) {
         return createSpecs(filterQuery)
             .filter(Optional::isPresent)
             .map(Optional::get)
             .reduce(Specification.where(null), Specification::and);
+    }
+
+    private Specification<User> createSoftSpecification(String query) {
+        StringFilter filter = new StringFilter();
+        filter.setContains(query);
+        return Specification.where(
+            getLoginSpecification(filter)
+            .or(buildStringSpecification(filter, User_.lastName))
+            .or(buildStringSpecification(filter, User_.firstName))
+        );
     }
 
     private Stream<Optional<Specification<User>>> createSpecs(UserFilterQuery filterQuery) {
@@ -54,7 +71,7 @@ public class UserQueryService extends QueryService<User> {
     }
 
     private Specification<User> getLoginSpecification(StringFilter loginFilter) {
-        Function<Root<User>, Join<User, UserLogin>> functionToEntity = userRoot -> (Join<User, UserLogin>)userRoot.fetch(User_.logins);
+        Function<Root<User>, Join<User, UserLogin>> functionToEntity = userRoot -> (Join<User, UserLogin>)userRoot.join(User_.logins);
         Function<Join<User, UserLogin>, Expression<String>> entityToColumn = entity -> entity.get(UserLogin_.login);
         return buildSpecification(loginFilter, functionToEntity.andThen(entityToColumn));
     }

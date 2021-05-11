@@ -35,6 +35,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -240,9 +241,29 @@ public class UserResource {
     @GetMapping("/users/filter")
     @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'USER.GET_BY_FILTER.LIST')")
     @Timed
-    public ResponseEntity<List<UserDTO>> getAllByFilters(@ApiParam Pageable pageable, UserFilterQuery userFilterQuery){
-        final Page<UserDTO> page = userQueryService.findAllUsers(userFilterQuery,pageable);
+    public ResponseEntity<List<UserDTO>> getAllByStrictFilters(@ApiParam Pageable pageable, UserFilterQuery userFilterQuery){
+        final Page<UserDTO> page = userQueryService.findAllUsersByStrictMatch(userFilterQuery,pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/users/filter");
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * Search user by occurrence a char sequence in firstname or lastname or login
+     * @param pageable
+     * @param query - search char sequence. Minimum 3 chars
+     * @return
+     */
+    @GetMapping("/users/filter-soft")
+    @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'USER.GET_BY_FILTER.LIST')")
+    @Timed
+    public ResponseEntity<List<UserDTO>> getAllBySoftFilters(@ApiParam Pageable pageable, String query) {
+        Page<UserDTO> page;
+        if (StringUtils.length(query) < 3) {
+            page = new PageImpl<>(List.of());
+        } else {
+            page = userQueryService.findAllUsersBySoftMatch(query, pageable);
+        }
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/users/filter-soft");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
