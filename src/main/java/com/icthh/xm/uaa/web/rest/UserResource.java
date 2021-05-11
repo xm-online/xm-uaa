@@ -250,19 +250,14 @@ public class UserResource {
     /**
      * Search user by occurrence a char sequence in firstname or lastname or login
      * @param pageable
-     * @param query - search char sequence. Minimum 3 chars
+     * @param query - search char sequence
      * @return
      */
     @GetMapping("/users/filter-soft")
     @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'USER.GET_BY_FILTER.LIST')")
     @Timed
     public ResponseEntity<List<UserDTO>> getAllBySoftFilters(@ApiParam Pageable pageable, String query) {
-        Page<UserDTO> page;
-        if (StringUtils.length(query) < 3) {
-            page = new PageImpl<>(List.of());
-        } else {
-            page = userQueryService.findAllUsersBySoftMatch(query, pageable);
-        }
+        Page<UserDTO> page = userQueryService.findAllUsersBySoftMatch(query, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/users/filter-soft");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
