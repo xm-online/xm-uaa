@@ -520,7 +520,7 @@ public class UserResourceIntTest {
         }});
         userRepository.saveAndFlush(userHomer);
 
-        restUserMockMvc.perform(get("/api/users/filter-soft?query=simps"))
+        restUserMockMvc.perform(get("/api/users/filter-soft?query.contains=simps"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$[0].userKey").value(userHomer.getUserKey()))
@@ -530,22 +530,44 @@ public class UserResourceIntTest {
             .andExpect(jsonPath("$[0].langKey").value(DEFAULT_LANGKEY))
             .andExpect(jsonPath("$[0].logins[0].login").value(login));
 
-        restUserMockMvc.perform(get("/api/users/filter-soft?query=SiMpS"))
+        // search by LastName case insensitive
+        restUserMockMvc.perform(get("/api/users/filter-soft?query.contains=SiMpS"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$[0].userKey").value(userHomer.getUserKey()));
 
-        restUserMockMvc.perform(get("/api/users/filter-soft?query=hom"))
+        // search by FirstName case insensitive
+        restUserMockMvc.perform(get("/api/users/filter-soft?query.contains=hOm"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$[0].userKey").value(userHomer.getUserKey()));
 
-        restUserMockMvc.perform(get("/api/users/filter-soft?query=nut"))
+        // search by Login case insensitive
+        restUserMockMvc.perform(get("/api/users/filter-soft?query.contains=NuT"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$[0].userKey").value(userHomer.getUserKey()));
 
-        restUserMockMvc.perform(get("/api/users/filter-soft?query=nu"))
+        // search by Name and Role SUCCESS
+        restUserMockMvc.perform(get("/api/users/filter-soft?query.contains=nut&roleKey.equals=ROLE_ADMIN"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+            .andExpect(jsonPath("$[0].userKey").value(userHomer.getUserKey()));
+
+        // search by Name and Role FAILED
+        restUserMockMvc.perform(get("/api/users/filter-soft?query.contains=nut&roleKey.equals=ROLE_UNKNOWN"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+            .andExpect(content().string("[]"));
+
+        // search by Name and Role and Activated SUCCESS
+        restUserMockMvc.perform(get("/api/users/filter-soft?query.contains=nut&roleKey.equals=ROLE_ADMIN&activated.equals=true"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+            .andExpect(jsonPath("$[0].userKey").value(userHomer.getUserKey()));
+
+        // search by Name and Role and Activated FAILED
+        restUserMockMvc.perform(get("/api/users/filter-soft?query.contains=nut&roleKey.equals=ROLE_ADMIN&activated.equals=false"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(content().string("[]"));
