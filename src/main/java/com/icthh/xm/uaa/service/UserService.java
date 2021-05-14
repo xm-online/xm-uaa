@@ -547,7 +547,7 @@ public class UserService {
             .filter(Boolean.TRUE::equals)
             .count();
 
-        if (countOfMatchedPolicies <= passwordPoliciesMinimalMatchCount) {
+        if (countOfMatchedPolicies < passwordPoliciesMinimalMatchCount) {
             throw new BusinessException("password.validation.failed",
                                         "password doesn't matched required count of policies");
         }
