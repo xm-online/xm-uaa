@@ -33,8 +33,6 @@ public class TokenConstraintsService {
 
     private boolean supportRefreshToken = true;
 
-    private boolean reuseRefreshToken = true;
-
     private final TenantPropertiesService tenantPropertiesService;
 
     private final ApplicationProperties applicationProperties;
@@ -173,9 +171,4 @@ public class TokenConstraintsService {
     public boolean isSupportRefreshToken(OAuth2Request clientAuth) {
         return isSupportRefreshToken();
     }
-
-    public boolean isReuseRefreshToken() {
-        return reuseRefreshToken;
-    }
-
 }
