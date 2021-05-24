@@ -3,6 +3,7 @@ package com.icthh.xm.uaa.service;
 import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
 import com.icthh.xm.commons.permission.config.PermissionProperties;
+import com.icthh.xm.commons.permission.service.PermissionMappingService;
 import com.icthh.xm.commons.security.XmAuthenticationContext;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContext;
@@ -14,12 +15,14 @@ import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.service.dto.PermissionDTO;
 import com.icthh.xm.uaa.service.dto.RoleDTO;
 import com.icthh.xm.uaa.service.dto.RoleMatrixDTO;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
 
@@ -30,7 +33,10 @@ import static com.icthh.xm.uaa.utils.FileUtil.getSingleConfigMap;
 import static com.icthh.xm.uaa.utils.FileUtil.readConfigFile;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -78,6 +84,9 @@ public class TenantRoleServiceUnitTest {
     @Mock
     EnvironmentService environmentService;
 
+    @Spy
+    PermissionMappingService permissionMappingService = new PermissionMappingService(value -> true);
+
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -89,7 +98,6 @@ public class TenantRoleServiceUnitTest {
         when(permissionProperties.getRolesSpecPath()).thenReturn("/config/tenants/{tenantName}/roles.yml");
         when(permissionProperties.getPermissionsSpecPath()).thenReturn("/config/tenants/{tenantName}/permissions.yml");
         when(permissionProperties.getPrivilegesSpecPath()).thenReturn("/config/tenants/privileges.yml");
-
     }
 
     @Test
@@ -142,7 +150,30 @@ public class TenantRoleServiceUnitTest {
         assertTrue(tenantRoleService.getRolePermissions(roleKey).isEmpty());
 
         verify(tenantConfigRepository, times(7)).getConfigFullPath(eq(XM_TENANT), eq(PERMISSIONS_PATH));
+    }
 
+    @Test
+    public void testGetRolePermissions_shouldReturnPermissionsFromAllApps() {
+        String roleKey = "ROLE_ADMIN";
+
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, PERMISSIONS_PATH))
+            .thenReturn(readConfigFile("/config/tenants/XM/permissions_multiple_apps.yml"));
+        List<PermissionDTO> rolePermissions = tenantRoleService.getRolePermissions(roleKey);
+        assertThat(rolePermissions).size().isEqualTo(3);
+
+        PermissionDTO permissionDT1 = rolePermissions.get(0);
+        assertEquals("ROLE_ADMIN", permissionDT1.getRoleKey());
+        assertEquals("ATTACHMENT.CREATE", permissionDT1.getPrivilegeKey());
+
+        PermissionDTO permissionDT2 = rolePermissions.get(1);
+        assertEquals("ROLE_ADMIN", permissionDT2.getRoleKey());
+        assertEquals("ATTACHMENT.DELETE", permissionDT2.getPrivilegeKey());
+
+        PermissionDTO permissionDT3 = rolePermissions.get(2);
+        assertEquals("ROLE_ADMIN", permissionDT3.getRoleKey());
+        assertEquals("MISSING.PRIVILEGE", permissionDT3.getPrivilegeKey());
+
+        verify(tenantConfigRepository, times(1)).getConfigFullPath(eq(XM_TENANT), eq(PERMISSIONS_PATH));
     }
 
     @Test

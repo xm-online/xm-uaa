@@ -1,7 +1,6 @@
 package com.icthh.xm.uaa.domain.properties;
 
 import static java.lang.Boolean.TRUE;
-import static java.util.Optional.ofNullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -16,6 +15,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -84,6 +84,8 @@ public class TenantProperties {
         @JsonProperty("removeDefaultPermissions")
         private Boolean removeDefaultPermissions = false;
 
+        private boolean reIssueRefreshToken = false;
+
         @JsonSetter("accessTokenValiditySeconds")
         public void setAccessTokenValiditySeconds(Integer accessTokenValiditySeconds) {
             this.accessTokenValiditySeconds = accessTokenValiditySeconds;
@@ -93,6 +95,26 @@ public class TenantProperties {
         public void setRefreshTokenValiditySeconds(Integer refreshTokenValiditySeconds) {
             this.refreshTokenValiditySeconds = refreshTokenValiditySeconds;
         }
+
+        @JsonProperty("idp")
+        private Idp idp;
+
+        @Data
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        public static class Idp {
+
+            @JsonProperty("defaultIdpClaimMapping")
+            private DefaultIdpClaimMapping defaultIdpClaimMapping;
+
+            @Data
+            public static class DefaultIdpClaimMapping {
+                private String userIdentityAttribute;
+                private String userIdentityType;
+                private String firstNameAttribute;
+                private String lastNameAttribute;
+            }
+        }
+
     }
 
     private PublicSettings publicSettings;
@@ -124,58 +146,6 @@ public class TenantProperties {
         public Boolean isTermsOfConditionsEnabled() {
             return TRUE.equals(termsOfConditionsEnabled);
         }
-    }
-
-    @JsonProperty("social")
-    private List<Social> social;
-
-    @JsonProperty("socialBaseUrl")
-    private String socialBaseUrl;
-
-    @Data
-    @ToString(of = {"providerId"})
-    public static class Social {
-
-        private String providerId;
-        private String clientId;
-        private String clientSecret;
-        private String authorizeUrl;
-        private String accessTokenUrl;
-        private String scope;
-        private String userInfoUri;
-        private UserInfoMapping userInfoMapping;
-        private String tokenStrategy;
-        private Boolean createAccountAutomatically;
-        private Boolean useParametersForClientAuthentication;
-
-        public Boolean getUseParametersForClientAuthentication() {
-            return ofNullable(useParametersForClientAuthentication).orElse(true);
-        }
-
-        public Boolean getCreateAccountAutomatically() {
-            return ofNullable(createAccountAutomatically).orElse(true);
-        }
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class UserInfoMapping {
-        private String id;
-        private String name;
-        private String firstName;
-        private String lastName;
-        private String email;
-        private String username;
-
-        private String profileUrl;
-        private String imageUrl;
-
-        private String phoneNumber;
-        private String langKey;
-
-        // It's field detect is email verified in provider.
-        // If field null or empty verification wiil be disabled.
-        private String emailVerifiedCheckField;
     }
 
     @JsonProperty("registrationCaptchaPeriodSeconds")

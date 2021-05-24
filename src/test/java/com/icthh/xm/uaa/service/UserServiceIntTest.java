@@ -9,6 +9,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
@@ -323,6 +324,16 @@ public class UserServiceIntTest {
         exception.expect(BusinessException.class);
         exception.expectMessage("password doesn't matched required count of policies");
 
+        validateByTwoRegexp(3L);
+    }
+
+    @SneakyThrows
+    @Test
+    public void passwordValidationPoliciesMinimalCountTest() {
+        validateByTwoRegexp(2L);
+    }
+
+    private void validateByTwoRegexp(long passwordPoliciesMinimalMatchCount) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         TenantProperties tenantProperties = new TenantProperties();
         PublicSettings publicSettings = new PublicSettings();
@@ -331,9 +342,10 @@ public class UserServiceIntTest {
         passwordSettings.setPattern("((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!#$]).{6,15})");
 
         List<PublicSettings.PasswordPolicy> policyList = new ArrayList<>();
+        policyList.add(initPasswordPolicy(".*.*.*"));
         policyList.add(initPasswordPolicy(".*\\d.*"));
         policyList.add(initPasswordPolicy("\\\\+\\d+$"));
-        publicSettings.setPasswordPoliciesMinimalMatchCount(2L);
+        publicSettings.setPasswordPoliciesMinimalMatchCount(passwordPoliciesMinimalMatchCount);
 
         publicSettings.setPasswordPolicies(policyList);
         publicSettings.setPasswordSettings(passwordSettings);

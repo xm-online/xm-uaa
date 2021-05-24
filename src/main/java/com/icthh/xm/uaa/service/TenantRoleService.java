@@ -12,8 +12,8 @@ import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.commons.permission.domain.Permission;
 import com.icthh.xm.commons.permission.domain.Privilege;
 import com.icthh.xm.commons.permission.domain.Role;
-import com.icthh.xm.commons.permission.domain.mapper.PermissionMapper;
 import com.icthh.xm.commons.permission.domain.mapper.PrivilegeMapper;
+import com.icthh.xm.commons.permission.service.PermissionMappingService;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
@@ -28,6 +28,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -74,6 +75,8 @@ public class TenantRoleService {
     private final EnvironmentService environmentService;
     private final CommonConfigRepository commonConfigRepository;
     private final TenantPropertiesService tenantPropertiesService;
+    @Qualifier("allPermissionMappingService")
+    private final PermissionMappingService permissionMappingService;
 
     /**
      * Get roles properties.
@@ -207,7 +210,7 @@ public class TenantRoleService {
             return Collections.emptyList();
         }
 
-        Map<String, Permission> permissions = PermissionMapper.ymlToPermissions(permissionsFile);
+        Map<String, Permission> permissions = permissionMappingService.ymlToPermissions(permissionsFile);
 
         return permissions.values()
                           .stream()

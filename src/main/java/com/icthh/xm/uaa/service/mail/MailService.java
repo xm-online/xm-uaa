@@ -35,7 +35,6 @@ import javax.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.i18n.LocaleContext;
@@ -195,36 +194,6 @@ public class MailService {
                 user.getEmail(),
                 objectModel
             );
-        });
-    }
-
-
-    /**
-     * Send social registration validation email.
-     */
-    @Async
-    public void sendSocialRegistrationValidationEmail(User user,
-                                                      String provider,
-                                                      String applicationUrl,
-                                                      TenantKey tenantKey,
-                                                      String rid) {
-        execForCustomRid(rid, () -> {
-            log.info("Sending social registration validation email to {}", user.getEmail());
-
-            Map<String, Object> objectModel = new HashMap<>();
-            objectModel.put(USER, user);
-            objectModel.put(BASE_URL, applicationUrl);
-            objectModel.put("provider", StringUtils.capitalize(provider));
-
-            sendEmailFromTemplate(
-                tenantKey,
-                user,
-                "socialRegistrationValidationEmail",
-                "email.social.registration.title",
-                user.getEmail(),
-                objectModel
-            );
-
         });
     }
 

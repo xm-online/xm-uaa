@@ -1,10 +1,11 @@
 package com.icthh.xm.uaa.security;
 
+import com.icthh.xm.commons.lep.LogicExtensionPoint;
+import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.domain.User;
-import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.service.dto.UserLoginDto;
 import lombok.AllArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import static java.util.stream.Collectors.toList;
@@ -24,6 +26,7 @@ import static java.util.stream.Collectors.toList;
 /**
  * Authenticate a user from the database.
  */
+@LepService(group = "service.user.details")
 @Service("userDetailsService")
 @AllArgsConstructor
 @Slf4j
@@ -35,30 +38,44 @@ public class DomainUserDetailsService implements UserDetailsService {
     @Override
     @Transactional
     @IgnoreLogginAspect
+    @LogicExtensionPoint("LoadUserByUsername")
     public DomainUserDetails loadUserByUsername(final String login) {
         final String lowerLogin = login.toLowerCase().trim();
 
-        String tenantKey = tenantContextHolder.getContext()
-                                                 .getTenantKey()
-                                                 .map(TenantKey::getValue)
-            .orElseThrow(() -> new TenantNotProvidedException("Tenant not provided for authentication"));
+        String tenantKey = getTenantKey();
 
         log.debug("Authenticating login: {}, lowercase: {}, within tenant: {}", login, lowerLogin, tenantKey);
 
-        return userLoginRepository.findOneByLogin(lowerLogin)
-                                  .map(userLogin -> buildDomainUserDetails(lowerLogin, tenantKey, userLogin))
-                                  .orElseThrow(buildException(lowerLogin, tenantKey));
+        return retrieveUserByUsername(login).orElseThrow(buildException(lowerLogin, tenantKey));
     }
 
-    private Supplier<UsernameNotFoundException> buildException(String lowerLogin, String tenantKey){
+    public Optional<DomainUserDetails> retrieveUserByUsername(final String login) {
+        final String lowerLogin = login.toLowerCase().trim();
+
+        String tenantKey = getTenantKey();
+
+        log.debug("Retrieving user with login: {}, lowercase: {}, within tenant: {}", login, lowerLogin, tenantKey);
+
+        return userLoginRepository
+            .findOneByLogin(lowerLogin)
+            .map(userLogin -> buildDomainUserDetails(lowerLogin, tenantKey, userLogin.getUser()));
+    }
+
+    private String getTenantKey() {
+        return tenantContextHolder.getContext()
+            .getTenantKey()
+            .map(TenantKey::getValue)
+            .orElseThrow(() -> new TenantNotProvidedException("Tenant not provided for authentication"));
+    }
+
+    private Supplier<UsernameNotFoundException> buildException(String lowerLogin, String tenantKey) {
         return () -> {
             log.error("User [{}] was not found for tenant [{}]", lowerLogin, tenantKey);
             return new UsernameNotFoundException("User " + lowerLogin + " was not found for tenant " + tenantKey);
         };
     }
 
-    private DomainUserDetails buildDomainUserDetails(String lowerLogin, String tenantKey, UserLogin userLogin) {
-        User user = userLogin.getUser();
+    public static DomainUserDetails buildDomainUserDetails(String lowerLogin, String tenantKey, User user) {
         if (!user.isActivated()) {
             throw new InvalidGrantException("User " + lowerLogin + " was not activated");
         }
