@@ -13,7 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class RoleKeyConverterTest {
+public class RoleKeyConverterUnitTest {
 
 
     @Mock
@@ -30,7 +30,7 @@ public class RoleKeyConverterTest {
             }});
         }});
         List<String> roles = roleKeyConverter.convertToEntityAttribute("[\"ROLE_ADMIN\",\"ROLE_SUPER_ADMIN\"]");
-        assertEquals(roles.get(0), "ROLE_SUPER_ADMIN");
+        assertEquals(roles.get(0), "ROLE_ADMIN");
         assertEquals(roles.size(), 1);
 
     }
