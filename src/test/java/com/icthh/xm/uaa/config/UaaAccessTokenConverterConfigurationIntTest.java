@@ -33,6 +33,7 @@ import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.transaction.BeforeTransaction;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StreamUtils;
 
@@ -77,6 +78,10 @@ public class UaaAccessTokenConverterConfigurationIntTest {
 
     private final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
+    @BeforeTransaction
+    public void BeforeTransaction() {
+        TenantContextUtils.setTenant(tenantContextHolder, TENANT);
+    }
 
     @Before
     @SneakyThrows
