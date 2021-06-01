@@ -62,6 +62,9 @@ public class TfaOtpTokenGranter extends AbstractTokenGranter {
         String tfaAccessTokenType = parameters.remove("tfa_access_token_type");
         String tfaAccessToken = parameters.remove("tfa_access_token");
 
+        // prevent sensitive information to be copied to token details
+        tokenRequest.setRequestParameters(parameters);
+
         // validate token type
         validateTokenType(tfaAccessTokenType);
 

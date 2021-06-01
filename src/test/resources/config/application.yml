@@ -146,7 +146,7 @@ application:
     email-path-pattern: /config/tenants/{tenantName}/uaa/emails/{langKey}/{fileName}.ftl
     lep:
         tenant-script-storage: XM_MS_CONFIG
-    client-grant-types: client_credentials, refresh_token, password
+    client-grant-types: client_credentials, refresh_token, password, tfa_otp_token
     client-scope: openid
     keystore-file: keystore.p12
     keystore-password: password
