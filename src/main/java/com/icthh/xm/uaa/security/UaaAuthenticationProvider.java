@@ -130,8 +130,6 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
      */
     @Override
     public boolean supports(Class<?> authentication) {
-        //TODO - remove log after investigation
-        log.info("FORDEBUG: check for supported authentication: {}", authentication);
         if (TfaOtpAuthenticationToken.class.isAssignableFrom(authentication)) {
             return Boolean.FALSE;
         }
