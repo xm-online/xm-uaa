@@ -320,6 +320,8 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         } else if (accessToken.isExpired()) {
             tokenStore.removeAccessToken(accessToken);
             throw new InvalidTokenException("Access token expired: " + accessTokenValue.substring(0, 200));
+        } else if (accessToken.getAdditionalInformation().containsKey("tfaVerificationKey")) {
+            throw new InvalidTokenException("TfaAccess token can not be used to access API");
         }
 
         OAuth2Authentication result = tokenStore.readAuthentication(accessToken);

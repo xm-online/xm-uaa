@@ -9,7 +9,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ImageUrlParserTest {
+public class ImageUrlParserUnitTest {
 
     public static final String DYNAMIC_PARAMETER_PATTERN = "\\{(.*?)\\}";
 

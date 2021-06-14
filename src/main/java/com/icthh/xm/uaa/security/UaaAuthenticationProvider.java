@@ -12,6 +12,7 @@ import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.lep.keyresolver.OptionalProfileHeaderResolver;
 import com.icthh.xm.uaa.security.ldap.LdapAuthenticationProviderBuilder;
+import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpAuthenticationToken;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
 import java.math.BigInteger;
@@ -129,6 +130,9 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
      */
     @Override
     public boolean supports(Class<?> authentication) {
+        if (TfaOtpAuthenticationToken.class.isAssignableFrom(authentication)) {
+            return Boolean.FALSE;
+        }
         return Boolean.TRUE;
     }
 

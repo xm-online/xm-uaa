@@ -41,7 +41,7 @@ import static org.mockito.Mockito.when;
     XmOverrideConfiguration.class
 })
 @Slf4j
-public class LdapServiceTest {
+public class LdapServiceIntTest {
 
     private static final String TENANT = "XM";
     private static final String BASE_DN = "dc=xm,dc=com";

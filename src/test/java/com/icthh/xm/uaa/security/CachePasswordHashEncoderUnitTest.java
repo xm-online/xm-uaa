@@ -9,7 +9,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class CachePasswordHashEncoderTest {
+public class CachePasswordHashEncoderUnitTest {
 
     PasswordEncoder mockEncoder = mock(PasswordEncoder.class);
     PasswordEncoder cachedEncoder = new CachePasswordHashEncoder(mockEncoder, 3);
