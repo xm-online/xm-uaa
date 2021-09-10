@@ -297,6 +297,7 @@ public class UaaAuthenticationProviderIntTest {
 
     @Test
     public void checkLastLoginDateUpdate() {
+        applicationProperties.setLastLoginDateEnabled(true);
         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_LOGIN, TEST_PASSWORD);
         uaaAuthenticationProvider.authenticate(token);
         Instant lastLoginDate = userService.findOneByLogin(TEST_LOGIN).get().getLastLoginDate();

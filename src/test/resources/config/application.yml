@@ -177,4 +177,4 @@ application:
           8SxQ+WYtVrOK0BVwUiiPMLqnJL/iLg/zuPZX6X8pdISUJx7LXhaJ3Jb2snkMWWx7
           qtbGCU/DjgrCs8RjJDGtWY20GA=="
     default-client-id: testClient
-    last-login-date-enabled: true
+    last-login-date-enabled: false
