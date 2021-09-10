@@ -20,6 +20,7 @@ import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.uaa.UaaApp;
+import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
@@ -107,6 +108,9 @@ public class UaaAuthenticationProviderIntTest {
     @Autowired
     private TenantContextHolder tenantContextHolder;
 
+    @Autowired
+    private ApplicationProperties applicationProperties;
+
     private UaaAuthenticationProvider uaaAuthenticationProvider;
 
     private TenantProperties tenantProperties;
@@ -142,7 +146,8 @@ public class UaaAuthenticationProviderIntTest {
         uaaAuthenticationProvider = new UaaAuthenticationProvider(daoAuthenticationProvider,
                                                                   providerBuilder,
                                                                   userService,
-                                                                  tenantPropertiesService);
+                                                                  tenantPropertiesService,
+                                                                  applicationProperties);
         uaaAuthenticationProvider.setSelf(uaaAuthenticationProvider);
         lepManager.beginThreadContext(ctx -> {
             ctx.setValue(THREAD_CONTEXT_KEY_TENANT_CONTEXT, tenantContextHolder.getContext());
@@ -288,6 +293,15 @@ public class UaaAuthenticationProviderIntTest {
         Authentication authentication = uaaAuthenticationProvider.authenticate(token);
         assertTrue(authentication.isAuthenticated());
         assertFalse(authentication.getAuthorities().isEmpty());
+    }
+
+    @Test
+    public void checkLastLoginDateUpdate() {
+        applicationProperties.setLastLoginDateEnabled(true);
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_LOGIN, TEST_PASSWORD);
+        uaaAuthenticationProvider.authenticate(token);
+        Instant lastLoginDate = userService.findOneByLogin(TEST_LOGIN).get().getLastLoginDate();
+        assertTrue(Instant.now().getEpochSecond() - lastLoginDate.getEpochSecond() <= 1);
     }
 
     @SneakyThrows

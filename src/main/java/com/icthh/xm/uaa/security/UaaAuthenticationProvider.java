@@ -8,6 +8,7 @@ import static java.time.temporal.ChronoUnit.DAYS;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
+import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.lep.keyresolver.OptionalProfileHeaderResolver;
@@ -40,6 +41,7 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
     private final LdapAuthenticationProviderBuilder providerBuilder;
     private final UserService userService;
     private final TenantPropertiesService tenantPropertiesService;
+    private final ApplicationProperties applicationProperties;
     @Setter(onMethod = @__(@Autowired))
     private UaaAuthenticationProvider self;
 
@@ -47,11 +49,13 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
                                      @Lazy AuthenticationProvider defaultProvider,
                                      LdapAuthenticationProviderBuilder providerBuilder,
                                      UserService userService,
-                                     TenantPropertiesService tenantPropertiesService) {
+                                     TenantPropertiesService tenantPropertiesService,
+                                     ApplicationProperties applicationProperties) {
         this.defaultProvider = defaultProvider;
         this.providerBuilder = providerBuilder;
         this.userService = userService;
         this.tenantPropertiesService = tenantPropertiesService;
+        this.applicationProperties = applicationProperties;
     }
 
     private AuthenticationProvider getProvider(Authentication authentication) {
@@ -82,6 +86,9 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
         log.info("authenticated: {}, role: {}, {}", result.isAuthenticated(), result.getAuthorities(), result.getPrincipal());
         checkPasswordExpiration(result);
         checkTermsOfConditions(result);
+        if (applicationProperties.isLastLoginDateEnabled()) {
+            userService.updateLastLoginDate(getUser(result));
+        }
         return result;
     }
 

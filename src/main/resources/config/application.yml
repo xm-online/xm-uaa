@@ -209,6 +209,7 @@ application:
         passwordEncoderStrength: -1
         enablePasswordHashCaching: true
         enablePasswordHashCacheSize: 1000
+    last-login-date-enabled: false
 gracefulShutdown:
     enabled: false
     shutdownDelay:
