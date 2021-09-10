@@ -290,6 +290,14 @@ public class UaaAuthenticationProviderIntTest {
         assertFalse(authentication.getAuthorities().isEmpty());
     }
 
+    @Test
+    public void checkLastLoginDateUpdate() {
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(TEST_LOGIN, TEST_PASSWORD);
+        uaaAuthenticationProvider.authenticate(token);
+        Instant lastLoginDate = userService.findOneByLogin(TEST_LOGIN).get().getLastLoginDate();
+        assertTrue(Instant.now().getEpochSecond() - lastLoginDate.getEpochSecond() <= 1);
+    }
+
     @SneakyThrows
     private void setTenantProps(Consumer<TenantProperties> consumer){
         TenantProperties properties = new TenantProperties();

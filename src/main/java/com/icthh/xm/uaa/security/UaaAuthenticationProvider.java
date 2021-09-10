@@ -82,6 +82,7 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
         log.info("authenticated: {}, role: {}, {}", result.isAuthenticated(), result.getAuthorities(), result.getPrincipal());
         checkPasswordExpiration(result);
         checkTermsOfConditions(result);
+        userService.updateLastLoginDate(getUser(result));
         return result;
     }
 
