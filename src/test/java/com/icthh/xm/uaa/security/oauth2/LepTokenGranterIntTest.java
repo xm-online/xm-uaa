@@ -1,36 +1,38 @@
-package com.icthh.xm.uaa.security.oauth2.tfa;
+package com.icthh.xm.uaa.security.oauth2;
 
 import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
 import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.icthh.xm.commons.lep.XmLepScriptConfigServerResourceLoader;
 import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.uaa.UaaApp;
+import com.icthh.xm.uaa.config.LepConfiguration;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
-import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.repository.UserRepository;
-import com.icthh.xm.uaa.security.oauth2.otp.OtpGenerator;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.UUID;
 import lombok.SneakyThrows;
+import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,9 +41,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.json.JacksonJsonParser;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.oauth2.common.exceptions.UnsupportedGrantTypeException;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.web.FilterChainProxy;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -52,19 +56,31 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.context.WebApplicationContext;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {
     UaaApp.class,
-    XmOverrideConfiguration.class
+    XmOverrideConfiguration.class,
+    LepConfiguration.class
 })
-public class TfaOtpAuthenticationIntTest {
+public class LepTokenGranterIntTest {
+
+    public static final String LEP_PATH_TEST_GRAND_TYPE = "/config/tenants/XM/uaa/lep/security/oauth2/"
+        + "TokenGranter$$test_grand_type$$around.groovy";
+
+    public static final String LEP_PATH_TEST_GRAND_TYPE_NOT_IN_APP_PROPS = "/config/tenants/XM/uaa/lep/security/oauth2/"
+        + "TokenGranter$$test_grand_type_not_in_app_properties$$around.groovy";
+
+    public static final String USER_NAME = "user";
+    public static final String USER_PASS = "password1";
+    public static final String TOKEN_URL = "/oauth/token";
+    public static final String CLIENT_NAME = "testClient";
+    public static final String CLIENT_SECRET = "clientSecret";
+    public static final String USERNAME = "username";
+    public static final String PASSWORD = "password";
+    public static final String GRANT_TYPE = "grant_type";
+    public static final String TEST_GRANT_TYPE = "test_grant_type";
+    public static final String TEST_WRONG_GRAND_TYPE = "test_wrong_grant_type";
+    public static final String TEST_GRAND_TYPE_NOT_IN_APP_PROPERTIES = "test_grant_type_not_in_app_properties";
 
     @Autowired
     private LepManager lepManager;
@@ -82,6 +98,9 @@ public class TfaOtpAuthenticationIntTest {
     private FilterChainProxy springSecurityFilterChain;
 
     @Autowired
+    private XmLepScriptConfigServerResourceLoader leps;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -93,92 +112,96 @@ public class TfaOtpAuthenticationIntTest {
     @MockBean
     private TenantPropertiesService tenantPropertiesService;
 
-    @MockBean
-    private OtpGenerator otpGenerator;
-
     private MockMvc mockMvc;
 
     @Before
     public void setup() {
-
-        this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac)
-                                      .addFilter(springSecurityFilterChain).build();
-
+        this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac).addFilter(springSecurityFilterChain).build();
         TenantContextUtils.setTenant(tenantContextHolder, DEFAULT_TENANT_KEY_VALUE);
+
         lepManager.beginThreadContext(scopedContext -> {
             scopedContext.setValue(THREAD_CONTEXT_KEY_TENANT_CONTEXT, tenantContextHolder.getContext());
             scopedContext.setValue(BINDING_KEY_AUTH_CONTEXT, xmAuthenticationContextHolder.getContext());
         });
 
+        leps.onRefresh(LEP_PATH_TEST_GRAND_TYPE, loadFile(LEP_PATH_TEST_GRAND_TYPE));
+        leps.onRefresh(LEP_PATH_TEST_GRAND_TYPE_NOT_IN_APP_PROPS, loadFile(LEP_PATH_TEST_GRAND_TYPE_NOT_IN_APP_PROPS));
         TenantProperties tenantProperties = new TenantProperties();
-
-        tenantProperties.getSecurity().setDefaultClientSecret("cleintSecret");
-        tenantProperties.getSecurity().setTfaEnabled(true);
-        tenantProperties.getSecurity().setTfaDefaultOtpChannelType("email");
-        tenantProperties.getSecurity().setTfaEnabledOtpChannelTypes(Set.of(OtpChannelType.EMAIL));
-
+        tenantProperties.getSecurity().setDefaultClientSecret(CLIENT_SECRET);
         when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProperties);
-
-        when(otpGenerator.generate(any())).thenReturn("123456");
-
     }
 
     @After
     public void destroy() {
+        leps.onRefresh(LEP_PATH_TEST_GRAND_TYPE, null);
         tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
         lepManager.endThreadContext();
     }
 
     @Test
-    public void testUserConsumesApiNoTFA() throws Exception {
+    @SneakyThrows
+    public void testCustomGrantType() {
+        createUser(USER_NAME, USER_PASS);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add(GRANT_TYPE, TEST_GRANT_TYPE);
+        params.add(USERNAME, USER_NAME);
+        params.add(PASSWORD, USER_PASS);
 
-        // 1. create User (no TFA)
-        createUser("notfauser", "password1", false);
+        ResultActions result = mockMvc.perform(post(TOKEN_URL)
+                .params(params)
+                .with(httpBasic(CLIENT_NAME, CLIENT_SECRET))
+                .accept(MediaType.APPLICATION_JSON_UTF8))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8));
 
-        // 2. obtain access token by user/pass
-        OAuth2AccessToken token = obtainAccessToken("notfauser", "password1");
+        String resultString = result.andReturn().getResponse().getContentAsString();
 
-        // 3. Use API with accessToken
-        consumeAPISuccessfully(token, "notfauser");
+        JacksonJsonParser jsonParser = new JacksonJsonParser();
+        String token = jsonParser.parseMap(resultString).get("access_token").toString();
+        OAuth2AccessToken accessToken = tokenStore.readAccessToken(token);
 
+        assertNotNull(accessToken);
+        assertNotNull(accessToken.getValue());
+        userRepository.deleteAll();
     }
 
     @Test
-    public void testUserConsumesApiWithTFA() throws Exception {
+    @SneakyThrows
+    public void testWrongCustomGrantType() {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add(GRANT_TYPE, TEST_WRONG_GRAND_TYPE);
+        params.add(USERNAME, USER_NAME);
+        params.add(PASSWORD, USER_PASS);
 
-        // 1. Create user with TFA enabled
-        createUser("testuser", "password2", true);
-
-        // 2. obtain access token by user/pass but in response is tfatoken
-        OAuth2AccessToken tfaToken = obtainAccessToken("testuser", "password2");
-
-        Map<String, Object> tokenDetails = tfaToken.getAdditionalInformation();
-        assertNotNull(tokenDetails);
-        assertNotNull(tokenDetails.get("tfaVerificationKey"));
-        assertEquals("email", tokenDetails.get("tfaOtpChannel"));
-        assertEquals("testuser", tokenDetails.get("user_name"));
-
-        // 3. Try to use API with tfaToken, it should fail
-        mockMvc.perform(get("/api/account")
-                            .accept(MediaType.APPLICATION_JSON)
-                            .header("Authorization", "Bearer " + tfaToken.getValue()))
-               .andDo(result -> System.out.println(result.getResponse().getContentAsString()))
-               .andExpect(status().isUnauthorized())
-               .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-               .andExpect(jsonPath("$.error").value("invalid_token"))
-               .andExpect(jsonPath("$.error_description").value("TfaAccess token can not be used to access API"));
-
-        // 4. Obtain access token by second factor (OTP)
-        OAuth2AccessToken accessToken = obtainAccessTokenByOtp(tfaToken.getValue());
-
-        assertFalse(accessToken.getAdditionalInformation().containsKey("tfaVerificationKey"));
-        assertFalse(accessToken.getAdditionalInformation().containsKey("tfaOtpChannel"));
-
-        // 5. Try to use API with access token, it should be success
-        consumeAPISuccessfully(accessToken, "testuser");
+        checkUnsupportedGrantTypeException(params);
     }
 
-    private void createUser(String login, String password, boolean tfaEnabled) {
+    @Test
+    @SneakyThrows
+    public void testCustomGrantTypeNotInApplicationProperties() {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add(GRANT_TYPE, TEST_GRAND_TYPE_NOT_IN_APP_PROPERTIES);
+        params.add(USERNAME, USER_NAME);
+        params.add(PASSWORD, USER_PASS);
+
+        checkUnsupportedGrantTypeException(params);
+    }
+
+    private void checkUnsupportedGrantTypeException(MultiValueMap<String, String> params) throws Exception {
+        mockMvc.perform(post(TOKEN_URL)
+                .params(params)
+                .with(httpBasic(CLIENT_NAME, CLIENT_SECRET))
+                .accept(MediaType.APPLICATION_JSON_UTF8))
+            .andExpect(status().isBadRequest())
+            .andExpect(ex -> assertTrue(ex.getResolvedException() instanceof UnsupportedGrantTypeException));
+    }
+
+    @SneakyThrows
+    public static String loadFile(String path) {
+        return IOUtils.toString(new ClassPathResource(path).getInputStream(), UTF_8);
+    }
+
+    private void createUser(String login, String password) {
         User user = new User();
 
         UserLogin userLogin = new UserLogin();
@@ -192,79 +215,11 @@ public class TfaOtpAuthenticationIntTest {
         user.setUserKey(UUID.randomUUID().toString());
         user.setPassword(passwordEncoder.encode(password));
         user.setActivated(true);
-        user.setTfaEnabled(tfaEnabled);
+        user.setTfaEnabled(true);
         user.setUpdatePasswordDate(Instant.now().plus(1, ChronoUnit.DAYS));
 
         userRepository.saveAndFlush(user);
 
-    }
-
-    private OAuth2AccessToken obtainAccessToken(String username, String password) {
-
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("grant_type", "password");
-        params.add("username", username);
-        params.add("password", password);
-
-        return getOAuth2AccessToken(params);
-
-    }
-
-    private OAuth2AccessToken obtainAccessTokenByOtp(String tfaToken) {
-
-        System.out.println(tfaToken);
-
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("grant_type", "tfa_otp_token");
-        params.add("tfa_access_token_type", "bearer");
-        params.add("otp", "123456");
-        params.add("tfa_access_token", tfaToken);
-
-        return getOAuth2AccessToken(params);
-
-    }
-
-    private void consumeAPISuccessfully(OAuth2AccessToken token, String userlogin) throws Exception {
-        mockMvc.perform(get("/api/account")
-                            .accept(MediaType.APPLICATION_JSON)
-                            .header("Authorization", "Bearer " + token.getValue()))
-               .andExpect(status().isOk())
-               .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-               .andExpect(jsonPath("$.firstName").value(userlogin))
-               .andExpect(jsonPath("$.logins[0].login").value(userlogin))
-               .andExpect(jsonPath("$.logins[0].typeKey").value("LOGIN.EMAIL"))
-               .andExpect(jsonPath("$.roleKey").value("SUPER-ADMIN"));
-    }
-
-    @SuppressWarnings("unchecked")
-    @SneakyThrows
-    private OAuth2AccessToken getOAuth2AccessToken(final MultiValueMap<String, String> params) {
-        ResultActions result
-            = mockMvc.perform(post("/oauth/token")
-                                  .params(params)
-                                  .with(httpBasic("testClient", "cleintSecret"))
-                                  .accept("application/json;charset=UTF-8"))
-                     .andExpect(status().isOk())
-                     .andExpect(content().contentType("application/json;charset=UTF-8"));
-
-        String resultString = result.andReturn().getResponse().getContentAsString();
-
-        JacksonJsonParser jsonParser = new JacksonJsonParser();
-        String token = jsonParser.parseMap(resultString).get("access_token").toString();
-        OAuth2AccessToken accessToken = tokenStore.readAccessToken(token);
-        Map<String, Object> additionalDetails = (Map<String, Object>) accessToken.getAdditionalInformation()
-                                                                                 .get("additionalDetails");
-
-        assertNotNull(accessToken);
-        assertNotNull(accessToken.getValue());
-
-        if (additionalDetails != null) {
-            assertFalse(additionalDetails.containsKey("otp"));
-            assertFalse(additionalDetails.containsKey("tfa_access_token"));
-            assertFalse(additionalDetails.containsKey("tfa_access_token_type"));
-        }
-
-        return accessToken;
     }
 
 }

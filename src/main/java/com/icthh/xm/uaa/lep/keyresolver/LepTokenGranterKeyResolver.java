@@ -1,10 +1,12 @@
-package com.icthh.xm.uaa.security.oauth2;
+package com.icthh.xm.uaa.lep.keyresolver;
 
 import com.icthh.xm.commons.lep.AppendLepKeyResolver;
 import com.icthh.xm.lep.api.LepManagerService;
 import com.icthh.xm.lep.api.LepMethod;
 import com.icthh.xm.lep.api.commons.SeparatorSegmentedLepKey;
+import org.springframework.stereotype.Component;
 
+@Component
 public class LepTokenGranterKeyResolver extends AppendLepKeyResolver {
 
     @Override
