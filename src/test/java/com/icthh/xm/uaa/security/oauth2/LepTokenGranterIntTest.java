@@ -65,10 +65,10 @@ import org.springframework.web.context.WebApplicationContext;
 public class LepTokenGranterIntTest {
 
     public static final String LEP_PATH_TEST_GRAND_TYPE = "/config/tenants/XM/uaa/lep/security/oauth2/"
-        + "TokenGranter$$test_grand_type$$around.groovy";
+        + "TokenGranter$$test_grant_type$$around.groovy";
 
     public static final String LEP_PATH_TEST_GRAND_TYPE_NOT_IN_APP_PROPS = "/config/tenants/XM/uaa/lep/security/oauth2/"
-        + "TokenGranter$$test_grand_type_not_in_app_properties$$around.groovy";
+        + "TokenGranter$$test_grant_type_not_in_app_properties$$around.groovy";
 
     public static final String USER_NAME = "user";
     public static final String USER_PASS = "password1";
@@ -79,8 +79,8 @@ public class LepTokenGranterIntTest {
     public static final String PASSWORD = "password";
     public static final String GRANT_TYPE = "grant_type";
     public static final String TEST_GRANT_TYPE = "test_grant_type";
-    public static final String TEST_WRONG_GRAND_TYPE = "test_wrong_grant_type";
-    public static final String TEST_GRAND_TYPE_NOT_IN_APP_PROPERTIES = "test_grant_type_not_in_app_properties";
+    public static final String TEST_WRONG_GRANT_TYPE = "test_wrong_grant_type";
+    public static final String TEST_GRANT_TYPE_NOT_IN_APP_PROPERTIES = "test_grant_type_not_in_app_properties";
 
     @Autowired
     private LepManager lepManager;
@@ -169,7 +169,7 @@ public class LepTokenGranterIntTest {
     @SneakyThrows
     public void testWrongCustomGrantType() {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add(GRANT_TYPE, TEST_WRONG_GRAND_TYPE);
+        params.add(GRANT_TYPE, TEST_WRONG_GRANT_TYPE);
         params.add(USERNAME, USER_NAME);
         params.add(PASSWORD, USER_PASS);
 
@@ -180,7 +180,7 @@ public class LepTokenGranterIntTest {
     @SneakyThrows
     public void testCustomGrantTypeNotInApplicationProperties() {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add(GRANT_TYPE, TEST_GRAND_TYPE_NOT_IN_APP_PROPERTIES);
+        params.add(GRANT_TYPE, TEST_GRANT_TYPE_NOT_IN_APP_PROPERTIES);
         params.add(USERNAME, USER_NAME);
         params.add(PASSWORD, USER_PASS);
 
