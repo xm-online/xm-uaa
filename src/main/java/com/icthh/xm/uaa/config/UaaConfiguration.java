@@ -7,6 +7,7 @@ import com.icthh.xm.uaa.security.DomainTokenServices;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.security.TokenConstraintsService;
 import com.icthh.xm.uaa.security.UserSecurityValidator;
+import com.icthh.xm.uaa.security.oauth2.LepTokenGranter;
 import com.icthh.xm.uaa.security.oauth2.athorization.code.CustomAuthorizationCodeServices;
 import com.icthh.xm.uaa.security.oauth2.idp.XmJwkTokenStore;
 import com.icthh.xm.uaa.security.oauth2.idp.IdpTokenGranter;
@@ -30,6 +31,7 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.token.TokenService;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
@@ -177,8 +179,16 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
 
         granters.add(tfaOtpTokenGranter);
         granters.add(idpTokenGranter);
+        granters.add(lepTokenGranter(clientDetailsService, authenticationManager));
 
         return new CompositeTokenGranter(granters);
+    }
+
+    @Bean
+    public LepTokenGranter lepTokenGranter(ClientDetailsService clientDetailsService,
+        AuthenticationManager authenticationManager) {
+
+        return new LepTokenGranter(clientDetailsService, authenticationManager, tokenServices());
     }
 
     /**

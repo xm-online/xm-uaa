@@ -7,6 +7,7 @@ import com.icthh.xm.commons.lep.spring.SpringLepProcessingApplicationListener;
 import com.icthh.xm.lep.api.ScopedContext;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
 import com.icthh.xm.uaa.security.CustomizableLepTokenStorage;
+import com.icthh.xm.uaa.security.oauth2.LepTokenGranter;
 import com.icthh.xm.uaa.security.oauth2.athorization.code.CustomAuthorizationCodeServices;
 import com.icthh.xm.uaa.service.AccountService;
 import com.icthh.xm.uaa.service.ClientService;
@@ -18,6 +19,7 @@ import com.icthh.xm.uaa.service.mail.MailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -48,6 +50,8 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
     private final LdapService ldapService;
     private final UserDetailsService userDetailsService;
     private final TenantPropertiesService tenantPropertiesService;
+    private final LepTokenGranter lepTokenGranter;
+    private final ClientDetailsService clientDetailsService;
 
 
     @Override
@@ -67,6 +71,8 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
         services.put(BINDING_SUB_KEY_SERVICE_LDAP_SERVICE, ldapService);
         services.put(BINDING_SUB_KEY_SERVICE_USER_DETAILS_SERVICE, userDetailsService);
         services.put(BINDING_SUB_KEY_SERVICE_TENANT_PROPERTIES_SERVICE, tenantPropertiesService);
+        services.put(BINDING_SUB_KEY_SERVICE_LEP_TOKEN_GRANTER, lepTokenGranter);
+        services.put(BINDING_SUB_KEY_SERVICE_CLIENT_DETAILS_SERVICE, clientDetailsService);
 
         executionContext.setValue(BINDING_KEY_COMMONS, new CommonsExecutor(commonsService));
         executionContext.setValue(BINDING_KEY_SERVICES, services);
