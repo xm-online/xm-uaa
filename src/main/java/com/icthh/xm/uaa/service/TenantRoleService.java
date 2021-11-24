@@ -522,8 +522,8 @@ public class TenantRoleService {
             }
 
         } catch (HttpClientErrorException e) {
-            log.warn("Error while getting '{" + configPath + "}'", e);
-            throw new IllegalStateException("Error while getting '{" + configPath + "}'", e);
+            log.warn("Error while getting '" + configPath + "'", e);
+            throw new IllegalStateException("Error while getting '" + configPath + "'", e);
         }
 
         return ofNullable(config);
