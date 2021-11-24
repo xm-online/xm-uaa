@@ -515,7 +515,7 @@ public class TenantRoleService {
 
     private Optional<String> getConfigContent(String configPath) {
         String tenant = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder.getContext());
-        String config = null;
+        String config;
         try {
             config = tenantConfigRepository.getConfigFullPath(tenant, API + configPath);
             if (StringUtils.isBlank(config) || EMPTY_YAML.equals(config)) {
@@ -523,7 +523,8 @@ public class TenantRoleService {
             }
 
         } catch (HttpClientErrorException e) {
-            log.warn("Error while getting '{}'", configPath, e);
+            log.warn("Error while getting path: '{}'", configPath, e);
+            throw new IllegalStateException("Error while getting '" + configPath + "'", e);
         }
 
         return ofNullable(config);
