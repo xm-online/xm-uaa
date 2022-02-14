@@ -268,6 +268,7 @@ public class UserService {
      *
      * @param userKey user key;
      */
+    @LogicExtensionPoint("DeleteUser")
     public void deleteUser(String userKey, Consumer<UserDTO> notification) {
         if (xmAuthenticationContextHolder.getContext().getRequiredUserKey().equals(userKey)) {
             throw new BusinessException(ERROR_USER_DELETE_HIMSELF, "Forbidden to delete himself");
