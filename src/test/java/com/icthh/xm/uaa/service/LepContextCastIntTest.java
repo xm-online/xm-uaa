@@ -74,7 +74,7 @@ public class LepContextCastIntTest {
     @Transactional
     @SneakyThrows
     public void testLepContextCast() {
-        String prefix = "/config/tenants/RESINTTEST/uaa/lep/";
+        String prefix = "/config/tenants/RESINTTEST/uaa/lep/test/";
         String key = prefix + "ScriptWithAround$$around.groovy";
         String body = "import com.icthh.xm.uaa.lep.LepContext;\nLepContext context = lepContext\nreturn ['context':context]";
         leps.onRefresh(key, body);
@@ -91,7 +91,7 @@ public class LepContextCastIntTest {
         }
     }
 
-    @LepService
+    @LepService(group = "test")
     public static class TestLepService {
         @LogicExtensionPoint("ScriptWithAround")
         public Map<String, Object> sayHello() {
