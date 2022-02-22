@@ -630,6 +630,11 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public User updateLastLoginDate(User user) {
+        user.setLastLoginDate(Instant.now());
+        return userRepository.save(user);
+    }
+
     public void handlePasswordReset(PasswordResetRequest resetRequest) {
         passwordResetHandlerFactory.getPasswordResetHandler(resetRequest.getResetType()).handle(resetRequest);
     }
