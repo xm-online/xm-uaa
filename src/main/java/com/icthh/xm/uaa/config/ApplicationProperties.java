@@ -86,6 +86,7 @@ public class ApplicationProperties {
     @Setter
     public static class Lep {
         private TenantScriptStorage tenantScriptStorage;
+        private Boolean fullRecompileOnLepUpdate;
     }
 
 }
