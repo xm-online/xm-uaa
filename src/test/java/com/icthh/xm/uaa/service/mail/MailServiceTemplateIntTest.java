@@ -35,7 +35,6 @@ import static org.mockito.Mockito.when;
         UaaApp.class,
         XmOverrideConfiguration.class
 })
-@ActiveProfiles(profiles = "non-async")
 public class MailServiceTemplateIntTest {
 
     private static final String TEMPLATE_NAME = "templateName";

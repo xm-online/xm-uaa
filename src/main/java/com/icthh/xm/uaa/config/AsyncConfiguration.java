@@ -24,7 +24,6 @@ import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 @Configuration
 @EnableAsync
 @EnableScheduling
-@Profile("!non-async")
 public class AsyncConfiguration implements AsyncConfigurer, SchedulingConfigurer {
 
     private final Logger log = LoggerFactory.getLogger(AsyncConfiguration.class);
