@@ -115,6 +115,8 @@ test {
     include '**/*UnitTest*'
     include '**/*IntTest*'
 
+    maxHeapSize = "512m"
+
     // uncomment if the tests reports are not generated
     // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
     // ignoreFailures true
