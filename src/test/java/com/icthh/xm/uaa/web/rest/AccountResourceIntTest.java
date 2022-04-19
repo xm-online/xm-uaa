@@ -211,7 +211,6 @@ public class AccountResourceIntTest {
             accountService,
             profileEventProducer,
             captchaService,
-            xmAuthenticationContextHolder,
             xmRequestContextHolder,
             tenantContextHolder, tenantPermissionService, accountMailService);
 
@@ -221,7 +220,6 @@ public class AccountResourceIntTest {
             accountService,
             profileEventProducer,
             captchaService,
-            xmAuthenticationContextHolder,
             xmRequestContextHolder,
             tenantContextHolder, tenantPermissionService, accountMailService);
 
@@ -294,6 +292,8 @@ public class AccountResourceIntTest {
             user.setLangKey("en");
             user.setRoleKey(RoleConstant.SUPER_ADMIN);
             user.getLogins().add(userLogin);
+
+            when(mockUserService.getRequiredUserKey()).thenReturn(user.getUserKey());
             when(mockUserService.findOneWithLoginsByUserKey(anyString())).thenReturn(Optional.of(user));
 
             try {
@@ -328,6 +328,7 @@ public class AccountResourceIntTest {
             user.setLangKey("en");
             user.setRoleKey("ROLE_ADMIN");
             user.getLogins().add(userLogin);
+            when(mockUserService.getRequiredUserKey()).thenReturn(user.getUserKey());
             when(mockUserService.findOneWithLoginsByUserKey(anyString())).thenReturn(Optional.of(user));
 
             tenantPermissionService.onRefresh("/config/tenants/XM/permissions.yml",
