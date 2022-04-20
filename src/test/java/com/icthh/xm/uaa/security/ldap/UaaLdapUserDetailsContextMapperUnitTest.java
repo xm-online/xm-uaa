@@ -31,7 +31,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 
 @RunWith(MockitoJUnitRunner.class)
-public class UaaLdapUserDetailsContextMapperTest {
+public class UaaLdapUserDetailsContextMapperUnitTest {
 
     private static final String LOGIN = "Homer";
     public static final Map<String, String> GROUP_MAPPING = Map.of(

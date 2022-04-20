@@ -203,12 +203,14 @@ application:
     db-schema-suffix:
     lep:
         tenant-script-storage: XM_MS_CONFIG
+        full-recompile-on-lep-update: false
     keystore-file: keystore.p12
     keystore-password: password
     security:
         passwordEncoderStrength: -1
         enablePasswordHashCaching: true
         enablePasswordHashCacheSize: 1000
+    last-login-date-enabled: false
 gracefulShutdown:
     enabled: false
     shutdownDelay:

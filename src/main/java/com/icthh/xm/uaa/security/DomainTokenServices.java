@@ -7,7 +7,12 @@ import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
+import java.util.Date;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
@@ -34,14 +39,10 @@ import org.springframework.security.web.authentication.preauth.PreAuthenticatedA
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
-import java.util.Date;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
 /**
  * Overrides standard class to pass user tenant.
  */
+@Slf4j
 public class DomainTokenServices implements AuthorizationServerTokenServices, ResourceServerTokenServices,
     ConsumerTokenServices, InitializingBean {
 
@@ -188,8 +189,16 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
             throw new InvalidGrantException("Invalid refresh token: " + refreshTokenValue);
         }
 
-        OAuth2RefreshToken refreshToken = tokenStore.readRefreshToken(refreshTokenValue);
+        OAuth2RefreshToken refreshToken;
+        try {
+            refreshToken = tokenStore.readRefreshToken(refreshTokenValue);
+        } catch (InvalidTokenException e) {
+            log.warn("Could not refresh token, invalid refresh token, message: {}", e.getMessage());
+            throw new InvalidTokenException("Invalid refresh token: " + refreshTokenValue, e);
+        }
+
         if (refreshToken == null) {
+            log.warn("Could not refresh token, null value given after reading, invalid refresh token");
             throw new InvalidGrantException("Invalid refresh token: " + refreshTokenValue);
         }
 
@@ -311,6 +320,8 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         } else if (accessToken.isExpired()) {
             tokenStore.removeAccessToken(accessToken);
             throw new InvalidTokenException("Access token expired: " + accessTokenValue.substring(0, 200));
+        } else if (accessToken.getAdditionalInformation().containsKey("tfaVerificationKey")) {
+            throw new InvalidTokenException("TfaAccess token can not be used to access API");
         }
 
         OAuth2Authentication result = tokenStore.readAuthentication(accessToken);

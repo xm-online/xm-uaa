@@ -49,6 +49,7 @@ public class ApplicationProperties {
     private String privateKey;
     private String keystoreKeyName = "selfsigned";
     private boolean auditEventsEnabled;
+    private boolean lastLoginDateEnabled;
 
     @Getter
     @Setter
@@ -85,6 +86,7 @@ public class ApplicationProperties {
     @Setter
     public static class Lep {
         private TenantScriptStorage tenantScriptStorage;
+        private Boolean fullRecompileOnLepUpdate;
     }
 
 }

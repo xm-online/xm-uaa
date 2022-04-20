@@ -3,7 +3,6 @@ package com.icthh.xm.uaa.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
-import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.config.Constants;
@@ -73,15 +72,10 @@ public class AccountResource {
     private final AccountService accountService;
     private final ProfileEventProducer profileEventProducer;
     private final CaptchaService captchaService;
-    private final XmAuthenticationContextHolder xmAuthenticationContextHolder;
     private final XmRequestContextHolder xmRequestContextHolder;
     private final TenantContextHolder tenantContextHolder;
     private final TenantPermissionService tenantPermissionService;
     private final AccountMailService accountMailService;
-
-    private String getRequiredUserKey() {
-        return xmAuthenticationContextHolder.getContext().getRequiredUserKey();
-    }
 
     /**
      * POST /register : register the user.
@@ -167,7 +161,8 @@ public class AccountResource {
     @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'ACCOUNT.GET_LIST.ITEM')")
     @PrivilegeDescription("Privilege to get the current user")
     public ResponseEntity<UserDTO> getAccount() {
-        return ResponseUtil.wrapOrNotFound(userService.findOneWithLoginsByUserKey(getRequiredUserKey())
+        String requiredUserKey = userService.getRequiredUserKey();
+        return ResponseUtil.wrapOrNotFound(userService.findOneWithLoginsByUserKey(requiredUserKey)
                                                .map(user -> {
                                                    UserDTO userDto = new UserDTO(user);
                                                    userDto.getPermissions().addAll(tenantPermissionService.getEnabledPermissionByRole(user.getAuthorities()));
@@ -222,8 +217,8 @@ public class AccountResource {
     public ResponseEntity<UserDTO> updateUserLogins(@Valid @RequestBody UserDTO user) {
         userLoginService.normalizeLogins(user.getLogins());
         userLoginService.verifyLoginsNotExist(user.getLogins(), user.getId());
-
-        Optional<UserDTO> updatedUser = userService.updateUserLogins(getRequiredUserKey(), user.getLogins());
+        String requiredUserKey = userService.getRequiredUserKey();
+        Optional<UserDTO> updatedUser = userService.updateUserLogins(requiredUserKey, user.getLogins());
         updatedUser.ifPresent(userDTO -> produceEvent(userDTO, Constants.UPDATE_PROFILE_EVENT_TYPE));
         return ResponseUtil.wrapOrNotFound(updatedUser,
                                            HeaderUtil.createAlert("userManagement.updated", user.getUserKey()));

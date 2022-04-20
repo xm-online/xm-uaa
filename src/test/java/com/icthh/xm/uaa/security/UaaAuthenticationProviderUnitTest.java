@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.security;
 
+import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.Security;
@@ -46,6 +47,9 @@ public class UaaAuthenticationProviderUnitTest {
     @Mock
     private TenantPropertiesService tenantPropertiesService;
 
+    @Mock
+    private ApplicationProperties applicationProperties;
+
     private UaaAuthenticationProvider uaaAuthenticationProvider;
 
     private TenantProperties tenantProperties;
@@ -62,7 +66,8 @@ public class UaaAuthenticationProviderUnitTest {
         uaaAuthenticationProvider = new UaaAuthenticationProvider(authenticationProvider,
                                                                   null,
                                                                   userService,
-                                                                  tenantPropertiesService);
+                                                                  tenantPropertiesService,
+                                                                  applicationProperties);
         uaaAuthenticationProvider.setSelf(uaaAuthenticationProvider);
     }
 

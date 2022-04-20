@@ -74,6 +74,10 @@ public class UserService {
     private final TokenConstraintsService tokenConstraints;
     private final PasswordResetHandlerFactory passwordResetHandlerFactory;
 
+    public String getRequiredUserKey() {
+        return xmAuthenticationContextHolder.getContext().getRequiredUserKey();
+    }
+
     /**
      * Search user by reset key and set him password.
      *
@@ -189,9 +193,13 @@ public class UserService {
      */
     @LogicExtensionPoint("BlockUserAccount")
     public Optional<UserDTO> blockUserAccount(String userKey) {
-        if (xmAuthenticationContextHolder.getContext().getRequiredUserKey().equals(userKey)) {
-            throw new BusinessException(ERROR_USER_BLOCK_HIMSELF, "Forbidden to block himself");
-        }
+
+        xmAuthenticationContextHolder.getContext().getUserKey().ifPresent(key -> {
+            if (key.equals(userKey)) {
+                throw new BusinessException(ERROR_USER_BLOCK_HIMSELF, "Forbidden to block himself");
+            }
+        });
+
         return changeUserAccountState(userKey, Boolean.FALSE);
     }
 
@@ -202,9 +210,13 @@ public class UserService {
      */
     @LogicExtensionPoint("ActivateUserAccount")
     public Optional<UserDTO> activateUserAccount(String userKey) {
-        if (xmAuthenticationContextHolder.getContext().getRequiredUserKey().equals(userKey)) {
-            throw new BusinessException(ERROR_USER_ACTIVATES_HIMSELF, "Forbidden to activate himself");
-        }
+
+        xmAuthenticationContextHolder.getContext().getUserKey().ifPresent(key -> {
+            if (key.equals(userKey)) {
+                throw new BusinessException(ERROR_USER_ACTIVATES_HIMSELF, "Forbidden to activate himself");
+            }
+        });
+
         return changeUserAccountState(userKey, Boolean.TRUE);
     }
 
@@ -269,9 +281,12 @@ public class UserService {
      * @param userKey user key;
      */
     public void deleteUser(String userKey, Consumer<UserDTO> notification) {
-        if (xmAuthenticationContextHolder.getContext().getRequiredUserKey().equals(userKey)) {
-            throw new BusinessException(ERROR_USER_DELETE_HIMSELF, "Forbidden to delete himself");
-        }
+        xmAuthenticationContextHolder.getContext().getUserKey().ifPresent(key -> {
+            if (key.equals(userKey)) {
+                throw new BusinessException(ERROR_USER_DELETE_HIMSELF, "Forbidden to delete himself");
+            }
+        });
+
         userRepository.findOneWithLoginsByUserKey(userKey).ifPresent(user -> {
             assertNotSuperAdmin(user.getAuthorities());
             userRepository.delete(user);
@@ -417,7 +432,7 @@ public class UserService {
             return supportedOtpChannelTypes.map(otpChannelTypes -> otpChannelTypes.contains(otpChannelType)).orElse(false);
         }).findAny();
 
-        if (!anyLoginForChannel.isPresent()) {
+        if (anyLoginForChannel.isEmpty()) {
             throw new BusinessException("User has no login for OTP channel type: " + channelTypeName);
         }
 
@@ -451,7 +466,7 @@ public class UserService {
             // is channel type supported by current login type
             UserLoginType loginType = OtpUtils.getRequiredLoginType(userLogin.getTypeKey());
             Optional<List<OtpChannelType>> userOtpChannelTypes = OtpUtils.getSupportedOtpChannelTypes(loginType);
-            if (!userOtpChannelTypes.isPresent()) {
+            if (userOtpChannelTypes.isEmpty()) {
                 continue;
             }
 
@@ -547,7 +562,7 @@ public class UserService {
             .filter(Boolean.TRUE::equals)
             .count();
 
-        if (countOfMatchedPolicies <= passwordPoliciesMinimalMatchCount) {
+        if (countOfMatchedPolicies < passwordPoliciesMinimalMatchCount) {
             throw new BusinessException("password.validation.failed",
                                         "password doesn't matched required count of policies");
         }
@@ -627,6 +642,11 @@ public class UserService {
     public User updateAcceptTermsOfConditionsToken(User user) {
         String token = randomUUID().toString();
         user.setAcceptTocOneTimeToken(token);
+        return userRepository.save(user);
+    }
+
+    public User updateLastLoginDate(User user) {
+        user.setLastLoginDate(Instant.now());
         return userRepository.save(user);
     }
 

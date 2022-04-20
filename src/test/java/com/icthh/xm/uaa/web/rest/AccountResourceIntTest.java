@@ -211,7 +211,6 @@ public class AccountResourceIntTest {
             accountService,
             profileEventProducer,
             captchaService,
-            xmAuthenticationContextHolder,
             xmRequestContextHolder,
             tenantContextHolder, tenantPermissionService, accountMailService);
 
@@ -221,7 +220,6 @@ public class AccountResourceIntTest {
             accountService,
             profileEventProducer,
             captchaService,
-            xmAuthenticationContextHolder,
             xmRequestContextHolder,
             tenantContextHolder, tenantPermissionService, accountMailService);
 
@@ -294,6 +292,8 @@ public class AccountResourceIntTest {
             user.setLangKey("en");
             user.setRoleKey(RoleConstant.SUPER_ADMIN);
             user.getLogins().add(userLogin);
+
+            when(mockUserService.getRequiredUserKey()).thenReturn(user.getUserKey());
             when(mockUserService.findOneWithLoginsByUserKey(anyString())).thenReturn(Optional.of(user));
 
             try {
@@ -328,6 +328,7 @@ public class AccountResourceIntTest {
             user.setLangKey("en");
             user.setRoleKey("ROLE_ADMIN");
             user.getLogins().add(userLogin);
+            when(mockUserService.getRequiredUserKey()).thenReturn(user.getUserKey());
             when(mockUserService.findOneWithLoginsByUserKey(anyString())).thenReturn(Optional.of(user));
 
             tenantPermissionService.onRefresh("/config/tenants/XM/permissions.yml",
@@ -395,7 +396,7 @@ public class AccountResourceIntTest {
             ROLE_USER, "test",
             null, null, null, null,
             Collections.singletonList(login), false, null, null,
-            List.of("test"));
+            List.of("test"), null);
 
         restMvc.perform(
             post("/api/register")
@@ -431,7 +432,7 @@ public class AccountResourceIntTest {
             ROLE_USER, "test",
             null, null, null,
             null, Collections.singletonList(login), false,
-            null, null, List.of("test"));
+            null, null, List.of("test"), null);
 
         restMvc.perform(
             post("/api/register")
@@ -467,7 +468,7 @@ public class AccountResourceIntTest {
             ROLE_USER, "test",
             null, null, null, null,
             Collections.singletonList(login), false, null,
-            null, List.of("test"));
+            null, List.of("test"), null);
 
         restUserMockMvc.perform(
             post("/api/register")
@@ -503,7 +504,7 @@ public class AccountResourceIntTest {
             ROLE_USER, "test",
             null, null, null,
             null, Collections.singletonList(login), false, null,
-            null, List.of("test"));
+            null, List.of("test"), null);
 
         restUserMockMvc.perform(
             post("/api/register")
@@ -540,7 +541,7 @@ public class AccountResourceIntTest {
             ROLE_USER, "test",
             null, null, null, null,
             Collections.singletonList(login), false, null,
-            null, List.of("test"));
+            null, List.of("test"), null);
 
         // Duplicate login, different login
         UserLogin loginNew = new UserLogin();
@@ -557,7 +558,7 @@ public class AccountResourceIntTest {
             validUser.getAccessTokenValiditySeconds(), validUser.getRefreshTokenValiditySeconds(),
             validUser.getTfaAccessTokenValiditySeconds(),
             null, Arrays.asList(login, loginNew), false, null,
-            null, validUser.getAuthorities());
+            null, validUser.getAuthorities(), null);
 
         // Good user
         restMvc.perform(
@@ -602,7 +603,7 @@ public class AccountResourceIntTest {
             ROLE_USER, "test",
             null, null, null, null,
             Collections.singletonList(loginOld), false, null,
-            null, List.of("test"));
+            null, List.of("test"), null);
 
         // Duplicate login, different login
         UserLogin loginNew = new UserLogin();
@@ -622,7 +623,7 @@ public class AccountResourceIntTest {
             validUser.getAccessTokenValiditySeconds(), validUser.getRefreshTokenValiditySeconds(),
             validUser.getTfaAccessTokenValiditySeconds(),
             null, Arrays.asList(loginOldWithWhitespaces, loginNew), false,
-            null, null, List.of("test"));
+            null, null, List.of("test"), null);
 
         // Good user
         restMvc.perform(
@@ -666,7 +667,7 @@ public class AccountResourceIntTest {
             RoleConstant.SUPER_ADMIN, "test",
             null, null, null, null,
             Collections.singletonList(login), false,
-            null, null, List.of("test"));
+            null, null, List.of("test"), null);
 
         restMvc.perform(
             post("/api/register")
@@ -746,7 +747,7 @@ public class AccountResourceIntTest {
                 null, null, null,
                 null, Collections.singletonList(userLogin),
                 Collections.emptyList(), false, null,
-                null);
+                null, null);
 
             try {
                 restMvc.perform(
@@ -818,7 +819,7 @@ public class AccountResourceIntTest {
                 List.of("test1"),
                 null, null, null, null,
                 Collections.singletonList(userLogin),
-                Collections.emptyList(), false, null, null);
+                Collections.emptyList(), false, null, null, null);
 
             try {
                 restMvc.perform(
