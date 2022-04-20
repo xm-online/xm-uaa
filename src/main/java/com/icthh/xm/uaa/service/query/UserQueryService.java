@@ -110,43 +110,36 @@ public class UserQueryService extends QueryService<User> {
 
     protected <X> Specification<User> equalsSpecificationDistinct(Function<Root<User>, Expression<X>> metaclassFunction, X value) {
         return (root, query, builder) -> {
-            final Predicate predicate = builder.equal(metaclassFunction.apply(root), value);
             query.distinct(true);
-            return predicate;
+            return builder.equal(metaclassFunction.apply(root), value);
         };
     }
 
     protected <X> Specification<User> notEqualsSpecificationDistinct(Function<Root<User>, Expression<X>> metaclassFunction, X value) {
         return (root, query, builder) -> {
-            final Predicate predicate = builder.not(builder.equal(metaclassFunction.apply(root), value));
             query.distinct(true);
-            return predicate;
+            return builder.not(builder.equal(metaclassFunction.apply(root), value));
         };
     }
 
     protected Specification<User> doesNotContainSpecificationDistinct(Function<Root<User>, Expression<String>> metaclassFunction, String value) {
         return (root, query, builder) -> {
-            final Predicate predicate =  builder.not(builder.like(builder.upper(metaclassFunction.apply(root)), wrapLikeQuery(value)));
             query.distinct(true);
-            return predicate;
+            return builder.not(builder.like(builder.upper(metaclassFunction.apply(root)), wrapLikeQuery(value)));
         };
     }
 
     protected Specification<User> likeUpperSpecificationDistinct(Function<Root<User>, Expression<String>> metaclassFunction, String value) {
         return (root, query, builder) -> {
-            final Predicate predicate = builder.like(builder.upper(metaclassFunction.apply(root)), wrapLikeQuery(value));
             query.distinct(true);
-            return predicate;
+            return builder.like(builder.upper(metaclassFunction.apply(root)), wrapLikeQuery(value));
         };
     }
 
     protected <X> Specification<User> byFieldSpecifiedDistinct(Function<Root<User>, Expression<X>> metaclassFunction, boolean specified) {
         return (root, query, builder) -> {
-            final Predicate predicate = specified ?
-                builder.isNotNull(metaclassFunction.apply(root)) :
-                builder.isNull(metaclassFunction.apply(root));
             query.distinct(true);
-            return predicate;
+            return specified ? builder.isNotNull(metaclassFunction.apply(root)) : builder.isNull(metaclassFunction.apply(root));
         };
     }
 
