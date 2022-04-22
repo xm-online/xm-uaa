@@ -4,6 +4,7 @@ import static org.apache.commons.lang.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import com.icthh.xm.uaa.domain.properties.TenantProperties.Ldap;
+import com.icthh.xm.uaa.lep.keyresolver.LepBuildLdapProviderKeyResolver;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
@@ -35,7 +36,7 @@ public class LdapAuthenticationProviderBuilder {
     private final DomainUserDetailsService userDetailsService;
     private final UserService userService;
 
-    @LogicExtensionPoint("BuildLdapProvider")
+    @LogicExtensionPoint(value = "BuildLdapProvider", resolver = LepBuildLdapProviderKeyResolver.class)
     public Optional<AuthenticationProvider> build(String domain) {
         List<Ldap> ldapList = tenantPropertiesService.getTenantProps().getLdap();
 
