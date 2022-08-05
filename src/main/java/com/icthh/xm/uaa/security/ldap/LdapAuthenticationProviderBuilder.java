@@ -4,6 +4,7 @@ import static org.apache.commons.lang.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import com.icthh.xm.uaa.domain.properties.TenantProperties.Ldap;
+import com.icthh.xm.uaa.lep.keyresolver.LepBuildLdapProviderKeyResolver;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
@@ -22,16 +23,20 @@ import org.springframework.security.ldap.authentication.LdapAuthenticationProvid
 import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider;
 import org.springframework.security.ldap.userdetails.DefaultLdapAuthoritiesPopulator;
 import org.springframework.stereotype.Component;
+import com.icthh.xm.commons.lep.LogicExtensionPoint;
+import com.icthh.xm.commons.lep.spring.LepService;
 
 @AllArgsConstructor
 @Slf4j
 @Component
+@LepService(group = "security.provider")
 public class LdapAuthenticationProviderBuilder {
 
     private final TenantPropertiesService tenantPropertiesService;
     private final DomainUserDetailsService userDetailsService;
     private final UserService userService;
 
+    @LogicExtensionPoint(value = "BuildLdapProvider", resolver = LepBuildLdapProviderKeyResolver.class)
     public Optional<AuthenticationProvider> build(String domain) {
         List<Ldap> ldapList = tenantPropertiesService.getTenantProps().getLdap();
 
