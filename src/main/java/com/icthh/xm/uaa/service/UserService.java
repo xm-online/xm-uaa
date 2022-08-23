@@ -9,6 +9,7 @@ import com.icthh.xm.commons.logging.LoggingAspectConfig;
 import com.icthh.xm.commons.permission.annotation.FindWithPermission;
 import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
+import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
@@ -73,6 +74,7 @@ public class UserService {
     private final UserPermittedRepository userPermittedRepository;
     private final TokenConstraintsService tokenConstraints;
     private final PasswordResetHandlerFactory passwordResetHandlerFactory;
+    private final ApplicationProperties applicationProperties;
 
     public String getRequiredUserKey() {
         return xmAuthenticationContextHolder.getContext().getRequiredUserKey();
@@ -648,6 +650,30 @@ public class UserService {
     public User updateLastLoginDate(User user) {
         user.setLastLoginDate(Instant.now());
         return userRepository.save(user);
+    }
+
+    public void onSuccessfulLogin(String userKey) {
+        Integer maxPasswordAttempts = tenantPropertiesService.getTenantProps().getSecurity().getMaxPasswordAttempts();
+
+        userRepository.findOneByUserKey(userKey).ifPresent(user -> {
+            if (applicationProperties.isLastLoginDateEnabled()) {
+                user.updateLastLoginDate();
+            }
+
+            if (maxPasswordAttempts != null && maxPasswordAttempts >= 0){
+                user.resetPasswordAttempts();
+            }
+        });
+    }
+
+    public void increaseFailedPasswordAttempts(String username) {
+        Integer maxPasswordAttempts = tenantPropertiesService.getTenantProps().getSecurity().getMaxPasswordAttempts();
+
+        if (maxPasswordAttempts != null && maxPasswordAttempts >= 0) {
+            userLoginRepository.findOneByLoginIgnoreCase(username)
+                .map(UserLogin::getUser)
+                .ifPresent(user -> user.incrementPasswordAttempts(maxPasswordAttempts));
+        }
     }
 
     public void handlePasswordReset(PasswordResetRequest resetRequest) {

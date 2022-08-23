@@ -157,6 +157,9 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "last_login_date")
     private Instant lastLoginDate;
 
+    @Column(name = "password_attempts")
+    private Integer passwordAttempts;
+
     // TODO refactor, put EMAIL type to configuration
     public String getEmail() {
         return getLogins().stream().filter(userLogin -> UserLoginType.EMAIL.getValue().equals(userLogin.getTypeKey()))
@@ -216,6 +219,25 @@ public class User extends AbstractAuditingEntity implements Serializable {
             + ", activationKey='" + activationKey + '\''
             + ", roleKey='" + roleKey + '\''
             + ", updatePasswordDate='" + updatePasswordDate + '\''
+            + ", passwordAttempts='" + passwordAttempts + '\''
             + "}";
+    }
+
+    public void resetPasswordAttempts() {
+        this.setPasswordAttempts(0);
+    }
+
+    public void updateLastLoginDate() {
+        this.setLastLoginDate(Instant.now());
+    }
+
+    public void incrementPasswordAttempts(Integer maxPasswordAttempts) {
+        int incrementedPasswordAttempt = this.getPasswordAttempts() + 1;
+
+        this.setPasswordAttempts(incrementedPasswordAttempt);
+
+        if (incrementedPasswordAttempt == maxPasswordAttempts) {
+            this.setActivated(false);
+        }
     }
 }
