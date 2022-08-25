@@ -83,7 +83,7 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
     @LogicExtensionPoint(value = "Authenticate", resolver = OptionalProfileHeaderResolver.class)
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        Authentication result = handleFailedAuthentication(authentication);
+        Authentication result = authenticationByProvider(authentication);
         log.info("authenticated: {}, role: {}, {}", result.isAuthenticated(), result.getAuthorities(), result.getPrincipal());
         checkPasswordExpiration(result);
         checkTermsOfConditions(result);
@@ -134,7 +134,7 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
         return userService.getUser(domainUserDetails.getUserKey());
     }
 
-    private Authentication handleFailedAuthentication(Authentication authentication) {
+    private Authentication authenticationByProvider(Authentication authentication) {
         try {
             return getProvider(authentication).authenticate(authentication);
         } catch (BadCredentialsException exception) {
