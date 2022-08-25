@@ -678,7 +678,8 @@ public class UserService {
             userLoginRepository.findOneByLoginIgnoreCase(username)
                 .map(UserLogin::getUser)
                 .map(User::incrementPasswordAttempts)
-                .ifPresent(user -> self.passwordAttemptsExceeded(user, maxPasswordAttempts));
+                .filter(user -> user.getPasswordAttempts().equals(maxPasswordAttempts))
+                .ifPresent(self::passwordAttemptsExceeded);
         }
     }
 
@@ -687,9 +688,7 @@ public class UserService {
     }
 
     @LogicExtensionPoint(value = "PasswordAttemptsExceeded")
-    public void passwordAttemptsExceeded(User user, Integer maxPasswordAttempts) {
-        if (user.getPasswordAttempts().equals(maxPasswordAttempts)) {
-            user.setActivated(false);
-        }
+    public void passwordAttemptsExceeded(User user) {
+        user.setActivated(false);
     }
 }

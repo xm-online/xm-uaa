@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.domain;
 
 import static com.google.common.collect.Iterables.getFirst;
+import static java.util.Objects.requireNonNullElse;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -159,6 +160,10 @@ public class User extends AbstractAuditingEntity implements Serializable {
 
     @Column(name = "password_attempts")
     private Integer passwordAttempts;
+
+    public Integer getPasswordAttempts() {
+        return requireNonNullElse(passwordAttempts, 0);
+    }
 
     // TODO refactor, put EMAIL type to configuration
     public String getEmail() {
