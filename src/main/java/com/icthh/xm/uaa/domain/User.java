@@ -231,9 +231,9 @@ public class User extends AbstractAuditingEntity implements Serializable {
         this.setLastLoginDate(Instant.now());
     }
 
-    public void incrementPasswordAttempts() {
+    public User incrementPasswordAttempts() {
         int incrementedPasswordAttempt = this.getPasswordAttempts() + 1;
-
         this.setPasswordAttempts(incrementedPasswordAttempt);
+        return this;
     }
 }

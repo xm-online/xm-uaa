@@ -60,6 +60,7 @@ public class UserServiceUnitTest {
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
+        service.setSelf(service);
     }
 
     @Test

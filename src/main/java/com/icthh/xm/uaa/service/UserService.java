@@ -27,6 +27,7 @@ import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.util.RandomUtil;
 import com.icthh.xm.uaa.util.OtpUtils;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -60,6 +61,7 @@ import static org.springframework.transaction.annotation.Propagation.REQUIRES_NE
 @LepService(group = "service.user")
 @Service
 @Transactional
+@RequiredArgsConstructor
 @Slf4j
 public class UserService {
 
@@ -77,28 +79,6 @@ public class UserService {
     private final ApplicationProperties applicationProperties;
     @Setter(onMethod = @__(@Autowired))
     private UserService self;
-
-    public UserService(UserRepository userRepository,
-                       UserLoginRepository userLoginRepository,
-                       PasswordEncoder passwordEncoder,
-                       AccountMailService accountMailService,
-                       TenantPropertiesService tenantPropertiesService,
-                       XmAuthenticationContextHolder xmAuthenticationContextHolder,
-                       UserPermittedRepository userPermittedRepository,
-                       TokenConstraintsService tokenConstraints,
-                       PasswordResetHandlerFactory passwordResetHandlerFactory,
-                       ApplicationProperties applicationProperties) {
-        this.userRepository = userRepository;
-        this.userLoginRepository = userLoginRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.accountMailService = accountMailService;
-        this.tenantPropertiesService = tenantPropertiesService;
-        this.xmAuthenticationContextHolder = xmAuthenticationContextHolder;
-        this.userPermittedRepository = userPermittedRepository;
-        this.tokenConstraints = tokenConstraints;
-        this.passwordResetHandlerFactory = passwordResetHandlerFactory;
-        this.applicationProperties = applicationProperties;
-    }
 
     public String getRequiredUserKey() {
         return xmAuthenticationContextHolder.getContext().getRequiredUserKey();
@@ -697,10 +677,8 @@ public class UserService {
         if (maxPasswordAttempts != null && maxPasswordAttempts > 0) {
             userLoginRepository.findOneByLoginIgnoreCase(username)
                 .map(UserLogin::getUser)
-                .ifPresent(user -> {
-                    user.incrementPasswordAttempts();
-                    self.disableAccountActivation(user, maxPasswordAttempts);
-                });
+                .map(User::incrementPasswordAttempts)
+                .ifPresent(user -> self.passwordAttemptsExceeded(user, maxPasswordAttempts));
         }
     }
 
@@ -708,8 +686,8 @@ public class UserService {
         passwordResetHandlerFactory.getPasswordResetHandler(resetRequest.getResetType()).handle(resetRequest);
     }
 
-    @LogicExtensionPoint(value = "DisableAccountActivation")
-    public void disableAccountActivation(User user, Integer maxPasswordAttempts) {
+    @LogicExtensionPoint(value = "PasswordAttemptsExceeded")
+    public void passwordAttemptsExceeded(User user, Integer maxPasswordAttempts) {
         if (user.getPasswordAttempts().equals(maxPasswordAttempts)) {
             user.setActivated(false);
         }
