@@ -21,13 +21,14 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Optional;
-import lombok.Getter;
+
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -82,13 +83,14 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
     @LogicExtensionPoint(value = "Authenticate", resolver = OptionalProfileHeaderResolver.class)
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        Authentication result = getProvider(authentication).authenticate(authentication);
+        Authentication result = authenticationByProvider(authentication);
         log.info("authenticated: {}, role: {}, {}", result.isAuthenticated(), result.getAuthorities(), result.getPrincipal());
         checkPasswordExpiration(result);
         checkTermsOfConditions(result);
-        if (applicationProperties.isLastLoginDateEnabled()) {
-            userService.updateLastLoginDate(getUser(result));
-        }
+
+        DomainUserDetails domainUserDetails = (DomainUserDetails) result.getPrincipal();
+        userService.onSuccessfulLogin(domainUserDetails.getUserKey());
+
         return result;
     }
 
@@ -130,6 +132,15 @@ public class UaaAuthenticationProvider implements AuthenticationProvider {
     private User getUser(Authentication authentication) {
         DomainUserDetails domainUserDetails = (DomainUserDetails) authentication.getPrincipal();
         return userService.getUser(domainUserDetails.getUserKey());
+    }
+
+    private Authentication authenticationByProvider(Authentication authentication) {
+        try {
+            return getProvider(authentication).authenticate(authentication);
+        } catch (BadCredentialsException exception) {
+            userService.increaseFailedPasswordAttempts(authentication.getName());
+            throw exception;
+        }
     }
 
     /**

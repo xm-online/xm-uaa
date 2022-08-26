@@ -11,14 +11,18 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 public class UaaAuthenticationProviderUnitTest {
@@ -27,19 +31,8 @@ public class UaaAuthenticationProviderUnitTest {
 
     private static final String DEFAULT_USER_ROLE_KEY = "ROLE-USER";
     private static final String DEFAULT_ADMIN_ROLE_KEY = "SUPER-ADMIN";
-
-
-    private AuthenticationProvider authenticationProvider = new AuthenticationProvider() {
-        @Override
-        public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-            return authentication;
-        }
-
-        @Override
-        public boolean supports(Class<?> authentication) {
-            return true;
-        }
-    };
+    @Mock
+    private AuthenticationProvider authenticationProvider;
 
     @Mock
     private UserService userService;
@@ -91,6 +84,22 @@ public class UaaAuthenticationProviderUnitTest {
         testUserPassword(DEFAULT_ADMIN_ROLE_KEY, Instant.now().minus(7, ChronoUnit.DAYS), 5);
     }
 
+    @Test(expected = BadCredentialsException.class)
+    public void testUserAuthenticationFailed(){
+        Authentication authentication = mock(Authentication.class);
+        DomainUserDetails userDetails = mock(DomainUserDetails.class);
+        when(authentication.getPrincipal()).thenReturn(userDetails);
+
+        doThrow(BadCredentialsException.class).when(authenticationProvider).authenticate(authentication);
+        doNothing().when(userService).increaseFailedPasswordAttempts(DEFAULT_USER_KEY);
+
+        uaaAuthenticationProvider.authenticate(authentication);
+
+        verify(authenticationProvider).authenticate(authentication);
+        verify(userService).increaseFailedPasswordAttempts(DEFAULT_USER_KEY);
+        verifyNoMoreInteractions(authenticationProvider, userService);
+    }
+
     private void testUserPassword(String roleKey, Instant updatePasswordDate, int passwordExpirationPeriod) {
         tenantProperties = new TenantProperties();
         tenantProperties.setSecurity(new Security());
@@ -101,13 +110,14 @@ public class UaaAuthenticationProviderUnitTest {
         user.setRoleKey(roleKey);
         user.setUpdatePasswordDate(updatePasswordDate);
         when(userService.getUser(DEFAULT_USER_KEY)).thenReturn(user);
+        doNothing().when(userService).onSuccessfulLogin(DEFAULT_USER_KEY);
 
 
         Authentication authentication = mock(Authentication.class);
         DomainUserDetails userDetails = mock(DomainUserDetails.class);
         when(userDetails.getUserKey()).thenReturn(DEFAULT_USER_KEY);
         when(authentication.getPrincipal()).thenReturn(userDetails);
+        when(authenticationProvider.authenticate(authentication)).thenReturn(authentication);
         uaaAuthenticationProvider.authenticate(authentication);
     }
-
 }

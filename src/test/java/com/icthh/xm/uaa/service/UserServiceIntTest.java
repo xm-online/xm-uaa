@@ -333,6 +333,39 @@ public class UserServiceIntTest {
         validateByTwoRegexp(2L);
     }
 
+    @Test
+    public void increaseFailedPasswordAttemptsAndDisableUserTest() throws JsonProcessingException {
+        TenantProperties tenantProperties = new TenantProperties();
+        tenantProperties.getSecurity().setMaxPasswordAttempts(3);
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        UserLogin userLogin = new UserLogin();
+        userLogin.setLogin("admin@localhost");
+        userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
+
+        User user = new User();
+        user.setUserKey("test");
+        user.setRoleKey(ROLE_USER);
+        user.setPassword(RandomStringUtils.random(60));
+        user.getLogins().add(userLogin);
+        userLogin.setUser(user);
+
+        user.setActivated(true);
+        user.setPasswordAttempts(2);
+
+        tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
+            objectMapper.writeValueAsString(tenantProperties));
+
+        userRepository.save(user);
+
+        userService.increaseFailedPasswordAttempts(userLogin.getLogin());
+
+        assertThat(user.isActivated()).isFalse();
+        assertThat(user.getPasswordAttempts()).isEqualTo(3);
+
+        userRepository.delete(user);
+    }
+
     private void validateByTwoRegexp(long passwordPoliciesMinimalMatchCount) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         TenantProperties tenantProperties = new TenantProperties();

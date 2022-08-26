@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.service;
 
 import com.icthh.xm.commons.security.XmAuthenticationContext;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
+import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
@@ -30,12 +31,14 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 public class UserServiceUnitTest {
 
     private static final String USER_KEY = "userKey";
     private static final Long ID = 1L;
+    private static final String USER_LOGIN = "userLogin";
 
     @InjectMocks
     private UserService service;
@@ -51,10 +54,13 @@ public class UserServiceUnitTest {
     private XmAuthenticationContextHolder xmAuthenticationContextHolder;
     @Mock
     private TokenConstraintsService tokenConstraintsService;
+    @Mock
+    private ApplicationProperties applicationProperties;
 
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
+        service.setSelf(service);
     }
 
     @Test
@@ -63,16 +69,13 @@ public class UserServiceUnitTest {
         User user = createUser();
         user.setActivated(true);
 
-        String login = "a@b.c";
-        UserLogin userLogin = new UserLogin();
+        UserLogin userLogin = createUserLogin(user);
         userLogin.setTypeKey("LOGIN.EMAIL");
-        userLogin.setLogin(login);
-        userLogin.setUser(user);
 
-        given(userLoginRepository.findOneByLoginIgnoreCase(login)).willReturn(Optional.of(userLogin));
+        given(userLoginRepository.findOneByLoginIgnoreCase(USER_LOGIN)).willReturn(Optional.of(userLogin));
 
         //WHEN
-        Optional<User> actualLogin = service.requestPasswordResetForLoginWithType(login, UserLoginType.EMAIL);
+        Optional<User> actualLogin = service.requestPasswordResetForLoginWithType(USER_LOGIN, UserLoginType.EMAIL);
 
         //THEN
         assertThat(actualLogin.isPresent()).isTrue();
@@ -329,6 +332,57 @@ public class UserServiceUnitTest {
         verify(userRepository).save(user);
     }
 
+    @Test
+    public void shouldIncreasePasswordAttemptsAndDisableUser() {
+        TenantProperties tenantProperties = new TenantProperties();
+        tenantProperties.getSecurity().setMaxPasswordAttempts(3);
+
+        User user = createUser();
+        user.setPasswordAttempts(2);
+
+        UserLogin userLogin = createUserLogin(user);
+
+        given(tenantPropertiesService.getTenantProps()).willReturn(tenantProperties);
+        given(userLoginRepository.findOneByLoginIgnoreCase(USER_LOGIN)).willReturn(Optional.of(userLogin));
+
+        service.increaseFailedPasswordAttempts(USER_LOGIN);
+
+        assertThat(user.getPasswordAttempts()).isEqualTo(3);
+        assertThat(user.isActivated()).isFalse();
+
+        verify(tenantPropertiesService).getTenantProps();
+        verify(userLoginRepository).findOneByLoginIgnoreCase(USER_LOGIN);
+    }
+
+    @Test
+    public void shouldNotIncreasePasswordAttemptsIfPropertyDoesNotExists() {
+        given(tenantPropertiesService.getTenantProps()).willReturn(new TenantProperties());
+
+        service.increaseFailedPasswordAttempts(USER_LOGIN);
+
+        verifyZeroInteractions(userLoginRepository);
+    }
+
+    @Test
+    public void shouldResetPasswordAttemptsIfLoginSuccess(){
+        TenantProperties tenantProperties = new TenantProperties();
+        tenantProperties.getSecurity().setMaxPasswordAttempts(3);
+        User user = createUser();
+        user.setPasswordAttempts(2);
+
+        given(tenantPropertiesService.getTenantProps()).willReturn(tenantProperties);
+        given(userRepository.findOneByUserKey(USER_KEY)).willReturn(Optional.of(user));
+        given(applicationProperties.isLastLoginDateEnabled()).willReturn(Boolean.FALSE);
+
+        service.onSuccessfulLogin(USER_KEY);
+
+        assertThat(user.getPasswordAttempts()).isEqualTo(0);
+
+        verify(tenantPropertiesService).getTenantProps();
+        verify(userRepository).findOneByUserKey(USER_KEY);
+        verify(applicationProperties).isLastLoginDateEnabled();
+    }
+
     private User createUser() {
         User user = new User();
         user.setId(ID);
@@ -342,6 +396,13 @@ public class UserServiceUnitTest {
         user.setRoleKey(roleKey);
         user.setActivated(Boolean.TRUE);
         return user;
+    }
+
+    private UserLogin createUserLogin(User user) {
+        UserLogin userLogin = new UserLogin();
+        userLogin.setLogin(USER_LOGIN);
+        userLogin.setUser(user);
+        return userLogin;
     }
 
     private XmAuthenticationContext getDummyCTX() {

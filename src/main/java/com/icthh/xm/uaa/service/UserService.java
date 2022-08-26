@@ -9,6 +9,7 @@ import com.icthh.xm.commons.logging.LoggingAspectConfig;
 import com.icthh.xm.commons.permission.annotation.FindWithPermission;
 import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
+import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
@@ -26,10 +27,12 @@ import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.util.RandomUtil;
 import com.icthh.xm.uaa.util.OtpUtils;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -58,7 +61,7 @@ import static org.springframework.transaction.annotation.Propagation.REQUIRES_NE
 @LepService(group = "service.user")
 @Service
 @Transactional
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
 public class UserService {
 
@@ -73,6 +76,9 @@ public class UserService {
     private final UserPermittedRepository userPermittedRepository;
     private final TokenConstraintsService tokenConstraints;
     private final PasswordResetHandlerFactory passwordResetHandlerFactory;
+    private final ApplicationProperties applicationProperties;
+    @Setter(onMethod = @__(@Autowired))
+    private UserService self;
 
     public String getRequiredUserKey() {
         return xmAuthenticationContextHolder.getContext().getRequiredUserKey();
@@ -650,8 +656,39 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public void onSuccessfulLogin(String userKey) {
+        Integer maxPasswordAttempts = tenantPropertiesService.getTenantProps().getSecurity().getMaxPasswordAttempts();
+
+        userRepository.findOneByUserKey(userKey).ifPresent(user -> {
+            if (applicationProperties.isLastLoginDateEnabled()) {
+                user.updateLastLoginDate();
+            }
+
+            if (maxPasswordAttempts != null && maxPasswordAttempts > 0) {
+                user.resetPasswordAttempts();
+            }
+        });
+    }
+
+    @LogicExtensionPoint(value = "IncreaseFailedPasswordAttempts")
+    public void increaseFailedPasswordAttempts(String username) {
+        Integer maxPasswordAttempts = tenantPropertiesService.getTenantProps().getSecurity().getMaxPasswordAttempts();
+
+        if (maxPasswordAttempts != null && maxPasswordAttempts > 0) {
+            userLoginRepository.findOneByLoginIgnoreCase(username)
+                .map(UserLogin::getUser)
+                .map(User::incrementPasswordAttempts)
+                .filter(user -> user.getPasswordAttempts().equals(maxPasswordAttempts))
+                .ifPresent(self::passwordAttemptsExceeded);
+        }
+    }
+
     public void handlePasswordReset(PasswordResetRequest resetRequest) {
         passwordResetHandlerFactory.getPasswordResetHandler(resetRequest.getResetType()).handle(resetRequest);
     }
 
+    @LogicExtensionPoint(value = "PasswordAttemptsExceeded")
+    public void passwordAttemptsExceeded(User user) {
+        user.setActivated(false);
+    }
 }

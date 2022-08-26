@@ -86,6 +86,9 @@ public class TenantProperties {
 
         private boolean reIssueRefreshToken = false;
 
+        @JsonProperty("maxPasswordAttempts")
+        private Integer maxPasswordAttempts;
+
         @JsonSetter("accessTokenValiditySeconds")
         public void setAccessTokenValiditySeconds(Integer accessTokenValiditySeconds) {
             this.accessTokenValiditySeconds = accessTokenValiditySeconds;
