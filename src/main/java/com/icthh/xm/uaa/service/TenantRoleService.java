@@ -271,17 +271,22 @@ public class TenantRoleService {
         Map<String, PermissionDTO> permissions = new TreeMap<>();
 
         // create permissions dto with role permissions
-        getPermissions().forEach((msName, rolePermissions) ->
-            rolePermissions.entrySet().stream()
-                .filter(entry -> roleKey.equalsIgnoreCase(entry.getKey()))
-                .forEach(entry ->
-                    entry.getValue().forEach(permission -> {
-                        permission.setMsName(msName);
-                        permission.setRoleKey(roleKey);
-                        permissions.put(msName + ":" + permission.getPrivilegeKey(),
-                            new PermissionDTO(permission));
-                    })
-                ));
+        getPermissions().forEach((msName, rolePermissions) -> {
+                log.info("\nMS NAME ::: {}\n", msName);
+                rolePermissions.entrySet().stream()
+                    .filter(entry -> roleKey.equalsIgnoreCase(entry.getKey()))
+                    .forEach(entry -> {
+                            log.info("\nROLE ::: {} ; PERMISSIONS ::: {}\n", entry.getKey(), entry.getValue());
+                            entry.getValue().forEach(permission -> {
+                                permission.setMsName(msName);
+                                permission.setRoleKey(roleKey);
+                                permissions.put(msName + ":" + permission.getPrivilegeKey(),
+                                    new PermissionDTO(permission));
+                            });
+                        }
+                    );
+            }
+        );
 
         // enrich role permissions with missing privileges
         BiConsumer<String, Set<Privilege>> privilegesProcessor = (msName, privileges) ->
