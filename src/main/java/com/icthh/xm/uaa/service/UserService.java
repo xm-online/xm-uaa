@@ -690,5 +690,6 @@ public class UserService {
     @LogicExtensionPoint(value = "PasswordAttemptsExceeded")
     public void passwordAttemptsExceeded(User user) {
         user.setActivated(false);
+        user.resetPasswordAttempts();
     }
 }
