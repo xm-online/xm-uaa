@@ -347,7 +347,7 @@ public class UserServiceUnitTest {
 
         service.increaseFailedPasswordAttempts(USER_LOGIN);
 
-        assertThat(user.getPasswordAttempts()).isEqualTo(3);
+        assertThat(user.getPasswordAttempts()).isEqualTo(0);
         assertThat(user.isActivated()).isFalse();
 
         verify(tenantPropertiesService).getTenantProps();

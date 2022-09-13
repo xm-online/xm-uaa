@@ -361,7 +361,7 @@ public class UserServiceIntTest {
         userService.increaseFailedPasswordAttempts(userLogin.getLogin());
 
         assertThat(user.isActivated()).isFalse();
-        assertThat(user.getPasswordAttempts()).isEqualTo(3);
+        assertThat(user.getPasswordAttempts()).isEqualTo(0);
 
         userRepository.delete(user);
     }
