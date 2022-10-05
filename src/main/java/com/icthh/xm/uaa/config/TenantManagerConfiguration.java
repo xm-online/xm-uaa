@@ -52,11 +52,10 @@ public class TenantManagerConfiguration {
     private String applicationName;
 
     @Bean
-    public TenantManager tenantManager(
-        TenantAbilityCheckerProvisioner abilityCheckerProvisioner,
-        TenantDatabaseProvisioner databaseProvisioner,
-        TenantConfigProvisioner configProvisioner,
-        TenantListProvisioner tenantListProvisioner) {
+    public TenantManager tenantManager(TenantAbilityCheckerProvisioner abilityCheckerProvisioner,
+                                       TenantDatabaseProvisioner databaseProvisioner,
+                                       TenantConfigProvisioner configProvisioner,
+                                       TenantListProvisioner tenantListProvisioner) {
 
         TenantManager manager = TenantManager.builder()
                                              .service(abilityCheckerProvisioner)
