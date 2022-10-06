@@ -211,7 +211,6 @@ application:
         enablePasswordHashCaching: true
         enablePasswordHashCacheSize: 1000
     last-login-date-enabled: false
-    requestCacheIgnoredPathPatternList: /api/functions/*/upload
 gracefulShutdown:
     enabled: false
     shutdownDelay:
