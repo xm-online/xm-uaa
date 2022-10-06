@@ -50,6 +50,8 @@ public class ApplicationProperties {
     private String keystoreKeyName = "selfsigned";
     private boolean auditEventsEnabled;
     private boolean lastLoginDateEnabled;
+    private Integer requestCacheLimit;
+    private List<String> requestCacheIgnoredPathPatternList = Collections.emptyList();
 
     @Getter
     @Setter
