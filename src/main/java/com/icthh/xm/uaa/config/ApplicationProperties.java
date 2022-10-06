@@ -50,6 +50,7 @@ public class ApplicationProperties {
     private String keystoreKeyName = "selfsigned";
     private boolean auditEventsEnabled;
     private boolean lastLoginDateEnabled;
+    private Integer requestCacheLimit;
 
     @Getter
     @Setter
