@@ -18,6 +18,7 @@ import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.mail.MailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.stereotype.Component;
@@ -52,6 +53,7 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
     private final TenantPropertiesService tenantPropertiesService;
     private final LepTokenGranter lepTokenGranter;
     private final ClientDetailsService clientDetailsService;
+    private final KafkaTemplate kafkaTemplate;
 
 
     @Override
@@ -79,6 +81,7 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
 
         Map<String, Object> templates = new HashMap<>();
         templates.put(BINDING_SUB_KEY_TEMPLATE_REST, restTemplate);
+        templates.put(BINDING_SUB_KEY_TEMPLATE_KAFKA, kafkaTemplate);
 
         executionContext.setValue(BINDING_KEY_TEMPLATES, templates);
 
