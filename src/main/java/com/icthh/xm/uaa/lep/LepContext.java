@@ -6,6 +6,7 @@ import com.icthh.xm.commons.lep.spring.LepThreadHelper;
 import com.icthh.xm.commons.lep.spring.lepservice.LepServiceFactory;
 import com.icthh.xm.commons.security.XmAuthenticationContext;
 import com.icthh.xm.commons.tenant.TenantContext;
+import com.icthh.xm.commons.topic.service.KafkaTemplateService;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
 import com.icthh.xm.uaa.security.CustomizableLepTokenStorage;
 import com.icthh.xm.uaa.security.oauth2.LepTokenGranter;
@@ -54,6 +55,7 @@ public class LepContext {
 
     public static class LepTemplates {
         public RestTemplate rest;
+        public KafkaTemplateService kafka;
     }
 
 }

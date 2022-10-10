@@ -3,6 +3,7 @@ package com.icthh.xm.uaa.lep;
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import com.icthh.xm.commons.lep.commons.CommonsExecutor;
 import com.icthh.xm.commons.lep.commons.CommonsService;
+import com.icthh.xm.commons.topic.service.KafkaTemplateService;
 import com.icthh.xm.commons.lep.spring.SpringLepProcessingApplicationListener;
 import com.icthh.xm.lep.api.ScopedContext;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
@@ -18,7 +19,6 @@ import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.mail.MailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.stereotype.Component;
@@ -53,7 +53,7 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
     private final TenantPropertiesService tenantPropertiesService;
     private final LepTokenGranter lepTokenGranter;
     private final ClientDetailsService clientDetailsService;
-    private final KafkaTemplate kafkaTemplate;
+    private final KafkaTemplateService kafkaTemplateService;
 
 
     @Override
@@ -81,7 +81,7 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
 
         Map<String, Object> templates = new HashMap<>();
         templates.put(BINDING_SUB_KEY_TEMPLATE_REST, restTemplate);
-        templates.put(BINDING_SUB_KEY_TEMPLATE_KAFKA, kafkaTemplate);
+        templates.put(BINDING_SUB_KEY_TEMPLATE_KAFKA, kafkaTemplateService);
 
         executionContext.setValue(BINDING_KEY_TEMPLATES, templates);
 
