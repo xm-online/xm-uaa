@@ -13,6 +13,7 @@ import com.icthh.xm.commons.gen.model.Tenant;
 import com.icthh.xm.commons.migration.db.tenant.provisioner.TenantDatabaseProvisioner;
 import com.icthh.xm.commons.permission.config.PermissionProperties;
 import com.icthh.xm.commons.tenantendpoint.TenantManager;
+import com.icthh.xm.commons.tenantendpoint.provisioner.TenantAbilityCheckerProvisioner;
 import com.icthh.xm.commons.tenantendpoint.provisioner.TenantConfigProvisioner;
 import com.icthh.xm.commons.tenantendpoint.provisioner.TenantListProvisioner;
 import org.junit.Before;
@@ -44,6 +45,8 @@ public class TenantManagerConfigurationUnitTest {
     @Mock
     private TenantListProvisioner tenantListProvisioner;
     @Mock
+    private TenantAbilityCheckerProvisioner abilityCheckerProvisioner;
+    @Mock
     private TenantConfigRepository tenantConfigRepository;
     @Mock
     private ApplicationProperties applicationProperties;
@@ -68,7 +71,7 @@ public class TenantManagerConfigurationUnitTest {
                                                                       applicationProperties,
                                                                       resourceLoader));
 
-        tenantManager = configuration.tenantManager(databaseProvisioner, configProvisioner, tenantListProvisioner);
+        tenantManager = configuration.tenantManager(abilityCheckerProvisioner,databaseProvisioner, configProvisioner, tenantListProvisioner);
     }
 
     @Test
@@ -95,13 +98,14 @@ public class TenantManagerConfigurationUnitTest {
 
         tenantManager.createTenant(new Tenant().tenantKey("newtenant"));
 
-        InOrder inOrder = Mockito.inOrder(tenantListProvisioner, databaseProvisioner, configProvisioner);
+        InOrder inOrder = Mockito.inOrder(abilityCheckerProvisioner, tenantListProvisioner, databaseProvisioner, configProvisioner);
 
+        inOrder.verify(abilityCheckerProvisioner).createTenant(any(Tenant.class));
         inOrder.verify(tenantListProvisioner).createTenant(any(Tenant.class));
         inOrder.verify(databaseProvisioner).createTenant(any(Tenant.class));
         inOrder.verify(configProvisioner).createTenant(any(Tenant.class));
 
-        verifyNoMoreInteractions(tenantListProvisioner, databaseProvisioner, configProvisioner);
+        verifyNoMoreInteractions(abilityCheckerProvisioner, tenantListProvisioner, databaseProvisioner, configProvisioner);
     }
 
 }

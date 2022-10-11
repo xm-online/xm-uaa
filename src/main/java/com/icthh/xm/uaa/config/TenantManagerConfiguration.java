@@ -19,6 +19,7 @@ import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
 import com.icthh.xm.commons.config.domain.Configuration;
 import com.icthh.xm.commons.migration.db.tenant.provisioner.TenantDatabaseProvisioner;
 import com.icthh.xm.commons.permission.config.PermissionProperties;
+import com.icthh.xm.commons.tenantendpoint.provisioner.TenantAbilityCheckerProvisioner;
 import com.icthh.xm.commons.tenantendpoint.provisioner.TenantConfigProvisioner;
 import com.icthh.xm.commons.tenantendpoint.provisioner.TenantListProvisioner;
 import com.icthh.xm.commons.tenantendpoint.TenantManager;
@@ -51,11 +52,13 @@ public class TenantManagerConfiguration {
     private String applicationName;
 
     @Bean
-    public TenantManager tenantManager(TenantDatabaseProvisioner databaseProvisioner,
+    public TenantManager tenantManager(TenantAbilityCheckerProvisioner abilityCheckerProvisioner,
+                                       TenantDatabaseProvisioner databaseProvisioner,
                                        TenantConfigProvisioner configProvisioner,
                                        TenantListProvisioner tenantListProvisioner) {
 
         TenantManager manager = TenantManager.builder()
+                                             .service(abilityCheckerProvisioner)
                                              .service(tenantListProvisioner)
                                              .service(databaseProvisioner)
                                              .service(configProvisioner)
