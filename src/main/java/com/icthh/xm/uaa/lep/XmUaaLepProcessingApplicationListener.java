@@ -3,6 +3,7 @@ package com.icthh.xm.uaa.lep;
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import com.icthh.xm.commons.lep.commons.CommonsExecutor;
 import com.icthh.xm.commons.lep.commons.CommonsService;
+import com.icthh.xm.commons.topic.service.KafkaTemplateService;
 import com.icthh.xm.commons.lep.spring.SpringLepProcessingApplicationListener;
 import com.icthh.xm.lep.api.ScopedContext;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
@@ -52,6 +53,7 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
     private final TenantPropertiesService tenantPropertiesService;
     private final LepTokenGranter lepTokenGranter;
     private final ClientDetailsService clientDetailsService;
+    private final KafkaTemplateService kafkaTemplateService;
 
 
     @Override
@@ -79,6 +81,7 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
 
         Map<String, Object> templates = new HashMap<>();
         templates.put(BINDING_SUB_KEY_TEMPLATE_REST, restTemplate);
+        templates.put(BINDING_SUB_KEY_TEMPLATE_KAFKA, kafkaTemplateService);
 
         executionContext.setValue(BINDING_KEY_TEMPLATES, templates);
 
