@@ -66,6 +66,7 @@ public class UserQueryService extends QueryService<User> {
                 getLoginSpecificationForSoft(query.getQuery())
                     .or(buildStringSpecification(query.getQuery(), User_.lastName))
                     .or(buildStringSpecification(query.getQuery(), User_.firstName))
+                    .or(buildSpecification(query.getQuery(), root -> root.get(User_.AUTHORITIES).as(String.class)))
             ), Specification::and);
     }
 
@@ -75,7 +76,8 @@ public class UserQueryService extends QueryService<User> {
             ofNullable(filterQuery.getLastName()).map(ln -> buildStringSpecification(ln, User_.lastName)),
             ofNullable(filterQuery.getFirstName()).map(fn -> buildStringSpecification(fn, User_.firstName)),
             ofNullable(filterQuery.getRoleKey()).map(fn -> buildStringSpecification(fn, User_.roleKey)),
-            ofNullable(filterQuery.getActivated()).map(fn -> buildSpecification(fn, User_.activated))
+            ofNullable(filterQuery.getActivated()).map(fn -> buildSpecification(fn, User_.activated)),
+            ofNullable(filterQuery.getAuthority()).map(fn -> buildSpecification(fn, root -> root.get(User_.AUTHORITIES).as(String.class)))
         );
     }
 
