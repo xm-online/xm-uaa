@@ -25,6 +25,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
 
+import static com.icthh.xm.uaa.utils.FileUtil.readConfigFile;
 import static java.lang.Boolean.TRUE;
 
 /**
@@ -39,7 +40,10 @@ import static java.lang.Boolean.TRUE;
 })
 public class UserQueryServiceIntTest {
 
+    private static final String UAA_CONFIG_PATH = "/config/tenants/XM/uaa/uaa.yml";
+
     private static final String ROLE_USER = "ROLE_USER";
+    private static final String ROLE_B2B_MANAGER = "ROLE_B2B_MANAGER";
 
     private static final String FIRST_USER_KEY = "strictFirst";
     private static final String SECOND_USER_KEY = "strictSecond";
@@ -61,7 +65,7 @@ public class UserQueryServiceIntTest {
 
     @Before
     public void before() {
-        tenantPropertiesService.onInit("/config/tenants/XM/uaa/uaa.yml", "{}");
+        tenantPropertiesService.onInit(UAA_CONFIG_PATH, readConfigFile(UAA_CONFIG_PATH));
 
         userRepository.deleteAll();
         createTestUser(FIRST_USER_KEY, FIRST_USER_LOGIN);
@@ -155,6 +159,20 @@ public class UserQueryServiceIntTest {
     }
 
     @Test
+    public void findAllUsersByStrictMatch_returnAllByFilterAuthority() {
+        StrictUserFilterQuery filterQuery = new StrictUserFilterQuery();
+
+        filterQuery.setLogin(new StringFilter().setContains("Test"));
+        filterQuery.setAuthority(new StringFilter().setContains(ROLE_B2B_MANAGER));
+
+        Page<UserDTO> page = userQueryService.findAllUsersByStrictMatch(filterQuery, PageRequest.of(0, 1));
+
+        Assert.assertEquals(2, page.getTotalElements());
+        Assert.assertEquals(1, page.getContent().size());
+        Assert.assertTrue(page.getContent().get(0).getAuthorities().contains(ROLE_B2B_MANAGER));
+    }
+
+    @Test
     public void findAllUsersBySoftMatch() {
 
         SoftUserFilterQuery filterQuery = new SoftUserFilterQuery();
@@ -173,7 +191,7 @@ public class UserQueryServiceIntTest {
 
         User user = new User();
         user.setUserKey(userKey);
-        user.setRoleKey(ROLE_USER);
+        user.setAuthorities(List.of(ROLE_USER, ROLE_B2B_MANAGER));
         user.setPassword(RandomStringUtils.random(60));
         user.setActivated(true);
         user.getLogins().add(userLogin);
