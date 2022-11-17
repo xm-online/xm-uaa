@@ -1,5 +1,6 @@
 ---
 security:
+    multiRoleEnabled: true
     defaultUserRole: ROLE_USER
     accessTokenValiditySeconds:
     refreshTokenValiditySeconds:

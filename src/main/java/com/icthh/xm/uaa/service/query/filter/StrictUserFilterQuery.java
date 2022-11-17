@@ -12,4 +12,5 @@ public class StrictUserFilterQuery extends AbstractUserFilterQuery implements Se
     private StringFilter firstName;
     private StringFilter lastName;
     private StringFilter login;
+    private StringFilter authority;
 }
