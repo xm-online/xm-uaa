@@ -16,9 +16,13 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
@@ -489,6 +493,36 @@ public class UserServiceUnitTest {
 
             @Override
             public String getAdditionalDetailsValue(String key, String defaultValue) {
+                return null;
+            }
+
+            @Override
+            public Optional<String> getClientId() {
+                return Optional.empty();
+            }
+
+            @Override
+            public String getRequiredClientId() {
+                return null;
+            }
+
+            @Override
+            public Set<String> getScope() {
+                return null;
+            }
+
+            @Override
+            public Collection<? extends GrantedAuthority> getAuthorities() {
+                return null;
+            }
+
+            @Override
+            public Set<String> getAuthoritiesSet() {
+                return null;
+            }
+
+            @Override
+            public Map<String, Object> getDecodedDetails() {
                 return null;
             }
         };
