@@ -146,6 +146,8 @@ application:
     email-path-pattern: /config/tenants/{tenantName}/uaa/emails/{langKey}/{fileName}.ftl
     lep:
         tenant-script-storage: XM_MS_CONFIG
+    communication:
+        enabled: false
     client-grant-types: client_credentials, refresh_token, password, tfa_otp_token, test_grant_type, test_wrong_grant_type
     client-scope: openid
     keystore-file: keystore.p12
@@ -178,3 +180,4 @@ application:
           qtbGCU/DjgrCs8RjJDGtWY20GA=="
     default-client-id: testClient
     last-login-date-enabled: false
+

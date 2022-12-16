@@ -1,18 +1,14 @@
 package com.icthh.xm.uaa.service.mail;
 
-import static com.icthh.xm.uaa.config.Constants.TRANSLATION_KEY;
-import static java.util.Locale.ENGLISH;
-import static java.util.Locale.forLanguageTag;
-import static org.springframework.context.i18n.LocaleContextHolder.getLocale;
-import static org.springframework.context.i18n.LocaleContextHolder.getLocaleContext;
-import static org.springframework.context.i18n.LocaleContextHolder.setLocale;
-import static org.springframework.context.i18n.LocaleContextHolder.setLocaleContext;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import com.icthh.xm.commons.i18n.spring.service.LocalizationMessageService;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.commons.mail.provider.MailProviderService;
+import com.icthh.xm.commons.messaging.communication.CommunicationMessage;
+import com.icthh.xm.commons.messaging.communication.CommunicationMessageBuilder;
+import com.icthh.xm.commons.messaging.communication.service.CommunicationService;
 import com.icthh.xm.commons.tenant.PlainTenant;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
@@ -21,20 +17,9 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import io.github.jhipster.config.JHipsterProperties;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import javax.annotation.Resource;
-import javax.mail.internet.MimeMessage;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.i18n.LocaleContext;
@@ -43,6 +28,25 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
+
+import javax.annotation.Resource;
+import javax.mail.internet.MimeMessage;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+
+import static com.icthh.xm.uaa.config.Constants.TRANSLATION_KEY;
+import static java.util.Locale.ENGLISH;
+import static java.util.Locale.forLanguageTag;
+import static org.springframework.context.i18n.LocaleContextHolder.getLocale;
+import static org.springframework.context.i18n.LocaleContextHolder.getLocaleContext;
+import static org.springframework.context.i18n.LocaleContextHolder.setLocale;
+import static org.springframework.context.i18n.LocaleContextHolder.setLocaleContext;
 
 /**
  * Service for sending emails.
@@ -71,6 +75,11 @@ public class MailService {
     private final TenantContextHolder tenantContextHolder;
     private final TenantConfigService tenantConfigService;
     private final LocalizationMessageService localizationMessageService;
+    private final CommunicationService communicationService;
+    private final ObjectMapper objectMapper;
+
+    @Value("${application.communication.enabled}")
+    private Boolean sendByCommunication;
 
     @Resource
     @Lazy
@@ -258,6 +267,46 @@ public class MailService {
                                        String email,
                                        String from,
                                        Map<String, Object> objectModel) {
+        if (sendByCommunication) {
+            String langKey = user.getLangKey();
+            Locale locale = forLanguageTag(langKey);
+            String subject = messageSource.getMessage(titleKey, null, locale);
+            sendCommunicationEmailEvent(tenantKey, langKey, templateName, subject, email, from, objectModel);
+        } else {
+            sendEmailFromTemplateByMailSender(tenantKey, user, templateName, titleKey, email, from, objectModel);
+        }
+    }
+
+    private void sendCommunicationEmailEvent(TenantKey tenantKey,
+                                             String langKey,
+                                             String templateName,
+                                             String subject,
+                                             String email,
+                                             String from,
+                                             Map<String, Object> objectModel) {
+        runWithTenantContext(tenantKey, () -> {
+            CommunicationMessage communicationMessage = new CommunicationMessage();
+            communicationMessage.setCharacteristic(new ArrayList<>());
+            communicationMessage.setSubject(subject);
+            communicationMessage = new CommunicationMessageBuilder(communicationMessage, objectMapper)
+                .addSenderId(from)
+                .addReceiverEmail(email)
+                .addLanguage(langKey)
+                .addTemplateName(templateName)
+                .addTemplateModel(objectModel)
+                .build();
+
+            communicationService.sendEmailEvent(communicationMessage);
+        });
+    }
+
+    private void sendEmailFromTemplateByMailSender(TenantKey tenantKey,
+                                                   User user,
+                                                   String templateName,
+                                                   String titleKey,
+                                                   String email,
+                                                   String from,
+                                                   Map<String, Object> objectModel) {
         if (email == null) {
             log.warn("Can't send email on null address for tenant: {}, user key: {}, email template: {}",
                 tenantKey.getValue(),
@@ -357,4 +406,12 @@ public class MailService {
         }
     }
 
+    private void runWithTenantContext(TenantKey tenantKey, Runnable runnable) {
+        try {
+            tenantContextHolder.getPrivilegedContext().setTenant(new PlainTenant(tenantKey));
+            runnable.run();
+        } finally {
+            tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
+        }
+    }
 }
