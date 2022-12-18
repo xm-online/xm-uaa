@@ -85,7 +85,7 @@ public class MailServiceUnitTest {
     public void ifNoConfigReturnDefault() {
         MimeMessage mock = sendEmail();
 
-        verify(mock).setRecipient(eq(Message.RecipientType.TO), eq(InternetAddress.parse(TO)[0]));
+        verify(mock).setRecipient(eq(Message.RecipientType.TO),  eq(InternetAddress.parse(TO)[0]));
         verify(mock).setFrom(eq(InternetAddress.parse(MOCK_FROM)[0]));
         verify(mock).setSubject(eq(MOCK_SUBJECT), eq("UTF-8"));
 
@@ -101,7 +101,7 @@ public class MailServiceUnitTest {
 
         MimeMessage mock = sendEmail();
 
-        verify(mock).setRecipient(eq(Message.RecipientType.TO), eq(InternetAddress.parse(TO)[0]));
+        verify(mock).setRecipient(eq(Message.RecipientType.TO),  eq(InternetAddress.parse(TO)[0]));
         verify(mock).setFrom(eq(InternetAddress.parse(MOCK_FROM)[0]));
         verify(mock).setSubject(eq(MOCK_SUBJECT), eq("UTF-8"));
 
@@ -145,7 +145,7 @@ public class MailServiceUnitTest {
 
         MimeMessage mock = sendEmail();
 
-        verify(mock).setRecipient(eq(Message.RecipientType.TO), eq(InternetAddress.parse(TO)[0]));
+        verify(mock).setRecipient(eq(Message.RecipientType.TO),  eq(InternetAddress.parse(TO)[0]));
         verify(mock).setFrom(eq(InternetAddress.parse(MOCK_FROM)[0]));
         verify(mock).setSubject(eq(MOCK_SUBJECT), eq("UTF-8"));
 
@@ -163,7 +163,7 @@ public class MailServiceUnitTest {
 
         MimeMessage mock = sendEmail();
 
-        verify(mock).setRecipient(eq(Message.RecipientType.TO), eq(InternetAddress.parse(TO)[0]));
+        verify(mock).setRecipient(eq(Message.RecipientType.TO),  eq(InternetAddress.parse(TO)[0]));
         verify(mock).setFrom(eq(InternetAddress.parse(MOCK_FROM)[0]));
         verify(mock).setSubject(eq(MOCK_SUBJECT), eq("UTF-8"));
 
@@ -186,7 +186,7 @@ public class MailServiceUnitTest {
 
         MimeMessage mock = sendEmail();
 
-        verify(mock).setRecipient(eq(Message.RecipientType.TO), eq(InternetAddress.parse(TO)[0]));
+        verify(mock).setRecipient(eq(Message.RecipientType.TO),  eq(InternetAddress.parse(TO)[0]));
         verify(mock).setFrom(eq(InternetAddress.parse("fromvalue (From value caption)")[0]));
         verify(mock).setSubject(eq("subject value"), eq("UTF-8"));
 
@@ -206,7 +206,7 @@ public class MailServiceUnitTest {
 
         MimeMessage mock = sendEmail();
 
-        verify(mock).setRecipient(eq(Message.RecipientType.TO), eq(InternetAddress.parse(TO)[0]));
+        verify(mock).setRecipient(eq(Message.RecipientType.TO),  eq(InternetAddress.parse(TO)[0]));
         verify(mock).setFrom(eq(InternetAddress.parse("frfrom")[0]));
         verify(mock).setSubject(eq("fr subject"), eq("UTF-8"));
 
@@ -226,7 +226,7 @@ public class MailServiceUnitTest {
 
         MimeMessage mock = sendEmail();
 
-        verify(mock).setRecipient(eq(Message.RecipientType.TO), eq(InternetAddress.parse(TO)[0]));
+        verify(mock).setRecipient(eq(Message.RecipientType.TO),  eq(InternetAddress.parse(TO)[0]));
         verify(mock).setFrom(eq(InternetAddress.parse("enfrom")[0]));
         verify(mock).setSubject(eq("en subject"), eq("UTF-8"));
 
@@ -245,7 +245,7 @@ public class MailServiceUnitTest {
 
         MimeMessage mock = sendEmail();
 
-        verify(mock).setRecipient(eq(Message.RecipientType.TO), eq(InternetAddress.parse(TO)[0]));
+        verify(mock).setRecipient(eq(Message.RecipientType.TO),  eq(InternetAddress.parse(TO)[0]));
         verify(mock).setFrom(eq(InternetAddress.parse(MOCK_FROM)[0]));
         verify(mock).setSubject(eq("otherSubject"), eq("UTF-8"));
 
@@ -264,7 +264,7 @@ public class MailServiceUnitTest {
 
         MimeMessage mock = sendEmail();
 
-        verify(mock).setRecipient(eq(Message.RecipientType.TO), eq(InternetAddress.parse(TO)[0]));
+        verify(mock).setRecipient(eq(Message.RecipientType.TO),  eq(InternetAddress.parse(TO)[0]));
         verify(mock).setFrom(eq(InternetAddress.parse("otherFrom@yopmail.com (France caption)")[0]));
         verify(mock).setSubject(eq(MOCK_SUBJECT), eq("UTF-8"));
 
@@ -284,7 +284,7 @@ public class MailServiceUnitTest {
 
         MimeMessage mock = sendEmail();
 
-        verify(mock).setRecipient(eq(Message.RecipientType.TO), eq(InternetAddress.parse(TO)[0]));
+        verify(mock).setRecipient(eq(Message.RecipientType.TO),  eq(InternetAddress.parse(TO)[0]));
         verify(mock).setFrom(eq(InternetAddress.parse("otherFrom@yopmail.com (France caption)")[0]));
         verify(mock).setSubject(eq("otherSubject"), eq("UTF-8"));
 
