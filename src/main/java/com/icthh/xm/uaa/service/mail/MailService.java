@@ -12,6 +12,7 @@ import com.icthh.xm.commons.messaging.communication.service.CommunicationService
 import com.icthh.xm.commons.tenant.PlainTenant;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
+import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.User;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -19,7 +20,6 @@ import freemarker.template.TemplateException;
 import io.github.jhipster.config.JHipsterProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.i18n.LocaleContext;
@@ -78,8 +78,7 @@ public class MailService {
     private final CommunicationService communicationService;
     private final ObjectMapper objectMapper;
 
-    @Value("${application.communication.enabled}")
-    private Boolean sendByCommunication;
+    private final ApplicationProperties applicationProperties;
 
     @Resource
     @Lazy
@@ -267,7 +266,7 @@ public class MailService {
                                        String email,
                                        String from,
                                        Map<String, Object> objectModel) {
-        if (sendByCommunication) {
+        if (applicationProperties.getCommunication().isEnabled()) {
             String langKey = user.getLangKey();
             Locale locale = forLanguageTag(langKey);
             String subject = messageSource.getMessage(titleKey, null, locale);

@@ -93,6 +93,6 @@ public class ApplicationProperties {
     @Getter
     @Setter
     public static class Communication {
-        private Boolean enabled;
+        private boolean enabled;
     }
 }
