@@ -17,7 +17,7 @@ import org.springframework.security.jwt.crypto.sign.SignatureVerifier;
 import java.util.List;
 import java.util.Map;
 
-import static com.icthh.xm.commons.domainevent.idp.IdpConstants.PUBLIC_JWKS_CONFIG_PATTERN;
+import static com.icthh.xm.commons.domain.idp.IdpConstants.PUBLIC_JWKS_CONFIG_PATTERN;
 import static com.icthh.xm.uaa.security.oauth2.idp.IdpTestUtils.buildJWKS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;

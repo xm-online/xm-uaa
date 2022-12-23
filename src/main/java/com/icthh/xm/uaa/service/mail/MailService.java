@@ -58,6 +58,11 @@ import static org.springframework.context.i18n.LocaleContextHolder.setLocaleCont
 @IgnoreLogginAspect
 public class MailService {
 
+    public static final String PASSWORD_RESET_EMAIL_TEMPLATE = "passwordResetEmail";
+    public static final String CREATION_EMAIL_TEMPLATE = "creationEmail";
+    public static final String ACTIVATION_EMAIL_TEMPLATE = "activationEmail";
+    public static final String PASSWORD_CHANGED_EMAIL_TEMPLATE = "passwordChangedEmail";
+
     private static final String MAIL_SETTINGS = "mailSettings";
     private static final String TEMPLATE_NAME = "templateName";
     private static final String SUBJECT = "subject";
@@ -77,7 +82,6 @@ public class MailService {
     private final LocalizationMessageService localizationMessageService;
     private final CommunicationService communicationService;
     private final ObjectMapper objectMapper;
-
     private final ApplicationProperties applicationProperties;
 
     @Resource
@@ -115,7 +119,7 @@ public class MailService {
             sendEmailFromTemplate(
                 tenantKey,
                 user,
-                "activationEmail",
+                ACTIVATION_EMAIL_TEMPLATE,
                 "email.activation.title",
                 email,
                 objectModel
@@ -140,7 +144,7 @@ public class MailService {
             sendEmailFromTemplate(
                 tenantKey,
                 user,
-                "creationEmail",
+                CREATION_EMAIL_TEMPLATE,
                 "email.activation.title",
                 user.getEmail(),
                 objectModel
@@ -168,7 +172,7 @@ public class MailService {
             sendEmailFromTemplate(
                 tenantKey,
                 user,
-                "passwordResetEmail",
+                PASSWORD_RESET_EMAIL_TEMPLATE,
                 "email.reset.title",
                 user.getEmail(),
                 objectModel
@@ -197,7 +201,7 @@ public class MailService {
             sendEmailFromTemplate(
                 tenantKey,
                 user,
-                "passwordChangedEmail",
+                PASSWORD_CHANGED_EMAIL_TEMPLATE,
                 "email.changed.title",
                 user.getEmail(),
                 objectModel
@@ -268,9 +272,13 @@ public class MailService {
                                        Map<String, Object> objectModel) {
         if (applicationProperties.getCommunication().isEnabled()) {
             String langKey = user.getLangKey();
-            Locale locale = forLanguageTag(langKey);
-            String subject = messageSource.getMessage(titleKey, null, locale);
-            sendCommunicationEmailEvent(tenantKey, langKey, templateName, subject, email, from, objectModel);
+            if (isSystemEmail(templateName)) {
+                sendCommunicationEmailEvent(tenantKey, langKey, templateName, null, email, from, objectModel);
+            } else {
+                Locale locale = forLanguageTag(langKey);
+                String subject = messageSource.getMessage(titleKey, null, locale);
+                sendCommunicationEmailEvent(tenantKey, langKey, templateName, subject, email, from, objectModel);
+            }
         } else {
             sendEmailFromTemplateByMailSender(tenantKey, user, templateName, titleKey, email, from, objectModel);
         }
@@ -412,5 +420,12 @@ public class MailService {
         } finally {
             tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
         }
+    }
+
+    private boolean isSystemEmail(String templateName) {
+        return ACTIVATION_EMAIL_TEMPLATE.equals(templateName)
+            || PASSWORD_CHANGED_EMAIL_TEMPLATE.equals(templateName)
+            || PASSWORD_RESET_EMAIL_TEMPLATE.equals(templateName)
+            || CREATION_EMAIL_TEMPLATE.equals(templateName);
     }
 }

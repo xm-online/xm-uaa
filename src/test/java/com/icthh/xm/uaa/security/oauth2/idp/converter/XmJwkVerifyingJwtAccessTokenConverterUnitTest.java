@@ -2,7 +2,7 @@ package com.icthh.xm.uaa.security.oauth2.idp.converter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.icthh.xm.commons.domainevent.idp.model.IdpPublicConfig;
+import com.icthh.xm.commons.domain.idp.model.IdpPublicConfig;
 import com.icthh.xm.commons.repository.JwksRepository;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
@@ -18,8 +18,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Map;
 
-import static com.icthh.xm.commons.domainevent.idp.IdpConstants.IDP_PUBLIC_SETTINGS_CONFIG_PATH_PATTERN;
-import static com.icthh.xm.commons.domainevent.idp.IdpConstants.PUBLIC_JWKS_CONFIG_PATTERN;
+import static com.icthh.xm.commons.domain.idp.IdpConstants.IDP_PUBLIC_SETTINGS_CONFIG_PATH_PATTERN;
+import static com.icthh.xm.commons.domain.idp.IdpConstants.PUBLIC_JWKS_CONFIG_PATTERN;
 import static com.icthh.xm.uaa.security.oauth2.idp.IdpTestUtils.buildJWKS;
 import static com.icthh.xm.uaa.security.oauth2.idp.IdpTestUtils.getIdToken;
 import static com.icthh.xm.uaa.security.oauth2.idp.IdpTestUtils.buildIdpPublicClientConfig;

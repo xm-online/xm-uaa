@@ -10,7 +10,6 @@ import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.User;
 import freemarker.template.Configuration;
 import lombok.SneakyThrows;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -19,7 +18,6 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.MessageSource;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.mail.Message;
 import javax.mail.internet.InternetAddress;
@@ -28,6 +26,7 @@ import java.util.HashMap;
 
 import static com.google.common.collect.ImmutableMap.of;
 import static com.icthh.xm.uaa.config.Constants.TRANSLATION_KEY;
+import static java.lang.Boolean.FALSE;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static java.util.Locale.ENGLISH;
@@ -37,7 +36,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MailServiceUnitTest {
@@ -74,11 +72,10 @@ public class MailServiceUnitTest {
     private MessageSource messageSource;
     @Mock
     private TenantContextHolder tenantContextHolder;
-
-    @Before
-    public void setup() {
-        setField(mailService, "sendByCommunication", false);
-    }
+    @Mock
+    private ApplicationProperties applicationProperties;
+    @Mock
+    private ApplicationProperties.Communication appCommunication;
 
     @Test
     @SneakyThrows
@@ -112,6 +109,8 @@ public class MailServiceUnitTest {
         when(tenantContextHolder.getPrivilegedContext()).thenReturn(mock(PrivilegedTenantContext.class));
         when(messageSource.getMessage(MOCK_SUBJECT, null, forLanguageTag("fr"))).thenReturn(MOCK_SUBJECT);
         when(tenantEmailTemplateService.getEmailTemplate(TENANT_KEY + "/" + FRANCE.getLanguage() + "/" + EMAIL_TEMPLATE)).thenReturn(TEST_TEMPLATE_CONTENT);
+        when(applicationProperties.getCommunication()).thenReturn(appCommunication);
+        when(appCommunication.isEnabled()).thenReturn(FALSE);
         MimeMessage mock = mock(MimeMessage.class);
         when(javaMailSender.createMimeMessage()).thenReturn(mock);
 

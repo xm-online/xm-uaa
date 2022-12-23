@@ -1,8 +1,8 @@
 package com.icthh.xm.uaa.security.oauth2.idp;
 
-import com.icthh.xm.commons.domainevent.idp.model.IdpPublicConfig;
-import com.icthh.xm.commons.domainevent.idp.model.IdpPublicConfig.IdpConfigContainer.IdpPublicClientConfig;
-import com.icthh.xm.commons.domainevent.idp.model.IdpPublicConfig.IdpConfigContainer.Features;
+import com.icthh.xm.commons.domain.idp.model.IdpPublicConfig;
+import com.icthh.xm.commons.domain.idp.model.IdpPublicConfig.IdpConfigContainer.IdpPublicClientConfig;
+import com.icthh.xm.commons.domain.idp.model.IdpPublicConfig.IdpConfigContainer.Features;
 
 import java.util.ArrayList;
 import java.util.HashMap;

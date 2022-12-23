@@ -212,7 +212,7 @@ application:
         enablePasswordHashCacheSize: 1000
     last-login-date-enabled: false
     communication:
-        enabled: true
+        enabled: false
 gracefulShutdown:
     enabled: false
     shutdownDelay:
