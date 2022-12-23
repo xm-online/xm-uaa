@@ -71,7 +71,7 @@ public class MailServiceIntTest {
     private static final String APPLICATION_URL = "http://xm.local:8080";
     private static final String DEFAULT_FIRST_NAME = "AAAAAAAAA";
     private static final String DEFAULT_LANG_KEY = "en";
-    public static final String TEMPLATE_NAME = "testTemplate";
+    private static final String TEMPLATE_NAME = "testTemplate";
 
     @Autowired
     private JHipsterProperties jHipsterProperties;
