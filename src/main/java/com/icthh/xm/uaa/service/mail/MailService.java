@@ -1,5 +1,13 @@
 package com.icthh.xm.uaa.service.mail;
 
+import static com.icthh.xm.uaa.config.Constants.TRANSLATION_KEY;
+import static java.util.Locale.ENGLISH;
+import static java.util.Locale.forLanguageTag;
+import static org.springframework.context.i18n.LocaleContextHolder.getLocale;
+import static org.springframework.context.i18n.LocaleContextHolder.getLocaleContext;
+import static org.springframework.context.i18n.LocaleContextHolder.setLocale;
+import static org.springframework.context.i18n.LocaleContextHolder.setLocaleContext;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import com.icthh.xm.commons.i18n.spring.service.LocalizationMessageService;
@@ -18,19 +26,7 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import io.github.jhipster.config.JHipsterProperties;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.MessageSource;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.context.i18n.LocaleContext;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
-import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
-import javax.annotation.Resource;
-import javax.mail.internet.MimeMessage;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -39,14 +35,20 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Resource;
+import javax.mail.internet.MimeMessage;
 
-import static com.icthh.xm.uaa.config.Constants.TRANSLATION_KEY;
-import static java.util.Locale.ENGLISH;
-import static java.util.Locale.forLanguageTag;
-import static org.springframework.context.i18n.LocaleContextHolder.getLocale;
-import static org.springframework.context.i18n.LocaleContextHolder.getLocaleContext;
-import static org.springframework.context.i18n.LocaleContextHolder.setLocale;
-import static org.springframework.context.i18n.LocaleContextHolder.setLocaleContext;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.i18n.LocaleContext;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
 /**
  * Service for sending emails.
