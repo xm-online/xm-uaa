@@ -26,6 +26,7 @@ public class ApplicationProperties {
     private final Security security = new Security();
     private final ReCaptcha reCaptcha = new ReCaptcha();
     private final Lep lep = new Lep();
+    private final Communication communication = new Communication();
 
     private List<String> tenantIgnoredPathList;
     private List<String> timelineIgnoredHttpMethods = Collections.emptyList();
@@ -89,4 +90,9 @@ public class ApplicationProperties {
         private Boolean fullRecompileOnLepUpdate;
     }
 
+    @Getter
+    @Setter
+    public static class Communication {
+        private boolean enabled;
+    }
 }

@@ -211,6 +211,8 @@ application:
         enablePasswordHashCaching: true
         enablePasswordHashCacheSize: 1000
     last-login-date-enabled: false
+    communication:
+        enabled: false
 gracefulShutdown:
     enabled: false
     shutdownDelay:

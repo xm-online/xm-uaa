@@ -6,6 +6,7 @@ import com.icthh.xm.commons.mail.provider.MailProviderService;
 import com.icthh.xm.commons.tenant.PrivilegedTenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
+import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.User;
 import freemarker.template.Configuration;
 import lombok.SneakyThrows;
@@ -25,6 +26,7 @@ import java.util.HashMap;
 
 import static com.google.common.collect.ImmutableMap.of;
 import static com.icthh.xm.uaa.config.Constants.TRANSLATION_KEY;
+import static java.lang.Boolean.FALSE;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static java.util.Locale.ENGLISH;
@@ -70,6 +72,10 @@ public class MailServiceUnitTest {
     private MessageSource messageSource;
     @Mock
     private TenantContextHolder tenantContextHolder;
+    @Mock
+    private ApplicationProperties applicationProperties;
+    @Mock
+    private ApplicationProperties.Communication appCommunication;
 
     @Test
     @SneakyThrows
@@ -103,6 +109,8 @@ public class MailServiceUnitTest {
         when(tenantContextHolder.getPrivilegedContext()).thenReturn(mock(PrivilegedTenantContext.class));
         when(messageSource.getMessage(MOCK_SUBJECT, null, forLanguageTag("fr"))).thenReturn(MOCK_SUBJECT);
         when(tenantEmailTemplateService.getEmailTemplate(TENANT_KEY + "/" + FRANCE.getLanguage() + "/" + EMAIL_TEMPLATE)).thenReturn(TEST_TEMPLATE_CONTENT);
+        when(applicationProperties.getCommunication()).thenReturn(appCommunication);
+        when(appCommunication.isEnabled()).thenReturn(FALSE);
         MimeMessage mock = mock(MimeMessage.class);
         when(javaMailSender.createMimeMessage()).thenReturn(mock);
 

@@ -8,14 +8,19 @@ import static org.springframework.context.i18n.LocaleContextHolder.getLocaleCont
 import static org.springframework.context.i18n.LocaleContextHolder.setLocale;
 import static org.springframework.context.i18n.LocaleContextHolder.setLocaleContext;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import com.icthh.xm.commons.i18n.spring.service.LocalizationMessageService;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.commons.mail.provider.MailProviderService;
+import com.icthh.xm.commons.messaging.communication.CommunicationMessage;
+import com.icthh.xm.commons.messaging.communication.CommunicationMessageBuilder;
+import com.icthh.xm.commons.messaging.communication.service.CommunicationService;
 import com.icthh.xm.commons.tenant.PlainTenant;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
+import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.User;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -24,6 +29,7 @@ import io.github.jhipster.config.JHipsterProperties;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -54,6 +60,11 @@ import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 @IgnoreLogginAspect
 public class MailService {
 
+    public static final String PASSWORD_RESET_EMAIL_TEMPLATE = "passwordResetEmail";
+    public static final String CREATION_EMAIL_TEMPLATE = "creationEmail";
+    public static final String ACTIVATION_EMAIL_TEMPLATE = "activationEmail";
+    public static final String PASSWORD_CHANGED_EMAIL_TEMPLATE = "passwordChangedEmail";
+
     private static final String MAIL_SETTINGS = "mailSettings";
     private static final String TEMPLATE_NAME = "templateName";
     private static final String SUBJECT = "subject";
@@ -71,6 +82,9 @@ public class MailService {
     private final TenantContextHolder tenantContextHolder;
     private final TenantConfigService tenantConfigService;
     private final LocalizationMessageService localizationMessageService;
+    private final CommunicationService communicationService;
+    private final ObjectMapper objectMapper;
+    private final ApplicationProperties applicationProperties;
 
     @Resource
     @Lazy
@@ -107,7 +121,7 @@ public class MailService {
             sendEmailFromTemplate(
                 tenantKey,
                 user,
-                "activationEmail",
+                ACTIVATION_EMAIL_TEMPLATE,
                 "email.activation.title",
                 email,
                 objectModel
@@ -132,7 +146,7 @@ public class MailService {
             sendEmailFromTemplate(
                 tenantKey,
                 user,
-                "creationEmail",
+                CREATION_EMAIL_TEMPLATE,
                 "email.activation.title",
                 user.getEmail(),
                 objectModel
@@ -160,7 +174,7 @@ public class MailService {
             sendEmailFromTemplate(
                 tenantKey,
                 user,
-                "passwordResetEmail",
+                PASSWORD_RESET_EMAIL_TEMPLATE,
                 "email.reset.title",
                 user.getEmail(),
                 objectModel
@@ -189,7 +203,7 @@ public class MailService {
             sendEmailFromTemplate(
                 tenantKey,
                 user,
-                "passwordChangedEmail",
+                PASSWORD_CHANGED_EMAIL_TEMPLATE,
                 "email.changed.title",
                 user.getEmail(),
                 objectModel
@@ -258,6 +272,50 @@ public class MailService {
                                        String email,
                                        String from,
                                        Map<String, Object> objectModel) {
+        if (applicationProperties.getCommunication().isEnabled()) {
+            String langKey = user.getLangKey();
+            if (isSystemEmail(templateName)) {
+                sendCommunicationEmailEvent(tenantKey, langKey, templateName, null, email, from, objectModel);
+            } else {
+                Locale locale = forLanguageTag(langKey);
+                String subject = messageSource.getMessage(titleKey, null, locale);
+                sendCommunicationEmailEvent(tenantKey, langKey, templateName, subject, email, from, objectModel);
+            }
+        } else {
+            sendEmailFromTemplateByMailSender(tenantKey, user, templateName, titleKey, email, from, objectModel);
+        }
+    }
+
+    private void sendCommunicationEmailEvent(TenantKey tenantKey,
+                                             String langKey,
+                                             String templateName,
+                                             String subject,
+                                             String email,
+                                             String from,
+                                             Map<String, Object> objectModel) {
+        runWithTenantContext(tenantKey, () -> {
+            CommunicationMessage communicationMessage = new CommunicationMessage();
+            communicationMessage.setCharacteristic(new ArrayList<>());
+            communicationMessage.setSubject(subject);
+            communicationMessage = new CommunicationMessageBuilder(communicationMessage, objectMapper)
+                .addSenderId(from)
+                .addReceiverEmail(email)
+                .addLanguage(langKey)
+                .addTemplateName(templateName)
+                .addTemplateModel(objectModel)
+                .build();
+
+            communicationService.sendEmailEvent(communicationMessage);
+        });
+    }
+
+    private void sendEmailFromTemplateByMailSender(TenantKey tenantKey,
+                                                   User user,
+                                                   String templateName,
+                                                   String titleKey,
+                                                   String email,
+                                                   String from,
+                                                   Map<String, Object> objectModel) {
         if (email == null) {
             log.warn("Can't send email on null address for tenant: {}, user key: {}, email template: {}",
                 tenantKey.getValue(),
@@ -357,4 +415,19 @@ public class MailService {
         }
     }
 
+    private void runWithTenantContext(TenantKey tenantKey, Runnable runnable) {
+        try {
+            tenantContextHolder.getPrivilegedContext().setTenant(new PlainTenant(tenantKey));
+            runnable.run();
+        } finally {
+            tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
+        }
+    }
+
+    private boolean isSystemEmail(String templateName) {
+        return ACTIVATION_EMAIL_TEMPLATE.equals(templateName)
+            || PASSWORD_CHANGED_EMAIL_TEMPLATE.equals(templateName)
+            || PASSWORD_RESET_EMAIL_TEMPLATE.equals(templateName)
+            || CREATION_EMAIL_TEMPLATE.equals(templateName);
+    }
 }
