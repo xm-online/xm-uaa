@@ -17,12 +17,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
 import com.icthh.xm.commons.config.domain.Configuration;
-import com.icthh.xm.commons.migration.db.tenant.provisioner.TenantDatabaseProvisioner;
 import com.icthh.xm.commons.permission.config.PermissionProperties;
-import com.icthh.xm.commons.tenantendpoint.provisioner.TenantAbilityCheckerProvisioner;
 import com.icthh.xm.commons.tenantendpoint.provisioner.TenantConfigProvisioner;
-import com.icthh.xm.commons.tenantendpoint.provisioner.TenantListProvisioner;
 import com.icthh.xm.commons.tenantendpoint.TenantManager;
+import com.icthh.xm.uaa.service.configurer.TenantManagerConfigurer;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -52,17 +50,10 @@ public class TenantManagerConfiguration {
     private String applicationName;
 
     @Bean
-    public TenantManager tenantManager(TenantAbilityCheckerProvisioner abilityCheckerProvisioner,
-                                       TenantDatabaseProvisioner databaseProvisioner,
-                                       TenantConfigProvisioner configProvisioner,
-                                       TenantListProvisioner tenantListProvisioner) {
-
-        TenantManager manager = TenantManager.builder()
-                                             .service(abilityCheckerProvisioner)
-                                             .service(tenantListProvisioner)
-                                             .service(databaseProvisioner)
-                                             .service(configProvisioner)
-                                             .build();
+    public TenantManager tenantManager(List<TenantManagerConfigurer> tenantManagerConfigurators) {
+        TenantManager.TenantManagerBuilder builder = TenantManager.builder();
+        tenantManagerConfigurators.forEach(it -> it.configure(builder));
+        TenantManager manager = builder.build();
         log.info("Configured tenant manager: {}", manager);
         return manager;
     }

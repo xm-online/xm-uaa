@@ -16,6 +16,10 @@ import com.icthh.xm.commons.tenantendpoint.TenantManager;
 import com.icthh.xm.commons.tenantendpoint.provisioner.TenantAbilityCheckerProvisioner;
 import com.icthh.xm.commons.tenantendpoint.provisioner.TenantConfigProvisioner;
 import com.icthh.xm.commons.tenantendpoint.provisioner.TenantListProvisioner;
+import com.icthh.xm.uaa.service.configurer.TenantAbilityCheckerConfigurer;
+import com.icthh.xm.uaa.service.configurer.TenantConfigConfigurer;
+import com.icthh.xm.uaa.service.configurer.TenantDatabaseConfigurer;
+import com.icthh.xm.uaa.service.configurer.TenantListConfigurer;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -71,7 +75,12 @@ public class TenantManagerConfigurationUnitTest {
                                                                       applicationProperties,
                                                                       resourceLoader));
 
-        tenantManager = configuration.tenantManager(abilityCheckerProvisioner,databaseProvisioner, configProvisioner, tenantListProvisioner);
+        TenantConfigConfigurer configConfigurer = new TenantConfigConfigurer(configProvisioner);
+        TenantAbilityCheckerConfigurer abilityCheckerConfigurer = new TenantAbilityCheckerConfigurer(abilityCheckerProvisioner);
+        TenantDatabaseConfigurer databaseConfigurer = new TenantDatabaseConfigurer(databaseProvisioner);
+        TenantListConfigurer tenantListConfigurer = new TenantListConfigurer(tenantListProvisioner);
+
+        tenantManager = configuration.tenantManager(List.of(abilityCheckerConfigurer, tenantListConfigurer, databaseConfigurer, configConfigurer));
     }
 
     @Test
