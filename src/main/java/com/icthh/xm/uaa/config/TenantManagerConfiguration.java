@@ -17,9 +17,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
 import com.icthh.xm.commons.config.domain.Configuration;
+import com.icthh.xm.commons.migration.db.tenant.provisioner.TenantDatabaseProvisioner;
 import com.icthh.xm.commons.permission.config.PermissionProperties;
+import com.icthh.xm.commons.tenantendpoint.provisioner.TenantAbilityCheckerProvisioner;
 import com.icthh.xm.commons.tenantendpoint.provisioner.TenantConfigProvisioner;
 import com.icthh.xm.commons.tenantendpoint.TenantManager;
+import com.icthh.xm.commons.tenantendpoint.provisioner.TenantListProvisioner;
+import com.icthh.xm.uaa.service.configurer.TenantCreationConfigurer;
 import com.icthh.xm.uaa.service.configurer.TenantManagerConfigurer;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +60,18 @@ public class TenantManagerConfiguration {
         TenantManager manager = builder.build();
         log.info("Configured tenant manager: {}", manager);
         return manager;
+    }
+
+    @Bean
+    public TenantCreationConfigurer tenantCreationConfigurer(TenantAbilityCheckerProvisioner abilityCheckerProvisioner,
+                                                             TenantDatabaseProvisioner databaseProvisioner,
+                                                             TenantConfigProvisioner configProvisioner,
+                                                             TenantListProvisioner tenantListProvisioner) {
+
+        return new TenantCreationConfigurer(List.of(abilityCheckerProvisioner,
+                                                    tenantListProvisioner,
+                                                    databaseProvisioner,
+                                                    configProvisioner));
     }
 
     @SneakyThrows
