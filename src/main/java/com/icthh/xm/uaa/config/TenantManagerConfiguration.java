@@ -66,7 +66,7 @@ public class TenantManagerConfiguration {
     }
 
     @Bean
-    @Order(0)
+    @Order(1)
     public TenantCreationConfigurer tenantCreationConfigurer(TenantAbilityCheckerProvisioner abilityCheckerProvisioner,
                                                              TenantDatabaseProvisioner databaseProvisioner,
                                                              TenantConfigProvisioner configProvisioner,
