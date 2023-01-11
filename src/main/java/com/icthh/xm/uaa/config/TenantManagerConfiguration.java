@@ -30,6 +30,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.annotation.AnnotationAwareOrderComparator;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -55,6 +57,7 @@ public class TenantManagerConfiguration {
 
     @Bean
     public TenantManager tenantManager(List<TenantManagerConfigurer> tenantManagerConfigurators) {
+        tenantManagerConfigurators.sort(AnnotationAwareOrderComparator.INSTANCE);
         TenantManager.TenantManagerBuilder builder = TenantManager.builder();
         tenantManagerConfigurators.forEach(it -> it.configure(builder));
         TenantManager manager = builder.build();
@@ -63,6 +66,7 @@ public class TenantManagerConfiguration {
     }
 
     @Bean
+    @Order(0)
     public TenantCreationConfigurer tenantCreationConfigurer(TenantAbilityCheckerProvisioner abilityCheckerProvisioner,
                                                              TenantDatabaseProvisioner databaseProvisioner,
                                                              TenantConfigProvisioner configProvisioner,
