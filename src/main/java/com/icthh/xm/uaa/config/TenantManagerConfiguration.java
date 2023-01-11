@@ -57,7 +57,6 @@ public class TenantManagerConfiguration {
 
     @Bean
     public TenantManager tenantManager(List<TenantManagerConfigurer> tenantManagerConfigurators) {
-        tenantManagerConfigurators.sort(AnnotationAwareOrderComparator.INSTANCE);
         TenantManager.TenantManagerBuilder builder = TenantManager.builder();
         tenantManagerConfigurators.forEach(it -> it.configure(builder));
         TenantManager manager = builder.build();
