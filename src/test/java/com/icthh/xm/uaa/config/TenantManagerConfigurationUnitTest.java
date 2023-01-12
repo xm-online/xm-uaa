@@ -29,6 +29,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.io.ResourceLoader;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -73,7 +74,7 @@ public class TenantManagerConfigurationUnitTest {
                                                                       resourceLoader));
 
         TenantCreationConfigurer tenantCreationConfigurer = configuration.tenantCreationConfigurer(abilityCheckerProvisioner, databaseProvisioner, configProvisioner, tenantListProvisioner);
-        tenantManager = configuration.tenantManager(List.of(tenantCreationConfigurer));
+        tenantManager = configuration.tenantManager(Collections.singletonList(tenantCreationConfigurer));
     }
 
     @Test
