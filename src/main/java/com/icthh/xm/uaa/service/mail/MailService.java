@@ -69,6 +69,7 @@ public class MailService {
     private static final String TEMPLATE_NAME = "templateName";
     private static final String SUBJECT = "subject";
     private static final String FROM = "from";
+    private static final String EMAIL_TYPE = "Email";
 
     private static final String USER = "user";
     private static final String BASE_URL = "baseUrl";
@@ -297,6 +298,7 @@ public class MailService {
             CommunicationMessage communicationMessage = new CommunicationMessage();
             communicationMessage.setCharacteristic(new ArrayList<>());
             communicationMessage.setSubject(subject);
+            communicationMessage.setType(EMAIL_TYPE);
             communicationMessage = new CommunicationMessageBuilder(communicationMessage, objectMapper)
                 .addSenderId(from)
                 .addReceiverEmail(email)

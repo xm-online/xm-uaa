@@ -72,6 +72,7 @@ public class MailServiceIntTest {
     private static final String DEFAULT_FIRST_NAME = "AAAAAAAAA";
     private static final String DEFAULT_LANG_KEY = "en";
     private static final String TEMPLATE_NAME = "testTemplate";
+    private static final String EMAIL_TYPE = "Email";
 
     @Autowired
     private JHipsterProperties jHipsterProperties;
@@ -340,6 +341,7 @@ public class MailServiceIntTest {
         && DEFAULT_LANG_KEY.equals(message.getCharacteristic().get(0).getValue())
         && templateName.equals(message.getCharacteristic().get(1).getValue())
         && model.equals(message.getCharacteristic().get(2).getValue())
+        && EMAIL_TYPE.equals(message.getType())
         && Objects.equals(message.getSubject(), subject));
     }
 
