@@ -100,6 +100,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
                 .antMatchers("/api/account/reset_password/init").permitAll()
                 .antMatchers("/api/account/reset_password/check").permitAll()
                 .antMatchers("/api/account/reset_password/finish").permitAll()
+                .antMatchers("/api/uaa/properties/settings-public").permitAll()
                 .antMatchers("/api/account/reset_activation_key").permitAll()
                 .antMatchers("/api/profile-info").permitAll()
                 .antMatchers("/api/users/accept-terms-of-conditions/*").permitAll()
