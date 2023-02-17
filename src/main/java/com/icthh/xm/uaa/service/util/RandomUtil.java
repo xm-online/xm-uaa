@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.service.util;
 
+import java.security.SecureRandom;
 import org.apache.commons.lang3.RandomStringUtils;
 
 /**
@@ -8,6 +9,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 public final class RandomUtil {
 
     private static final int DEF_COUNT = 20;
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     private RandomUtil() {
     }
@@ -18,7 +20,7 @@ public final class RandomUtil {
      * @return the generated password
      */
     public static String generatePassword() {
-        return RandomStringUtils.randomAlphanumeric(DEF_COUNT);
+        return RandomStringUtils.random(DEF_COUNT, 0, 0, true, true, (char[])null, RANDOM);
     }
 
     /**
@@ -27,7 +29,7 @@ public final class RandomUtil {
      * @return the generated activation key
      */
     public static String generateActivationKey() {
-        return RandomStringUtils.randomNumeric(DEF_COUNT);
+        return RandomStringUtils.random(DEF_COUNT, 0, 0, false, true, (char[])null, RANDOM);
     }
 
     /**
@@ -36,6 +38,6 @@ public final class RandomUtil {
     * @return the generated reset key
     */
     public static String generateResetKey() {
-        return RandomStringUtils.randomNumeric(DEF_COUNT);
+        return RandomStringUtils.random(DEF_COUNT, 0, 0, false, true, (char[])null, RANDOM);
     }
 }
