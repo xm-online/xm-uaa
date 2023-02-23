@@ -3,6 +3,7 @@ package com.icthh.xm.uaa.lep;
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import com.icthh.xm.commons.lep.commons.CommonsExecutor;
 import com.icthh.xm.commons.lep.commons.CommonsService;
+import com.icthh.xm.commons.permission.service.PermissionCheckService;
 import com.icthh.xm.commons.topic.service.KafkaTemplateService;
 import com.icthh.xm.commons.lep.spring.SpringLepProcessingApplicationListener;
 import com.icthh.xm.lep.api.ScopedContext;
@@ -54,7 +55,7 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
     private final LepTokenGranter lepTokenGranter;
     private final ClientDetailsService clientDetailsService;
     private final KafkaTemplateService kafkaTemplateService;
-
+    private final PermissionCheckService permissionCheckService;
 
     @Override
     protected void bindExecutionContext(final ScopedContext executionContext) {
@@ -75,6 +76,7 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
         services.put(BINDING_SUB_KEY_SERVICE_TENANT_PROPERTIES_SERVICE, tenantPropertiesService);
         services.put(BINDING_SUB_KEY_SERVICE_LEP_TOKEN_GRANTER, lepTokenGranter);
         services.put(BINDING_SUB_KEY_SERVICE_CLIENT_DETAILS_SERVICE, clientDetailsService);
+        services.put(BINDING_SUB_KEY_PERMISSION_CHECK_SERVICE, permissionCheckService);
 
         executionContext.setValue(BINDING_KEY_COMMONS, new CommonsExecutor(commonsService));
         executionContext.setValue(BINDING_KEY_SERVICES, services);
