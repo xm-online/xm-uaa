@@ -253,25 +253,8 @@ public class UserResourceIntTest {
         UserLogin userLogin = new UserLogin();
         userLogin.setLogin("test");
         userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
-        ManagedUserVM managedUserVM = new ManagedUserVM(
-            null,
-            DEFAULT_PASSWORD,
-            DEFAULT_FIRSTNAME,
-            DEFAULT_LASTNAME,
-            true,
-            false,
-            null,
-            null,
-            DEFAULT_IMAGEURL,
-            DEFAULT_LANGKEY,
-            null,
-            null,
-            null,
-            null,
-            ROLE_USER, "test", null, null, null, null, Collections.singletonList(userLogin),
-            AUTO_LOGOUT_ENABLED,
-            AUTO_LOGOUT_TIME,
-            null, List.of("test"), null);
+        ManagedUserVM managedUserVM = buildDefaultUser(DEFAULT_FIRSTNAME, DEFAULT_LASTNAME,
+            Collections.singletonList(userLogin));
 
         restUserMockMvc.perform(post("/api/users")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -284,6 +267,37 @@ public class UserResourceIntTest {
         User testUser = userList.get(userList.size() - 1);
         assertThat(testUser.getFirstName()).isEqualTo(DEFAULT_FIRSTNAME);
         assertThat(testUser.getLastName()).isEqualTo(DEFAULT_LASTNAME);
+        assertThat(testUser.getImageUrl()).isEqualTo(DEFAULT_IMAGEURL);
+        assertThat(testUser.getLangKey()).isEqualTo(DEFAULT_LANGKEY);
+        assertThat(testUser.isAutoLogoutEnabled()).isEqualTo(AUTO_LOGOUT_ENABLED);
+        assertThat(testUser.getAutoLogoutTimeoutSeconds()).isEqualTo(AUTO_LOGOUT_TIME);
+    }
+
+    @Test
+    @Transactional
+    public void createUserWithLongName() throws Exception {
+        int databaseSizeBeforeCreate = userRepository.findAll().size();
+
+        // Create the User
+        UserLogin userLogin = new UserLogin();
+        userLogin.setLogin("test");
+        userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
+        String firstName = "VeryLongFistNameVeryLongFistNameVeryLongFistNameVeryLongFistNameVeryLongFistName";
+        String lastName = "VeryLongLastNameVeryLongLastNameVeryLongLastNameVeryLongLastNameVeryLongLastName";
+        ManagedUserVM managedUserVM = buildDefaultUser(firstName, lastName, Collections.singletonList(userLogin));
+
+
+        restUserMockMvc.perform(post("/api/users")
+                .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
+            .andExpect(status().isCreated());
+
+        // Validate the User in the database
+        List<User> userList = userRepository.findAll();
+        assertThat(userList).hasSize(databaseSizeBeforeCreate + 1);
+        User testUser = userList.get(userList.size() - 1);
+        assertThat(testUser.getFirstName()).isEqualTo(firstName);
+        assertThat(testUser.getLastName()).isEqualTo(lastName);
         assertThat(testUser.getImageUrl()).isEqualTo(DEFAULT_IMAGEURL);
         assertThat(testUser.getLangKey()).isEqualTo(DEFAULT_LANGKEY);
         assertThat(testUser.isAutoLogoutEnabled()).isEqualTo(AUTO_LOGOUT_ENABLED);
@@ -1201,5 +1215,32 @@ public class UserResourceIntTest {
         consumer.accept(properties);
         tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
             new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
+    }
+
+    private ManagedUserVM buildDefaultUser(String firstName, String lastName, List<UserLogin> logins) {
+        return new ManagedUserVM(
+            null,
+            DEFAULT_PASSWORD,
+            firstName,
+            lastName,
+            true,
+            false,
+            null,
+            null,
+            DEFAULT_IMAGEURL,
+            DEFAULT_LANGKEY,
+            null,
+            null,
+            null,
+            null,
+            ROLE_USER,
+            "test",
+            null,
+            null,
+            null, null,
+            logins,
+            AUTO_LOGOUT_ENABLED,
+            AUTO_LOGOUT_TIME,
+            null, List.of("test"), null);
     }
 }

@@ -66,12 +66,12 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "password_hash", length = 60)
     private String password;
 
-    @Size(max = 50)
-    @Column(name = "first_name", length = 50)
+    @Size(max = 256)
+    @Column(name = "first_name", length = 256)
     private String firstName;
 
-    @Size(max = 50)
-    @Column(name = "last_name", length = 50)
+    @Size(max = 256)
+    @Column(name = "last_name", length = 256)
     private String lastName;
 
     @NotNull

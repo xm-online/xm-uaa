@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="20230216125200" author="vkyrychenko">
+            <modifyDataType columnName="first_name"
+                            newDataType="varchar(256)"
+                            tableName="jhi_user"/>
+            <modifyDataType columnName="last_name"
+                            newDataType="varchar(256)"
+                            tableName="jhi_user"/>
+    </changeSet>
+</databaseChangeLog>

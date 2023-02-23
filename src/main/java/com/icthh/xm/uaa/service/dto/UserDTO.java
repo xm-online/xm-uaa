@@ -33,10 +33,10 @@ public class UserDTO {
 
     private Long id;
 
-    @Size(max = 50)
+    @Size(max = 256)
     private String firstName;
 
-    @Size(max = 50)
+    @Size(max = 256)
     private String lastName;
 
     @Size(max = 256)
