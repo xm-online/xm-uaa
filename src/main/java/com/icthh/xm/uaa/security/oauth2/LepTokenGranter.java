@@ -43,6 +43,7 @@ public class LepTokenGranter implements TokenGranter {
 
     @LogicExtensionPoint(value = "TokenGranter", resolver = LepTokenGranterKeyResolver.class)
     public OAuth2AccessToken grantSelf(String grantType, TokenRequest tokenRequest) {
+
         return null;
     }
 

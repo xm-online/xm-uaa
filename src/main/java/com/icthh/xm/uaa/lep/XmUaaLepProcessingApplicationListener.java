@@ -14,6 +14,7 @@ import com.icthh.xm.uaa.security.oauth2.athorization.code.CustomAuthorizationCod
 import com.icthh.xm.uaa.service.AccountService;
 import com.icthh.xm.uaa.service.ClientService;
 import com.icthh.xm.uaa.service.LdapService;
+import com.icthh.xm.uaa.service.SeparateTransactionExecutor;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
@@ -56,6 +57,7 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
     private final ClientDetailsService clientDetailsService;
     private final KafkaTemplateService kafkaTemplateService;
     private final PermissionCheckService permissionCheckService;
+    private final SeparateTransactionExecutor separateTransactionExecutor;
 
     @Override
     protected void bindExecutionContext(final ScopedContext executionContext) {
@@ -66,6 +68,7 @@ public class XmUaaLepProcessingApplicationListener extends SpringLepProcessingAp
         services.put(BINDING_SUB_KEY_SERVICE_USER, userService);
         services.put(BINDING_SUB_KEY_SERVICE_MAIL, mailService);
         services.put(BINDING_SUB_KEY_SERVICE_ACCOUNT, accountService);
+        services.put(BINDING_SUB_KEY_SERVICE_SEPARATE_TRANSACTION_EXECUTOR, separateTransactionExecutor);
         services.put(BINDING_SUB_KEY_SERVICE_USER_LOGIN_SERVICE, userLoginService);
         services.put(BINDING_SUB_KEY_SERVICE_TENANT_CONFIG_SERVICE, tenantConfigService);
         services.put(BINDING_SUB_KEY_PROFILE_EVEBT_PRODUCER_SERVICE, profileEventProducer);

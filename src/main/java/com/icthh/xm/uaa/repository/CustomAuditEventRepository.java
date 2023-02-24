@@ -5,11 +5,10 @@ import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.config.audit.AuditEventConverter;
 import com.icthh.xm.uaa.domain.PersistentAuditEvent;
 import com.icthh.xm.uaa.repository.projection.PrincipalProjection;
-
+import com.icthh.xm.uaa.service.SeparateTransactionExecutor;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
@@ -29,6 +28,7 @@ public class CustomAuditEventRepository implements AuditEventRepository {
     private final PersistenceAuditEventRepository persistenceAuditEventRepository;
     private final AuditEventConverter auditEventConverter;
     private final ApplicationProperties applicationProperties;
+    private final SeparateTransactionExecutor separateTransactionExecutor;
 
     public List<AuditEvent> find(Date after) {
         Iterable<PersistentAuditEvent> persistentAuditEvents =
@@ -60,18 +60,19 @@ public class CustomAuditEventRepository implements AuditEventRepository {
         return persistenceAuditEventRepository.findDistinctByAuditEventDateAfterAndAuditEventType(after, type);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Override
     public void add(AuditEvent event) {
         if (!AUTHORIZATION_FAILURE.equals(event.getType())
                 && !Constants.ANONYMOUS_USER.equals(event.getPrincipal())
                 && applicationProperties.isAuditEventsEnabled()) {
-            PersistentAuditEvent persistentAuditEvent = new PersistentAuditEvent();
-            persistentAuditEvent.setPrincipal(event.getPrincipal());
-            persistentAuditEvent.setAuditEventType(event.getType());
-            persistentAuditEvent.setAuditEventDate(event.getTimestamp());
-            persistentAuditEvent.setData(auditEventConverter.convertDataToStrings(event.getData()));
-            persistenceAuditEventRepository.save(persistentAuditEvent);
+            separateTransactionExecutor.doInSeparateTransaction(() -> {
+                PersistentAuditEvent persistentAuditEvent = new PersistentAuditEvent();
+                persistentAuditEvent.setPrincipal(event.getPrincipal());
+                persistentAuditEvent.setAuditEventType(event.getType());
+                persistentAuditEvent.setAuditEventDate(event.getTimestamp());
+                persistentAuditEvent.setData(auditEventConverter.convertDataToStrings(event.getData()));
+                return persistenceAuditEventRepository.save(persistentAuditEvent);
+            });
         }
     }
 

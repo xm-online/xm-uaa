@@ -16,6 +16,7 @@ import com.icthh.xm.uaa.security.oauth2.athorization.code.CustomAuthorizationCod
 import com.icthh.xm.uaa.service.AccountService;
 import com.icthh.xm.uaa.service.ClientService;
 import com.icthh.xm.uaa.service.LdapService;
+import com.icthh.xm.uaa.service.SeparateTransactionExecutor;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
@@ -55,6 +56,7 @@ public class LepContext {
         LepTokenGranter lepTokenGranter;
         ClientDetailsService clientDetailsService;
         PermissionCheckService permissionCheckService;
+        SeparateTransactionExecutor separateTransactionExecutor;
     }
 
     public static class LepTemplates {

@@ -8,6 +8,7 @@ import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.config.audit.AuditEventConverter;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.PersistentAuditEvent;
+import com.icthh.xm.uaa.service.SeparateTransactionExecutor;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -56,6 +57,9 @@ public class CustomAuditEventRepositoryIntTest {
     @Autowired
     private TenantContextHolder tenantContextHolder;
 
+    @Autowired
+    private SeparateTransactionExecutor separateTransactionExecutor;
+
     @Mock
     private ApplicationProperties applicationProperties;
 
@@ -77,7 +81,8 @@ public class CustomAuditEventRepositoryIntTest {
         when(applicationProperties.isAuditEventsEnabled()).thenReturn(true);
         customAuditEventRepository = new CustomAuditEventRepository(persistenceAuditEventRepository,
                                                                     auditEventConverter,
-                                                                    applicationProperties);
+                                                                    applicationProperties,
+                                                                    separateTransactionExecutor);
 
         persistenceAuditEventRepository.deleteAll();
         Instant oneHourAgo = Instant.now().minusSeconds(3600);
