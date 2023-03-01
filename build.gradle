@@ -13,6 +13,7 @@ buildscript {
 
 plugins {
     id "java"
+    id "groovy"
     id "maven-publish"
     id "idea"
     id "jacoco"
@@ -61,6 +62,19 @@ if (project.hasProperty("zipkin")) {
 idea {
     module {
         excludeDirs += files("node_modules")
+    }
+}
+
+sourceSets {
+    test {
+        groovy {
+            srcDirs += ['src/test/lep']
+        }
+    }
+    main {
+        groovy {
+            srcDirs += ['src/main/lep']
+        }
     }
 }
 
