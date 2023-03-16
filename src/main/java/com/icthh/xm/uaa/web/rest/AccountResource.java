@@ -50,6 +50,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 
@@ -145,9 +146,15 @@ public class AccountResource {
     @Timed
     @PreAuthorize("hasPermission({'request': #request}, 'ACCOUNT.CHECK_AUTH')")
     @PrivilegeDescription("Privilege to check if the user is authenticated")
-    public String isAuthenticated(HttpServletRequest request) {
+    public ResponseEntity<String> isAuthenticated(HttpServletRequest request) {
         log.debug("REST request to check if the current user is authenticated");
-        return request.getRemoteUser();
+        final String userKey = userService.getRequiredUserKey();
+        boolean equals = Objects.equals(userKey, request.getRemoteUser());
+        if (!equals) {
+            log.error("User login {} not marched to remoteUser {}", userKey, request.getRemoteUser());
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(userKey);
     }
 
     /**
