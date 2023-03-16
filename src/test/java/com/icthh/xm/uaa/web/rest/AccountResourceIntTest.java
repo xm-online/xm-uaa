@@ -271,7 +271,7 @@ public class AccountResourceIntTest {
 
         restUserMockMvc.perform(get("/api/authenticate")
                 .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isBadRequest())
+            .andExpect(status().isUnauthorized())
             .andExpect(content().string(""));
     }
 
