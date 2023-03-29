@@ -8,6 +8,7 @@ import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.User;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.SneakyThrows;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,6 +51,9 @@ public class MailServiceTemplateIntTest {
 
     @MockBean
     private JavaMailSender javaMailSender;
+
+    @MockBean
+    private TenantPropertiesService tenantPropertiesService;
 
     @Autowired
     private TenantContextHolder tenantContextHolder;
