@@ -261,12 +261,25 @@ public class AccountResourceIntTest {
     public void testNonAuthenticatedUser() throws Exception {
         restUserMockMvc.perform(get("/api/authenticate")
             .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk())
+            .andExpect(status().isUnauthorized())
+            .andExpect(content().string(""));
+    }
+
+    @Test
+    public void testMismatchAuthenticatedUser() throws Exception {
+        when(mockUserService.getRequiredUserKey()).thenReturn("user1");
+
+        restUserMockMvc.perform(get("/api/authenticate")
+                .accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isUnauthorized())
             .andExpect(content().string(""));
     }
 
     @Test
     public void testAuthenticatedUser() throws Exception {
+        String userKey = "test";
+        when(mockUserService.getRequiredUserKey()).thenReturn(userKey);
+
         restUserMockMvc.perform(get("/api/authenticate")
             .with(request -> {
                 request.setRemoteUser("test");
@@ -274,7 +287,7 @@ public class AccountResourceIntTest {
             })
             .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
-            .andExpect(content().string("test"));
+            .andExpect(content().string(userKey));
     }
 
     @Test
