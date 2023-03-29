@@ -291,7 +291,7 @@ public class MailService {
     }
 
     private boolean isCommunicationEnabled(TenantKey tenantKey) {
-        return Optional.ofNullable(tenantPropertiesService.getTenantProps())
+        return Optional.ofNullable(tenantPropertiesService.getTenantProps(tenantKey))
             .map(TenantProperties::getCommunication)
             .map(TenantProperties.Communication::getEnabled)
             .map(Boolean.TRUE::equals)
