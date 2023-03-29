@@ -218,4 +218,15 @@ public class TenantProperties {
         private String[] attributeNames;
     }
 
+    @JsonProperty("communication")
+    private Communication communication = new Communication();
+
+
+    @Getter
+    @Setter
+    @ToString
+    public static class Communication {
+        private Boolean enabled = false;
+    }
+
 }

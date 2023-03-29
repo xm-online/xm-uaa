@@ -22,6 +22,8 @@ import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.User;
+import com.icthh.xm.uaa.domain.properties.TenantProperties;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -86,6 +88,7 @@ public class MailService {
     private final CommunicationService communicationService;
     private final ObjectMapper objectMapper;
     private final ApplicationProperties applicationProperties;
+    private final TenantPropertiesService tenantPropertiesService;
 
     @Resource
     @Lazy
@@ -273,7 +276,7 @@ public class MailService {
                                        String email,
                                        String from,
                                        Map<String, Object> objectModel) {
-        if (applicationProperties.getCommunication().isEnabled()) {
+        if (isCommunicationEnabled()) {
             String langKey = user.getLangKey();
             if (isSystemEmail(templateName)) {
                 sendCommunicationEmailEvent(tenantKey, langKey, templateName, null, email, from, objectModel);
@@ -285,6 +288,14 @@ public class MailService {
         } else {
             sendEmailFromTemplateByMailSender(tenantKey, user, templateName, titleKey, email, from, objectModel);
         }
+    }
+
+    private boolean isCommunicationEnabled() {
+        return Optional.ofNullable(tenantPropertiesService.getTenantProps())
+            .map(TenantProperties::getCommunication)
+            .map(TenantProperties.Communication::getEnabled)
+            .map(Boolean.TRUE::equals)
+            .orElse(applicationProperties.getCommunication().isEnabled());
     }
 
     private void sendCommunicationEmailEvent(TenantKey tenantKey,

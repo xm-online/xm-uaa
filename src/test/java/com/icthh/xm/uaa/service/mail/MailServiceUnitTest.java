@@ -8,6 +8,7 @@ import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.User;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
 import freemarker.template.Configuration;
 import lombok.SneakyThrows;
 import org.junit.Test;
@@ -76,6 +77,8 @@ public class MailServiceUnitTest {
     private ApplicationProperties applicationProperties;
     @Mock
     private ApplicationProperties.Communication appCommunication;
+    @Mock
+    private TenantPropertiesService tenantPropertiesService;
 
     @Test
     @SneakyThrows
