@@ -276,7 +276,7 @@ public class MailService {
                                        String email,
                                        String from,
                                        Map<String, Object> objectModel) {
-        if (isCommunicationEnabled()) {
+        if (isCommunicationEnabled(tenantKey)) {
             String langKey = user.getLangKey();
             if (isSystemEmail(templateName)) {
                 sendCommunicationEmailEvent(tenantKey, langKey, templateName, null, email, from, objectModel);
@@ -290,7 +290,7 @@ public class MailService {
         }
     }
 
-    private boolean isCommunicationEnabled() {
+    private boolean isCommunicationEnabled(TenantKey tenantKey) {
         return Optional.ofNullable(tenantPropertiesService.getTenantProps())
             .map(TenantProperties::getCommunication)
             .map(TenantProperties.Communication::getEnabled)
