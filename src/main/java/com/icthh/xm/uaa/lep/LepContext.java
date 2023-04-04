@@ -5,6 +5,7 @@ import com.icthh.xm.commons.lep.BaseProceedingLep;
 import com.icthh.xm.commons.lep.spring.LepThreadHelper;
 import com.icthh.xm.commons.lep.spring.lepservice.LepServiceFactory;
 import com.icthh.xm.commons.logging.trace.TraceService;
+import com.icthh.xm.commons.messaging.communication.service.CommunicationService;
 import com.icthh.xm.commons.permission.service.PermissionCheckService;
 import com.icthh.xm.commons.security.XmAuthenticationContext;
 import com.icthh.xm.commons.tenant.TenantContext;
@@ -57,6 +58,7 @@ public class LepContext {
         ClientDetailsService clientDetailsService;
         PermissionCheckService permissionCheckService;
         SeparateTransactionExecutor separateTransactionExecutor;
+        CommunicationService communicationService;
     }
 
     public static class LepTemplates {
