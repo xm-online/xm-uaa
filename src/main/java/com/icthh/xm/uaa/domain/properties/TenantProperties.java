@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.domain.properties;
 
+import static com.icthh.xm.uaa.service.otp.OtpType.EMBEDDED;
 import static java.lang.Boolean.TRUE;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -62,13 +63,19 @@ public class TenantProperties {
         private boolean tfaEnabled = false;
 
         @JsonProperty("tfaOtpType")
-        private OtpType tfaOtpType;
+        private OtpType tfaOtpType = EMBEDDED;
 
         @JsonProperty("tfaOtpTypeKey")
         private String tfaOtpTypeKey;
 
         @JsonProperty("tfaOtpReceiverTypeKey")
         private String tfaOtpReceiverTypeKey;
+
+        @JsonProperty("tfaOtpGenerateUrl")
+        private String tfaOtpGenerateUrl;
+
+        @JsonProperty("tfaOtpCheckUrl")
+        private String tfaOtpCheckUrl;
 
         @JsonProperty("tfaDefaultOtpChannelType")
         private String tfaDefaultOtpChannelType;

@@ -1,20 +1,13 @@
 package com.icthh.xm.uaa.security.oauth2.tfa;
 
-import com.icthh.xm.uaa.service.otp.OtpService;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.security.authentication.AccountExpiredException;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.LockedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.SpringSecurityMessageSource;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.core.authority.mapping.NullAuthoritiesMapper;
@@ -22,36 +15,33 @@ import org.springframework.security.core.userdetails.UserCache;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsChecker;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.core.userdetails.cache.NullUserCache;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
-import java.util.Collection;
 import java.util.Objects;
 
 /**
  * The {@link TfaOtpAuthenticationProvider} class.
  */
-public class TfaOtpAuthenticationProvider implements AuthenticationProvider {
+public abstract class TfaOtpAuthenticationProvider implements AuthenticationProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TfaOtpAuthenticationProvider.class);
     private static final String USER_NOT_FOUND_OTP = "userNotFoundOtp";
 
-    private final UserDetailsService userDetailsService;
-    private final OtpService otpService;
-    private PasswordEncoder otpEncoder;
-    private String userNotFoundEncodedOtp;
+    final UserDetailsService userDetailsService;
+    PasswordEncoder otpEncoder;
+    String userNotFoundEncodedOtp;
 
-    private boolean hideUserNotFoundExceptions = true;
-    private boolean forcePrincipalAsString = false;
+    boolean hideUserNotFoundExceptions = true;
+    boolean forcePrincipalAsString = false;
 
-    private GrantedAuthoritiesMapper authoritiesMapper = new NullAuthoritiesMapper();
-    private UserCache userCache = new NullUserCache();
-    private UserDetailsChecker preAuthenticationChecks = new DefaultPreAuthenticationChecks();
-    private UserDetailsChecker postAuthenticationChecks = new DefaultPostAuthenticationChecks();
-    private MessageSourceAccessor messages = SpringSecurityMessageSource.getAccessor();
+    GrantedAuthoritiesMapper authoritiesMapper = new NullAuthoritiesMapper();
+    UserCache userCache = new NullUserCache();
+    UserDetailsChecker preAuthenticationChecks = new DefaultPreAuthenticationChecks();
+    UserDetailsChecker postAuthenticationChecks = new DefaultPostAuthenticationChecks();
+    MessageSourceAccessor messages = SpringSecurityMessageSource.getAccessor();
 
     /**
      * Constructor.
@@ -60,11 +50,9 @@ public class TfaOtpAuthenticationProvider implements AuthenticationProvider {
      * @param otpEncoder         the OTP encoder
      */
     public TfaOtpAuthenticationProvider(UserDetailsService userDetailsService,
-                                        PasswordEncoder otpEncoder,
-                                        OtpService otpService) {
+                                        PasswordEncoder otpEncoder) {
         this.userDetailsService = Objects.requireNonNull(userDetailsService, "userDetailsService can't be null");
         setOtpEncoder(otpEncoder);
-        this.otpService = otpService;
     }
 
     private void setOtpEncoder(PasswordEncoder otpEncoder) {
@@ -83,163 +71,6 @@ public class TfaOtpAuthenticationProvider implements AuthenticationProvider {
         Assert.notNull(this.preAuthenticationChecks, "preAuthenticationChecks must be set");
         Assert.notNull(this.postAuthenticationChecks, "postAuthenticationChecks must be set");
         Assert.notNull(this.authoritiesMapper, "authoritiesMapper must be set");
-    }
-
-    @Override
-    public boolean supports(Class<?> authentication) {
-        return TfaOtpAuthenticationToken.class.isAssignableFrom(authentication);
-    }
-
-    @Override
-    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        Assert.isInstanceOf(TfaOtpAuthenticationToken.class, authentication,
-            "Only TfaOtpAuthenticationToken is supported");
-
-        final TfaOtpAuthenticationToken tfaOtpAuthentication = TfaOtpAuthenticationToken.class.cast(authentication);
-
-        // Determine username
-        final String username = (tfaOtpAuthentication.getPrincipal() == null) ? "NONE_PROVIDED" : authentication.getName();
-
-        // retrieve user
-        boolean cacheWasUsed = true;
-        UserDetails user = this.userCache.getUserFromCache(username);
-        if (user == null) {
-            cacheWasUsed = false;
-
-            try {
-                user = retrieveUser(username, tfaOtpAuthentication);
-            } catch (UsernameNotFoundException notFound) {
-                LOGGER.debug("User '" + username + "' not found");
-                throw isHideUserNotFoundExceptions()
-                    ? new BadCredentialsException(messages.getMessage(
-                    "AbstractUserDetailsAuthenticationProvider.badCredentials",
-                    "Bad credentials"))
-                    : notFound;
-            }
-
-            Assert.notNull(user,
-                "retrieveUser returned null - a violation of the interface contract");
-        }
-
-        // validate user/account
-        try {
-            preAuthenticationChecks.check(user);
-            additionalAuthenticationChecks(user, tfaOtpAuthentication);
-        } catch (AuthenticationException exception) {
-            if (!cacheWasUsed) {
-                throw exception;
-            }
-
-            // There was a problem, so try again after checking
-            // we're using latest data (i.e. not from the cache)
-            cacheWasUsed = false;
-            user = retrieveUser(username, tfaOtpAuthentication);
-            preAuthenticationChecks.check(user);
-            additionalAuthenticationChecks(user, tfaOtpAuthentication);
-        }
-
-        postAuthenticationChecks.check(user);
-
-        if (!cacheWasUsed) {
-            this.userCache.putUserInCache(user);
-        }
-
-        Object principalToReturn = user;
-        if (forcePrincipalAsString) {
-            principalToReturn = user.getUsername();
-        }
-        return createSuccessAuthentication(principalToReturn, tfaOtpAuthentication, user);
-    }
-
-    private UserDetails retrieveUser(String username, TfaOtpAuthenticationToken tfaOtpAuthentication) {
-        UserDetails loadedUser;
-
-        try {
-            loadedUser = userDetailsService.loadUserByUsername(username);
-        } catch (UsernameNotFoundException notFound) {
-            if (tfaOtpAuthentication.getCredentials() != null) {
-                String presentedOtp = tfaOtpAuthentication.getCredentials().getOtp();
-                otpEncoder.matches(presentedOtp, userNotFoundEncodedOtp);
-            }
-            throw notFound;
-        } catch (Exception repositoryProblem) {
-            throw new InternalAuthenticationServiceException(repositoryProblem.getMessage(), repositoryProblem);
-        }
-
-        if (loadedUser == null) {
-            throw new InternalAuthenticationServiceException(
-                "UserDetailsService returned null, which is an interface contract violation");
-        }
-        return loadedUser;
-    }
-
-    private void additionalAuthenticationChecks(UserDetails userDetails,
-                                                TfaOtpAuthenticationToken authentication) throws AuthenticationException {
-        // check is credentials "container object" exist
-        TfaOtpAuthenticationToken.BaseOtpCredentials credentials = authentication.getCredentials();
-        if (credentials == null) {
-            LOGGER.debug("Authentication failed: no credentials provided");
-
-            throw new BadCredentialsException(messages.getMessage(
-                "AbstractUserDetailsAuthenticationProvider.badCredentials",
-                "Bad credentials"));
-        }
-
-        // get credentials fields
-        final String presentedOtp = credentials.getOtp();
-
-        if (credentials instanceof TfaOtpAuthenticationToken.OtpMsCredentials) {
-            TfaOtpAuthenticationToken.OtpMsCredentials otpCredentials = (TfaOtpAuthenticationToken.OtpMsCredentials) credentials;
-            Long otpId = otpCredentials.getOtpId();
-            boolean isValidOtp = otpService.checkOtpRequest(otpId, presentedOtp);
-            if (!isValidOtp) {
-                LOGGER.debug("Authentication failed: no OTP MS provided");
-
-                throw new BadCredentialsException(messages.getMessage(
-                    "AbstractUserDetailsAuthenticationProvider.badCredentials",
-                    "Bad credentials"));
-            }
-        }
-
-        if (credentials instanceof TfaOtpAuthenticationToken.OtpCredentials) {
-
-            TfaOtpAuthenticationToken.OtpCredentials otpCredentials = (TfaOtpAuthenticationToken.OtpCredentials) credentials;
-            String encodedOtp = otpCredentials.getEncodedOtp();
-
-            // check is credentials fields not blank
-            if (StringUtils.isBlank(presentedOtp) || StringUtils.isBlank(encodedOtp)) {
-                LOGGER.debug("Authentication failed: no OTP provided");
-
-                throw new BadCredentialsException(messages.getMessage(
-                    "AbstractUserDetailsAuthenticationProvider.badCredentials",
-                    "Bad credentials"));
-            }
-
-            // validate OTP
-            if (!otpEncoder.matches(presentedOtp, encodedOtp)) {
-                LOGGER.debug("Authentication failed: password does not match stored value");
-
-                throw new BadCredentialsException(messages.getMessage(
-                    "AbstractUserDetailsAuthenticationProvider.badCredentials",
-                    "Bad credentials"));
-            }
-        }
-    }
-
-    private Authentication createSuccessAuthentication(Object principal,
-                                                       TfaOtpAuthenticationToken authentication,
-                                                       UserDetails user) {
-        // Ensure we return the original credentials the user supplied,
-        // so subsequent attempts are successful even with encoded passwords.
-        // Also ensure we return the original getDetails(), so that future
-        // authentication events after cache expiry contain the details
-        Collection<? extends GrantedAuthority> authorities = authoritiesMapper.mapAuthorities(user.getAuthorities());
-        TfaOtpAuthenticationToken result = new TfaOtpAuthenticationToken(principal,
-                                                                         authentication.getCredentials(),
-                                                                         authorities);
-        result.setDetails(authentication.getDetails());
-
-        return result;
     }
 
     public boolean isHideUserNotFoundExceptions() {

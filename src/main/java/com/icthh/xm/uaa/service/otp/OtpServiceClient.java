@@ -39,26 +39,24 @@ public class OtpServiceClient {
         LinkedMultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add(GRANT_TYPE, GRANT_TYPE_VALUE);
 
-        ResponseEntity<Map> response;
         try {
-            response = restTemplate.exchange(url, POST, new HttpEntity<>(body, headers), Map.class);
+            return (String) restTemplate.exchange(url, POST, new HttpEntity<>(body, headers), Map.class).getBody().get("access_token");
         } catch (Exception e) {
             log.error("Can't get system token", e);
             throw new BusinessException("Can't get system token");
         }
-        return (String) response.getBody().get("access_token");
     }
 
-    public Long getOtpRequest(String url, OtpService.OneTimePasswordCustomDto body, String systemToken) {
+    public Long createOtp(String url, OtpService.OneTimePasswordDto body, String systemToken) {
         log.info("OneTimePasswordCustom body: {}", body);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add(AUTHORIZATION, BEARER + systemToken);
 
-        ResponseEntity<OtpService.OneTimePasswordCustomDto> response;
+        ResponseEntity<OtpService.OneTimePasswordDto> response;
         try {
-            response = restTemplate.exchange(url, POST, new HttpEntity<>(body, headers), OtpService.OneTimePasswordCustomDto.class);
+            response = restTemplate.exchange(url, POST, new HttpEntity<>(body, headers), OtpService.OneTimePasswordDto.class);
         } catch (Exception e) {
             log.error("Can't get otp id", e);
             throw new BusinessException("Can't get otp id");
@@ -66,16 +64,15 @@ public class OtpServiceClient {
         return response.getBody().getId();
     }
 
-    public boolean checkOtpRequest(String url, OtpService.OneTimePasswordCheckDto body, String systemToken) {
+    public boolean checkOtp(String url, OtpService.OneTimePasswordCheckDto body, String systemToken) {
         log.info("OneTimePasswordCheck body: {}", body);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add(AUTHORIZATION, BEARER + systemToken);
 
-        ResponseEntity<OtpService.OneTimePasswordCustomDto> response;
         try {
-            response = restTemplate.exchange(url, POST, new HttpEntity<>(body, headers), OtpService.OneTimePasswordCustomDto.class);
+            restTemplate.exchange(url, POST, new HttpEntity<>(body, headers), OtpService.OneTimePasswordDto.class);
         } catch (Exception e) {
             log.error("Can't check otp", e);
             return false;

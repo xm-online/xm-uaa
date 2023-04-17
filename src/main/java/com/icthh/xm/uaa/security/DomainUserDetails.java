@@ -26,10 +26,10 @@ public class DomainUserDetails extends User {
     private final Integer tfaAccessTokenValiditySeconds;
 
     private String tfaEncodedOtp;
+    private OtpChannelType tfaOtpChannelType;
 
     private Long otpId;
-
-    private OtpChannelType tfaOtpChannelType;
+    private String langKey;
 
     private final String tenant;
     private final String userKey;
@@ -102,6 +102,43 @@ public class DomainUserDetails extends User {
         this.autoLogoutTimeoutSeconds = autoLogoutTimeoutSeconds;
     }
 
+    public DomainUserDetails(String username,
+                             String password,
+                             Collection<? extends GrantedAuthority> authorities,
+                             String tenant,
+                             String userKey,
+                             boolean tfaEnabled,
+                             String tfaOtpSecret,
+                             OtpChannelType tfaOtpChannelType,
+                             Integer accessTokenValiditySeconds,
+                             Integer refreshTokenValiditySeconds,
+                             Integer tfaAccessTokenValiditySeconds,
+                             boolean autoLogoutEnabled,
+                             Integer autoLogoutTimeoutSeconds,
+                             List<UserLoginDto> logins,
+                             String langKey) {
+        super(username,
+              password,
+              true,
+              true,
+              true,
+              true,
+              authorities);
+        this.tenant = tenant;
+        this.userKey = userKey;
+        this.accessTokenValiditySeconds = accessTokenValiditySeconds;
+        this.refreshTokenValiditySeconds = refreshTokenValiditySeconds;
+        this.logins = logins;
+        this.tfaEnabled = tfaEnabled;
+        this.tfaOtpSecret = tfaOtpSecret;
+        this.tfaOtpChannelType = tfaOtpChannelType;
+        this.tfaAccessTokenValiditySeconds = tfaAccessTokenValiditySeconds;
+
+        this.autoLogoutEnabled = autoLogoutEnabled;
+        this.autoLogoutTimeoutSeconds = autoLogoutTimeoutSeconds;
+        this.langKey = langKey;
+    }
+
     public Optional<String> getTfaEncodedOtp() {
         return Optional.ofNullable(tfaEncodedOtp);
     }
@@ -118,6 +155,14 @@ public class DomainUserDetails extends User {
         this.otpId = otpId;
     }
 
+    public String getLangKey() {
+        return langKey;
+    }
+
+    public void setLangKey(String langKey) {
+        this.langKey = langKey;
+    }
+
     public Optional<OtpChannelType> getTfaOtpChannelType() {
         return Optional.ofNullable(tfaOtpChannelType);
     }
@@ -127,7 +172,11 @@ public class DomainUserDetails extends User {
     }
 
     public boolean isTfaApplied() {
-        return getTfaEncodedOtp().isPresent() || otpId != null;
+        return getTfaEncodedOtp().isPresent();
+    }
+
+    public boolean isOtpIdPresent() {
+        return otpId != null;
     }
 
     @Override

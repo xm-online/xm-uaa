@@ -92,20 +92,23 @@ public class DomainUserDetailsService implements UserDetailsService {
             .map(SimpleGrantedAuthority::new)
             .collect(toList());
 
-        return new DomainUserDetails(lowerLogin,
-                                     user.getPassword(),
-                                     authorities,
-                                     tenantKey,
-                                     user.getUserKey(),
-                                     user.isTfaEnabled(),
-                                     user.getTfaOtpSecret(),
-                                     user.getTfaOtpChannelType(),
-                                     user.getAccessTokenValiditySeconds(),
-                                     user.getRefreshTokenValiditySeconds(),
-                                     user.getTfaAccessTokenValiditySeconds(),
-                                     user.isAutoLogoutEnabled(),
-                                     user.getAutoLogoutTimeoutSeconds(),
-                                     logins);
+        return new DomainUserDetails(
+            lowerLogin,
+            user.getPassword(),
+            authorities,
+            tenantKey,
+            user.getUserKey(),
+            user.isTfaEnabled(),
+            user.getTfaOtpSecret(),
+            user.getTfaOtpChannelType(),
+            user.getAccessTokenValiditySeconds(),
+            user.getRefreshTokenValiditySeconds(),
+            user.getTfaAccessTokenValiditySeconds(),
+            user.isAutoLogoutEnabled(),
+            user.getAutoLogoutTimeoutSeconds(),
+            logins,
+            user.getLangKey()
+        );
     }
 
 }

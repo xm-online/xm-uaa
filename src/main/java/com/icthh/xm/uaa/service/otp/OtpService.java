@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -23,15 +24,14 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_DESTINATION;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class OtpService {
 
     private static final String UAA_CONFIG_KEY = "uaa";
-    private static final String OTP_CONFIG_KEY = "otp";
-    private static final String GENERATE_OTP_CONFIG_KEY = "url";
-    private static final String CHECK_OTP_CONFIG_KEY = "check";
 
     private final TenantPropertiesService tenantPropertiesService;
     private final TenantContextHolder tenantContextHolder;
@@ -55,10 +55,10 @@ public class OtpService {
         return otpServiceClient.getSystemToken(systemAuthUrl, systemClientToken, tenant);
     }
 
-    public Long getOtpRequest(DomainUserDetails userDetails) {
+    public Long prepareOtpRequest(DomainUserDetails userDetails) {
         String systemToken = getSystemTokenRequest();
 
-        String url = buildOneTimePasswordUrl(GENERATE_OTP_CONFIG_KEY);
+        String url = tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpGenerateUrl();
         if (StringUtils.isEmpty(url)) {
             log.error("OneTimePasswordUrl is empty: {}", url);
             throw new BusinessException("error.get.otp.password.url", "Can not get otp password url");
@@ -69,24 +69,37 @@ public class OtpService {
         String receiverTypeKey = tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpReceiverTypeKey();
         log.info("receiverTypeKey: {}", receiverTypeKey);
 
-        UserLoginDto userLogin = userDetails.getLogins().stream()
-            .filter(UserLoginDto -> UserLoginType.MSISDN.getValue().equals(UserLoginDto.getTypeKey()))
-            .findFirst()
-            .orElseThrow(() -> new BusinessException("error.find.otp.receiver", "Can not get otp receiver"));
+        UserLoginDto userLogin;
+        if (ReceiverTypeKey.PHONE_NUMBER.getValue().equals(receiverTypeKey)) {
+            userLogin = userDetails.getLogins().stream()
+                .filter(UserLoginDto -> UserLoginType.MSISDN.getValue().equals(UserLoginDto.getTypeKey()))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException("error.find.otp.phone.number.receiver", "Can not get otp phone number receiver"));
+        } else if (ReceiverTypeKey.EMAIL.getValue().equals(receiverTypeKey)) {
+            userLogin = userDetails.getLogins().stream()
+                .filter(UserLoginDto -> UserLoginType.EMAIL.getValue().equals(UserLoginDto.getTypeKey()))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException("error.find.otp.email.receiver", "Can not get otp email receiver"));
+        } else {
+            throw new NotImplementedException("Not implemented otp receiver type key: " + receiverTypeKey);
+        }
 
-        OneTimePasswordCustomDto oneTimePasswordCustomDto = new OneTimePasswordCustomDto();
-        oneTimePasswordCustomDto.setReceiver(userLogin.getLogin());
-        oneTimePasswordCustomDto.setReceiverTypeKey(receiverTypeKey);
-        oneTimePasswordCustomDto.setTypeKey(tfaOtpTypeKey);
-        oneTimePasswordCustomDto.setLangKey("uk");
+        String destination = userLogin.getLogin();
+        userDetails.getAdditionalDetails().put(TOKEN_AUTH_DETAILS_TFA_DESTINATION, destination);
 
-        return otpServiceClient.getOtpRequest(url, oneTimePasswordCustomDto, systemToken);
+        OneTimePasswordDto oneTimePasswordDto = new OneTimePasswordDto();
+        oneTimePasswordDto.setReceiver(destination);
+        oneTimePasswordDto.setReceiverTypeKey(receiverTypeKey);
+        oneTimePasswordDto.setTypeKey(tfaOtpTypeKey);
+        oneTimePasswordDto.setLangKey(userDetails.getLangKey());
+
+        return otpServiceClient.createOtp(url, oneTimePasswordDto, systemToken);
     }
 
     public boolean checkOtpRequest(Long otpId, String otp) {
         String systemToken = getSystemTokenRequest();
 
-        String url = buildOneTimePasswordUrl(CHECK_OTP_CONFIG_KEY);
+        String url = tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpCheckUrl();
         if (StringUtils.isEmpty(url)) {
             log.error("OneTimePasswordCheckUrl is empty: {}", url);
             throw new BusinessException("error.get.otp.password.check.url", "Can not get otp password check url");
@@ -94,23 +107,7 @@ public class OtpService {
 
         OneTimePasswordCheckDto oneTimePasswordCheckDto = new OneTimePasswordCheckDto(otpId, otp);
 
-        return otpServiceClient.checkOtpRequest(url, oneTimePasswordCheckDto, systemToken);
-    }
-
-    private String buildOneTimePasswordUrl(String fieldKey) {
-        Object otpConfig = tenantConfigService.getConfig().get(OTP_CONFIG_KEY);
-
-        OtpConfigDto otpConfigDto = mapper.convertValue(otpConfig, OtpConfigDto.class);
-
-        String baseUrl = otpConfigDto.getBaseUrl();
-        String oneTimePasswordUrl = otpConfigDto.getOneTimePassword().get(fieldKey);
-
-        if (StringUtils.isEmpty(baseUrl) || StringUtils.isEmpty(oneTimePasswordUrl)) {
-            log.error("baseUrl: {}, oneTimePasswordUrl: {}", baseUrl, oneTimePasswordUrl);
-            throw new BusinessException("error.build.otp.url", "Can not build otp url");
-        }
-
-        return baseUrl + oneTimePasswordUrl;
+        return otpServiceClient.checkOtp(url, oneTimePasswordCheckDto, systemToken);
     }
 
     @Getter
@@ -118,7 +115,7 @@ public class OtpService {
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class OneTimePasswordCustomDto implements Serializable {
+    public static class OneTimePasswordDto implements Serializable {
         private Long id;
         private String receiver;
         private String receiverTypeKey;

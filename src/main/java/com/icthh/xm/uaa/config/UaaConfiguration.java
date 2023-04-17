@@ -5,7 +5,6 @@ import com.icthh.xm.commons.permission.service.PermissionMappingService;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.security.DomainTokenServices;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
-import com.icthh.xm.uaa.service.otp.OtpService;
 import com.icthh.xm.uaa.security.TokenConstraintsService;
 import com.icthh.xm.uaa.security.UserSecurityValidator;
 import com.icthh.xm.uaa.security.oauth2.LepTokenGranter;
@@ -21,6 +20,7 @@ import com.icthh.xm.uaa.service.IdpIdTokenMappingService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
+import com.icthh.xm.uaa.service.otp.OtpGenerationStrategy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -141,7 +141,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
     private final DefaultAuthenticationRefreshProvider defaultAuthenticationRefreshProvider;
     private final UserSecurityValidator userSecurityValidator;
     private final XmJwkTokenStore jwkTokenStore;
-    private final OtpService otpService;
+    private final List<OtpGenerationStrategy> otpGenerationStrategies;
 
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
@@ -162,6 +162,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
     private TokenGranter tokenGranter(AuthorizationServerEndpointsConfigurer endpoints) {
         List<TokenGranter> granters = new ArrayList<>(Collections.singletonList(endpoints.getTokenGranter()));
         TfaOtpTokenGranter tfaOtpTokenGranter = new TfaOtpTokenGranter(tenantContextHolder,
+            tenantPropertiesService,
             tokenServices(),
             clientDetailsService,
             endpoints.getOAuth2RequestFactory(),
@@ -212,7 +213,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
         tokenServices.setOtpGenerator(otpGenerator);
         tokenServices.setOtpStore(otpStore);
         tokenServices.setOtpSendStrategy(otpSendStrategy);
-        tokenServices.setOtpService(otpService);
+        tokenServices.setOtpGenerationStrategies(otpGenerationStrategies);
 
         return tokenServices;
     }

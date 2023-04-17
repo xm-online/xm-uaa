@@ -3,6 +3,8 @@ package com.icthh.xm.uaa.config;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.spring.config.TenantContextConfiguration;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
+import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpAuthenticationEmbedded;
+import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpAuthenticationOtpMs;
 import com.icthh.xm.uaa.service.otp.OtpService;
 import com.icthh.xm.uaa.security.oauth2.otp.DefaultOtpSenderFactory;
 import com.icthh.xm.uaa.security.oauth2.otp.DomainUserDetailsOtpStore;
@@ -83,8 +85,13 @@ public class TfaOtpConfiguration {
     }
 
     @Bean
-    TfaOtpAuthenticationProvider tfaOtpAuthenticationProvider(UserDetailsService userDetailsService, OtpService otpService) {
-        return new TfaOtpAuthenticationProvider(userDetailsService, otpEncoder(), otpService);
+    TfaOtpAuthenticationEmbedded tfaOtpAuthenticationEmbedded(UserDetailsService userDetailsService) {
+        return new TfaOtpAuthenticationEmbedded(userDetailsService, otpEncoder());
+    }
+
+    @Bean
+    TfaOtpAuthenticationOtpMs tfaOtpAuthenticationOtpMs(UserDetailsService userDetailsService, OtpService otpService) {
+        return new TfaOtpAuthenticationOtpMs(userDetailsService, otpEncoder(), otpService);
     }
 
 }

@@ -7,9 +7,11 @@ import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
-import com.icthh.xm.uaa.service.otp.OtpService;
+import com.icthh.xm.uaa.service.otp.OtpGenerationStrategy;
+import com.icthh.xm.uaa.service.otp.OtpType;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.NotImplementedException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
@@ -37,11 +39,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
-import static com.icthh.xm.uaa.service.otp.OtpType.OTP_MS;
 
 /**
  * Overrides standard class to pass user tenant.
@@ -75,7 +76,7 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
     @Setter
     private UserSecurityValidator userSecurityValidator;
     @Setter
-    private OtpService otpService;
+    private List<OtpGenerationStrategy> otpGenerationStrategies;
 
     /**
      * Initialize these token services. If no random generator is set, one will be created.
@@ -167,31 +168,19 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         }
         tfaToken.setScope(authentication.getOAuth2Request().getScope());
 
-        if (OTP_MS.equals(tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpType())) {
-            Object principal = authentication.getPrincipal();
-            DomainUserDetails userDetails = (DomainUserDetails) principal;
-            Long otpRequest = otpService.getOtpRequest(userDetails);
-            userDetails.setOtpId(otpRequest);
-        } else {
-            // generate OTP, send it, and store hashed value in UserDetails
-            generateOTP(authentication);
-        }
+        tryGenerateOtp(authentication);
 
         return (tokenEnhancer != null) ? tokenEnhancer.enhance(tfaToken, authentication) : tfaToken;
     }
 
-    private void generateOTP(OAuth2Authentication authentication) {
-        Object principal = authentication.getPrincipal();
-        if (!authentication.isAuthenticated() || !(principal instanceof DomainUserDetails)) {
-            // should't happen but check for sure
-            return;
-        }
+    private void tryGenerateOtp(OAuth2Authentication authentication) {
+        OtpType tfaOtpType = tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpType();
+        OtpGenerationStrategy otpGenerationStrategy = otpGenerationStrategies.stream()
+            .filter(strategy -> strategy.getOtpType().equals(tfaOtpType))
+            .findFirst()
+            .orElseThrow(() -> new NotImplementedException("Not implemented tfa otp type: " + tfaOtpType));
 
-        DomainUserDetails userDetails = DomainUserDetails.class.cast(principal);
-
-        String otp = otpGenerator.generate(authentication);
-        otpStore.storeOtp(otp, authentication);
-        otpSendStrategy.send(otp, userDetails);
+        otpGenerationStrategy.generateOtp(authentication);
     }
 
     @Transactional(noRollbackFor = {InvalidTokenException.class, InvalidGrantException.class})
