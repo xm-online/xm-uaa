@@ -26,6 +26,9 @@ public class DomainUserDetails extends User {
     private final Integer tfaAccessTokenValiditySeconds;
 
     private String tfaEncodedOtp;
+
+    private Long otpId;
+
     private OtpChannelType tfaOtpChannelType;
 
     private final String tenant;
@@ -107,6 +110,14 @@ public class DomainUserDetails extends User {
         this.tfaEncodedOtp = tfaEncodedOtp;
     }
 
+    public Long getOtpId() {
+        return otpId;
+    }
+
+    public void setOtpId(Long otpId) {
+        this.otpId = otpId;
+    }
+
     public Optional<OtpChannelType> getTfaOtpChannelType() {
         return Optional.ofNullable(tfaOtpChannelType);
     }
@@ -116,7 +127,7 @@ public class DomainUserDetails extends User {
     }
 
     public boolean isTfaApplied() {
-        return getTfaEncodedOtp().isPresent();
+        return getTfaEncodedOtp().isPresent() || otpId != null;
     }
 
     @Override

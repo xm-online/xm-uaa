@@ -5,12 +5,13 @@ import com.icthh.xm.commons.permission.service.PermissionMappingService;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.security.DomainTokenServices;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
+import com.icthh.xm.uaa.service.otp.OtpService;
 import com.icthh.xm.uaa.security.TokenConstraintsService;
 import com.icthh.xm.uaa.security.UserSecurityValidator;
 import com.icthh.xm.uaa.security.oauth2.LepTokenGranter;
 import com.icthh.xm.uaa.security.oauth2.athorization.code.CustomAuthorizationCodeServices;
-import com.icthh.xm.uaa.security.oauth2.idp.XmJwkTokenStore;
 import com.icthh.xm.uaa.security.oauth2.idp.IdpTokenGranter;
+import com.icthh.xm.uaa.security.oauth2.idp.XmJwkTokenStore;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpGenerator;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
@@ -31,7 +32,6 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.token.TokenService;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
@@ -141,6 +141,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
     private final DefaultAuthenticationRefreshProvider defaultAuthenticationRefreshProvider;
     private final UserSecurityValidator userSecurityValidator;
     private final XmJwkTokenStore jwkTokenStore;
+    private final OtpService otpService;
 
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
@@ -211,6 +212,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
         tokenServices.setOtpGenerator(otpGenerator);
         tokenServices.setOtpStore(otpStore);
         tokenServices.setOtpSendStrategy(otpSendStrategy);
+        tokenServices.setOtpService(otpService);
 
         return tokenServices;
     }

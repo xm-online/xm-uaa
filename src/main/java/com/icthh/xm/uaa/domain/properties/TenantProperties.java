@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.UserSpec;
+import com.icthh.xm.uaa.service.otp.OtpType;
 import com.icthh.xm.uaa.security.ldap.Type;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -59,6 +60,15 @@ public class TenantProperties {
 
         @JsonProperty("tfaEnabled")
         private boolean tfaEnabled = false;
+
+        @JsonProperty("tfaOtpType")
+        private OtpType tfaOtpType;
+
+        @JsonProperty("tfaOtpTypeKey")
+        private String tfaOtpTypeKey;
+
+        @JsonProperty("tfaOtpReceiverTypeKey")
+        private String tfaOtpReceiverTypeKey;
 
         @JsonProperty("tfaDefaultOtpChannelType")
         private String tfaDefaultOtpChannelType;

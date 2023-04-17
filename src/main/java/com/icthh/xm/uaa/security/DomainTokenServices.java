@@ -7,10 +7,7 @@ import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
-import java.util.Date;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import com.icthh.xm.uaa.service.otp.OtpService;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
@@ -38,6 +35,13 @@ import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
+
+import java.util.Date;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+import static com.icthh.xm.uaa.service.otp.OtpType.OTP_MS;
 
 /**
  * Overrides standard class to pass user tenant.
@@ -70,6 +74,8 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
     private UserService userService;
     @Setter
     private UserSecurityValidator userSecurityValidator;
+    @Setter
+    private OtpService otpService;
 
     /**
      * Initialize these token services. If no random generator is set, one will be created.
@@ -161,8 +167,15 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         }
         tfaToken.setScope(authentication.getOAuth2Request().getScope());
 
-        // generate OTP, send it, and store hashed value in UserDetails
-        generateOTP(authentication);
+        if (OTP_MS.equals(tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpType())) {
+            Object principal = authentication.getPrincipal();
+            DomainUserDetails userDetails = (DomainUserDetails) principal;
+            Long otpRequest = otpService.getOtpRequest(userDetails);
+            userDetails.setOtpId(otpRequest);
+        } else {
+            // generate OTP, send it, and store hashed value in UserDetails
+            generateOTP(authentication);
+        }
 
         return (tokenEnhancer != null) ? tokenEnhancer.enhance(tfaToken, authentication) : tfaToken;
     }
@@ -210,7 +223,7 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
             // The client has already been authenticated, but the user authentication might be old now, so give it a
             // chance to re-authenticate.
             Authentication user = new PreAuthenticatedAuthenticationToken(authentication.getUserAuthentication(), "",
-                                                                          authentication.getAuthorities());
+                authentication.getAuthorities());
             user = authenticationManager.authenticate(user);
             Object details = authentication.getDetails();
             authentication = new OAuth2Authentication(authentication.getOAuth2Request(), user);
@@ -286,7 +299,7 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
             Set<String> originalScope = clientAuth.getScope();
             if (originalScope == null || !originalScope.containsAll(scope)) {
                 throw new InvalidScopeException("Unable to narrow the scope of the client authentication to " + scope
-                                                    + ".", originalScope);
+                    + ".", originalScope);
             } else {
                 clientAuth = clientAuth.narrowScope(scope);
             }
@@ -354,7 +367,7 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         String value = UUID.randomUUID().toString();
         if (validitySeconds > 0) {
             return new DefaultExpiringOAuth2RefreshToken(value, new Date(System.currentTimeMillis()
-                                                                             + (validitySeconds * 1000L)));
+                + (validitySeconds * 1000L)));
         }
         return new DefaultOAuth2RefreshToken(value);
     }

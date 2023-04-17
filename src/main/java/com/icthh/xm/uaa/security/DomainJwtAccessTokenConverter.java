@@ -9,6 +9,7 @@ import static com.icthh.xm.uaa.config.Constants.AUTH_USER_KEY;
 import static com.icthh.xm.uaa.config.Constants.CREATE_TOKEN_TIME;
 import static com.icthh.xm.uaa.config.Constants.MULTI_ROLE_ENABLED;
 import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_OTP_CHANNEL_TYPE;
+import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_OTP_ID;
 import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_VERIFICATION_OTP_KEY;
 import static org.apache.commons.collections.MapUtils.isNotEmpty;
 
@@ -94,6 +95,10 @@ public class DomainJwtAccessTokenConverter extends JwtAccessTokenConverter {
 
                 String tfaOtpChannelTypeName = userDetails.getTfaOtpChannelType().map(OtpChannelType::getTypeName).orElse(null);
                 details.put(TOKEN_AUTH_DETAILS_TFA_OTP_CHANNEL_TYPE, tfaOtpChannelTypeName);
+
+                // here need to put otpId to userDetails
+                Long otpId = userDetails.getOtpId();
+                details.put(TOKEN_AUTH_DETAILS_TFA_OTP_ID, otpId != null ? otpId.toString() : otpId);
             } else {
                 details.put(AUTH_LOGINS_KEY, userDetails.getLogins());
                 details.put(AUTH_ROLE_KEY, getOptionalRoleKey(userDetails.getAuthorities()));

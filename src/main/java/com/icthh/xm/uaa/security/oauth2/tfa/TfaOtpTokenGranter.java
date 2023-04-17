@@ -3,7 +3,9 @@ package com.icthh.xm.uaa.security.oauth2.tfa;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.config.Constants;
+import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpAuthenticationToken.BaseOtpCredentials;
 import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpAuthenticationToken.OtpCredentials;
+import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpAuthenticationToken.OtpMsCredentials;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_OTP_ID;
 import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_VERIFICATION_OTP_KEY;
 
 /**
@@ -75,9 +78,12 @@ public class TfaOtpTokenGranter extends AbstractTokenGranter {
         validateTfaAccessToken(tfaOAuth2AccessToken);
 
         String username = (String) tfaOAuth2AccessToken.getAdditionalInformation().get("user_name");
-        String encodedOtp = (String) tfaOAuth2AccessToken.getAdditionalInformation().get(TOKEN_AUTH_DETAILS_TFA_VERIFICATION_OTP_KEY);
 
-        OtpCredentials otpCredentials = new OtpCredentials(otp, encodedOtp);
+        String encodedOtp = (String) tfaOAuth2AccessToken.getAdditionalInformation().get(TOKEN_AUTH_DETAILS_TFA_VERIFICATION_OTP_KEY);
+        String tfaOtpId = (String) tfaOAuth2AccessToken.getAdditionalInformation().get(TOKEN_AUTH_DETAILS_TFA_OTP_ID);
+        Long otpId = tfaOtpId != null ? Long.valueOf(tfaOtpId) : null;
+
+        BaseOtpCredentials otpCredentials = encodedOtp != null ? new OtpCredentials(otp, encodedOtp) : new OtpMsCredentials(otp, otpId);
 
         TfaOtpAuthenticationToken userAuthentication = new TfaOtpAuthenticationToken(username, otpCredentials);
         userAuthentication.setDetails(parameters);
@@ -143,10 +149,12 @@ public class TfaOtpTokenGranter extends AbstractTokenGranter {
             throw new InvalidGrantException("Bad credentials");
         }
 
-        // is encoded OTP exist
+        // is encoded and id OTP exist
         Object encodedOtp = additionalInfo.get(TOKEN_AUTH_DETAILS_TFA_VERIFICATION_OTP_KEY);
-        if (encodedOtp == null || StringUtils.isBlank(String.valueOf(encodedOtp))) {
-            LOGGER.debug("TFA access token has no encoded OTP");
+        Object otpId = additionalInfo.get(TOKEN_AUTH_DETAILS_TFA_OTP_ID);
+        if ((encodedOtp == null || StringUtils.isBlank(String.valueOf(encodedOtp))) &&
+            (otpId == null || StringUtils.isBlank(String.valueOf(otpId)))) {
+            LOGGER.debug("TFA access token has no OTP");
             throw new InvalidGrantException("Bad credentials");
         }
     }

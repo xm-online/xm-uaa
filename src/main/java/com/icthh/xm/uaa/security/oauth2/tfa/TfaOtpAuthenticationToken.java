@@ -15,9 +15,9 @@ import java.util.Collection;
 public class TfaOtpAuthenticationToken extends AbstractAuthenticationToken {
 
     private final Object principal;
-    private OtpCredentials credentials;
+    private BaseOtpCredentials credentials;
 
-    public TfaOtpAuthenticationToken(Object principal, OtpCredentials otpCredentials) {
+    public TfaOtpAuthenticationToken(Object principal, BaseOtpCredentials otpCredentials) {
         super(null);
         this.principal = principal;
         this.credentials = otpCredentials;
@@ -25,7 +25,7 @@ public class TfaOtpAuthenticationToken extends AbstractAuthenticationToken {
     }
 
     public TfaOtpAuthenticationToken(Object principal,
-                                     OtpCredentials otpCredentials,
+                                     BaseOtpCredentials otpCredentials,
                                      Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
         this.principal = principal;
@@ -44,7 +44,7 @@ public class TfaOtpAuthenticationToken extends AbstractAuthenticationToken {
 
 
     @Override
-    public OtpCredentials getCredentials() {
+    public BaseOtpCredentials getCredentials() {
         return this.credentials;
     }
 
@@ -61,15 +61,48 @@ public class TfaOtpAuthenticationToken extends AbstractAuthenticationToken {
 
     @AllArgsConstructor
     @Getter
-    public static class OtpCredentials implements CredentialsContainer, Serializable {
+    public static class BaseOtpCredentials implements CredentialsContainer, Serializable {
 
         private String otp;
-        private String encodedOtp;
 
         @Override
         public void eraseCredentials() {
             this.otp = null;
+        }
+
+    }
+    @Getter
+    public static class OtpCredentials extends BaseOtpCredentials {
+
+        private String encodedOtp;
+
+        public OtpCredentials(String otp, String encodedOtp) {
+            super(otp);
+            this.encodedOtp = encodedOtp;
+        }
+
+        @Override
+        public void eraseCredentials() {
+            super.eraseCredentials();
             this.encodedOtp = null;
+        }
+
+    }
+
+    @Getter
+    public static class OtpMsCredentials extends BaseOtpCredentials implements CredentialsContainer, Serializable {
+
+        private Long otpId;
+
+        public OtpMsCredentials(String otp, Long otpId) {
+            super(otp);
+            this.otpId = otpId;
+        }
+
+        @Override
+        public void eraseCredentials() {
+            super.eraseCredentials();
+            this.otpId = null;
         }
 
     }

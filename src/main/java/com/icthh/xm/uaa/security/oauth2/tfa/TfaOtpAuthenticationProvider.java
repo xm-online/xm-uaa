@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.security.oauth2.tfa;
 
+import com.icthh.xm.uaa.service.otp.OtpService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,7 @@ public class TfaOtpAuthenticationProvider implements AuthenticationProvider {
     private static final String USER_NOT_FOUND_OTP = "userNotFoundOtp";
 
     private final UserDetailsService userDetailsService;
+    private final OtpService otpService;
     private PasswordEncoder otpEncoder;
     private String userNotFoundEncodedOtp;
 
@@ -55,12 +57,14 @@ public class TfaOtpAuthenticationProvider implements AuthenticationProvider {
      * Constructor.
      *
      * @param userDetailsService user details service
-     * @param otpEncoder the OTP encoder
+     * @param otpEncoder         the OTP encoder
      */
     public TfaOtpAuthenticationProvider(UserDetailsService userDetailsService,
-                                        PasswordEncoder otpEncoder) {
+                                        PasswordEncoder otpEncoder,
+                                        OtpService otpService) {
         this.userDetailsService = Objects.requireNonNull(userDetailsService, "userDetailsService can't be null");
         setOtpEncoder(otpEncoder);
+        this.otpService = otpService;
     }
 
     private void setOtpEncoder(PasswordEncoder otpEncoder) {
@@ -89,7 +93,7 @@ public class TfaOtpAuthenticationProvider implements AuthenticationProvider {
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         Assert.isInstanceOf(TfaOtpAuthenticationToken.class, authentication,
-                            "Only TfaOtpAuthenticationToken is supported");
+            "Only TfaOtpAuthenticationToken is supported");
 
         final TfaOtpAuthenticationToken tfaOtpAuthentication = TfaOtpAuthenticationToken.class.cast(authentication);
 
@@ -114,7 +118,7 @@ public class TfaOtpAuthenticationProvider implements AuthenticationProvider {
             }
 
             Assert.notNull(user,
-                           "retrieveUser returned null - a violation of the interface contract");
+                "retrieveUser returned null - a violation of the interface contract");
         }
 
         // validate user/account
@@ -172,7 +176,7 @@ public class TfaOtpAuthenticationProvider implements AuthenticationProvider {
     private void additionalAuthenticationChecks(UserDetails userDetails,
                                                 TfaOtpAuthenticationToken authentication) throws AuthenticationException {
         // check is credentials "container object" exist
-        TfaOtpAuthenticationToken.OtpCredentials credentials = authentication.getCredentials();
+        TfaOtpAuthenticationToken.BaseOtpCredentials credentials = authentication.getCredentials();
         if (credentials == null) {
             LOGGER.debug("Authentication failed: no credentials provided");
 
@@ -183,24 +187,42 @@ public class TfaOtpAuthenticationProvider implements AuthenticationProvider {
 
         // get credentials fields
         final String presentedOtp = credentials.getOtp();
-        final String encodedOtp = credentials.getEncodedOtp();
 
-        // check is credentials fields not blank
-        if (StringUtils.isBlank(presentedOtp) || StringUtils.isBlank(encodedOtp)) {
-            LOGGER.debug("Authentication failed: no OTP provided");
+        if (credentials instanceof TfaOtpAuthenticationToken.OtpMsCredentials) {
+            TfaOtpAuthenticationToken.OtpMsCredentials otpCredentials = (TfaOtpAuthenticationToken.OtpMsCredentials) credentials;
+            Long otpId = otpCredentials.getOtpId();
+            boolean isValidOtp = otpService.checkOtpRequest(otpId, presentedOtp);
+            if (!isValidOtp) {
+                LOGGER.debug("Authentication failed: no OTP MS provided");
 
-            throw new BadCredentialsException(messages.getMessage(
-                "AbstractUserDetailsAuthenticationProvider.badCredentials",
-                "Bad credentials"));
+                throw new BadCredentialsException(messages.getMessage(
+                    "AbstractUserDetailsAuthenticationProvider.badCredentials",
+                    "Bad credentials"));
+            }
         }
 
-        // validate OTP
-        if (!otpEncoder.matches(presentedOtp, encodedOtp)) {
-            LOGGER.debug("Authentication failed: password does not match stored value");
+        if (credentials instanceof TfaOtpAuthenticationToken.OtpCredentials) {
 
-            throw new BadCredentialsException(messages.getMessage(
-                "AbstractUserDetailsAuthenticationProvider.badCredentials",
-                "Bad credentials"));
+            TfaOtpAuthenticationToken.OtpCredentials otpCredentials = (TfaOtpAuthenticationToken.OtpCredentials) credentials;
+            String encodedOtp = otpCredentials.getEncodedOtp();
+
+            // check is credentials fields not blank
+            if (StringUtils.isBlank(presentedOtp) || StringUtils.isBlank(encodedOtp)) {
+                LOGGER.debug("Authentication failed: no OTP provided");
+
+                throw new BadCredentialsException(messages.getMessage(
+                    "AbstractUserDetailsAuthenticationProvider.badCredentials",
+                    "Bad credentials"));
+            }
+
+            // validate OTP
+            if (!otpEncoder.matches(presentedOtp, encodedOtp)) {
+                LOGGER.debug("Authentication failed: password does not match stored value");
+
+                throw new BadCredentialsException(messages.getMessage(
+                    "AbstractUserDetailsAuthenticationProvider.badCredentials",
+                    "Bad credentials"));
+            }
         }
     }
 

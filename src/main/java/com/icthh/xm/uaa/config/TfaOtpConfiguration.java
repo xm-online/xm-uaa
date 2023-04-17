@@ -3,6 +3,7 @@ package com.icthh.xm.uaa.config;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.spring.config.TenantContextConfiguration;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
+import com.icthh.xm.uaa.service.otp.OtpService;
 import com.icthh.xm.uaa.security.oauth2.otp.DefaultOtpSenderFactory;
 import com.icthh.xm.uaa.security.oauth2.otp.DomainUserDetailsOtpStore;
 import com.icthh.xm.uaa.security.oauth2.otp.EmailOtpSender;
@@ -82,8 +83,8 @@ public class TfaOtpConfiguration {
     }
 
     @Bean
-    TfaOtpAuthenticationProvider tfaOtpAuthenticationProvider(UserDetailsService userDetailsService) {
-        return new TfaOtpAuthenticationProvider(userDetailsService, otpEncoder());
+    TfaOtpAuthenticationProvider tfaOtpAuthenticationProvider(UserDetailsService userDetailsService, OtpService otpService) {
+        return new TfaOtpAuthenticationProvider(userDetailsService, otpEncoder(), otpService);
     }
 
 }
