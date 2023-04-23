@@ -199,6 +199,9 @@ application:
     client-grant-types: client_credentials, refresh_token, password, tfa_otp_token, authorization_code, idp_token
     client-scope: openid
     default-client-id: internal
+    access-token-url: http://uaa-app/oauth/token
+    connect-timeout-millis: 5000
+    read-timeout-millis: 25000
     timelines-enabled: true
     db-schema-suffix:
     lep:

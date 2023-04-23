@@ -41,6 +41,9 @@ public class ApplicationProperties {
     private Set<String> clientGrantTypes;
     private Set<String> clientScope;
     private Set<String> defaultClientId;
+    private String accessTokenUrl;
+    private Integer connectTimeoutMillis;
+    private Integer readTimeoutMillis;
     private String emailPathPattern;
     private boolean timelinesEnabled;
     private String dbSchemaSuffix;

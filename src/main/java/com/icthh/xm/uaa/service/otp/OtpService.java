@@ -31,32 +31,11 @@ import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_DESTINATI
 @RequiredArgsConstructor
 public class OtpService {
 
-    private static final String UAA_CONFIG_KEY = "uaa";
-
     private final TenantPropertiesService tenantPropertiesService;
-    private final TenantContextHolder tenantContextHolder;
-    private final TenantConfigService tenantConfigService;
+
     private final OtpServiceClient otpServiceClient;
-    private final ObjectMapper mapper;
-
-    public String getSystemTokenRequest() {
-        Object uaaConfig = tenantConfigService.getConfig().get(UAA_CONFIG_KEY);
-
-        UaaConfigDto uaaConfigDto = mapper.convertValue(uaaConfig, UaaConfigDto.class);
-
-        String systemAuthUrl = uaaConfigDto.getSystemAuthUrl();
-        String systemClientToken = uaaConfigDto.getSystemClientToken();
-        String tenant = tenantContextHolder.getTenantKey();
-        if (StringUtils.isEmpty(systemAuthUrl) || StringUtils.isEmpty(systemClientToken) || StringUtils.isEmpty(tenant)) {
-            log.error("systemAuthUrl: {}, systemClientToken: {}, tenant: {}", systemAuthUrl, systemClientToken, tenant);
-            throw new BusinessException("error.create.otp.system.token", "Can not create otp system token");
-        }
-
-        return otpServiceClient.getSystemToken(systemAuthUrl, systemClientToken, tenant);
-    }
 
     public Long prepareOtpRequest(DomainUserDetails userDetails) {
-        String systemToken = getSystemTokenRequest();
 
         String url = tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpGenerateUrl();
         if (StringUtils.isEmpty(url)) {
@@ -69,6 +48,34 @@ public class OtpService {
         String receiverTypeKey = tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpReceiverTypeKey();
         log.info("receiverTypeKey: {}", receiverTypeKey);
 
+        UserLoginDto userLogin = findUserLogin(userDetails, receiverTypeKey);
+
+        String destination = userLogin.getLogin();
+        userDetails.getAdditionalDetails().put(TOKEN_AUTH_DETAILS_TFA_DESTINATION, destination);
+
+        OneTimePasswordDto oneTimePasswordDto = new OneTimePasswordDto();
+        oneTimePasswordDto.setReceiver(destination);
+        oneTimePasswordDto.setReceiverTypeKey(receiverTypeKey);
+        oneTimePasswordDto.setTypeKey(tfaOtpTypeKey);
+        oneTimePasswordDto.setLangKey(userDetails.getLangKey());
+
+        return otpServiceClient.createOtp(url, oneTimePasswordDto);
+    }
+
+    public boolean checkOtpRequest(Long otpId, String otp) {
+
+        String url = tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpCheckUrl();
+        if (StringUtils.isEmpty(url)) {
+            log.error("OneTimePasswordCheckUrl is empty: {}", url);
+            throw new BusinessException("error.get.otp.password.check.url", "Can not get otp password check url");
+        }
+
+        OneTimePasswordCheckDto oneTimePasswordCheckDto = new OneTimePasswordCheckDto(otpId, otp);
+
+        return otpServiceClient.checkOtp(url, oneTimePasswordCheckDto);
+    }
+
+    private UserLoginDto findUserLogin(DomainUserDetails userDetails, String receiverTypeKey) {
         UserLoginDto userLogin;
         if (ReceiverTypeKey.PHONE_NUMBER.getValue().equals(receiverTypeKey)) {
             userLogin = userDetails.getLogins().stream()
@@ -83,31 +90,7 @@ public class OtpService {
         } else {
             throw new NotImplementedException("Not implemented otp receiver type key: " + receiverTypeKey);
         }
-
-        String destination = userLogin.getLogin();
-        userDetails.getAdditionalDetails().put(TOKEN_AUTH_DETAILS_TFA_DESTINATION, destination);
-
-        OneTimePasswordDto oneTimePasswordDto = new OneTimePasswordDto();
-        oneTimePasswordDto.setReceiver(destination);
-        oneTimePasswordDto.setReceiverTypeKey(receiverTypeKey);
-        oneTimePasswordDto.setTypeKey(tfaOtpTypeKey);
-        oneTimePasswordDto.setLangKey(userDetails.getLangKey());
-
-        return otpServiceClient.createOtp(url, oneTimePasswordDto, systemToken);
-    }
-
-    public boolean checkOtpRequest(Long otpId, String otp) {
-        String systemToken = getSystemTokenRequest();
-
-        String url = tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpCheckUrl();
-        if (StringUtils.isEmpty(url)) {
-            log.error("OneTimePasswordCheckUrl is empty: {}", url);
-            throw new BusinessException("error.get.otp.password.check.url", "Can not get otp password check url");
-        }
-
-        OneTimePasswordCheckDto oneTimePasswordCheckDto = new OneTimePasswordCheckDto(otpId, otp);
-
-        return otpServiceClient.checkOtp(url, oneTimePasswordCheckDto, systemToken);
+        return userLogin;
     }
 
     @Getter
