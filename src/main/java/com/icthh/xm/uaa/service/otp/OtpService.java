@@ -1,10 +1,7 @@
 package com.icthh.xm.uaa.service.otp;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import com.icthh.xm.commons.exceptions.BusinessException;
-import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.security.DomainUserDetails;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
