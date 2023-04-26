@@ -28,6 +28,7 @@ public class RestTemplateConfiguration {
     private final ApplicationProperties applicationProperties;
     private final TenantPropertiesService tenantPropertiesService;
     private final OAuth2ClientContext oauth2ClientContext;
+    private final UaaClientAuthenticationHandler uaaClientAuthenticationHandler;
 
     @Bean
     public RestTemplate loadBalancedRestTemplate(RestTemplateCustomizer customizer) {
@@ -57,7 +58,7 @@ public class RestTemplateConfiguration {
         restTemplate.setRequestFactory(simpleClientHttpRequestFactory);
 
         ClientCredentialsAccessTokenProvider accessTokenProvider = new ClientCredentialsAccessTokenProvider();
-        accessTokenProvider.setAuthenticationHandler(new UaaClientAuthenticationHandler());
+        accessTokenProvider.setAuthenticationHandler(uaaClientAuthenticationHandler);
 
         restTemplate.setAccessTokenProvider(accessTokenProvider);
 
