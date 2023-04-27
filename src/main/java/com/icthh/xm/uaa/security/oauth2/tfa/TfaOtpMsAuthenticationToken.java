@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.security.oauth2.tfa;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.CredentialsContainer;
@@ -58,15 +59,11 @@ public class TfaOtpMsAuthenticationToken extends AbstractAuthenticationToken {
     }
 
     @Getter
+    @AllArgsConstructor
     public static class OtpMsCredentials implements CredentialsContainer, Serializable {
 
         private String otp;
         private Long otpId;
-
-        public OtpMsCredentials(String otp, Long otpId) {
-            this.otp = otp;
-            this.otpId = otpId;
-        }
 
         @Override
         public void eraseCredentials() {

@@ -67,7 +67,8 @@ public class RestTemplateConfiguration {
 
     private String findClientId() {
         String clientId = applicationProperties.getDefaultClientId().stream()
-            .reduce((first, second) -> second).orElse(null);
+            .reduce((first, second) -> second)
+            .orElseThrow(() -> new IllegalArgumentException("Client id not found"));
         log.info("Property clientId: {}", clientId);
         return clientId;
     }
