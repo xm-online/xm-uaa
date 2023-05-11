@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.service.otp;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.icthh.xm.commons.exceptions.BusinessException;
+import com.icthh.xm.commons.logging.LoggingAspectConfig;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.security.DomainUserDetails;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
@@ -59,6 +60,7 @@ public class OtpService {
         return otpServiceClient.createOtp(url, oneTimePasswordDto);
     }
 
+    @LoggingAspectConfig(inputExcludeParams = "otp")
     public boolean checkOtpRequest(Long otpId, String otp) {
 
         String url = tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpCheckUrl();

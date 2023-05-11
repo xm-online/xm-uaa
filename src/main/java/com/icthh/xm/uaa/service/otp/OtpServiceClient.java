@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.service.otp;
 
 import com.icthh.xm.commons.exceptions.BusinessException;
+import com.icthh.xm.commons.logging.LoggingAspectConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
@@ -33,6 +34,7 @@ public class OtpServiceClient {
         return response.getBody().getId();
     }
 
+    @LoggingAspectConfig(inputExcludeParams = "body")
     public boolean checkOtp(String url, OtpService.OneTimePasswordCheckDto body) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
