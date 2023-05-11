@@ -20,8 +20,6 @@ public class OtpServiceClient {
     private final OAuth2RestTemplate oAuth2RestTemplate;
 
     public Long createOtp(String url, OtpService.OneTimePasswordDto body) {
-        log.info("OneTimePasswordCustom body: {}", body);
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -36,8 +34,6 @@ public class OtpServiceClient {
     }
 
     public boolean checkOtp(String url, OtpService.OneTimePasswordCheckDto body) {
-        log.info("OneTimePasswordCheck body: {}", body);
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
