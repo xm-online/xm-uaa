@@ -16,6 +16,8 @@ import org.springframework.security.oauth2.client.token.grant.client.ClientCrede
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
 import org.springframework.web.client.RestTemplate;
 
+import static com.icthh.xm.uaa.config.Constants.ACCESS_TOKEN_URL;
+
 /**
  * Configuration for RestTemplate beans.
  */
@@ -43,7 +45,7 @@ public class RestTemplateConfiguration {
 
         resource.setClientId(findClientId());
         resource.setClientSecret(tenantPropertiesService.getTenantProps().getSecurity().getDefaultClientSecret());
-        resource.setAccessTokenUri(applicationProperties.getAccessTokenUrl());
+        resource.setAccessTokenUri(ACCESS_TOKEN_URL);
 
         return resource;
     }
