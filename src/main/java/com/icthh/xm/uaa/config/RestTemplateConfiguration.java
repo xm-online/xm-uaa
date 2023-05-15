@@ -65,6 +65,7 @@ public class RestTemplateConfiguration {
         restTemplate.setAccessTokenProvider(accessTokenProvider);
 
         customizer.customize(restTemplate);
+        log.info("RestTemplateCustomizer: {}", customizer.getClass());
 
         return restTemplate;
     }
