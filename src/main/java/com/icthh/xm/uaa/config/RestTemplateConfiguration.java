@@ -39,7 +39,7 @@ public class RestTemplateConfiguration {
     private final OAuth2ClientContext oauth2ClientContext;
     private final UaaClientAuthenticationHandler uaaClientAuthenticationHandler;
 //    private final LoadBalancerClient loadBalancerClient;
-//    private final DiscoveryClient discoveryClient;
+    private final DiscoveryClient discoveryClient;
 //    private final RemoteTokenServices remoteTokenServices;
 
     @Bean
@@ -80,8 +80,7 @@ public class RestTemplateConfiguration {
 //        log.info("discoveryClient xmUaaInstances: {}", xmUaaInstances != null ? xmUaaInstances.size() : xmUaaInstances);
 //        log.info("discoveryClient uaaInstances: {}", uaaInstances != null ? uaaInstances.size() : uaaInstances);
 //        String uaa = discoveryClient.getInstances("uaa").stream().findFirst().get().getUri().toString();
-
-//        oAuth2RestTemplate.getAccessToken();
+        oAuth2RestTemplate.getAccessToken();
 
         return oAuth2RestTemplate;
     }
