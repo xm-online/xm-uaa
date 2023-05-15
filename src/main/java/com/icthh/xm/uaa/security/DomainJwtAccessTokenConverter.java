@@ -1,23 +1,5 @@
 package com.icthh.xm.uaa.security;
 
-import com.icthh.xm.commons.tenant.TenantContextHolder;
-import com.icthh.xm.uaa.domain.OtpChannelType;
-import com.icthh.xm.uaa.service.TenantPropertiesService;
-import com.icthh.xm.uaa.service.otp.OtpType;
-import lombok.RequiredArgsConstructor;
-import org.apache.commons.collections.CollectionUtils;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
-import org.springframework.security.oauth2.common.ExpiringOAuth2RefreshToken;
-import org.springframework.security.oauth2.common.OAuth2AccessToken;
-import org.springframework.security.oauth2.provider.OAuth2Authentication;
-import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
-
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
 import static com.icthh.xm.commons.tenant.TenantContextUtils.getRequiredTenantKeyValue;
 import static com.icthh.xm.uaa.config.Constants.AUTH_ADDITIONAL_DETAILS;
 import static com.icthh.xm.uaa.config.Constants.AUTH_LOGINS_KEY;
@@ -31,6 +13,23 @@ import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_OTP_CHANN
 import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_OTP_ID;
 import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_VERIFICATION_OTP_KEY;
 import static org.apache.commons.collections.MapUtils.isNotEmpty;
+
+import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.uaa.domain.OtpChannelType;
+import com.icthh.xm.uaa.service.otp.OtpType;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections.CollectionUtils;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
+import org.springframework.security.oauth2.common.ExpiringOAuth2RefreshToken;
+import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 
 /**
  * Overrides to add and get token tenant.
