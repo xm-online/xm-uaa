@@ -51,7 +51,7 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    public OAuth2RestTemplate oAuth2RestTemplate() {
+    public OAuth2RestTemplate oAuth2RestTemplate(RestTemplateCustomizer customizer) {
         OAuth2RestTemplate restTemplate = new OAuth2RestTemplate(oAuth2ProtectedResourceDetails(), oauth2ClientContext);
 
         SimpleClientHttpRequestFactory simpleClientHttpRequestFactory = new SimpleClientHttpRequestFactory();
@@ -64,12 +64,14 @@ public class RestTemplateConfiguration {
 
         restTemplate.setAccessTokenProvider(accessTokenProvider);
 
+        customizer.customize(restTemplate);
+
         return restTemplate;
     }
 
     private String findClientId() {
         String clientId = applicationProperties.getDefaultClientId().stream()
-            .reduce((first, second) -> second)
+            .findFirst()
             .orElseThrow(() -> new IllegalArgumentException("Client id not found"));
         log.info("Property clientId: {}", clientId);
         return clientId;
