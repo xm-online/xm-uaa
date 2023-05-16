@@ -4,6 +4,8 @@ import com.icthh.xm.uaa.security.oauth2.UaaClientAuthenticationHandler;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
+import org.springframework.cloud.client.loadbalancer.LoadBalancerInterceptor;
 import org.springframework.cloud.client.loadbalancer.RestTemplateCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +17,8 @@ import org.springframework.security.oauth2.client.token.grant.client.ClientCrede
 import org.springframework.security.oauth2.client.token.grant.client.ClientCredentialsResourceDetails;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.Collections;
 
 import static com.icthh.xm.uaa.config.Constants.ACCESS_TOKEN_URL;
 
@@ -31,6 +35,7 @@ public class RestTemplateConfiguration {
     private final TenantPropertiesService tenantPropertiesService;
     private final OAuth2ClientContext oauth2ClientContext;
     private final UaaClientAuthenticationHandler uaaClientAuthenticationHandler;
+    private final LoadBalancerClient loadBalancerClient;
 
     @Bean
     public RestTemplate loadBalancedRestTemplate(RestTemplateCustomizer customizer) {
@@ -61,6 +66,9 @@ public class RestTemplateConfiguration {
 
         ClientCredentialsAccessTokenProvider accessTokenProvider = new ClientCredentialsAccessTokenProvider();
         accessTokenProvider.setAuthenticationHandler(uaaClientAuthenticationHandler);
+
+        LoadBalancerInterceptor loadBalancerInterceptor = new LoadBalancerInterceptor(loadBalancerClient);
+        restTemplate.setInterceptors(Collections.singletonList(loadBalancerInterceptor));
 
         restTemplate.setAccessTokenProvider(accessTokenProvider);
 
