@@ -4,6 +4,7 @@ import com.icthh.xm.uaa.security.oauth2.UaaClientAuthenticationHandler;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerInterceptor;
 import org.springframework.cloud.client.loadbalancer.RestTemplateCustomizer;
@@ -56,6 +57,7 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
+    @LoadBalanced
     public OAuth2RestTemplate oAuth2RestTemplate(RestTemplateCustomizer customizer) {
         OAuth2RestTemplate restTemplate = new OAuth2RestTemplate(oAuth2ProtectedResourceDetails(), oauth2ClientContext);
 
@@ -69,6 +71,7 @@ public class RestTemplateConfiguration {
 
         LoadBalancerInterceptor loadBalancerInterceptor = new LoadBalancerInterceptor(loadBalancerClient);
         restTemplate.setInterceptors(Collections.singletonList(loadBalancerInterceptor));
+//        restTemplate.getInterceptors().add(loadBalancerInterceptor);
 
         restTemplate.setAccessTokenProvider(accessTokenProvider);
 
