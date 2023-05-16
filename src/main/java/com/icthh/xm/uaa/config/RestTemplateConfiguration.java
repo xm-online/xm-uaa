@@ -1,9 +1,11 @@
 package com.icthh.xm.uaa.config;
 
+import com.icthh.xm.commons.config.client.config.XmConfigTenantConfiguration;
 import com.icthh.xm.uaa.security.oauth2.UaaClientAuthenticationHandler;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerInterceptor;
@@ -58,27 +60,28 @@ public class RestTemplateConfiguration {
 
     @Bean
     @LoadBalanced
+    @Qualifier("oAuth2RestTemplate")
     public OAuth2RestTemplate oAuth2RestTemplate(RestTemplateCustomizer customizer) {
-        OAuth2RestTemplate restTemplate = new OAuth2RestTemplate(oAuth2ProtectedResourceDetails(), oauth2ClientContext);
+        OAuth2RestTemplate oAuth2RestTemplate = new OAuth2RestTemplate(oAuth2ProtectedResourceDetails(), oauth2ClientContext);
 
         SimpleClientHttpRequestFactory simpleClientHttpRequestFactory = new SimpleClientHttpRequestFactory();
         simpleClientHttpRequestFactory.setConnectTimeout(applicationProperties.getConnectTimeoutMillis());
         simpleClientHttpRequestFactory.setReadTimeout(applicationProperties.getReadTimeoutMillis());
-        restTemplate.setRequestFactory(simpleClientHttpRequestFactory);
+        oAuth2RestTemplate.setRequestFactory(simpleClientHttpRequestFactory);
 
         ClientCredentialsAccessTokenProvider accessTokenProvider = new ClientCredentialsAccessTokenProvider();
         accessTokenProvider.setAuthenticationHandler(uaaClientAuthenticationHandler);
 
         LoadBalancerInterceptor loadBalancerInterceptor = new LoadBalancerInterceptor(loadBalancerClient);
-        restTemplate.setInterceptors(Collections.singletonList(loadBalancerInterceptor));
-//        restTemplate.getInterceptors().add(loadBalancerInterceptor);
+        oAuth2RestTemplate.setInterceptors(Collections.singletonList(loadBalancerInterceptor));
+//        oAuth2RestTemplate.getInterceptors().add(loadBalancerInterceptor);
 
-        restTemplate.setAccessTokenProvider(accessTokenProvider);
+        oAuth2RestTemplate.setAccessTokenProvider(accessTokenProvider);
 
-        customizer.customize(restTemplate);
+        customizer.customize(oAuth2RestTemplate);
         log.info("RestTemplateCustomizer: {}", customizer.getClass());
 
-        return restTemplate;
+        return oAuth2RestTemplate;
     }
 
     private String findClientId() {
