@@ -59,7 +59,7 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    public OAuth2RestTemplate oAuth2RestTemplate() {
+    public OAuth2RestTemplate oAuth2RestTemplate(RestTemplateCustomizer customizer) {
         OAuth2RestTemplate oAuth2RestTemplate = new OAuth2RestTemplate(oAuth2ProtectedResourceDetails(), oauth2ClientContext);
 
         SimpleClientHttpRequestFactory simpleClientHttpRequestFactory = new SimpleClientHttpRequestFactory();
@@ -70,10 +70,12 @@ public class RestTemplateConfiguration {
         ClientCredentialsAccessTokenProvider accessTokenProvider = new ClientCredentialsAccessTokenProvider();
         accessTokenProvider.setAuthenticationHandler(uaaClientAuthenticationHandler);
 
-        LoadBalancerInterceptor loadBalancerInterceptor = new LoadBalancerInterceptor(loadBalancerClient);
-        oAuth2RestTemplate.getInterceptors().add(loadBalancerInterceptor);
+//        LoadBalancerInterceptor loadBalancerInterceptor = new LoadBalancerInterceptor(loadBalancerClient);
+//        oAuth2RestTemplate.getInterceptors().add(loadBalancerInterceptor);
 
         oAuth2RestTemplate.setAccessTokenProvider(accessTokenProvider);
+
+        customizer.customize(oAuth2RestTemplate);
 
         return oAuth2RestTemplate;
     }
