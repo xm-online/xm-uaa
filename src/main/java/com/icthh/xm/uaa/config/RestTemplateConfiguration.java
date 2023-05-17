@@ -34,7 +34,7 @@ public class RestTemplateConfiguration {
     private final TenantPropertiesService tenantPropertiesService;
     private final OAuth2ClientContext oauth2ClientContext;
     private final UaaClientAuthenticationHandler uaaClientAuthenticationHandler;
-    private final LoadBalancerClient loadBalancerClient;
+//    private final LoadBalancerClient loadBalancerClient;
     private final DiscoveryClient discoveryClient;
     private final RemoteTokenServices remoteTokenServices;
 
