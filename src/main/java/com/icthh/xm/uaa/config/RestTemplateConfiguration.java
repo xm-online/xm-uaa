@@ -15,6 +15,7 @@ import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResour
 import org.springframework.security.oauth2.client.token.grant.client.ClientCredentialsAccessTokenProvider;
 import org.springframework.security.oauth2.client.token.grant.client.ClientCredentialsResourceDetails;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
+import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
 import org.springframework.web.client.RestTemplate;
 
 import static com.icthh.xm.uaa.config.Constants.ACCESS_TOKEN_URL;
@@ -33,11 +34,13 @@ public class RestTemplateConfiguration {
     private final OAuth2ClientContext oauth2ClientContext;
     private final UaaClientAuthenticationHandler uaaClientAuthenticationHandler;
     private final LoadBalancerClient loadBalancerClient;
+    private final RemoteTokenServices remoteTokenServices;
 
     @Bean
     public RestTemplate loadBalancedRestTemplate(RestTemplateCustomizer customizer) {
         RestTemplate restTemplate = new RestTemplate();
         customizer.customize(restTemplate);
+        remoteTokenServices.setRestTemplate(restTemplate);
         return restTemplate;
     }
 
@@ -68,7 +71,6 @@ public class RestTemplateConfiguration {
 //        oAuth2RestTemplate.getInterceptors().add(loadBalancerInterceptor);
 
         oAuth2RestTemplate.setAccessTokenProvider(accessTokenProvider);
-
         customizer.customize(oAuth2RestTemplate);
 
         return oAuth2RestTemplate;
