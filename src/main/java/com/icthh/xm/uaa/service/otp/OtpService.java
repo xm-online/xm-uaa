@@ -8,6 +8,7 @@ import com.icthh.xm.uaa.security.DomainUserDetails;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.dto.UserLoginDto;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -97,6 +98,7 @@ public class OtpService {
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
+    @EqualsAndHashCode
     public static class OneTimePasswordDto implements Serializable {
         private Long id;
         private String receiver;
@@ -110,6 +112,7 @@ public class OtpService {
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
+    @EqualsAndHashCode
     public static class OneTimePasswordCheckDto implements Serializable {
         private Long id;
         private String otp;

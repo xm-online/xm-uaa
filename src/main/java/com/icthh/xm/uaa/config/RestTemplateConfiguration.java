@@ -71,7 +71,6 @@ public class RestTemplateConfiguration {
         accessTokenProvider.setAuthenticationHandler(uaaClientAuthenticationHandler);
 
         LoadBalancerInterceptor loadBalancerInterceptor = new LoadBalancerInterceptor(loadBalancerClient);
-//        oAuth2RestTemplate.setInterceptors(Collections.singletonList(loadBalancerInterceptor));
         oAuth2RestTemplate.getInterceptors().add(loadBalancerInterceptor);
 
         oAuth2RestTemplate.setAccessTokenProvider(accessTokenProvider);
