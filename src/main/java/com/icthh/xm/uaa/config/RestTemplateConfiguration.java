@@ -36,7 +36,7 @@ public class RestTemplateConfiguration {
     private final UaaClientAuthenticationHandler uaaClientAuthenticationHandler;
 //    private final LoadBalancerClient loadBalancerClient;
     private final DiscoveryClient discoveryClient;
-    private final RemoteTokenServices remoteTokenServices;
+//    private final RemoteTokenServices remoteTokenServices;
 
     @Bean
     public RestTemplate loadBalancedRestTemplate(RestTemplateCustomizer customizer) {
@@ -47,18 +47,13 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    public OAuth2ProtectedResourceDetails oAuth2ProtectedResourceDetails() {
+    public OAuth2RestTemplate oAuth2RestTemplate(RestTemplateCustomizer customizer) {
         ClientCredentialsResourceDetails resource = new ClientCredentialsResourceDetails();
-
         resource.setClientId(findClientId());
         resource.setClientSecret(tenantPropertiesService.getTenantProps().getSecurity().getDefaultClientSecret());
         resource.setAccessTokenUri(ACCESS_TOKEN_URL);
-        return resource;
-    }
 
-    @Bean
-    public OAuth2RestTemplate oAuth2RestTemplate(RestTemplateCustomizer customizer) {
-        OAuth2RestTemplate oAuth2RestTemplate = new OAuth2RestTemplate(oAuth2ProtectedResourceDetails(), oauth2ClientContext);
+        OAuth2RestTemplate oAuth2RestTemplate = new OAuth2RestTemplate(resource, oauth2ClientContext);
 
         SimpleClientHttpRequestFactory simpleClientHttpRequestFactory = new SimpleClientHttpRequestFactory();
         simpleClientHttpRequestFactory.setConnectTimeout(applicationProperties.getConnectTimeoutMillis());
@@ -74,7 +69,7 @@ public class RestTemplateConfiguration {
 
         customizer.customize(oAuth2RestTemplate);
 
-        remoteTokenServices.setRestTemplate(oAuth2RestTemplate);
+//        remoteTokenServices.setRestTemplate(oAuth2RestTemplate);
 
         String uaa = discoveryClient.getInstances("uaa").stream().findFirst().get().getUri().toString();
         log.info("discoveryClient uri: {}", uaa);
