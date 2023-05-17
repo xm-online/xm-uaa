@@ -42,7 +42,7 @@ public class RestTemplateConfiguration {
     public RestTemplate loadBalancedRestTemplate(RestTemplateCustomizer customizer) {
         RestTemplate restTemplate = new RestTemplate();
         customizer.customize(restTemplate);
-        remoteTokenServices.setRestTemplate(restTemplate);
+//        remoteTokenServices.setRestTemplate(restTemplate);
         return restTemplate;
     }
 
@@ -74,7 +74,7 @@ public class RestTemplateConfiguration {
 
         customizer.customize(oAuth2RestTemplate);
 
-//        remoteTokenServices.setRestTemplate(oAuth2RestTemplate);
+        remoteTokenServices.setRestTemplate(oAuth2RestTemplate);
 
         String uaa = discoveryClient.getInstances("uaa").stream().findFirst().get().getUri().toString();
         log.info("discoveryClient uri: {}", uaa);
