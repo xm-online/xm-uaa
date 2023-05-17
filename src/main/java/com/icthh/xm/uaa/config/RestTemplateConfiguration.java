@@ -4,6 +4,7 @@ import com.icthh.xm.uaa.security.oauth2.UaaClientAuthenticationHandler;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.cloud.client.loadbalancer.RestTemplateCustomizer;
 import org.springframework.context.annotation.Bean;
@@ -35,12 +36,13 @@ public class RestTemplateConfiguration {
     private final UaaClientAuthenticationHandler uaaClientAuthenticationHandler;
     private final LoadBalancerClient loadBalancerClient;
     private final RemoteTokenServices remoteTokenServices;
+    private final DiscoveryClient discoveryClient;
 
     @Bean
     public RestTemplate loadBalancedRestTemplate(RestTemplateCustomizer customizer) {
         RestTemplate restTemplate = new RestTemplate();
         customizer.customize(restTemplate);
-        remoteTokenServices.setRestTemplate(restTemplate);
+//        remoteTokenServices.setRestTemplate(restTemplate);
         return restTemplate;
     }
 
@@ -51,7 +53,6 @@ public class RestTemplateConfiguration {
         resource.setClientId(findClientId());
         resource.setClientSecret(tenantPropertiesService.getTenantProps().getSecurity().getDefaultClientSecret());
         resource.setAccessTokenUri(ACCESS_TOKEN_URL);
-
         return resource;
     }
 
@@ -66,12 +67,17 @@ public class RestTemplateConfiguration {
 
         ClientCredentialsAccessTokenProvider accessTokenProvider = new ClientCredentialsAccessTokenProvider();
         accessTokenProvider.setAuthenticationHandler(uaaClientAuthenticationHandler);
+        oAuth2RestTemplate.setAccessTokenProvider(accessTokenProvider);
 
 //        LoadBalancerInterceptor loadBalancerInterceptor = new LoadBalancerInterceptor(loadBalancerClient);
 //        oAuth2RestTemplate.getInterceptors().add(loadBalancerInterceptor);
 
-        oAuth2RestTemplate.setAccessTokenProvider(accessTokenProvider);
         customizer.customize(oAuth2RestTemplate);
+
+        remoteTokenServices.setRestTemplate(oAuth2RestTemplate);
+
+        String uaa = discoveryClient.getInstances("uaa").stream().findFirst().get().getUri().toString();
+        log.info("discoveryClient uri: {}", uaa);
 
         return oAuth2RestTemplate;
     }
