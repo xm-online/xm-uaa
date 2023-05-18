@@ -4,6 +4,7 @@ import com.icthh.xm.uaa.security.oauth2.UaaClientAuthenticationHandler;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.cloud.client.loadbalancer.RestTemplateCustomizer;
@@ -19,6 +20,8 @@ import org.springframework.security.oauth2.client.token.grant.client.ClientCrede
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
 import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
 
 import static com.icthh.xm.uaa.config.Constants.ACCESS_TOKEN_URL;
 
@@ -48,7 +51,6 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @DependsOn("tenantPropertiesService")
     public OAuth2RestTemplate oAuth2RestTemplate(RestTemplateCustomizer customizer) {
         ClientCredentialsResourceDetails resource = new ClientCredentialsResourceDetails();
         resource.setClientId(findClientId());
@@ -73,8 +75,11 @@ public class RestTemplateConfiguration {
 
 //        remoteTokenServices.setRestTemplate(oAuth2RestTemplate);
 
+        List<ServiceInstance> xmUaaInstances = discoveryClient.getInstances("xm-uaa");
+        List<ServiceInstance> uaaInstances = discoveryClient.getInstances("uaa");
+        log.info("discoveryClient xmUaaInstances: {}", xmUaaInstances != null ? xmUaaInstances.size() : xmUaaInstances);
+        log.info("discoveryClient uaaInstances: {}", uaaInstances != null ? uaaInstances.size() : uaaInstances);
 //        String uaa = discoveryClient.getInstances("uaa").stream().findFirst().get().getUri().toString();
-//        log.info("discoveryClient uri: {}", uaa);
         oAuth2RestTemplate.getAccessToken();
 
         return oAuth2RestTemplate;
