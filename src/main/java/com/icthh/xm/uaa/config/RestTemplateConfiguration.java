@@ -73,8 +73,9 @@ public class RestTemplateConfiguration {
 
 //        remoteTokenServices.setRestTemplate(oAuth2RestTemplate);
 
-        String uaa = discoveryClient.getInstances("uaa").stream().findFirst().get().getUri().toString();
-        log.info("discoveryClient uri: {}", uaa);
+//        String uaa = discoveryClient.getInstances("uaa").stream().findFirst().get().getUri().toString();
+//        log.info("discoveryClient uri: {}", uaa);
+        oAuth2RestTemplate.getAccessToken();
 
         return oAuth2RestTemplate;
     }
