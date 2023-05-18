@@ -75,10 +75,10 @@ public class RestTemplateConfiguration {
 
 //        remoteTokenServices.setRestTemplate(oAuth2RestTemplate);
 
-        List<ServiceInstance> xmUaaInstances = discoveryClient.getInstances("xm-uaa");
-        List<ServiceInstance> uaaInstances = discoveryClient.getInstances("uaa");
-        log.info("discoveryClient xmUaaInstances: {}", xmUaaInstances != null ? xmUaaInstances.size() : xmUaaInstances);
-        log.info("discoveryClient uaaInstances: {}", uaaInstances != null ? uaaInstances.size() : uaaInstances);
+//        List<ServiceInstance> xmUaaInstances = discoveryClient.getInstances("xm-uaa");
+//        List<ServiceInstance> uaaInstances = discoveryClient.getInstances("uaa");
+//        log.info("discoveryClient xmUaaInstances: {}", xmUaaInstances != null ? xmUaaInstances.size() : xmUaaInstances);
+//        log.info("discoveryClient uaaInstances: {}", uaaInstances != null ? uaaInstances.size() : uaaInstances);
 //        String uaa = discoveryClient.getInstances("uaa").stream().findFirst().get().getUri().toString();
         oAuth2RestTemplate.getAccessToken();
 
