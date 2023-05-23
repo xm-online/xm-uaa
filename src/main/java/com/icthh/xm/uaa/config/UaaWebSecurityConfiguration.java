@@ -1,6 +1,8 @@
 package com.icthh.xm.uaa.config;
 
 import com.icthh.xm.uaa.security.UaaAuthenticationProvider;
+import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpAuthenticationEmbedded;
+import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpAuthenticationOtpMs;
 import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpAuthenticationProvider;
 
 import javax.annotation.PostConstruct;
@@ -33,24 +35,28 @@ public class UaaWebSecurityConfiguration extends WebSecurityConfigurerAdapter {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final AuthenticationProvider uaaAuthenticationProvider;
-    private final TfaOtpAuthenticationProvider tfaOtpAuthenticationProvider;
+    private final TfaOtpAuthenticationEmbedded tfaOtpAuthenticationEmbedded;
+    private final TfaOtpAuthenticationOtpMs tfaOtpAuthenticationOtpMs;
 
     public UaaWebSecurityConfiguration(PasswordEncoder passwordEncoder,
                                        UserDetailsService userDetailsService,
                                        AuthenticationManagerBuilder authenticationManagerBuilder,
                                        @Qualifier("uaaAuthenticationProvider") UaaAuthenticationProvider uaaAuthenticationProvider,
-                                       TfaOtpAuthenticationProvider tfaOtpAuthenticationProvider) {
+                                       TfaOtpAuthenticationEmbedded tfaOtpAuthenticationEmbedded,
+                                       TfaOtpAuthenticationOtpMs tfaOtpAuthenticationOtpMs) {
         this.passwordEncoder = passwordEncoder;
         this.userDetailsService = userDetailsService;
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.uaaAuthenticationProvider = uaaAuthenticationProvider;
-        this.tfaOtpAuthenticationProvider = tfaOtpAuthenticationProvider;
+        this.tfaOtpAuthenticationEmbedded = tfaOtpAuthenticationEmbedded;
+        this.tfaOtpAuthenticationOtpMs = tfaOtpAuthenticationOtpMs;
     }
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.authenticationProvider(uaaAuthenticationProvider);
-        auth.authenticationProvider(tfaOtpAuthenticationProvider);
+        auth.authenticationProvider(tfaOtpAuthenticationEmbedded);
+        auth.authenticationProvider(tfaOtpAuthenticationOtpMs);
     }
 
     @PostConstruct

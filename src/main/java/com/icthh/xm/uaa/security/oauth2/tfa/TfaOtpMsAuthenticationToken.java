@@ -10,23 +10,23 @@ import java.io.Serializable;
 import java.util.Collection;
 
 /**
- * The {@link TfaOtpAuthenticationToken} class.
+ * The {@link TfaOtpMsAuthenticationToken} class.
  */
-public class TfaOtpAuthenticationToken extends AbstractAuthenticationToken {
+public class TfaOtpMsAuthenticationToken extends AbstractAuthenticationToken {
 
     private final Object principal;
-    private OtpCredentials credentials;
+    private OtpMsCredentials credentials;
 
-    public TfaOtpAuthenticationToken(Object principal, OtpCredentials otpCredentials) {
+    public TfaOtpMsAuthenticationToken(Object principal, OtpMsCredentials otpCredentials) {
         super(null);
         this.principal = principal;
         this.credentials = otpCredentials;
         setAuthenticated(false);
     }
 
-    public TfaOtpAuthenticationToken(Object principal,
-                                     OtpCredentials otpCredentials,
-                                     Collection<? extends GrantedAuthority> authorities) {
+    public TfaOtpMsAuthenticationToken(Object principal,
+                                       OtpMsCredentials otpCredentials,
+                                       Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
         this.principal = principal;
         this.credentials = otpCredentials;
@@ -43,7 +43,7 @@ public class TfaOtpAuthenticationToken extends AbstractAuthenticationToken {
     }
 
     @Override
-    public OtpCredentials getCredentials() {
+    public OtpMsCredentials getCredentials() {
         return this.credentials;
     }
 
@@ -59,20 +59,16 @@ public class TfaOtpAuthenticationToken extends AbstractAuthenticationToken {
     }
 
     @Getter
-    public static class OtpCredentials implements CredentialsContainer, Serializable {
+    @AllArgsConstructor
+    public static class OtpMsCredentials implements CredentialsContainer, Serializable {
 
         private String otp;
-        private String encodedOtp;
-
-        public OtpCredentials(String otp, String encodedOtp) {
-            this.otp = otp;
-            this.encodedOtp = encodedOtp;
-        }
+        private Long otpId;
 
         @Override
         public void eraseCredentials() {
             this.otp = null;
-            this.encodedOtp = null;
+            this.otpId = null;
         }
 
     }
