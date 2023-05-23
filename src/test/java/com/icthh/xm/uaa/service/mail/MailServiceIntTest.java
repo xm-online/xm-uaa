@@ -357,7 +357,7 @@ public class MailServiceIntTest {
         when(appCommunication.isEnabled()).thenReturn(FALSE);
         var tenantProperties = new TenantProperties();
         tenantProperties.getCommunication().setEnabled(true);
-        when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProperties);
+        when(tenantPropertiesService.getTenantProps(TEST_TENANT_KEY)).thenReturn(tenantProperties);
 
         mailService.sendEmailFromTemplate(TEST_TENANT_KEY,
             user,
