@@ -9,8 +9,8 @@ import com.icthh.xm.uaa.security.TokenConstraintsService;
 import com.icthh.xm.uaa.security.UserSecurityValidator;
 import com.icthh.xm.uaa.security.oauth2.LepTokenGranter;
 import com.icthh.xm.uaa.security.oauth2.athorization.code.CustomAuthorizationCodeServices;
-import com.icthh.xm.uaa.security.oauth2.idp.XmJwkTokenStore;
 import com.icthh.xm.uaa.security.oauth2.idp.IdpTokenGranter;
+import com.icthh.xm.uaa.security.oauth2.idp.XmJwkTokenStore;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpGenerator;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
@@ -20,6 +20,7 @@ import com.icthh.xm.uaa.service.IdpIdTokenMappingService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
+import com.icthh.xm.uaa.service.otp.OtpGenerationStrategy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -31,7 +32,6 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.token.TokenService;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
@@ -141,6 +141,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
     private final DefaultAuthenticationRefreshProvider defaultAuthenticationRefreshProvider;
     private final UserSecurityValidator userSecurityValidator;
     private final XmJwkTokenStore jwkTokenStore;
+    private final List<OtpGenerationStrategy> otpGenerationStrategies;
 
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
@@ -161,6 +162,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
     private TokenGranter tokenGranter(AuthorizationServerEndpointsConfigurer endpoints) {
         List<TokenGranter> granters = new ArrayList<>(Collections.singletonList(endpoints.getTokenGranter()));
         TfaOtpTokenGranter tfaOtpTokenGranter = new TfaOtpTokenGranter(tenantContextHolder,
+            tenantPropertiesService,
             tokenServices(),
             clientDetailsService,
             endpoints.getOAuth2RequestFactory(),
@@ -211,6 +213,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
         tokenServices.setOtpGenerator(otpGenerator);
         tokenServices.setOtpStore(otpStore);
         tokenServices.setOtpSendStrategy(otpSendStrategy);
+        tokenServices.setOtpGenerationStrategies(otpGenerationStrategies);
 
         return tokenServices;
     }

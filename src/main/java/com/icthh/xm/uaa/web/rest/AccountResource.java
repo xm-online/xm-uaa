@@ -31,11 +31,13 @@ import io.github.jhipster.web.util.ResponseUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.web.util.TextEscapeUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -50,6 +52,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 
@@ -145,9 +148,13 @@ public class AccountResource {
     @Timed
     @PreAuthorize("hasPermission({'request': #request}, 'ACCOUNT.CHECK_AUTH')")
     @PrivilegeDescription("Privilege to check if the user is authenticated")
-    public String isAuthenticated(HttpServletRequest request) {
+    public ResponseEntity<String> isAuthenticated(HttpServletRequest request) {
         log.debug("REST request to check if the current user is authenticated");
-        return request.getRemoteUser();
+        final String userLogin = request.getRemoteUser();
+        if (userLogin == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(StringEscapeUtils.escapeHtml4(userLogin));
     }
 
     /**

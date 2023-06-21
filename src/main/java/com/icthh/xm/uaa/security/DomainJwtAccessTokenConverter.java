@@ -8,12 +8,15 @@ import static com.icthh.xm.uaa.config.Constants.AUTH_TENANT_KEY;
 import static com.icthh.xm.uaa.config.Constants.AUTH_USER_KEY;
 import static com.icthh.xm.uaa.config.Constants.CREATE_TOKEN_TIME;
 import static com.icthh.xm.uaa.config.Constants.MULTI_ROLE_ENABLED;
+import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_DESTINATION;
 import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_OTP_CHANNEL_TYPE;
+import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_OTP_ID;
 import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_VERIFICATION_OTP_KEY;
 import static org.apache.commons.collections.MapUtils.isNotEmpty;
 
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.domain.OtpChannelType;
+import com.icthh.xm.uaa.service.otp.OtpType;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import java.util.Collection;
 import java.util.Date;
@@ -94,6 +97,13 @@ public class DomainJwtAccessTokenConverter extends JwtAccessTokenConverter {
 
                 String tfaOtpChannelTypeName = userDetails.getTfaOtpChannelType().map(OtpChannelType::getTypeName).orElse(null);
                 details.put(TOKEN_AUTH_DETAILS_TFA_OTP_CHANNEL_TYPE, tfaOtpChannelTypeName);
+
+            } else if (OtpType.OTP_MS.equals(tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpType()) && userDetails.isOtpIdPresent()) {
+                Long otpId = userDetails.getOtpId();
+                String destination = userDetails.getAdditionalDetails().get(TOKEN_AUTH_DETAILS_TFA_DESTINATION);
+                details.put(TOKEN_AUTH_DETAILS_TFA_OTP_ID, otpId.toString());
+                details.put(TOKEN_AUTH_DETAILS_TFA_DESTINATION, destination);
+
             } else {
                 details.put(AUTH_LOGINS_KEY, userDetails.getLogins());
                 details.put(AUTH_ROLE_KEY, getOptionalRoleKey(userDetails.getAuthorities()));

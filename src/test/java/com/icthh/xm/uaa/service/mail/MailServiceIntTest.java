@@ -16,6 +16,8 @@ import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
+import com.icthh.xm.uaa.domain.properties.TenantProperties;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
 import freemarker.template.Configuration;
 import io.github.jhipster.config.JHipsterProperties;
 import lombok.SneakyThrows;
@@ -45,6 +47,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.icthh.xm.uaa.service.mail.MailService.ACTIVATION_EMAIL_TEMPLATE;
+import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -117,6 +120,9 @@ public class MailServiceIntTest {
     private ApplicationProperties applicationProperties;
 
     @Mock
+    private TenantPropertiesService tenantPropertiesService;
+
+    @Mock
     private ApplicationProperties.Communication appCommunication;
 
     @Before
@@ -133,7 +139,7 @@ public class MailServiceIntTest {
         mailService = new MailService(jHipsterProperties, mailProviderService, messageSource,
                                       tenantEmailTemplateService, freeMarker, tenantContextHolder,
                                       tenantConfigService, localizationMessageService, communicationService,
-                                      objectMapper, applicationProperties);
+                                      objectMapper, applicationProperties, tenantPropertiesService);
     }
 
     @After
@@ -323,6 +329,35 @@ public class MailServiceIntTest {
 
         when(applicationProperties.getCommunication()).thenReturn(appCommunication);
         when(appCommunication.isEnabled()).thenReturn(TRUE);
+
+        mailService.sendEmailFromTemplate(TEST_TENANT_KEY,
+            user,
+            TEMPLATE_NAME,
+            "email.test.title",
+            "john.doe@example.com",
+            model);
+
+        verify(communicationService).sendEmailEvent(isCorrectMessage(from, convertedModel, subject, TEMPLATE_NAME));
+        verifyNoMoreInteractions(communicationService);
+    }
+
+    @Test
+    public void testSendEmailFromTemplateByCommunicatioWithTenantRelatedSettings() {
+        String from = TEST_TENANT_KEY.getValue() + EMAIL_SUFFIX;
+        String subject = "test title";
+        User user = new User();
+        user.setLangKey(DEFAULT_LANG_KEY);
+        user.setAuthorities(List.of("ROLE_USER"));
+        Map<String, Object> model = new HashMap<>();
+        model.put("user", user);
+        model.put("tenant", TEST_TENANT_KEY.getValue());
+        String convertedModel = convertToString(model);
+
+        when(applicationProperties.getCommunication()).thenReturn(appCommunication);
+        when(appCommunication.isEnabled()).thenReturn(FALSE);
+        var tenantProperties = new TenantProperties();
+        tenantProperties.getCommunication().setEnabled(true);
+        when(tenantPropertiesService.getTenantProps(TEST_TENANT_KEY)).thenReturn(tenantProperties);
 
         mailService.sendEmailFromTemplate(TEST_TENANT_KEY,
             user,

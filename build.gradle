@@ -302,6 +302,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-data"
     implementation "org.springframework.security:spring-security-web"
     implementation "org.springframework.security.oauth:spring-security-oauth2"
+    implementation "org.springframework.security.oauth.boot:spring-security-oauth2-autoconfigure"
     implementation "org.springframework.security:spring-security-jwt"
     implementation "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     implementation ("io.springfox:springfox-swagger2") {

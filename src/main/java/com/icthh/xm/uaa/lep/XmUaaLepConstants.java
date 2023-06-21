@@ -27,6 +27,7 @@ public class XmUaaLepConstants {
     public static final String BINDING_SUB_KEY_SERVICE_LEP_TOKEN_GRANTER = "lepTokenGranter";
     public static final String BINDING_SUB_KEY_SERVICE_CLIENT_DETAILS_SERVICE = "clientDetailsService";
     public static final String BINDING_SUB_KEY_PERMISSION_CHECK_SERVICE = "permissionCheckService";
+    public static final String BINDING_SUB_KEY_COMMUNICATION_SERVICE = "communicationService";
 
     public static final String BINDING_KEY_TEMPLATES = "templates";
     public static final String BINDING_SUB_KEY_TEMPLATE_REST = "rest";

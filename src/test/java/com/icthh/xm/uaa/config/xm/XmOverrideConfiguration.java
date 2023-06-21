@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.web.client.RestTemplate;
 
 @Slf4j
@@ -40,6 +41,18 @@ public class XmOverrideConfiguration {
     @Primary
     public RestTemplate loadBalancedRestTemplate(RestTemplateCustomizer customizer) {
         RestTemplate template = Mockito.mock(RestTemplate.class);
+        Mockito.when(template.exchange(Mockito.anyString(),
+            Mockito.any(),
+            Mockito.any(),
+            Mockito.eq(String.class)))
+            .thenReturn(new ResponseEntity<>(BODY, HttpStatus.OK));
+        return template;
+    }
+
+    @Bean
+    @Primary
+    public OAuth2RestTemplate oAuth2RestTemplate() {
+        OAuth2RestTemplate template = Mockito.mock(OAuth2RestTemplate.class);
         Mockito.when(template.exchange(Mockito.anyString(),
             Mockito.any(),
             Mockito.any(),

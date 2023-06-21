@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.service;
 
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
+import com.icthh.xm.uaa.config.ApplicationProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -26,15 +27,25 @@ public class AuthenticationService {
 
     private final TenantContextHolder tenantContextHolder;
 
+    private final ApplicationProperties applicationProperties;
+
     public void authenticate() throws HttpRequestMethodNotSupportedException {
         log.info("Authenticating request for privileges config");
         TenantContextUtils.setTenant(tenantContextHolder, DEFAULT_TENANT);
         OAuth2Request request = new OAuth2Request(Collections.singletonMap("grant_type", "client_credentials"),
-            "internal", null, true, null, null, null, null, null);
+            findClientId(), null, true, null, null, null, null, null);
         OAuth2Authentication authentication = new OAuth2Authentication(request, null);
         ResponseEntity<OAuth2AccessToken> tokenResponse = tokenEndpoint.postAccessToken(authentication,
             Collections.singletonMap("grant_type", "client_credentials"));
         authentication.setDetails(tokenResponse.getBody().getValue());
         SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    private String findClientId() {
+        String clientId = applicationProperties.getDefaultClientId().stream()
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("Default client id not found"));
+        log.info("Property clientId: {}", clientId);
+        return clientId;
     }
 }

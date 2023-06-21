@@ -7,12 +7,16 @@ import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
+import com.icthh.xm.uaa.service.otp.OtpGenerationStrategy;
+import com.icthh.xm.uaa.service.otp.OtpType;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.NotImplementedException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
@@ -70,6 +74,8 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
     private UserService userService;
     @Setter
     private UserSecurityValidator userSecurityValidator;
+    @Setter
+    private List<OtpGenerationStrategy> otpGenerationStrategies;
 
     /**
      * Initialize these token services. If no random generator is set, one will be created.
@@ -161,24 +167,19 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         }
         tfaToken.setScope(authentication.getOAuth2Request().getScope());
 
-        // generate OTP, send it, and store hashed value in UserDetails
-        generateOTP(authentication);
+        tryGenerateOtp(authentication);
 
         return (tokenEnhancer != null) ? tokenEnhancer.enhance(tfaToken, authentication) : tfaToken;
     }
 
-    private void generateOTP(OAuth2Authentication authentication) {
-        Object principal = authentication.getPrincipal();
-        if (!authentication.isAuthenticated() || !(principal instanceof DomainUserDetails)) {
-            // should't happen but check for sure
-            return;
-        }
+    private void tryGenerateOtp(OAuth2Authentication authentication) {
+        OtpType tfaOtpType = tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpType();
+        OtpGenerationStrategy otpGenerationStrategy = otpGenerationStrategies.stream()
+            .filter(strategy -> strategy.getOtpType().equals(tfaOtpType))
+            .findFirst()
+            .orElseThrow(() -> new NotImplementedException("Not implemented tfa otp type: " + tfaOtpType));
 
-        DomainUserDetails userDetails = DomainUserDetails.class.cast(principal);
-
-        String otp = otpGenerator.generate(authentication);
-        otpStore.storeOtp(otp, authentication);
-        otpSendStrategy.send(otp, userDetails);
+        otpGenerationStrategy.generateOtp(authentication);
     }
 
     @Transactional(noRollbackFor = {InvalidTokenException.class, InvalidGrantException.class})
@@ -210,7 +211,7 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
             // The client has already been authenticated, but the user authentication might be old now, so give it a
             // chance to re-authenticate.
             Authentication user = new PreAuthenticatedAuthenticationToken(authentication.getUserAuthentication(), "",
-                                                                          authentication.getAuthorities());
+                authentication.getAuthorities());
             user = authenticationManager.authenticate(user);
             Object details = authentication.getDetails();
             authentication = new OAuth2Authentication(authentication.getOAuth2Request(), user);
@@ -286,7 +287,7 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
             Set<String> originalScope = clientAuth.getScope();
             if (originalScope == null || !originalScope.containsAll(scope)) {
                 throw new InvalidScopeException("Unable to narrow the scope of the client authentication to " + scope
-                                                    + ".", originalScope);
+                    + ".", originalScope);
             } else {
                 clientAuth = clientAuth.narrowScope(scope);
             }
@@ -354,7 +355,7 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         String value = UUID.randomUUID().toString();
         if (validitySeconds > 0) {
             return new DefaultExpiringOAuth2RefreshToken(value, new Date(System.currentTimeMillis()
-                                                                             + (validitySeconds * 1000L)));
+                + (validitySeconds * 1000L)));
         }
         return new DefaultOAuth2RefreshToken(value);
     }

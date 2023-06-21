@@ -4,6 +4,10 @@ import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpAuthenticationToken.OtpCredentials;
+import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpMsAuthenticationToken.OtpMsCredentials;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
+import com.icthh.xm.uaa.service.otp.OtpType;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_OTP_ID;
 import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_VERIFICATION_OTP_KEY;
 
 /**
@@ -39,16 +44,19 @@ public class TfaOtpTokenGranter extends AbstractTokenGranter {
     private static final String GRANT_TYPE = "tfa_otp_token";
 
     private final TenantContextHolder tenantContextHolder;
+    private final TenantPropertiesService tenantPropertiesService;
     private final TokenStore tokenStore;
     private final AuthenticationManager authenticationManager;
 
     public TfaOtpTokenGranter(TenantContextHolder tenantContextHolder,
+                              TenantPropertiesService tenantPropertiesService,
                               AuthorizationServerTokenServices tokenServices,
                               ClientDetailsService clientDetailsService,
                               OAuth2RequestFactory requestFactory,
                               TokenStore tokenStore,
                               AuthenticationManager authenticationManager) {
         super(tokenServices, clientDetailsService, requestFactory, GRANT_TYPE);
+        this.tenantPropertiesService = tenantPropertiesService;
         this.tenantContextHolder = tenantContextHolder;
         this.tokenStore = tokenStore;
         this.authenticationManager = authenticationManager;
@@ -75,12 +83,12 @@ public class TfaOtpTokenGranter extends AbstractTokenGranter {
         validateTfaAccessToken(tfaOAuth2AccessToken);
 
         String username = (String) tfaOAuth2AccessToken.getAdditionalInformation().get("user_name");
+
         String encodedOtp = (String) tfaOAuth2AccessToken.getAdditionalInformation().get(TOKEN_AUTH_DETAILS_TFA_VERIFICATION_OTP_KEY);
+        String tfaOtpId = (String) tfaOAuth2AccessToken.getAdditionalInformation().get(TOKEN_AUTH_DETAILS_TFA_OTP_ID);
+        Long otpId = tfaOtpId != null ? Long.valueOf(tfaOtpId) : null;
 
-        OtpCredentials otpCredentials = new OtpCredentials(otp, encodedOtp);
-
-        TfaOtpAuthenticationToken userAuthentication = new TfaOtpAuthenticationToken(username, otpCredentials);
-        userAuthentication.setDetails(parameters);
+        Authentication userAuthentication = createTfaAuthentication(parameters, otp, username, encodedOtp, otpId);
 
         Authentication resultUserAuth;
         try {
@@ -97,6 +105,22 @@ public class TfaOtpTokenGranter extends AbstractTokenGranter {
         }
 
         return new OAuth2Authentication(tokenRequest.createOAuth2Request(client), resultUserAuth);
+    }
+
+    private Authentication createTfaAuthentication(Map<String, String> parameters, String otp, String username, String encodedOtp, Long otpId) {
+        OtpType tfaOtpType = tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpType();
+
+        if (OtpType.EMBEDDED.equals(tfaOtpType)) {
+            TfaOtpAuthenticationToken tfaOtpAuthenticationToken = new TfaOtpAuthenticationToken(username, new OtpCredentials(otp, encodedOtp));
+            tfaOtpAuthenticationToken.setDetails(parameters);
+            return tfaOtpAuthenticationToken;
+        } else if (OtpType.OTP_MS.equals(tfaOtpType)) {
+            TfaOtpMsAuthenticationToken tfaOtpMsAuthenticationToken = new TfaOtpMsAuthenticationToken(username, new OtpMsCredentials(otp, otpId));
+            tfaOtpMsAuthenticationToken.setDetails(parameters);
+            return tfaOtpMsAuthenticationToken;
+        } else {
+            throw new NotImplementedException("Not implemented tfaOtpType: " + tfaOtpType);
+        }
     }
 
     private void validateTokenType(String tfaAccessTokenType) {
@@ -143,10 +167,13 @@ public class TfaOtpTokenGranter extends AbstractTokenGranter {
             throw new InvalidGrantException("Bad credentials");
         }
 
-        // is encoded OTP exist
+        // is encoded OTP exist with embedded tfa flow
         Object encodedOtp = additionalInfo.get(TOKEN_AUTH_DETAILS_TFA_VERIFICATION_OTP_KEY);
-        if (encodedOtp == null || StringUtils.isBlank(String.valueOf(encodedOtp))) {
-            LOGGER.debug("TFA access token has no encoded OTP");
+        // is otpId exist with flow integration otp microservice
+        Object otpId = additionalInfo.get(TOKEN_AUTH_DETAILS_TFA_OTP_ID);
+        if ((encodedOtp == null || StringUtils.isBlank(String.valueOf(encodedOtp))) &&
+            (otpId == null || StringUtils.isBlank(String.valueOf(otpId)))) {
+            LOGGER.debug("TFA access token has no OTP");
             throw new InvalidGrantException("Bad credentials");
         }
     }

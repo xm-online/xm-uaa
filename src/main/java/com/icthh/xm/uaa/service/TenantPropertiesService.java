@@ -7,6 +7,7 @@ import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
+import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,15 @@ public class TenantPropertiesService implements RefreshableConfiguration {
 
     public TenantProperties getTenantProps() {
         String tenantKey = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder);
+        String cfgTenantKey = tenantKey.toUpperCase();
+        if (!tenantProps.containsKey(cfgTenantKey)) {
+            throw new IllegalArgumentException("Tenant '" + cfgTenantKey + "' - configuration is empty");
+        }
+        return tenantProps.get(cfgTenantKey);
+    }
+
+    public TenantProperties getTenantProps(TenantKey tenant) {
+        String tenantKey = tenant.getValue();
         String cfgTenantKey = tenantKey.toUpperCase();
         if (!tenantProps.containsKey(cfgTenantKey)) {
             throw new IllegalArgumentException("Tenant '" + cfgTenantKey + "' - configuration is empty");
