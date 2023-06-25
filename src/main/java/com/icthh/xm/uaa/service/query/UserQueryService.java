@@ -12,10 +12,11 @@ import io.github.jhipster.service.QueryService;
 import io.github.jhipster.service.filter.StringFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.query.criteria.internal.CriteriaBuilderImpl;
+import org.hibernate.query.criteria.internal.expression.LiteralExpression;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.expression.common.LiteralExpression;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -84,7 +85,7 @@ public class UserQueryService extends QueryService<User> {
             ofNullable(filterQuery.getRoleKey()).map(fn -> buildStringSpecification(fn, User_.roleKey)),
             ofNullable(filterQuery.getActivated()).map(fn -> buildSpecification(fn, User_.activated)),
             ofNullable(filterQuery.getAuthority()).map(fn -> buildSpecification(fn, root -> root.get(User_.AUTHORITIES).as(String.class)))
-            );
+        );
         List<Optional<Specification<User>>> dataAttributes = buildDataAttributes(filterQuery.getDataAttributes());
         return Stream.concat(filters, dataAttributes.stream());
     }
@@ -109,9 +110,9 @@ public class UserQueryService extends QueryService<User> {
         List<Optional<Specification<User>>> specs = new ArrayList<>();
         for (Map.Entry<String, String> entry : dataAttributes.entrySet()) {
             Specification<User> spec = (root, query, cb) -> cb.equal(cb.function("JSON_VALUE", String.class,
-                    root.get(User_.DATA).as(String.class),
-                    cb.literal("'$." + entry.getKey() + "'")),
-                cb.literal("'" + entry.getValue() + "'"));
+                    new LiteralExpression<>((CriteriaBuilderImpl) cb, root.get(User_.DATA).as(String.class)),
+                    new LiteralExpression<>((CriteriaBuilderImpl) cb, "'$." + entry.getKey() + "'")),
+                new LiteralExpression<>((CriteriaBuilderImpl) cb, "'" + entry.getValue() + "'"));
             specs.add(Optional.of(spec));
             log.info("Specification: {}", spec);
         }
