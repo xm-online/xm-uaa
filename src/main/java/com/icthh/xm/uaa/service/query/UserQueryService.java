@@ -11,6 +11,7 @@ import com.icthh.xm.uaa.service.query.filter.StrictUserFilterQuery;
 import io.github.jhipster.service.QueryService;
 import io.github.jhipster.service.filter.StringFilter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -35,6 +36,7 @@ import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -103,6 +105,7 @@ public class UserQueryService extends QueryService<User> {
     }
 
     private List<Optional<Specification<User>>> buildDataAttributes(Map<String, String> dataAttributes) {
+        log.info("Specification buildDataAttributes {}", dataAttributes);
         List<Optional<Specification<User>>> specs = new ArrayList<>();
         for (Map.Entry<String, String> entry : dataAttributes.entrySet()) {
             Specification<User> spec = (root, query, cb) -> cb.equal(cb.function("JSON_VALUE", String.class,
@@ -110,6 +113,7 @@ public class UserQueryService extends QueryService<User> {
                     new HibernateInlineExpression(cb, "'$." + entry.getKey() + "'")),
                 new LiteralExpression("'" + entry.getValue() + "'"));
             specs.add(Optional.of(spec));
+            log.info("Specification: {}", spec);
         }
         return specs;
     }
