@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.Map;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -13,4 +15,5 @@ public class StrictUserFilterQuery extends AbstractUserFilterQuery implements Se
     private StringFilter lastName;
     private StringFilter login;
     private StringFilter authority;
+    private Map<String, String> dataAttributes = Collections.emptyMap();
 }

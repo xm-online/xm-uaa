@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.expression.common.LiteralExpression;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +23,10 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Root;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -71,14 +75,16 @@ public class UserQueryService extends QueryService<User> {
     }
 
     private Stream<Optional<Specification<User>>> createStrictSpecs(StrictUserFilterQuery filterQuery) {
-        return Stream.of(
+        Stream<Optional<Specification<User>>> filters = Stream.of(
             ofNullable(filterQuery.getLogin()).map(this::getLoginSpecificationForStrict),
             ofNullable(filterQuery.getLastName()).map(ln -> buildStringSpecification(ln, User_.lastName)),
             ofNullable(filterQuery.getFirstName()).map(fn -> buildStringSpecification(fn, User_.firstName)),
             ofNullable(filterQuery.getRoleKey()).map(fn -> buildStringSpecification(fn, User_.roleKey)),
             ofNullable(filterQuery.getActivated()).map(fn -> buildSpecification(fn, User_.activated)),
             ofNullable(filterQuery.getAuthority()).map(fn -> buildSpecification(fn, root -> root.get(User_.AUTHORITIES).as(String.class)))
-        );
+            );
+        List<Optional<Specification<User>>> dataAttributes = buildDataAttributes(filterQuery.getDataAttributes());
+        return Stream.concat(filters, dataAttributes.stream());
     }
 
     private Specification<User> getLoginSpecificationForStrict(StringFilter loginFilter) {
@@ -94,6 +100,18 @@ public class UserQueryService extends QueryService<User> {
         };
         Function<Join<User, UserLogin>, Expression<String>> entityToColumn = entity -> entity.get(UserLogin_.login);
         return buildSpecification(loginFilter, functionToEntity.andThen(entityToColumn), queryConsumer);
+    }
+
+    private List<Optional<Specification<User>>> buildDataAttributes(Map<String, String> dataAttributes) {
+        List<Optional<Specification<User>>> specs = new ArrayList<>();
+        for (Map.Entry<String, String> entry : dataAttributes.entrySet()) {
+            Specification<User> spec = (root, query, cb) -> cb.equal(cb.function("JSON_VALUE", String.class,
+                    new HibernateInlineExpression(cb, "DATA"),
+                    new HibernateInlineExpression(cb, "'$." + entry.getKey() + "'")),
+                new LiteralExpression("'" + entry.getValue() + "'"));
+            specs.add(Optional.of(spec));
+        }
+        return specs;
     }
 
     private Specification<User> getLoginSpecificationForSoft(StringFilter loginFilter) {
