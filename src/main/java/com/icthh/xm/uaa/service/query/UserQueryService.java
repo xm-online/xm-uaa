@@ -109,10 +109,11 @@ public class UserQueryService extends QueryService<User> {
         log.info("Specification buildDataAttributes {}", dataAttributes);
         List<Optional<Specification<User>>> specs = new ArrayList<>();
         for (Map.Entry<String, String> entry : dataAttributes.entrySet()) {
-            Specification<User> spec = (root, query, cb) -> cb.equal(cb.function("JSON_VALUE", String.class,
-                    new LiteralExpression<>((CriteriaBuilderImpl) cb, root.get(User_.DATA).as(String.class)),
-                    new LiteralExpression<>((CriteriaBuilderImpl) cb, "'$." + entry.getKey() + "'")),
-                new LiteralExpression<>((CriteriaBuilderImpl) cb, "'" + entry.getValue() + "'"));
+            Specification<User> spec = (root, query, cb) -> cb.equal(
+                cb.function("JSON_VALUE", String.class,
+                    root.get(User_.DATA).as(String.class),
+                    cb.literal("$." + entry.getKey())),
+                cb.literal(entry.getValue()));
             specs.add(Optional.of(spec));
             log.info("Specification: {}", spec);
         }
