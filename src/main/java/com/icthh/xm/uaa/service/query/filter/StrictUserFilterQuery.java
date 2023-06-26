@@ -15,5 +15,5 @@ public class StrictUserFilterQuery extends AbstractUserFilterQuery implements Se
     private StringFilter lastName;
     private StringFilter login;
     private StringFilter authority;
-    private Map<String, String> dataAttributes = Map.of("salesPointId","1000101106");
+    private Map<String, String> dataAttributes = Collections.emptyMap();
 }
