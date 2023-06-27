@@ -112,8 +112,8 @@ public class UserQueryService extends QueryService<User> {
             Specification<User> spec = (root, query, cb) -> cb.equal(
                 cb.function("JSON_VALUE", String.class,
                     root.get(User_.DATA).as(String.class),
-                    cb.literal("$." + entry.getKey())),
-                cb.literal(entry.getValue()));
+                    new HibernateInlineExpression(cb, "'$." + entry.getKey() + "'")),
+                new LiteralExpression<>((CriteriaBuilderImpl) cb, String.class, entry.getValue()));
             specs.add(Optional.of(spec));
             log.info("Specification: {}", spec);
         }

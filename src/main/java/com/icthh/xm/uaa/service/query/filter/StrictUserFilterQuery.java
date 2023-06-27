@@ -16,5 +16,7 @@ public class StrictUserFilterQuery extends AbstractUserFilterQuery implements Se
     private StringFilter lastName;
     private StringFilter login;
     private StringFilter authority;
-    private Map<String, String> dataAttributes = new HashMap<>();
+    private Map<String, String> dataAttributes = new HashMap<>(){{
+        put("salesPointId","1000101106");
+    }};
 }
