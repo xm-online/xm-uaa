@@ -112,16 +112,16 @@ public class UserQueryService extends QueryService<User> {
         List<Optional<Specification<User>>> specs = new ArrayList<>();
         for (DataAttributeCriteria dataAttributeCriteria : dataAttributes) {
             log.info("DataAttribute path {}", dataAttributeCriteria.getPath());
-            log.info("DataAttribute type {}", dataAttributeCriteria.getType());
-            log.info("DataAttribute String path {}", dataAttributeCriteria.getPathS());
+            log.info("DataAttribute value {}", dataAttributeCriteria.getValue());
+            log.info("DataAttribute operation {}", dataAttributeCriteria.getOperation());
 
-//            Specification<User> spec = (root, query, cb) -> cb.equal(
-//                cb.function("JSON_VALUE", String.class,
-//                    root.get(User_.DATA).as(String.class),
-//                    new HibernateInlineExpression(cb, "'$." + dataAttributeCriteria.getPath() + "'")),
-//                new LiteralExpression<>((CriteriaBuilderImpl) cb, String.class, dataAttributeCriteria.getValue()));
-//            specs.add(Optional.of(spec));
-//            log.info("Specification: {}", spec);
+            Specification<User> spec = (root, query, cb) -> cb.equal(
+                cb.function("JSON_VALUE", String.class,
+                    root.get(User_.DATA).as(String.class),
+                    new HibernateInlineExpression(cb, "'$." + dataAttributeCriteria.getPath() + "'")),
+                new LiteralExpression<>((CriteriaBuilderImpl) cb, String.class, dataAttributeCriteria.getValue()));
+            specs.add(Optional.of(spec));
+            log.info("Specification: {}", spec);
         }
         return specs;
     }
