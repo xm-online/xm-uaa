@@ -5,7 +5,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,7 +15,5 @@ public class StrictUserFilterQuery extends AbstractUserFilterQuery implements Se
     private StringFilter lastName;
     private StringFilter login;
     private StringFilter authority;
-    private Map<String, String> dataAttributes = new HashMap<>(){{
-        put("salesPointId","1000101106");
-    }};
+    private Map<String, String> dataAttributes = new HashMap<>();
 }
