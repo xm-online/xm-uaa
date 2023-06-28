@@ -2,9 +2,11 @@ package com.icthh.xm.uaa.service.query.filter;
 
 import io.github.jhipster.service.Criteria;
 import io.github.jhipster.service.filter.StringFilter;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;
@@ -15,6 +17,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @Builder(toBuilder = true)
 @EqualsAndHashCode(callSuper = true)
+@AllArgsConstructor
+@NoArgsConstructor
 public class StrictUserFilterQuery extends AbstractUserFilterQuery implements Criteria, Serializable {
     private StringFilter firstName;
     private StringFilter lastName;
