@@ -6,6 +6,7 @@ import com.icthh.xm.uaa.domain.UserLogin_;
 import com.icthh.xm.uaa.domain.User_;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.service.dto.UserDTO;
+import com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria;
 import com.icthh.xm.uaa.service.query.filter.SoftUserFilterQuery;
 import com.icthh.xm.uaa.service.query.filter.StrictUserFilterQuery;
 import io.github.jhipster.service.QueryService;
@@ -27,6 +28,7 @@ import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -105,17 +107,21 @@ public class UserQueryService extends QueryService<User> {
         return buildSpecification(loginFilter, functionToEntity.andThen(entityToColumn), queryConsumer);
     }
 
-    private List<Optional<Specification<User>>> buildDataAttributes(Map<String, String> dataAttributes) {
+    private List<Optional<Specification<User>>> buildDataAttributes(List<DataAttributeCriteria> dataAttributes) {
         log.info("Specification buildDataAttributes {}", dataAttributes);
         List<Optional<Specification<User>>> specs = new ArrayList<>();
-        for (Map.Entry<String, String> entry : dataAttributes.entrySet()) {
-            Specification<User> spec = (root, query, cb) -> cb.equal(
-                cb.function("JSON_VALUE", String.class,
-                    root.get(User_.DATA).as(String.class),
-                    new HibernateInlineExpression(cb, "'$." + entry.getKey() + "'")),
-                new LiteralExpression<>((CriteriaBuilderImpl) cb, String.class, entry.getValue()));
-            specs.add(Optional.of(spec));
-            log.info("Specification: {}", spec);
+        for (DataAttributeCriteria dataAttributeCriteria : dataAttributes) {
+            log.info("DataAttribute path {}", dataAttributeCriteria.getPath());
+            log.info("DataAttribute type {}", dataAttributeCriteria.getType());
+            log.info("DataAttribute String path {}", dataAttributeCriteria.getPathS());
+
+//            Specification<User> spec = (root, query, cb) -> cb.equal(
+//                cb.function("JSON_VALUE", String.class,
+//                    root.get(User_.DATA).as(String.class),
+//                    new HibernateInlineExpression(cb, "'$." + dataAttributeCriteria.getPath() + "'")),
+//                new LiteralExpression<>((CriteriaBuilderImpl) cb, String.class, dataAttributeCriteria.getValue()));
+//            specs.add(Optional.of(spec));
+//            log.info("Specification: {}", spec);
         }
         return specs;
     }
