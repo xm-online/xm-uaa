@@ -215,8 +215,7 @@ public class UserQueryService extends QueryService<User> {
     protected Specification<User> likeDataSpecification(DataAttributeCriteria dataAttributeCriteria) {
         return (root, query, cb) -> {
             Expression<String> stringExpression = buildDataExpression(dataAttributeCriteria, root, cb);
-            LiteralExpression<String> literalExpression = new LiteralExpression<>((CriteriaBuilderImpl) cb, String.class, dataAttributeCriteria.getValue());
-            return cb.like(stringExpression, literalExpression);
+            return cb.like(cb.upper(stringExpression), wrapLikeQuery(dataAttributeCriteria.getValue()));
         };
     }
 
