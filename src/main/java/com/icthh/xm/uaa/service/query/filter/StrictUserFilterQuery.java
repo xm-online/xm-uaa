@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,7 +25,7 @@ public class StrictUserFilterQuery extends AbstractUserFilterQuery implements Cr
     private StringFilter lastName;
     private StringFilter login;
     private StringFilter authority;
-    private List<DataAttributeCriteria> dataAttributes;
+    private List<DataAttributeCriteria> dataAttributes = new ArrayList<>();
 
     @Override
     public Criteria copy() {

@@ -28,9 +28,7 @@ import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -107,25 +105,6 @@ public class UserQueryService extends QueryService<User> {
         return buildSpecification(loginFilter, functionToEntity.andThen(entityToColumn), queryConsumer);
     }
 
-    private List<Optional<Specification<User>>> buildDataAttributes(List<DataAttributeCriteria> dataAttributes) {
-        log.info("Specification buildDataAttributes {}", dataAttributes);
-        List<Optional<Specification<User>>> specs = new ArrayList<>();
-        for (DataAttributeCriteria dataAttributeCriteria : dataAttributes) {
-            log.info("DataAttribute path {}", dataAttributeCriteria.getPath());
-            log.info("DataAttribute value {}", dataAttributeCriteria.getValue());
-            log.info("DataAttribute operation {}", dataAttributeCriteria.getOperation());
-
-            Specification<User> spec = (root, query, cb) -> cb.equal(
-                cb.function("JSON_VALUE", String.class,
-                    root.get(User_.DATA).as(String.class),
-                    new HibernateInlineExpression(cb, "'$." + dataAttributeCriteria.getPath() + "'")),
-                new LiteralExpression<>((CriteriaBuilderImpl) cb, String.class, dataAttributeCriteria.getValue()));
-            specs.add(Optional.of(spec));
-            log.info("Specification: {}", spec);
-        }
-        return specs;
-    }
-
     private Specification<User> getLoginSpecificationForSoft(StringFilter loginFilter) {
         Consumer<CriteriaQuery<?>> queryConsumer = query -> query.distinct(true);
 
@@ -198,5 +177,52 @@ public class UserQueryService extends QueryService<User> {
             }
             return predicate;
         };
+    }
+
+    private List<Optional<Specification<User>>> buildDataAttributes(List<DataAttributeCriteria> dataAttributes) {
+        log.info("Specification buildDataAttributes {}", dataAttributes);
+        List<Optional<Specification<User>>> specs = new ArrayList<>();
+        for (DataAttributeCriteria dataAttributeCriteria : dataAttributes) {
+            log.info("DataAttribute path {}", dataAttributeCriteria.getPath());
+            log.info("DataAttribute value {}", dataAttributeCriteria.getValue());
+            log.info("DataAttribute operation {}", dataAttributeCriteria.getOperation());
+
+            Specification<User> spec = buildDataSpecification(dataAttributeCriteria);
+            specs.add(Optional.of(spec));
+
+            log.info("Specification: {}", spec);
+        }
+        return specs;
+    }
+
+    protected Specification<User> buildDataSpecification(DataAttributeCriteria dataAttributeCriteria) {
+        if (dataAttributeCriteria.getOperation().equals("equals")) {
+            return equalsDataSpecification(dataAttributeCriteria);
+        } else if (dataAttributeCriteria.getOperation().equals("contains")) {
+            return likeDataSpecification(dataAttributeCriteria);
+        }
+        return null;
+    }
+
+    protected Specification<User> equalsDataSpecification(DataAttributeCriteria dataAttributeCriteria) {
+        return (root, query, cb) -> {
+            Expression<String> stringExpression = buildDataExpression(dataAttributeCriteria, root, cb);
+            LiteralExpression<String> literalExpression = new LiteralExpression<>((CriteriaBuilderImpl) cb, String.class, dataAttributeCriteria.getValue());
+            return cb.equal(stringExpression, literalExpression);
+        };
+    }
+
+    protected Specification<User> likeDataSpecification(DataAttributeCriteria dataAttributeCriteria) {
+        return (root, query, cb) -> {
+            Expression<String> stringExpression = buildDataExpression(dataAttributeCriteria, root, cb);
+            LiteralExpression<String> literalExpression = new LiteralExpression<>((CriteriaBuilderImpl) cb, String.class, dataAttributeCriteria.getValue());
+            return cb.like(stringExpression, literalExpression);
+        };
+    }
+
+    protected Expression<String> buildDataExpression(DataAttributeCriteria dataAttributeCriteria, Root<User> root, CriteriaBuilder builder) {
+        return builder.function("JSON_VALUE", String.class,
+            root.get(User_.DATA).as(String.class),
+            new HibernateInlineExpression(builder, "'$." + dataAttributeCriteria.getPath() + "'"));
     }
 }
