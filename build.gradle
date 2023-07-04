@@ -2,8 +2,6 @@ import org.gradle.internal.os.OperatingSystem
 
 buildscript {
     repositories {
-        mavenLocal()
-        mavenCentral()
         maven {
             url itsf_artifactory_contextUrl + "/libs-release-local"
             allowInsecureProtocol = true
@@ -13,6 +11,8 @@ buildscript {
                 password = itsf_artifactory_password
             }
         }
+        mavenLocal()
+        mavenCentral()
         gradlePluginPortal()
         maven { url "https://repo.spring.io/plugins-release" }
     }
@@ -238,8 +238,6 @@ configurations {
 }
 
 repositories {
-    mavenLocal()
-    mavenCentral()
     maven {
         url itsf_artifactory_contextUrl + "/libs-release-local"
         allowInsecureProtocol = true
@@ -249,6 +247,8 @@ repositories {
             password = itsf_artifactory_password
         }
     }
+    mavenLocal()
+    mavenCentral()
     jcenter()
     maven { url 'https://repo.spring.io/milestone' }
     maven { url 'https://repo.spring.io/snapshot' }
