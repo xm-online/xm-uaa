@@ -3,7 +3,7 @@ import org.gradle.internal.os.OperatingSystem
 buildscript {
     repositories {
         maven {
-            url itsf_artifactory_contextUrl + "/libs-release-local"
+            url itsf_artifactory_contextUrl
             allowInsecureProtocol = true
 
             credentials {
@@ -239,7 +239,7 @@ configurations {
 
 repositories {
     maven {
-        url itsf_artifactory_contextUrl + "/libs-release-local"
+        url itsf_artifactory_contextUrl
         allowInsecureProtocol = true
 
         credentials {
