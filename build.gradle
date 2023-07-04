@@ -4,6 +4,15 @@ buildscript {
     repositories {
         mavenLocal()
         mavenCentral()
+        maven {
+            url itsf_artifactory_contextUrl + "/libs-release-local"
+            allowInsecureProtocol = true
+
+            credentials {
+                username = itsf_artifactory_user
+                password = itsf_artifactory_password
+            }
+        }
         gradlePluginPortal()
         maven { url "https://repo.spring.io/plugins-release" }
     }
@@ -231,6 +240,15 @@ configurations {
 repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+        url itsf_artifactory_contextUrl + "/libs-release-local"
+        allowInsecureProtocol = true
+
+        credentials {
+            username = itsf_artifactory_user
+            password = itsf_artifactory_password
+        }
+    }
     jcenter()
     maven { url 'https://repo.spring.io/milestone' }
     maven { url 'https://repo.spring.io/snapshot' }

@@ -35,6 +35,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static com.icthh.xm.commons.migration.db.jsonb.CustomOracle12cDialect.JSON_QUERY;
 import static java.util.Optional.ofNullable;
 
 @Slf4j
@@ -220,7 +221,7 @@ public class UserQueryService extends QueryService<User> {
     }
 
     protected Expression<String> buildDataExpression(DataAttributeCriteria dataAttributeCriteria, Root<User> root, CriteriaBuilder builder) {
-        return builder.function("JSON_VALUE", String.class,
+        return builder.function(JSON_QUERY, String.class,
             root.get(User_.DATA).as(String.class),
             new HibernateInlineExpression(builder, "'$." + dataAttributeCriteria.getPath() + "'"));
     }
