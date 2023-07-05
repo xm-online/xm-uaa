@@ -13,14 +13,19 @@ import io.github.jhipster.service.QueryService;
 import io.github.jhipster.service.filter.StringFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Session;
+import org.hibernate.dialect.Dialect;
+import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.query.criteria.internal.CriteriaBuilderImpl;
 import org.hibernate.query.criteria.internal.expression.LiteralExpression;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
@@ -45,8 +50,14 @@ import static java.util.Optional.ofNullable;
 public class UserQueryService extends QueryService<User> {
 
     private final UserRepository userRepository;
+    @Autowired
+    private EntityManager entityManager;
 
     public Page<UserDTO> findAllUsersByStrictMatch(StrictUserFilterQuery filterQuery, Pageable pageable) {
+        final Session session = (Session) entityManager.getDelegate();
+        final SessionFactoryImpl sessionFactory = (SessionFactoryImpl) session.getSessionFactory();
+        final Dialect dialect = sessionFactory.getJdbcServices().getDialect();
+        log.info("Dialect: {}", dialect);
         Specification<User> specification = createStrictSpecification(filterQuery);
         return userRepository.findAll(specification, pageable).map(UserDTO::new);
     }
@@ -221,7 +232,9 @@ public class UserQueryService extends QueryService<User> {
     }
 
     protected Expression<String> buildDataExpression(DataAttributeCriteria dataAttributeCriteria, Root<User> root, CriteriaBuilder builder) {
-        return builder.function(JSON_QUERY, String.class,
+        return builder.function(
+            JSON_QUERY,
+            String.class,
             root.get(User_.DATA).as(String.class),
             new HibernateInlineExpression(builder, "'$." + dataAttributeCriteria.getPath() + "'"));
     }
