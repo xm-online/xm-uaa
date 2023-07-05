@@ -236,6 +236,7 @@ public class UserQueryService extends QueryService<User> {
             JSON_QUERY,
             String.class,
             root.get(User_.DATA).as(String.class),
-            new HibernateInlineExpression(builder, "'$." + dataAttributeCriteria.getPath() + "'"));
+            builder.literal("'$." + dataAttributeCriteria.getPath() + "'"));
+//            new HibernateInlineExpression(builder, "'$." + dataAttributeCriteria.getPath() + "'"));
     }
 }
