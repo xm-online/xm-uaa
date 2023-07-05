@@ -233,7 +233,7 @@ public class UserQueryService extends QueryService<User> {
 
     protected Expression<String> buildDataExpression(DataAttributeCriteria dataAttributeCriteria, Root<User> root, CriteriaBuilder builder) {
         return builder.function(
-            JSON_QUERY,
+            "JSON_FAKE",
             String.class,
             root.get(User_.DATA).as(String.class),
             builder.literal("'$." + dataAttributeCriteria.getPath() + "'"));
