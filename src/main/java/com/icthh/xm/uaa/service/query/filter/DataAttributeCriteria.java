@@ -24,6 +24,7 @@ public class DataAttributeCriteria implements Criteria {
         return this.toBuilder().build();
     }
 
+    @Getter
     @AllArgsConstructor
     public enum Operation {
         @JsonProperty("equals")
@@ -31,8 +32,15 @@ public class DataAttributeCriteria implements Criteria {
         @JsonProperty("contains")
         CONTAINS("contains");
 
-        @JsonValue
-        @Getter
         private final String operation;
+
+        public static Operation fromOperation(String o) {
+            for (Operation operation : Operation.values()) {
+                if (operation.getOperation().equalsIgnoreCase(o)) {
+                    return operation;
+                }
+            }
+            throw new IllegalArgumentException("Invalid operation: " + o);
+        }
     }
 }
