@@ -25,7 +25,7 @@ public class DataAttributeCriteria implements Criteria {
     }
 
     @AllArgsConstructor
-    private enum Operation {
+    public enum Operation {
         @JsonProperty("equals")
         EQUALS("equals"),
         @JsonProperty("contains")
