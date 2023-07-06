@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.service.query;
 
+import com.icthh.xm.commons.migration.db.jsonb.JsonbUtils;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLogin_;
@@ -40,7 +41,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static com.icthh.xm.commons.migration.db.jsonb.CustomOracle12cDialect.JSON_QUERY;
+import static com.icthh.xm.commons.migration.db.jsonb.CustomDialect.JSON_QUERY;
+import static com.icthh.xm.commons.migration.db.jsonb.JsonbUtils.jsonQuery;
 import static java.util.Optional.ofNullable;
 
 @Slf4j
@@ -232,10 +234,16 @@ public class UserQueryService extends QueryService<User> {
     }
 
     protected Expression<String> buildDataExpression(DataAttributeCriteria dataAttributeCriteria, Root<User> root, CriteriaBuilder builder) {
-        return builder.function(
-            JSON_QUERY,
-            String.class,
-            root.get(User_.DATA).as(String.class),
-            new HibernateInlineExpression(builder, "'$." + dataAttributeCriteria.getPath() + "'"));
+        String jsonPath = "'$." + dataAttributeCriteria.getPath() + "'";
+        log.info("buildDataExpression with jsonPath {}", jsonPath);
+        log.info("Name function {}", JSON_QUERY);
+        return jsonQuery(builder, root, User_.DATA, jsonPath, String.class);
     }
+//    protected Expression<String> buildDataExpression(DataAttributeCriteria dataAttributeCriteria, Root<User> root, CriteriaBuilder builder) {
+//        return builder.function(
+//            JSON_QUERY,
+//            String.class,
+//            root.get(User_.DATA).as(String.class),
+//            new HibernateInlineExpression(builder, "'$." + dataAttributeCriteria.getPath() + "'"));
+//    }
 }
