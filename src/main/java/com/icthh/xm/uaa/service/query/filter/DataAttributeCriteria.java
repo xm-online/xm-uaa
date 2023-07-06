@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.service.query.filter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import io.github.jhipster.service.Criteria;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,15 +24,15 @@ public class DataAttributeCriteria implements Criteria {
         return this.toBuilder().build();
     }
 
-    @Getter
     @AllArgsConstructor
-    public enum Operation {
+    private enum Operation {
         @JsonProperty("equals")
         EQUALS("equals"),
-
         @JsonProperty("contains")
         CONTAINS("contains");
 
+        @JsonValue
+        @Getter
         private final String operation;
     }
 }
