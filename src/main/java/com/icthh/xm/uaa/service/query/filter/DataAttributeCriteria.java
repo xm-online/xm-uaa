@@ -16,7 +16,7 @@ public class DataAttributeCriteria implements Criteria {
 
     private String path;
     private String value;
-    private OPERATION operation;
+    private Operation operation;
 
     @Override
     public DataAttributeCriteria copy() {
@@ -25,11 +25,13 @@ public class DataAttributeCriteria implements Criteria {
 
     @Getter
     @AllArgsConstructor
-    @NoArgsConstructor
-    public enum OPERATION {
+    public enum Operation {
         @JsonProperty("equals")
-        EQUALS,
+        EQUALS("equals"),
+
         @JsonProperty("contains")
-        CONTAINS;
+        CONTAINS("contains");
+
+        private final String operation;
     }
 }

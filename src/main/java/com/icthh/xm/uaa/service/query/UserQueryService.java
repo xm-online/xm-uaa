@@ -41,8 +41,8 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static com.icthh.xm.commons.migration.db.jsonb.JsonbUtils.jsonQuery;
-import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.OPERATION.CONTAINS;
-import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.OPERATION.EQUALS;
+import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.Operation.CONTAINS;
+import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.Operation.EQUALS;
 import static java.util.Optional.ofNullable;
 
 @Slf4j
