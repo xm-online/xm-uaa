@@ -18,7 +18,7 @@ public class DataAttributeCriteria implements Criteria {
     private String path;
     private String value;
     private Operation operation;
-    private ValueType valueType;
+    private ValueType type;
 
     @Override
     public DataAttributeCriteria copy() {
@@ -65,7 +65,7 @@ public class DataAttributeCriteria implements Criteria {
                     return valueType;
                 }
             }
-            throw new IllegalArgumentException("Invalid type: " + type);
+            return ValueType.STRING;
         }
     }
 }

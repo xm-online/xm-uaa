@@ -13,7 +13,6 @@ import io.github.jhipster.service.QueryService;
 import io.github.jhipster.service.filter.StringFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.hibernate.Session;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.internal.SessionFactoryImpl;
@@ -45,7 +44,6 @@ import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.Operat
 import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.ValueType.BOOLEAN;
 import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.ValueType.DOUBLE;
 import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.ValueType.INTEGER;
-import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.ValueType.STRING;
 import static java.util.Optional.ofNullable;
 
 @Slf4j
@@ -203,7 +201,7 @@ public class UserQueryService extends QueryService<User> {
             log.info("DataAttribute path {}", dataAttributeCriteria.getPath());
             log.info("DataAttribute value {}", dataAttributeCriteria.getValue());
             log.info("DataAttribute operation {}", dataAttributeCriteria.getOperation());
-            log.info("DataAttribute valueType {}", dataAttributeCriteria.getValueType());
+            log.info("DataAttribute valueType {}", dataAttributeCriteria.getType());
 
             Specification<User> spec = buildDataSpecification(dataAttributeCriteria);
             specs.add(Optional.of(spec));
@@ -244,17 +242,15 @@ public class UserQueryService extends QueryService<User> {
     }
 
     private Object findValueByType(DataAttributeCriteria dataAttributeCriteria) {
-        if (INTEGER == dataAttributeCriteria.getValueType()) {
+        if (INTEGER == dataAttributeCriteria.getType()) {
             return Integer.valueOf(dataAttributeCriteria.getValue());
-        } else if (DOUBLE == dataAttributeCriteria.getValueType()) {
+        } else if (DOUBLE == dataAttributeCriteria.getType()) {
             return Double.valueOf(dataAttributeCriteria.getValue());
-        } else if (STRING == dataAttributeCriteria.getValueType()) {
-            return String.valueOf(dataAttributeCriteria.getValue());
-        } else if (BOOLEAN == dataAttributeCriteria.getValueType()) {
+        } else if (BOOLEAN == dataAttributeCriteria.getType()) {
             return Boolean.valueOf(dataAttributeCriteria.getValue());
         }
 
-        throw new NotImplementedException("Not implemented value type " + dataAttributeCriteria.getValueType());
+        return dataAttributeCriteria.getValue();
     }
 
 }
