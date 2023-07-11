@@ -222,7 +222,7 @@ public class UserQueryService extends QueryService<User> {
 //            LiteralExpression<String> literalExpression = new LiteralExpression<>((CriteriaBuilderImpl) cb, String.class, dataAttributeCriteria.getValue());
             Expression<String> literal = cb.literal(dataAttributeCriteria.getValue());
 //            Expression<JsonBinaryType> jsonB = toJsonB(cb, dataAttributeCriteria.getValue());
-            return cb.equal(stringExpression.as(String.class), literal);
+            return cb.equal(stringExpression, literal);
         };
     }
 
