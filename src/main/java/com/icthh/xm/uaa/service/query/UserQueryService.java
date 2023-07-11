@@ -1,6 +1,5 @@
 package com.icthh.xm.uaa.service.query;
 
-import com.icthh.xm.commons.migration.db.jsonb.CustomPostgreSQL95Dialect;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLogin_;
@@ -10,7 +9,6 @@ import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria;
 import com.icthh.xm.uaa.service.query.filter.SoftUserFilterQuery;
 import com.icthh.xm.uaa.service.query.filter.StrictUserFilterQuery;
-import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import io.github.jhipster.service.QueryService;
 import io.github.jhipster.service.filter.StringFilter;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Session;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.internal.SessionFactoryImpl;
-import org.hibernate.query.criteria.internal.CriteriaBuilderImpl;
-import org.hibernate.query.criteria.internal.expression.LiteralExpression;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -42,10 +38,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static com.icthh.xm.commons.migration.db.jsonb.CustomDialect.JSON_QUERY;
 import static com.icthh.xm.commons.migration.db.jsonb.JsonbUtils.jsonQuery;
-
-import static com.icthh.xm.commons.migration.db.jsonb.JsonbUtils.toJsonB;
 import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.Operation.CONTAINS;
 import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.Operation.EQUALS;
 import static java.util.Optional.ofNullable;
