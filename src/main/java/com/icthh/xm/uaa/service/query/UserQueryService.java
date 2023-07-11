@@ -240,7 +240,7 @@ public class UserQueryService extends QueryService<User> {
         };
     }
 
-    protected Expression<JsonBinaryType> buildDataExpression(DataAttributeCriteria dataAttributeCriteria, Root<User> root, CriteriaBuilder builder) {
+    protected Expression<?> buildDataExpression(DataAttributeCriteria dataAttributeCriteria, Root<User> root, CriteriaBuilder builder) {
         String jsonPath = "'$." + dataAttributeCriteria.getPath() + "'";
         return jsonQuery(builder, root, User_.DATA, jsonPath);
     }
