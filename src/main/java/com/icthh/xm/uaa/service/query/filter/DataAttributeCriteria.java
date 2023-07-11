@@ -18,6 +18,7 @@ public class DataAttributeCriteria implements Criteria {
     private String path;
     private String value;
     private Operation operation;
+    private ValueType valueType;
 
     @Override
     public DataAttributeCriteria copy() {
@@ -41,6 +42,30 @@ public class DataAttributeCriteria implements Criteria {
                 }
             }
             throw new IllegalArgumentException("Invalid operation: " + o);
+        }
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public enum ValueType {
+        @JsonProperty("integer")
+        INTEGER("integer") ,
+        @JsonProperty("double")
+        DOUBLE("double"),
+        @JsonProperty("string")
+        STRING("string"),
+        @JsonProperty("boolean")
+        BOOLEAN("boolean");
+
+        private final String type;
+
+        public static ValueType fromValueType(String type) {
+            for (ValueType valueType : ValueType.values()) {
+                if (valueType.getType().equalsIgnoreCase(type)) {
+                    return valueType;
+                }
+            }
+            throw new IllegalArgumentException("Invalid type: " + type);
         }
     }
 }

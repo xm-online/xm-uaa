@@ -13,6 +13,7 @@ import io.github.jhipster.service.QueryService;
 import io.github.jhipster.service.filter.StringFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.hibernate.Session;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.internal.SessionFactoryImpl;
@@ -41,6 +42,10 @@ import java.util.stream.Stream;
 import static com.icthh.xm.commons.migration.db.jsonb.JsonbUtils.jsonQuery;
 import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.Operation.CONTAINS;
 import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.Operation.EQUALS;
+import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.ValueType.BOOLEAN;
+import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.ValueType.DOUBLE;
+import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.ValueType.INTEGER;
+import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.ValueType.STRING;
 import static java.util.Optional.ofNullable;
 
 @Slf4j
@@ -198,6 +203,7 @@ public class UserQueryService extends QueryService<User> {
             log.info("DataAttribute path {}", dataAttributeCriteria.getPath());
             log.info("DataAttribute value {}", dataAttributeCriteria.getValue());
             log.info("DataAttribute operation {}", dataAttributeCriteria.getOperation());
+            log.info("DataAttribute valueType {}", dataAttributeCriteria.getValueType());
 
             Specification<User> spec = buildDataSpecification(dataAttributeCriteria);
             specs.add(Optional.of(spec));
@@ -219,9 +225,8 @@ public class UserQueryService extends QueryService<User> {
     protected Specification<User> equalsDataSpecification(DataAttributeCriteria dataAttributeCriteria) {
         return (root, query, cb) -> {
             Expression<?> stringExpression = buildDataExpression(dataAttributeCriteria, root, cb);
-//            LiteralExpression<String> literalExpression = new LiteralExpression<>((CriteriaBuilderImpl) cb, String.class, dataAttributeCriteria.getValue());
-            Expression<String> literal = cb.literal(dataAttributeCriteria.getValue());
-//            Expression<JsonBinaryType> jsonB = toJsonB(cb, dataAttributeCriteria.getValue());
+            Expression<?> literal = cb.literal(findValueByType(dataAttributeCriteria));
+//            Expression<JsonBinaryType> jsonB = toJsonB(cb, findValueByType(dataAttributeCriteria));
             return cb.equal(stringExpression, literal);
         };
     }
@@ -236,6 +241,20 @@ public class UserQueryService extends QueryService<User> {
     protected Expression<?> buildDataExpression(DataAttributeCriteria dataAttributeCriteria, Root<User> root, CriteriaBuilder builder) {
         String jsonPath = "'$." + dataAttributeCriteria.getPath() + "'";
         return jsonQuery(builder, root, User_.DATA, jsonPath);
+    }
+
+    private Object findValueByType(DataAttributeCriteria dataAttributeCriteria) {
+        if (INTEGER == dataAttributeCriteria.getValueType()) {
+            return Integer.valueOf(dataAttributeCriteria.getValue());
+        } else if (DOUBLE == dataAttributeCriteria.getValueType()) {
+            return Double.valueOf(dataAttributeCriteria.getValue());
+        } else if (STRING == dataAttributeCriteria.getValueType()) {
+            return String.valueOf(dataAttributeCriteria.getValue());
+        } else if (BOOLEAN == dataAttributeCriteria.getValueType()) {
+            return Boolean.valueOf(dataAttributeCriteria.getValue());
+        }
+
+        throw new NotImplementedException("Not implemented value type " + dataAttributeCriteria.getValueType());
     }
 
 }
