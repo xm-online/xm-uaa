@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.service.query;
 
+import com.icthh.xm.commons.migration.db.jsonb.OracleExpression;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLogin_;
@@ -53,6 +54,7 @@ import static java.util.Optional.ofNullable;
 public class UserQueryService extends QueryService<User> {
 
     private final UserRepository userRepository;
+    private final OracleExpression oracleExpression;
     @Autowired
     private EntityManager entityManager;
 
@@ -223,9 +225,10 @@ public class UserQueryService extends QueryService<User> {
     protected Specification<User> equalsDataSpecification(DataAttributeCriteria dataAttributeCriteria) {
         return (root, query, cb) -> {
             Expression<?> stringExpression = buildDataExpression(dataAttributeCriteria, root, cb);
-            Expression<?> literal = cb.literal(findValueByType(dataAttributeCriteria));
+//            Expression<?> literal = cb.literal(findValueByType(dataAttributeCriteria));
 //            Expression<JsonBinaryType> jsonB = toJsonB(cb, findValueByType(dataAttributeCriteria));
-            return cb.equal(stringExpression, literal);
+            Expression<?> expression = oracleExpression.toExpression(cb, findValueByType(dataAttributeCriteria));
+            return cb.equal(stringExpression, expression);
         };
     }
 
