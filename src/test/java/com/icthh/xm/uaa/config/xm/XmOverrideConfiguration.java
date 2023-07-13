@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.config.xm;
 
+import com.icthh.xm.commons.migration.db.jsonb.CustomExpression;
 import lombok.extern.slf4j.Slf4j;
 import org.mockito.Mockito;
 import org.springframework.cloud.client.loadbalancer.RestTemplateCustomizer;
@@ -59,6 +60,12 @@ public class XmOverrideConfiguration {
             Mockito.eq(String.class)))
             .thenReturn(new ResponseEntity<>(BODY, HttpStatus.OK));
         return template;
+    }
+
+    @Bean
+    @Primary
+    public CustomExpression customExpression() {
+        return Mockito.mock(CustomExpression.class);
     }
 
 }
