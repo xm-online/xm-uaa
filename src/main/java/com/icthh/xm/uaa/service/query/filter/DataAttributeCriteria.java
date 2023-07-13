@@ -1,7 +1,6 @@
 package com.icthh.xm.uaa.service.query.filter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonValue;
 import io.github.jhipster.service.Criteria;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -48,10 +47,8 @@ public class DataAttributeCriteria implements Criteria {
     @Getter
     @AllArgsConstructor
     public enum ValueType {
-        @JsonProperty("integer")
-        INTEGER("integer") ,
-        @JsonProperty("double")
-        DOUBLE("double"),
+        @JsonProperty("number")
+        NUMBER("number") ,
         @JsonProperty("string")
         STRING("string"),
         @JsonProperty("boolean")

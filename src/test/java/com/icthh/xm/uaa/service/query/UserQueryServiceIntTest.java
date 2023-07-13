@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.service.query;
 
+import com.icthh.xm.commons.migration.db.jsonb.CustomExpression;
 import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.User;
@@ -56,6 +57,9 @@ public class UserQueryServiceIntTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private CustomExpression customExpression;
 
     @Autowired
     private UserQueryService userQueryService;

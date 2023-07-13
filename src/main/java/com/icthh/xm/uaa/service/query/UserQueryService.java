@@ -1,6 +1,6 @@
 package com.icthh.xm.uaa.service.query;
 
-import com.icthh.xm.commons.migration.db.jsonb.OracleExpression;
+import com.icthh.xm.commons.migration.db.jsonb.CustomExpression;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLogin_;
@@ -14,17 +14,12 @@ import io.github.jhipster.service.QueryService;
 import io.github.jhipster.service.filter.StringFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.Session;
-import org.hibernate.dialect.Dialect;
-import org.hibernate.internal.SessionFactoryImpl;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
@@ -39,12 +34,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static com.icthh.xm.commons.migration.db.jsonb.JsonbUtils.jsonQuery;
 import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.Operation.CONTAINS;
 import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.Operation.EQUALS;
 import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.ValueType.BOOLEAN;
-import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.ValueType.DOUBLE;
-import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.ValueType.INTEGER;
+import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.ValueType.NUMBER;
 import static java.util.Optional.ofNullable;
 
 @Slf4j
@@ -54,15 +47,9 @@ import static java.util.Optional.ofNullable;
 public class UserQueryService extends QueryService<User> {
 
     private final UserRepository userRepository;
-    private final OracleExpression oracleExpression;
-    @Autowired
-    private EntityManager entityManager;
+    private final CustomExpression customExpression;
 
     public Page<UserDTO> findAllUsersByStrictMatch(StrictUserFilterQuery filterQuery, Pageable pageable) {
-        final Session session = (Session) entityManager.getDelegate();
-        final SessionFactoryImpl sessionFactory = (SessionFactoryImpl) session.getSessionFactory();
-        final Dialect dialect = sessionFactory.getJdbcServices().getDialect();
-        log.info("Dialect: {}", dialect);
         Specification<User> specification = createStrictSpecification(filterQuery);
         return userRepository.findAll(specification, pageable).map(UserDTO::new);
     }
@@ -207,8 +194,6 @@ public class UserQueryService extends QueryService<User> {
 
             Specification<User> spec = buildDataSpecification(dataAttributeCriteria);
             specs.add(Optional.of(spec));
-
-            log.info("Specification: {}", spec);
         }
         return specs;
     }
@@ -224,11 +209,9 @@ public class UserQueryService extends QueryService<User> {
 
     protected Specification<User> equalsDataSpecification(DataAttributeCriteria dataAttributeCriteria) {
         return (root, query, cb) -> {
-            Expression<?> stringExpression = buildDataExpression(dataAttributeCriteria, root, cb);
-//            Expression<?> literal = cb.literal(findValueByType(dataAttributeCriteria));
-//            Expression<JsonBinaryType> jsonB = toJsonB(cb, findValueByType(dataAttributeCriteria));
-            Expression<?> expression = oracleExpression.toExpression(cb, findValueByType(dataAttributeCriteria));
-            return cb.equal(stringExpression, expression);
+            Expression<?> dataExpression = buildDataExpression(dataAttributeCriteria, root, cb);
+            Expression<?> expression = customExpression.toExpression(cb, findValueByType(dataAttributeCriteria));
+            return cb.equal(dataExpression, expression);
         };
     }
 
@@ -241,13 +224,11 @@ public class UserQueryService extends QueryService<User> {
 
     protected Expression<?> buildDataExpression(DataAttributeCriteria dataAttributeCriteria, Root<User> root, CriteriaBuilder builder) {
         String jsonPath = "'$." + dataAttributeCriteria.getPath() + "'";
-        return jsonQuery(builder, root, User_.DATA, jsonPath);
+        return customExpression.jsonQuery(builder, root, User_.DATA, jsonPath);
     }
 
     private Object findValueByType(DataAttributeCriteria dataAttributeCriteria) {
-        if (INTEGER == dataAttributeCriteria.getType()) {
-            return Integer.valueOf(dataAttributeCriteria.getValue());
-        } else if (DOUBLE == dataAttributeCriteria.getType()) {
+        if (NUMBER == dataAttributeCriteria.getType()) {
             return Double.valueOf(dataAttributeCriteria.getValue());
         } else if (BOOLEAN == dataAttributeCriteria.getType()) {
             return Boolean.valueOf(dataAttributeCriteria.getValue());
