@@ -46,7 +46,7 @@ public class RestTemplateConfiguration {
     public OAuth2RestTemplate oAuth2RestTemplate(RestTemplateCustomizer customizer) {
         ClientCredentialsResourceDetails resource = new ClientCredentialsResourceDetails();
         resource.setClientId(findClientId());
-        resource.setClientSecret(tenantPropertiesService.getTenantProps().getSecurity().getDefaultClientSecret());
+        resource.setClientSecret(applicationProperties.getDefaultClientSecret());
         resource.setAccessTokenUri(ACCESS_TOKEN_URL);
 
         OAuth2RestTemplate oAuth2RestTemplate = new OAuth2RestTemplate(resource, oauth2ClientContext);

@@ -199,6 +199,7 @@ application:
     client-grant-types: client_credentials, refresh_token, password, tfa_otp_token, authorization_code, idp_token
     client-scope: openid
     default-client-id: internal
+    default-client-secret: aW50ZXJuYWw6aW50ZXJuYWw=
     connect-timeout-millis: 5000
     read-timeout-millis: 25000
     timelines-enabled: true
