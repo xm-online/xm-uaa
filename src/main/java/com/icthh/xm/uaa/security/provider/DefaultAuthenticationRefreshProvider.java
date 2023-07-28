@@ -1,5 +1,9 @@
 package com.icthh.xm.uaa.security.provider;
 
+import com.icthh.xm.commons.lep.LogicExtensionPoint;
+import com.icthh.xm.commons.lep.spring.LepService;
+import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
+import com.icthh.xm.uaa.lep.keyresolver.OptionalProfileHeaderResolver;
 import com.icthh.xm.uaa.security.AuthenticationRefreshProvider;
 import com.icthh.xm.uaa.security.DomainUserDetails;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,10 +21,13 @@ import static com.icthh.xm.uaa.config.Constants.AUTH_TENANT_KEY;
 import static com.icthh.xm.uaa.config.Constants.AUTH_USER_KEY;
 
 @Component
+@LepService(group = "security.provider")
+@IgnoreLogginAspect
 public class DefaultAuthenticationRefreshProvider implements AuthenticationRefreshProvider {
 
     @SuppressWarnings("unchecked")
     @Override
+    @LogicExtensionPoint(value = "Refresh", resolver = OptionalProfileHeaderResolver.class)
     public Authentication refresh(OAuth2Authentication authentication) {
         Object detailsValue = authentication.getDetails();
         if (detailsValue instanceof Map) {
