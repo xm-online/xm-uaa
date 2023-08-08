@@ -89,8 +89,8 @@ public class UserQueryService extends QueryService<User> {
             ofNullable(filterQuery.getActivated()).map(fn -> buildSpecification(fn, User_.activated)),
             ofNullable(filterQuery.getAuthority()).map(fn -> buildSpecification(fn, root -> root.get(User_.AUTHORITIES).as(String.class)))
         );
-        List<Optional<Specification<User>>> dataAttributes = buildDataAttributes(filterQuery.getDataAttributes());
-        return Stream.concat(filters, dataAttributes.stream());
+        Stream<Optional<Specification<User>>> dataAttributes = buildDataAttributes(filterQuery.getDataAttributes());
+        return Stream.concat(filters, dataAttributes);
     }
 
     private Specification<User> getLoginSpecificationForStrict(StringFilter loginFilter) {
@@ -182,13 +182,10 @@ public class UserQueryService extends QueryService<User> {
         };
     }
 
-    private List<Optional<Specification<User>>> buildDataAttributes(List<DataAttributeCriteria> dataAttributes) {
-        List<Optional<Specification<User>>> specs = new ArrayList<>();
-        for (DataAttributeCriteria dataAttributeCriteria : dataAttributes) {
-            Specification<User> spec = buildDataSpecification(dataAttributeCriteria);
-            specs.add(Optional.of(spec));
-        }
-        return specs;
+    private Stream<Optional<Specification<User>>> buildDataAttributes(List<DataAttributeCriteria> dataAttributes) {
+        return dataAttributes.stream()
+            .map(this::buildDataSpecification)
+            .map(Optional::ofNullable);
     }
 
     protected Specification<User> buildDataSpecification(DataAttributeCriteria dataAttributeCriteria) {

@@ -1,8 +1,11 @@
 package com.icthh.xm.uaa.config.xm;
 
 import com.icthh.xm.commons.migration.db.jsonb.CustomExpression;
+import com.icthh.xm.commons.migration.db.jsonb.JsonbExpression;
+import com.icthh.xm.commons.migration.db.jsonb.OracleExpression;
 import lombok.extern.slf4j.Slf4j;
 import org.mockito.Mockito;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.cloud.client.loadbalancer.RestTemplateCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -63,9 +66,17 @@ public class XmOverrideConfiguration {
     }
 
     @Bean
-    @Primary
-    public CustomExpression customExpression() {
-        return Mockito.mock(CustomExpression.class);
+    @ConditionalOnExpression("'${spring.datasource.url}'.startsWith('jdbc:postgresql:')")
+    public CustomExpression jsonbExpression() {
+        log.info("Init JsonbExpression");
+        return new JsonbExpression();
+    }
+
+    @Bean
+    @ConditionalOnExpression("'${spring.datasource.url}'.startsWith('jdbc:oracle:')")
+    public CustomExpression oracleExpression() {
+        log.info("Init OracleExpression");
+        return new OracleExpression();
     }
 
 }

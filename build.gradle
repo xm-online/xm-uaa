@@ -368,6 +368,8 @@ dependencies {
     testImplementation "junit:junit"
     testImplementation "org.mockito:mockito-core"
     testImplementation "org.hamcrest:hamcrest-library"
+    testImplementation "org.postgresql:postgresql"
+    testImplementation 'com.oracle.ojdbc:ojdbc8:19.3.0.0'
     testImplementation "com.h2database:h2"
     liquibaseRuntime "com.h2database:h2"
 
@@ -376,6 +378,9 @@ dependencies {
     testAnnotationProcessor "org.projectlombok:lombok:${lombok_version}"
     testImplementation "org.zapodot:embedded-ldap-junit:${embedded_ldap_version}"
 
+    testImplementation "org.testcontainers:testcontainers:${testcontainers}"
+    testImplementation "org.testcontainers:postgresql:${testcontainers_postgres}"
+    testImplementation "org.testcontainers:oracle-xe:${testcontainers_oracle}"
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 }
 

@@ -37,6 +37,8 @@
     <include file="classpath:config/liquibase/changelog/20210906123500_add_last_login_date_field.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20220819125200_add_password_attempts.xml" relativeToChangelogFile="false" />
     <include file="classpath:config/liquibase/changelog/20230216125200_change_user_name_length.xml" relativeToChangelogFile="false" />
+    <include file="classpath:config/liquibase/changelog/20230731165500_add_data_field_jsonb.xml" relativeToChangelogFile="false"/>
+
     <!-- jhipster-needle-liquibase-add-changelog - JHipster will add liquibase changelogs here -->
     <!-- jhipster-needle-liquibase-add-constraints-changelog - JHipster will add liquibase constraints changelogs here -->
 </databaseChangeLog>
