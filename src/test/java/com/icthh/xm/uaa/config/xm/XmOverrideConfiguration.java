@@ -1,7 +1,11 @@
 package com.icthh.xm.uaa.config.xm;
 
+import com.icthh.xm.commons.migration.db.jsonb.CustomExpression;
+import com.icthh.xm.commons.migration.db.jsonb.JsonbExpression;
+import com.icthh.xm.commons.migration.db.jsonb.OracleExpression;
 import lombok.extern.slf4j.Slf4j;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.loadbalancer.RestTemplateCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,6 +41,9 @@ public class XmOverrideConfiguration {
         "fmiXN/69ssMZSyCx3QBmkrKmC2Fx\n" +
         "-----END CERTIFICATE-----";
 
+    @Value("${spring.datasource.url}")
+    private String jdbcUrl;
+
     @Bean
     @Primary
     public RestTemplate loadBalancedRestTemplate(RestTemplateCustomizer customizer) {
@@ -59,6 +66,17 @@ public class XmOverrideConfiguration {
             Mockito.eq(String.class)))
             .thenReturn(new ResponseEntity<>(BODY, HttpStatus.OK));
         return template;
+    }
+
+    @Bean
+    public CustomExpression customExpression() {
+        if (jdbcUrl.startsWith("jdbc:oracle:")) {
+            log.info("Init OracleExpression");
+            return new OracleExpression();
+        } else {
+            log.info("Init JsonbExpression");
+            return new JsonbExpression();
+        }
     }
 
 }

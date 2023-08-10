@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNullElse;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.icthh.xm.commons.migration.db.jsonb.Jsonb;
 import com.icthh.xm.uaa.domain.converter.MapToStringConverter;
 import com.icthh.xm.uaa.domain.converter.RoleKeyConverter;
 import com.icthh.xm.uaa.validator.JsonData;
@@ -131,6 +132,15 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column
     private List<String> authorities;
 
+    /**
+     * Data property represents entity fields as JSON structure. Fields specified by
+     * Formly and could use them for form building.
+     *
+     * Field that stored in postgres as jsonb, and in other as varchar.
+     * For postgres it's object and for other db need to string converter.
+     * @see com.icthh.xm.commons.migration.db.jsonb.JsonbTypeRegistrator
+     */
+    @Jsonb
     @Convert(converter = MapToStringConverter.class)
     @Column(name = "data")
     private Map<String, Object> data = new HashMap<>();
