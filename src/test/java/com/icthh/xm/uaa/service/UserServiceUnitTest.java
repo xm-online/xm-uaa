@@ -525,6 +525,11 @@ public class UserServiceUnitTest {
             public Map<String, Object> getDecodedDetails() {
                 return null;
             }
+
+            @Override
+            public Optional<String> getTenantName() {
+                return Optional.empty();
+            }
         };
     }
 

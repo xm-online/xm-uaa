@@ -1,13 +1,16 @@
 package com.icthh.xm.uaa.service.query;
 
+import com.icthh.xm.commons.migration.db.jsonb.CustomExpression;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLogin_;
 import com.icthh.xm.uaa.domain.User_;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.service.dto.UserDTO;
+import com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria;
 import com.icthh.xm.uaa.service.query.filter.SoftUserFilterQuery;
 import com.icthh.xm.uaa.service.query.filter.StrictUserFilterQuery;
+import io.github.jhipster.service.Criteria;
 import io.github.jhipster.service.QueryService;
 import io.github.jhipster.service.filter.StringFilter;
 import lombok.RequiredArgsConstructor;
@@ -22,13 +25,19 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Root;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.Operation.CONTAINS;
+import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.Operation.EQUALS;
+import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.ValueType.BOOLEAN;
+import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.ValueType.NUMBER;
 import static java.util.Optional.ofNullable;
 
 @Service
@@ -37,6 +46,7 @@ import static java.util.Optional.ofNullable;
 public class UserQueryService extends QueryService<User> {
 
     private final UserRepository userRepository;
+    private final CustomExpression customExpression;
 
     public Page<UserDTO> findAllUsersByStrictMatch(StrictUserFilterQuery filterQuery, Pageable pageable) {
         Specification<User> specification = createStrictSpecification(filterQuery);
@@ -71,7 +81,7 @@ public class UserQueryService extends QueryService<User> {
     }
 
     private Stream<Optional<Specification<User>>> createStrictSpecs(StrictUserFilterQuery filterQuery) {
-        return Stream.of(
+        Stream<Optional<Specification<User>>> filters = Stream.of(
             ofNullable(filterQuery.getLogin()).map(this::getLoginSpecificationForStrict),
             ofNullable(filterQuery.getLastName()).map(ln -> buildStringSpecification(ln, User_.lastName)),
             ofNullable(filterQuery.getFirstName()).map(fn -> buildStringSpecification(fn, User_.firstName)),
@@ -79,6 +89,8 @@ public class UserQueryService extends QueryService<User> {
             ofNullable(filterQuery.getActivated()).map(fn -> buildSpecification(fn, User_.activated)),
             ofNullable(filterQuery.getAuthority()).map(fn -> buildSpecification(fn, root -> root.get(User_.AUTHORITIES).as(String.class)))
         );
+        Stream<Optional<Specification<User>>> dataAttributes = buildDataAttributes(filterQuery.getDataAttributes());
+        return Stream.concat(filters, dataAttributes);
     }
 
     private Specification<User> getLoginSpecificationForStrict(StringFilter loginFilter) {
@@ -169,4 +181,50 @@ public class UserQueryService extends QueryService<User> {
             return predicate;
         };
     }
+
+    private Stream<Optional<Specification<User>>> buildDataAttributes(List<DataAttributeCriteria> dataAttributes) {
+        return dataAttributes.stream()
+            .map(this::buildDataSpecification)
+            .map(Optional::ofNullable);
+    }
+
+    protected Specification<User> buildDataSpecification(DataAttributeCriteria dataAttributeCriteria) {
+        if (dataAttributeCriteria.getOperation() == EQUALS) {
+            return equalsDataSpecification(dataAttributeCriteria);
+        } else if (dataAttributeCriteria.getOperation() == CONTAINS) {
+            return likeDataSpecification(dataAttributeCriteria);
+        }
+        return null;
+    }
+
+    protected Specification<User> equalsDataSpecification(DataAttributeCriteria dataAttributeCriteria) {
+        return (root, query, cb) -> {
+            Expression<?> dataExpression = buildDataExpression(dataAttributeCriteria, root, cb);
+            Expression<?> expression = customExpression.toExpression(cb, findValueByType(dataAttributeCriteria));
+            return cb.equal(dataExpression, expression);
+        };
+    }
+
+    protected Specification<User> likeDataSpecification(DataAttributeCriteria dataAttributeCriteria) {
+        return (root, query, cb) -> {
+            Expression<?> stringExpression = buildDataExpression(dataAttributeCriteria, root, cb);
+            return cb.like(cb.upper(stringExpression.as(String.class)), wrapLikeQuery(dataAttributeCriteria.getValue()));
+        };
+    }
+
+    protected Expression<?> buildDataExpression(DataAttributeCriteria dataAttributeCriteria, Root<User> root, CriteriaBuilder builder) {
+        String jsonPath = "'$." + dataAttributeCriteria.getPath() + "'";
+        return customExpression.jsonQuery(builder, root, User_.DATA, jsonPath);
+    }
+
+    private Object findValueByType(DataAttributeCriteria dataAttributeCriteria) {
+        if (NUMBER == dataAttributeCriteria.getType()) {
+            return Double.valueOf(dataAttributeCriteria.getValue());
+        } else if (BOOLEAN == dataAttributeCriteria.getType()) {
+            return Boolean.valueOf(dataAttributeCriteria.getValue());
+        }
+
+        return dataAttributeCriteria.getValue();
+    }
+
 }
