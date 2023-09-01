@@ -58,7 +58,7 @@ spring:
             hibernate.cache.use_second_level_cache: false
             hibernate.cache.use_query_cache: false
             hibernate.generate_statistics: true
-            hibernate.hbm2ddl.auto: validate
+            hibernate.hbm2ddl.auto: none
             hibernate.jdbc.time_zone: UTC
             # see org.hibernate.cfg.AvailableSettings.PREFER_GENERATOR_NAME_AS_DEFAULT_SEQUENCE_NAME
             hibernate.model.generator_name_as_sequence_name: false
@@ -136,9 +136,13 @@ xm-config:
 application:
     timeline-ignored-http-methods:
     audit-events-enabled: false
+    domain-event:
+        enabled: false
     kafka-system-topic: system_topic
     kafka-system-queue: system_queue
     kafka-enabled: false
+#    kafka-metadata-max-age: 6000 #in milliseconds
+    auto-system-queue-enabled: false
     tenant-properties-path-pattern: /config/tenants/{tenantName}/uaa/${application.tenant-properties-name}
     tenant-properties-name: uaa.yml
     tenant-login-properties-path-pattern: /config/tenants/{tenantName}/uaa/${application.tenant-login-properties-name}

@@ -4,8 +4,8 @@ import static com.icthh.xm.uaa.config.Constants.SYSTEM_EVENT_PROP_IMAGE_URL;
 import static com.icthh.xm.uaa.config.Constants.SYSTEM_EVENT_PROP_LAST_MODIFIED_DATE;
 import static com.icthh.xm.uaa.config.Constants.SYSTEM_EVENT_PROP_ROLE_KEY;
 
+import com.icthh.xm.commons.messaging.event.system.SystemEvent;
 import com.icthh.xm.uaa.domain.User;
-import com.icthh.xm.uaa.domain.kafka.SystemEvent;
 
 import java.time.Instant;
 import java.util.Map;

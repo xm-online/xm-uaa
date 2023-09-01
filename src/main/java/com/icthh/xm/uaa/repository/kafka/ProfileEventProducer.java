@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.icthh.xm.commons.logging.util.MdcUtils;
+import com.icthh.xm.commons.messaging.event.system.SystemEvent;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
-import com.icthh.xm.uaa.domain.kafka.SystemEvent;
 
 import java.time.Instant;
 

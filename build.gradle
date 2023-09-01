@@ -339,6 +339,9 @@ dependencies {
     implementation "com.icthh.xm.commons:xm-commons-logging-trace:${xm_commons_version}"
     implementation "com.icthh.xm.commons:xm-commons-topic:${xm_commons_version}"
     implementation "com.icthh.xm.commons:xm-commons-messaging:${xm_commons_version}"
+    implementation "com.icthh.xm.commons:xm-commons-domainevent:${xm_commons_version}"
+    implementation "com.icthh.xm.commons:xm-commons-domainevent-db:${xm_commons_version}"
+    implementation "com.icthh.xm.commons:xm-commons-domainevent-outbox:${xm_commons_version}"
 
     implementation ("org.codehaus.groovy.modules.http-builder:http-builder:0.7.1") {
         exclude group: "commons-beanutils"
