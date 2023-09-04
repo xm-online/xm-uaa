@@ -206,7 +206,7 @@ application:
     read-timeout-millis: 25000
     timelines-enabled: true
     domain-event:
-        enabled: true
+        enabled: false
     db-schema-suffix:
     lep:
         tenant-script-storage: XM_MS_CONFIG
