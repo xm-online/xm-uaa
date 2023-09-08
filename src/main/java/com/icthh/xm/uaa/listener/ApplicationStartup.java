@@ -1,10 +1,10 @@
 package com.icthh.xm.uaa.listener;
 
+import com.icthh.xm.commons.domainevent.db.service.kafka.SystemQueueConsumer;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.commons.permission.domain.EnvironmentVariable;
 import com.icthh.xm.commons.permission.inspector.PrivilegeInspector;
 import com.icthh.xm.uaa.config.ApplicationProperties;
-import com.icthh.xm.uaa.repository.kafka.SystemQueueConsumer;
 import com.icthh.xm.uaa.repository.kafka.SystemTopicConsumer;
 import com.icthh.xm.uaa.service.EnvironmentService;
 import lombok.RequiredArgsConstructor;

@@ -187,6 +187,8 @@ application:
     kafka-system-topic: system_topic
     kafka-system-queue: system_queue
     kafka-enabled: true
+    kafka-metadata-max-age: 60000 #in milliseconds
+    auto-system-queue-enabled: true
     retry:
         max-attempts: 3
         delay: 1000 #in milliseconds
@@ -203,6 +205,8 @@ application:
     connect-timeout-millis: 5000
     read-timeout-millis: 25000
     timelines-enabled: true
+    domain-event:
+        enabled: false
     db-schema-suffix:
     lep:
         tenant-script-storage: XM_MS_CONFIG

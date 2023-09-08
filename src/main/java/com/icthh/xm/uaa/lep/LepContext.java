@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.lep;
 
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
+import com.icthh.xm.commons.domainevent.outbox.service.OutboxTransportService;
 import com.icthh.xm.commons.lep.BaseProceedingLep;
 import com.icthh.xm.commons.lep.spring.LepThreadHelper;
 import com.icthh.xm.commons.lep.spring.lepservice.LepServiceFactory;
@@ -40,6 +41,7 @@ public class LepContext {
     public LepServices services;
     public LepTemplates templates;
     public TraceService traceService;
+    public OutboxTransportService outboxTransportService;
 
     public static class LepServices {
         UserLoginService userLoginService;

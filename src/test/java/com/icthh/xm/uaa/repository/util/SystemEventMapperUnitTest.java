@@ -1,7 +1,7 @@
 package com.icthh.xm.uaa.repository.util;
 
+import com.icthh.xm.commons.messaging.event.system.SystemEvent;
 import com.icthh.xm.uaa.domain.User;
-import com.icthh.xm.uaa.domain.kafka.SystemEvent;
 import org.junit.Test;
 
 import java.time.Instant;

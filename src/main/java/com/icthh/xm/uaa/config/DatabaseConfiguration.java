@@ -4,6 +4,7 @@ import static com.icthh.xm.uaa.config.Constants.CHANGE_LOG_PATH;
 import static org.hibernate.cfg.AvailableSettings.JPA_VALIDATION_FACTORY;
 
 import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
+import com.icthh.xm.commons.domainevent.db.config.DatabaseSourceInterceptorCustomizer;
 import com.icthh.xm.commons.migration.db.XmMultiTenantSpringLiquibase;
 import com.icthh.xm.commons.migration.db.XmSpringLiquibase;
 import com.icthh.xm.commons.migration.db.tenant.SchemaResolver;
@@ -29,6 +30,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.lang.Nullable;
 import org.springframework.orm.hibernate5.SpringBeanContainer;
 import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -52,6 +54,8 @@ public class DatabaseConfiguration {
     private final Logger log = LoggerFactory.getLogger(DatabaseConfiguration.class);
 
     private static final String JPA_PACKAGES = "com.icthh.xm.uaa.domain";
+
+    private static final String OUTBOX_JPA_PACKAGES = "com.icthh.xm.commons.domainevent.outbox.domain";
 
     private final Environment env;
     private final JpaProperties jpaProperties;
@@ -125,7 +129,8 @@ public class DatabaseConfiguration {
                                                                        MultiTenantConnectionProvider multiTenantConnectionProviderImpl,
                                                                        CurrentTenantIdentifierResolver currentTenantIdentifierResolverImpl,
                                                                        LocalValidatorFactoryBean localValidatorFactoryBean,
-                                                                       ConfigurableListableBeanFactory beanFactory) {
+                                                                       ConfigurableListableBeanFactory beanFactory,
+                                                                       @Nullable DatabaseSourceInterceptorCustomizer databaseSourceInterceptorCustomizer) {
         Map<String, Object> properties = new HashMap<>(jpaProperties.getProperties());
         properties.put(org.hibernate.cfg.Environment.MULTI_TENANT, MultiTenancyStrategy.SCHEMA);
         properties.put(org.hibernate.cfg.Environment.MULTI_TENANT_CONNECTION_PROVIDER,
@@ -134,10 +139,13 @@ public class DatabaseConfiguration {
                        currentTenantIdentifierResolverImpl);
         properties.put(JPA_VALIDATION_FACTORY, localValidatorFactoryBean);
         properties.put(AvailableSettings.BEAN_CONTAINER, new SpringBeanContainer(beanFactory));
+        if (databaseSourceInterceptorCustomizer != null) {
+            databaseSourceInterceptorCustomizer.customize(properties);
+        }
 
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource);
-        em.setPackagesToScan(JPA_PACKAGES);
+        em.setPackagesToScan(JPA_PACKAGES, OUTBOX_JPA_PACKAGES);
         em.setJpaVendorAdapter(jpaVendorAdapter());
         em.setJpaPropertyMap(properties);
         return em;

@@ -34,6 +34,7 @@ public class ApplicationProperties {
     private String kafkaSystemTopic;
     private String kafkaSystemQueue;
     private boolean kafkaEnabled;
+    private Integer kafkaMetadataMaxAge;
     private String tenantPropertiesPathPattern;
     private String tenantPropertiesName;
     private String tenantLoginPropertiesPathPattern;
@@ -54,6 +55,8 @@ public class ApplicationProperties {
     private String keystoreKeyName = "selfsigned";
     private boolean auditEventsEnabled;
     private boolean lastLoginDateEnabled;
+    private DomainEvent domainEvent;
+    private Boolean autoSystemQueueEnabled;
 
     @Getter
     @Setter
@@ -97,5 +100,11 @@ public class ApplicationProperties {
     @Setter
     public static class Communication {
         private boolean enabled;
+    }
+
+    @Getter
+    @Setter
+    public static class DomainEvent {
+        private Boolean enabled;
     }
 }
