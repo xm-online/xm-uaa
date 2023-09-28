@@ -27,6 +27,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -83,6 +84,7 @@ public class RoleResourceIntTest {
     @SneakyThrows
     public void testRestGetRoleMatrixWithCustomPrivileges(){
         restMvc.perform(get("/api/roles/matrix"))
+            .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.roles").isArray())
             .andExpect(jsonPath("$.roles", hasSize(3)))
@@ -95,6 +97,17 @@ public class RoleResourceIntTest {
                                                    "Privilege to get custom privilege",
                                                    "Privilege to edit custom privilege")));
 
+    }
+
+    @Test
+    @SneakyThrows
+    public void testRestGetRoles(){
+        restMvc.perform(get("/api/roles"))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(3)))
+            .andExpect(jsonPath("$[1].name.en").value("Administrative"))
+            .andExpect(jsonPath("$[1].name.uk").value("Адміністратор"));
     }
 
     @Test
