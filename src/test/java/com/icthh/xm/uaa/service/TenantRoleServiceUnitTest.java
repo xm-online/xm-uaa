@@ -118,7 +118,7 @@ public class TenantRoleServiceUnitTest {
         assertEquals("test2", tenantRoleService.getRoles().get(SUPER_ADMIN).getDescription());
 
         when(tenantConfigRepository.getConfigFullPath(XM_TENANT, ROLES_PATH))
-            .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
+            .thenReturn("---");
         assertTrue(tenantRoleService.getRoles().isEmpty());
 
         verify(tenantConfigRepository, times(6)).getConfigFullPath(eq(XM_TENANT), anyString());
@@ -146,7 +146,7 @@ public class TenantRoleServiceUnitTest {
         assertEquals("ATTACHMENT.CREATE", tenantRoleService.getRolePermissions(roleKey).get(0).getPrivilegeKey());
 
         when(tenantConfigRepository.getConfigFullPath(XM_TENANT, PERMISSIONS_PATH))
-            .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
+            .thenReturn("");
         assertTrue(tenantRoleService.getRolePermissions(roleKey).isEmpty());
 
         verify(tenantConfigRepository, times(7)).getConfigFullPath(eq(XM_TENANT), eq(PERMISSIONS_PATH));
@@ -365,6 +365,14 @@ public class TenantRoleServiceUnitTest {
 
         verify(tenantConfigRepository)
             .updateConfigFullPath(XM_TENANT, PERMISSIONS_PATH, readConfigFile("/RoleResourceIntTest/updatedPermissions.yml"));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testUpdateRole_shouldThrowException_ifRoleYamlCouldNotBeRetrieved() {
+        when(tenantConfigRepository.getConfigFullPath(XM_TENANT, ROLES_PATH))
+            .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
+
+        tenantRoleService.updateRole(new RoleDTO());
     }
 
     private void updateRoleMoks() {
