@@ -107,6 +107,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
                 .antMatchers("/api/**").authenticated()
                 .antMatchers("/management/health").permitAll()
                 .antMatchers("/management/prometheus").permitAll()
+                .antMatchers("/management/info").permitAll()
                 .antMatchers("/management/**").hasAuthority(RoleConstant.SUPER_ADMIN)
                 .antMatchers("/v2/api-docs/**").permitAll()
                 .antMatchers("/swagger-resources/configuration/ui").permitAll()
