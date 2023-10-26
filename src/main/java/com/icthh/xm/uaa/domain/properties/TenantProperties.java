@@ -45,7 +45,7 @@ public class TenantProperties {
     private Security security = new Security();
 
     @JsonProperty("userSpec")
-    private List<UserSpec> userSpec;
+    private List<UserSpec> userSpec = new ArrayList<>();
 
 
     @Getter

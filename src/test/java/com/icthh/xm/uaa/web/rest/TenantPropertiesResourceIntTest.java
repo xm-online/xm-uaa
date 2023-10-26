@@ -132,4 +132,17 @@ public class TenantPropertiesResourceIntTest {
 
     }
 
+    @Test
+    @SneakyThrows
+    public void testNullUserSpec() {
+        tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
+            new ObjectMapper(new YAMLFactory()).writeValueAsString(new TenantProperties()));
+
+        restMvc.perform(get("/api/uaa/properties/data-schema/ROLE_1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.roleKey").value("ROLE_1"))
+            .andExpect(jsonPath("$.dataSpec").doesNotExist())
+            .andExpect(jsonPath("$.dataForm").doesNotExist());
+    }
+
 }
