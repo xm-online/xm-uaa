@@ -111,7 +111,7 @@ public class MailServiceUnitTest {
     private MimeMessage sendEmail() {
         when(tenantContextHolder.getPrivilegedContext()).thenReturn(mock(PrivilegedTenantContext.class));
         when(messageSource.getMessage(MOCK_SUBJECT, null, forLanguageTag("fr"))).thenReturn(MOCK_SUBJECT);
-        when(tenantEmailTemplateService.getEmailTemplate(TENANT_KEY + "/" + FRANCE.getLanguage() + "/" + EMAIL_TEMPLATE)).thenReturn(TEST_TEMPLATE_CONTENT);
+        when(tenantEmailTemplateService.getEmailTemplate(TENANT_KEY, FRANCE.getLanguage(), EMAIL_TEMPLATE)).thenReturn(TEST_TEMPLATE_CONTENT);
         when(applicationProperties.getCommunication()).thenReturn(appCommunication);
         when(appCommunication.isEnabled()).thenReturn(FALSE);
         MimeMessage mock = mock(MimeMessage.class);
