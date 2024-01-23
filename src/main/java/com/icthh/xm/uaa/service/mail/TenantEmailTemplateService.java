@@ -24,6 +24,7 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
     private static final String FILE_NAME = "fileName";
     private static final String LANG_KEY = "langKey";
     private static final String TENANT_NAME = "tenantName";
+    private static final String DEFAULT_LANG = "en";
 
     private ConcurrentHashMap<String, String> emailTemplates = new ConcurrentHashMap<>();
     private final AntPathMatcher matcher = new AntPathMatcher();
@@ -33,15 +34,19 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
     /**
      * Search email template by email template key.
      *
-     * @param emailTemplateKey search key
+     * @param tenantKey    tenant key
+     * @param langKey      language key
+     * @param templateName template name
      * @return email template
      */
     @LoggingAspectConfig(resultDetails = false)
-    public String getEmailTemplate(String emailTemplateKey) {
-        if (!emailTemplates.containsKey(emailTemplateKey)) {
+    public String getEmailTemplate(String tenantKey, String langKey, String templateName) {
+        String emailTemplateKey = EmailTemplateUtil.emailTemplateKey(tenantKey, langKey, templateName);
+        String defaultEmailTemplateKey = EmailTemplateUtil.emailTemplateKey(tenantKey, DEFAULT_LANG, templateName);
+        if (!emailTemplates.containsKey(emailTemplateKey) && !emailTemplates.containsKey(defaultEmailTemplateKey)) {
             throw new IllegalArgumentException("Email template was not found");
         }
-        return emailTemplates.get(emailTemplateKey);
+        return emailTemplates.getOrDefault(emailTemplateKey, emailTemplates.get(defaultEmailTemplateKey));
     }
 
     @Override

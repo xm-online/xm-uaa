@@ -337,13 +337,13 @@ public class MailService {
             return;
         }
 
-        String templateKey = EmailTemplateUtil.emailTemplateKey(tenantKey, user.getLangKey(), templateName);
-        String emailTemplate = tenantEmailTemplateService.getEmailTemplate(templateKey);
+        String emailTemplate = tenantEmailTemplateService.getEmailTemplate(tenantKey.getValue(), user.getLangKey(), templateName);
         Locale locale = forLanguageTag(user.getLangKey());
 
         try {
             tenantContextHolder.getPrivilegedContext().setTenant(new PlainTenant(tenantKey));
 
+            String templateKey = EmailTemplateUtil.emailTemplateKey(tenantKey, user.getLangKey(), templateName);
             Template mailTemplate = new Template(templateKey, emailTemplate, freeMarker);
             String content = FreeMarkerTemplateUtils.processTemplateIntoString(mailTemplate, objectModel);
             String subject = messageSource.getMessage(titleKey, null, locale);
