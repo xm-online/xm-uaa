@@ -343,6 +343,10 @@ dependencies {
     implementation "com.icthh.xm.commons:xm-commons-domainevent-db:${xm_commons_version}"
     implementation "com.icthh.xm.commons:xm-commons-domainevent-outbox:${xm_commons_version}"
 
+    implementation "io.undertow:undertow-core:${undertow_version}"
+    implementation "io.undertow:undertow-servlet:${undertow_version}"
+    implementation "io.undertow:undertow-websockets-jsr:${undertow_version}"
+
     implementation ("org.codehaus.groovy.modules.http-builder:http-builder:0.7.1") {
         exclude group: "commons-beanutils"
     }
