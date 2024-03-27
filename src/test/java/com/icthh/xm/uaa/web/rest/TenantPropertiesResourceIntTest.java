@@ -96,11 +96,15 @@ public class TenantPropertiesResourceIntTest {
         tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
             new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
 
-        this.restMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        this.restMvc = MockMvcBuilders.standaloneSetup(new TenantPropertiesResource(tenantPropertiesService))
+            .setControllerAdvice(exceptionTranslator)
+            .build();
     }
 
     @Test
     public void testGetUaaPublicSettings() throws Exception {
+        // to apply all filters and configurations
+        this.restMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
 
         restMvc.perform(get("/api/uaa/properties/settings-public"))
             .andDo(print())
