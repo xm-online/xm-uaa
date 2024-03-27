@@ -50,6 +50,7 @@ import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.session.SessionManagementFilter;
 import org.springframework.web.filter.CorsFilter;
 
 import javax.servlet.http.HttpServletResponse;
@@ -74,6 +75,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
 
         private final TokenStore tokenStore;
         private final CorsFilter corsFilter;
+        private final NoSessionCreationFilter noSessionCreationFilter;
 
         @Override
         public void configure(HttpSecurity http) throws Exception {
@@ -85,6 +87,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
                 .csrf()
                 .disable()
                 .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(noSessionCreationFilter, SessionManagementFilter.class)
                 .headers()
                 .frameOptions()
                 .disable()
