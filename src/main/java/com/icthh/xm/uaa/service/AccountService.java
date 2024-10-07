@@ -6,14 +6,20 @@ import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.security.XmAuthenticationContext;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
+import com.icthh.xm.uaa.config.Constants;
+import com.icthh.xm.uaa.domain.GrantType;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.RegistrationLog;
 import com.icthh.xm.uaa.domain.User;
+import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.repository.RegistrationLogRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
+import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
 import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
+import com.icthh.xm.uaa.service.dto.UserPassDto;
 import com.icthh.xm.uaa.service.util.RandomUtil;
+import com.icthh.xm.uaa.web.rest.vm.AuthorizeUserVm;
 import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
 import lombok.AllArgsConstructor;
@@ -28,6 +34,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.icthh.xm.uaa.config.Constants.LOGIN_NOT_PROVIDED_CODE;
+
 @LepService(group = "service.account")
 @Transactional
 @AllArgsConstructor
@@ -40,6 +48,8 @@ public class AccountService {
     private final XmAuthenticationContextHolder authContextHolder;
     private final TenantPropertiesService tenantPropertiesService;
     private final UserService userService;
+    private final UserLoginService userLoginService;
+    private final ProfileEventProducer profileEventProducer;
 
     /**
      * Register new user.
@@ -49,14 +59,13 @@ public class AccountService {
      */
     @Transactional
     @LogicExtensionPoint("Register")
-    public User register(ManagedUserVM user, String ipAddress) {
-        userService.validatePassword(user.getPassword());
-        String encryptedPassword = passwordEncoder.encode(user.getPassword());
+    public User register(UserDTO user, String ipAddress) {
+        UserPassDto userPassDto = getOrGeneratePassword(user);
 
         User newUser = new User();
         newUser.setUserKey(UUID.randomUUID().toString());
-        newUser.setPassword(encryptedPassword);
-        newUser.setPasswordSetByUser(true);
+        newUser.setPassword(userPassDto.getEncryptedPassword());
+        newUser.setPasswordSetByUser(userPassDto.getSetByUser());
         newUser.setFirstName(user.getFirstName());
         newUser.setLastName(user.getLastName());
         newUser.setImageUrl(user.getImageUrl());
@@ -72,6 +81,27 @@ public class AccountService {
         registrationLogRepository.save(new RegistrationLog(ipAddress));
 
         return resultUser;
+    }
+
+    public User registerUser(UserDTO user, String remoteAddress) {
+        userLoginService.normalizeLogins(user.getLogins());
+        userLoginService.verifyLoginsNotExist(user.getLogins());
+
+        User newUser = register(user, remoteAddress);
+        produceEvent(new UserDTO(newUser), Constants.CREATE_PROFILE_EVENT_TYPE);
+        return newUser;
+    }
+
+    public String authorizeAccount(AuthorizeUserVm authorizeUserVm, String remoteAddr) {
+        User user = userService.findOneByLogin(findFirstUserLogin(authorizeUserVm))
+            .orElseGet(() -> registerUser(authorizeUserVm, remoteAddr));
+
+        if (user.getPasswordSetByUser() == Boolean.TRUE) {
+            return GrantType.PASSWORD.getValue();
+        } else {
+            // todo: send otp
+            return GrantType.OTP.getValue();
+        }
     }
 
     /**
@@ -174,5 +204,26 @@ public class AccountService {
     @Transactional
     public Map<OtpChannelType, List<TfaOtpChannelSpec>> getTfaAvailableOtpChannelSpecs() {
         return userService.getTfaAvailableOtpChannelSpecs(getRequiredUserKey());
+    }
+
+    public void produceEvent(UserDTO userDto, String eventType) {
+        String content = profileEventProducer.createEventJson(userDto, eventType);
+        profileEventProducer.send(content);
+    }
+
+    private UserPassDto getOrGeneratePassword(UserDTO user) {
+        if (user instanceof ManagedUserVM) {
+            ManagedUserVM managedUser = (ManagedUserVM) user;
+            userService.validatePassword(managedUser.getPassword());
+            return new UserPassDto(passwordEncoder.encode(managedUser.getPassword()), true);
+        }
+        return new UserPassDto(passwordEncoder.encode(UUID.randomUUID().toString()), false);
+    }
+
+    private String findFirstUserLogin(AuthorizeUserVm authorizeUserVm) {
+        return authorizeUserVm.getLogins().stream()
+            .findFirst()
+            .map(UserLogin::getLogin)
+            .orElseThrow(() -> new BusinessException(LOGIN_NOT_PROVIDED_CODE, Constants.LOGIN_NOT_PROVIDED_ERROR_TEXT));
     }
 }

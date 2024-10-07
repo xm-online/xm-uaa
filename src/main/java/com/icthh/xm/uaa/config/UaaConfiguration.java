@@ -97,6 +97,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
                 .and()
                 .authorizeRequests()
                 .antMatchers("/api/register").permitAll()
+                .antMatchers("/api/authorize").permitAll()
                 .antMatchers("/api/activate").permitAll()
                 .antMatchers("/api/authenticate").permitAll()
                 .antMatchers("/api/is-captcha-need").permitAll()
