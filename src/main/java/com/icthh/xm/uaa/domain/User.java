@@ -67,6 +67,17 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "password_hash", length = 60)
     private String password;
 
+    @JsonIgnore
+    @NotNull
+    @Column(name = "password_set_by_user", nullable = false)
+    private Boolean passwordSetByUser; // wrapper should be used since there isn't default value
+
+    @Column(name = "otp_code", unique = true)
+    private String otpCode;
+
+    @Column(name = "otp_code_creation_cate")
+    private Instant otpCodeCreationDate;
+
     @Size(max = 256)
     @Column(name = "first_name", length = 256)
     private String firstName;
