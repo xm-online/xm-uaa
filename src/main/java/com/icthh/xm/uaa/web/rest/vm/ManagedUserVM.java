@@ -90,7 +90,10 @@ public class ManagedUserVM extends UserDTO {
                          Integer autoLogoutTimeoutSeconds,
                          Instant acceptTocTime,
                          List<String> authorities,
-                         Instant lastLoginDate) {
+                         Instant lastLoginDate,
+                         Boolean passwordSetByUser,
+                         String otpCode,
+                         Instant otpCodeCreationDate) {
 
         super(id,
             firstName,
@@ -117,7 +120,10 @@ public class ManagedUserVM extends UserDTO {
             autoLogoutEnabled,
             autoLogoutTimeoutSeconds,
             acceptTocTime,
-            lastLoginDate);
+            lastLoginDate,
+            passwordSetByUser,
+            otpCode,
+            otpCodeCreationDate);
         this.password = password;
     }
 

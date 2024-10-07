@@ -56,6 +56,7 @@ public class AccountService {
         User newUser = new User();
         newUser.setUserKey(UUID.randomUUID().toString());
         newUser.setPassword(encryptedPassword);
+        newUser.setPasswordSetByUser(true);
         newUser.setFirstName(user.getFirstName());
         newUser.setLastName(user.getLastName());
         newUser.setImageUrl(user.getImageUrl());

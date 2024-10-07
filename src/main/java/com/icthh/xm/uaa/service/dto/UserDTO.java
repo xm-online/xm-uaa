@@ -97,6 +97,15 @@ public class UserDTO {
 
     private Instant lastLoginDate;
 
+    /**
+     * User has set password during registration himself
+     */
+    private Boolean passwordSetByUser;
+
+    private String otpCode;
+
+    private Instant otpCodeCreationDate;
+
     @SuppressWarnings("unused")
     public UserDTO() {
         // Empty constructor needed for Jackson.
@@ -133,7 +142,10 @@ public class UserDTO {
             user.isAutoLogoutEnabled(),
             user.getAutoLogoutTimeoutSeconds(),
             user.getAcceptTocTime(),
-            user.getLastLoginDate()
+            user.getLastLoginDate(),
+            user.getPasswordSetByUser(),
+            user.getOtpCode(),
+            user.getOtpCodeCreationDate()
         );
         OtpUtils.enrichTfaOtpChannelSpec(this);
     }
