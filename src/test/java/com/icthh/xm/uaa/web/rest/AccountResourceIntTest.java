@@ -105,9 +105,6 @@ public class AccountResourceIntTest {
     private UserService userService;
 
     @Autowired
-    private AccountService accountService;
-
-    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -197,6 +194,7 @@ public class AccountResourceIntTest {
         MockitoAnnotations.initMocks(this);
         doNothing().when(mockMailService).sendActivationEmail(any(), anyString(), any(), anyString());
         doNothing().when(profileEventProducer).send(any());
+        when(profileEventProducer.createEventJson(any(), anyString())).thenReturn(StringUtils.EMPTY);
         when(tenantRoleService.getRolePermissions(anyString())).thenReturn(Collections.emptyList());
 
         RegistrationLogRepository registrationLogRepository = mock(RegistrationLogRepository.class);
@@ -205,11 +203,13 @@ public class AccountResourceIntTest {
         CaptchaService captchaService = new CaptchaService(applicationProperties, registrationLogRepository,
             tenantPropertiesService);
 
+        AccountService accountService = new AccountService(userRepository, passwordEncoder, registrationLogRepository,
+            xmAuthenticationContextHolder, tenantPropertiesService, userService, userLoginService, profileEventProducer);
+
         AccountResource accountResource = new AccountResource(userRepository,
             userLoginService,
             userService,
             accountService,
-            profileEventProducer,
             captchaService,
             xmRequestContextHolder,
             tenantContextHolder, tenantPermissionService, accountMailService);
@@ -218,7 +218,6 @@ public class AccountResourceIntTest {
             userLoginService,
             mockUserService,
             accountService,
-            profileEventProducer,
             captchaService,
             xmRequestContextHolder,
             tenantContextHolder, tenantPermissionService, accountMailService);
