@@ -121,7 +121,6 @@ public class ManagedUserVM extends UserDTO {
             autoLogoutTimeoutSeconds,
             acceptTocTime,
             lastLoginDate,
-            passwordSetByUser,
             otpCode,
             otpCodeCreationDate);
         this.password = password;

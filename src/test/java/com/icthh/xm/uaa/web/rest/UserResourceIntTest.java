@@ -1104,7 +1104,7 @@ public class UserResourceIntTest {
             "test", "testRoleKey", List.of("testRoleKey"),
             null, null, null, null,
             null, null, false, null,
-            null, null, true, null, null);
+            null, null, null, null);
         User user = userMapper.userDTOToUser(userDTO);
         assertThat(user.getId()).isEqualTo(DEFAULT_ID);
         assertThat(user.getFirstName()).isEqualTo(DEFAULT_FIRSTNAME);
