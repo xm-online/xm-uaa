@@ -97,11 +97,6 @@ public class UserDTO {
 
     private Instant lastLoginDate;
 
-    /**
-     * User has set password during registration himself
-     */
-    private Boolean passwordSetByUser;
-
     private String otpCode;
 
     private Instant otpCodeCreationDate;

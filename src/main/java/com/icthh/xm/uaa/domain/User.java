@@ -75,7 +75,7 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "otp_code", unique = true)
     private String otpCode;
 
-    @Column(name = "otp_code_creation_cate")
+    @Column(name = "otp_code_creation_date")
     private Instant otpCodeCreationDate;
 
     @Size(max = 256)

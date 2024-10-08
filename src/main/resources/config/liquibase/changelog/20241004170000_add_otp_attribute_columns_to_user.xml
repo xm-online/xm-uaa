@@ -23,7 +23,7 @@
     <changeSet id="20241004170000_2" author="vosiievska">
         <addColumn tableName="jhi_user">
             <column name="otp_code" type="varchar(50)"/>
-            <column name="otp_code_creation_cate" type="timestamp"/>
+            <column name="otp_code_creation_date" type="timestamp"/>
         </addColumn>
     </changeSet>
 
