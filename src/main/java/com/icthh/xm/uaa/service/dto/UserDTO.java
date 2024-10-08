@@ -138,7 +138,6 @@ public class UserDTO {
             user.getAutoLogoutTimeoutSeconds(),
             user.getAcceptTocTime(),
             user.getLastLoginDate(),
-            user.getPasswordSetByUser(),
             user.getOtpCode(),
             user.getOtpCodeCreationDate()
         );

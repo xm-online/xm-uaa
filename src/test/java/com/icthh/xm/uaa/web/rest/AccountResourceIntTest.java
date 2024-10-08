@@ -761,7 +761,7 @@ public class AccountResourceIntTest {
                 null, null, null,
                 null, Collections.singletonList(userLogin),
                 Collections.emptyList(), false, null,
-                null, null, true, null, null);
+                null, null, null, null);
 
             try {
                 restMvc.perform(
@@ -835,7 +835,7 @@ public class AccountResourceIntTest {
                 List.of("test1"),
                 null, null, null, null,
                 Collections.singletonList(userLogin),
-                Collections.emptyList(), false, null, null, null, true, null, null);
+                Collections.emptyList(), false, null, null, null, null, null);
 
             try {
                 restMvc.perform(
