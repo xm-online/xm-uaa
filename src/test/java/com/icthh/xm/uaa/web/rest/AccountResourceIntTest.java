@@ -409,7 +409,7 @@ public class AccountResourceIntTest {
             ROLE_USER, "test",
             null, null, null, null,
             Collections.singletonList(login), false, null, null,
-            List.of("test"), null);
+            List.of("test"), null, true, null, null);
 
         restMvc.perform(
             post("/api/register")
@@ -445,7 +445,7 @@ public class AccountResourceIntTest {
             ROLE_USER, "test",
             null, null, null,
             null, Collections.singletonList(login), false,
-            null, null, List.of("test"), null);
+            null, null, List.of("test"), null, true, null, null);
 
         restMvc.perform(
             post("/api/register")
@@ -481,7 +481,7 @@ public class AccountResourceIntTest {
             ROLE_USER, "test",
             null, null, null, null,
             Collections.singletonList(login), false, null,
-            null, List.of("test"), null);
+            null, List.of("test"), null, true, null, null);
 
         restUserMockMvc.perform(
             post("/api/register")
@@ -517,7 +517,7 @@ public class AccountResourceIntTest {
             ROLE_USER, "test",
             null, null, null,
             null, Collections.singletonList(login), false, null,
-            null, List.of("test"), null);
+            null, List.of("test"), null, true, null, null);
 
         restUserMockMvc.perform(
             post("/api/register")
@@ -554,7 +554,7 @@ public class AccountResourceIntTest {
             ROLE_USER, "test",
             null, null, null, null,
             Collections.singletonList(login), false, null,
-            null, List.of("test"), null);
+            null, List.of("test"), null, true, null, null);
 
         // Duplicate login, different login
         UserLogin loginNew = new UserLogin();
@@ -571,7 +571,7 @@ public class AccountResourceIntTest {
             validUser.getAccessTokenValiditySeconds(), validUser.getRefreshTokenValiditySeconds(),
             validUser.getTfaAccessTokenValiditySeconds(),
             null, Arrays.asList(login, loginNew), false, null,
-            null, validUser.getAuthorities(), null);
+            null, validUser.getAuthorities(), null, true, null, null);
 
         // Good user
         restMvc.perform(
@@ -616,7 +616,7 @@ public class AccountResourceIntTest {
             ROLE_USER, "test",
             null, null, null, null,
             Collections.singletonList(loginOld), false, null,
-            null, List.of("test"), null);
+            null, List.of("test"), null, true, null, null);
 
         // Duplicate login, different login
         UserLogin loginNew = new UserLogin();
@@ -636,7 +636,7 @@ public class AccountResourceIntTest {
             validUser.getAccessTokenValiditySeconds(), validUser.getRefreshTokenValiditySeconds(),
             validUser.getTfaAccessTokenValiditySeconds(),
             null, Arrays.asList(loginOldWithWhitespaces, loginNew), false,
-            null, null, List.of("test"), null);
+            null, null, List.of("test"), null, true, null, null);
 
         // Good user
         restMvc.perform(
@@ -680,7 +680,7 @@ public class AccountResourceIntTest {
             RoleConstant.SUPER_ADMIN, "test",
             null, null, null, null,
             Collections.singletonList(login), false,
-            null, null, List.of("test"), null);
+            null, null, List.of("test"), null, true, null, null);
 
         restMvc.perform(
             post("/api/register")
@@ -701,6 +701,7 @@ public class AccountResourceIntTest {
         user.setUserKey("test");
         user.setRoleKey(ROLE_USER);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.setActivated(false);
         user.setActivationKey(activationKey);
 
@@ -734,6 +735,7 @@ public class AccountResourceIntTest {
             user.setUserKey("test");
             user.setRoleKey(ROLE_USER);
             user.setPassword(RandomStringUtils.random(60));
+            user.setPasswordSetByUser(true);
             user.setActivated(true);
             user.getLogins().add(userLogin);
             userLogin.setUser(user);
@@ -760,7 +762,7 @@ public class AccountResourceIntTest {
                 null, null, null,
                 null, Collections.singletonList(userLogin),
                 Collections.emptyList(), false, null,
-                null, null);
+                null, null, null, null);
 
             try {
                 restMvc.perform(
@@ -798,6 +800,7 @@ public class AccountResourceIntTest {
             User user = new User();
             user.setUserKey("test");
             user.setPassword(RandomStringUtils.random(60));
+            user.setPasswordSetByUser(true);
             user.setActivated(true);
             user.setRoleKey(ROLE_USER);
             userLogin.setUser(user);
@@ -808,6 +811,7 @@ public class AccountResourceIntTest {
             User anotherUser = new User();
             anotherUser.setUserKey("test1");
             anotherUser.setPassword(RandomStringUtils.random(60));
+            anotherUser.setPasswordSetByUser(true);
             anotherUser.setActivated(true);
             anotherUser.setRoleKey(ROLE_USER);
 
@@ -832,7 +836,7 @@ public class AccountResourceIntTest {
                 List.of("test1"),
                 null, null, null, null,
                 Collections.singletonList(userLogin),
-                Collections.emptyList(), false, null, null, null);
+                Collections.emptyList(), false, null, null, null, null, null);
 
             try {
                 restMvc.perform(
@@ -863,6 +867,7 @@ public class AccountResourceIntTest {
             user.setUserKey(DEF_USER_KEY);
             user.setRoleKey(ROLE_USER);
             user.setPassword(passwordEncoder.encode(password));
+            user.setPasswordSetByUser(true);
 
             userRepository.saveAndFlush(user);
 
@@ -894,6 +899,7 @@ public class AccountResourceIntTest {
             user.setUserKey(DEF_USER_KEY);
             user.setRoleKey(ROLE_USER);
             user.setPassword(passwordEncoder.encode(password));
+            user.setPasswordSetByUser(true);
 
             userRepository.saveAndFlush(user);
 
@@ -924,6 +930,7 @@ public class AccountResourceIntTest {
             user.setUserKey(DEF_USER_KEY);
             user.setRoleKey(ROLE_USER);
             user.setPassword(RandomStringUtils.random(60));
+            user.setPasswordSetByUser(true);
 
             userRepository.saveAndFlush(user);
 
@@ -951,6 +958,7 @@ public class AccountResourceIntTest {
         executeForUserKey(DEF_USER_KEY, () -> {
             User user = new User();
             user.setPassword(RandomStringUtils.random(60));
+            user.setPasswordSetByUser(true);
             user.setUserKey(DEF_USER_KEY);
             user.setRoleKey(ROLE_USER);
 
@@ -984,6 +992,7 @@ public class AccountResourceIntTest {
         User user = new User();
         user.setUserKey(DEF_USER_KEY);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.setActivated(true);
         user.setRoleKey(ROLE_USER);
         user.getLogins().add(userLogin);
@@ -1007,6 +1016,7 @@ public class AccountResourceIntTest {
         User user = new User();
         user.setUserKey(DEF_USER_KEY);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.setActivated(true);
         user.setRoleKey(ROLE_USER);
         user.getLogins().add(userLogin);
@@ -1042,6 +1052,7 @@ public class AccountResourceIntTest {
         User user = new User();
         user.setUserKey(DEF_USER_KEY);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.setActivated(true);
         user.setRoleKey(ROLE_USER);
         user.getLogins().add(userLogin);
@@ -1082,6 +1093,7 @@ public class AccountResourceIntTest {
         user.setUserKey(DEF_USER_KEY);
         user.setRoleKey(ROLE_USER);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.setActivated(true);
         user.setResetDate(Instant.now().plusSeconds(60));
         user.setResetKey("reset key");
@@ -1112,6 +1124,7 @@ public class AccountResourceIntTest {
         user.setUserKey(DEF_USER_KEY);
         user.setRoleKey(ROLE_USER);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.setResetDate(Instant.now().plusSeconds(60));
         user.setResetKey("reset key too small");
 
@@ -1153,6 +1166,7 @@ public class AccountResourceIntTest {
         User user = new User();
         user.setUserKey(DEF_USER_KEY);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.setResetKey("test");
         user.setResetDate(Instant.now());
         user.setRoleKey(ROLE_USER);
@@ -1169,6 +1183,7 @@ public class AccountResourceIntTest {
         User user = new User();
         user.setUserKey(DEF_USER_KEY);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.setRoleKey(ROLE_USER);
         user = userRepository.saveAndFlush(user);
 
@@ -1183,6 +1198,7 @@ public class AccountResourceIntTest {
         User user = new User();
         user.setUserKey(DEF_USER_KEY);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.setResetKey("test");
         user.setResetDate(Instant.now().minusSeconds(86401));
         user.setRoleKey(ROLE_USER);

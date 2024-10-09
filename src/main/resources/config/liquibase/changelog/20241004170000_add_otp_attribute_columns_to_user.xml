@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <!-- Add not null 'password_set_by_user' column & set true for old records -->
+    <changeSet id="20241004170000_1" author="vosiievska">
+        <addColumn tableName="jhi_user">
+            <column name="password_set_by_user" type="boolean">
+                <constraints nullable="true" />
+            </column>
+        </addColumn>
+
+        <update tableName="jhi_user">
+            <column name="password_set_by_user" valueBoolean="true"/>
+        </update>
+
+        <addNotNullConstraint tableName="jhi_user" columnName="password_set_by_user" columnDataType="boolean"/>
+    </changeSet>
+
+    <!-- Add otp columns -->
+    <changeSet id="20241004170000_2" author="vosiievska">
+        <addColumn tableName="jhi_user">
+            <column name="otp_code" type="varchar(50)"/>
+            <column name="otp_code_creation_date" type="timestamp"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

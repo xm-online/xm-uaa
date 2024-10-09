@@ -193,6 +193,7 @@ public class UserQueryServiceIntTest {
         user.setUserKey(userKey);
         user.setAuthorities(List.of(ROLE_USER, ROLE_B2B_MANAGER));
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.setActivated(true);
         user.getLogins().add(userLogin);
         userLogin.setUser(user);
