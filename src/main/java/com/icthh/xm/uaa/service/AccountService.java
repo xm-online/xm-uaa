@@ -92,6 +92,15 @@ public class AccountService {
         return newUser;
     }
 
+    /**
+     * Authorize new user and register if no password provided.
+     *
+     * @param authorizeUserVm user dto
+     * @param remoteAddr remote address
+     * @return authorization grant type
+     */
+    @Transactional
+    @LogicExtensionPoint("Authorize")
     public String authorizeAccount(AuthorizeUserVm authorizeUserVm, String remoteAddr) {
         String login = findFirstUserLogin(authorizeUserVm);
         User user = userService.findOneByLogin(login)
