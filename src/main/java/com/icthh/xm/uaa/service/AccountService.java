@@ -102,14 +102,13 @@ public class AccountService {
     @Transactional
     @LogicExtensionPoint("Authorize")
     public String authorizeAccount(AuthorizeUserVm authorizeUserVm, String remoteAddr) {
-        String login = findFirstUserLogin(authorizeUserVm);
-        User user = userService.findOneByLogin(login)
+        User user = userService.findOneByLogin(authorizeUserVm.getLogin())
             .orElseGet(() -> registerUser(authorizeUserVm, remoteAddr));
 
         if (user.getPasswordSetByUser() == Boolean.TRUE) {
             return GrantType.PASSWORD.getValue();
         } else {
-            sendOtpCode(login, user);
+            sendOtpCode(authorizeUserVm.getLogin(), user);
             return GrantType.OTP.getValue();
         }
     }
@@ -232,12 +231,5 @@ public class AccountService {
             return new UserPassDto(passwordEncoder.encode(managedUser.getPassword()), true);
         }
         return new UserPassDto(passwordEncoder.encode(UUID.randomUUID().toString()), false);
-    }
-
-    private String findFirstUserLogin(AuthorizeUserVm authorizeUserVm) {
-        return authorizeUserVm.getLogins().stream()
-            .findFirst()
-            .map(UserLogin::getLogin)
-            .orElseThrow(() -> new BusinessException(LOGIN_NOT_PROVIDED_CODE, Constants.LOGIN_NOT_PROVIDED_ERROR_TEXT));
     }
 }
