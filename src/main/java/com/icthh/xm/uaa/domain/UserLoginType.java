@@ -10,7 +10,6 @@ import java.util.regex.Pattern;
 @SuppressWarnings("unused")
 public enum UserLoginType {
     EMAIL("LOGIN.EMAIL"),
-    PHONE("LOGIN.PHONE"),
     MSISDN("LOGIN.MSISDN"),
     NICKNAME("LOGIN.NICKNAME");
 
@@ -58,7 +57,7 @@ public enum UserLoginType {
             return UserLoginType.EMAIL;
         }
         if (PHONE_PATTERN.matcher(value).matches()) {
-            return UserLoginType.PHONE;
+            return UserLoginType.MSISDN;
         }
         throw new IllegalArgumentException("can not build UserLoginType from value: " + value);
     }

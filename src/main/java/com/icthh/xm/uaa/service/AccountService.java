@@ -95,20 +95,21 @@ public class AccountService {
     /**
      * Authorize new user and register if no password provided.
      *
-     * @param authorizeUserVm user dto
+     * @param login user login as authorization channel
      * @param remoteAddr remote address
      * @return authorization grant type
      */
     @Transactional
     @LogicExtensionPoint("Authorize")
-    public String authorizeAccount(AuthorizeUserVm authorizeUserVm, String remoteAddr) {
-        User user = userService.findOneByLogin(authorizeUserVm.getLogin())
-            .orElseGet(() -> registerUser(authorizeUserVm, remoteAddr));
+    public String authorizeAccount(String login, String remoteAddr) {
+        UserDTO userDTO = buildUserDtoWithLogin(login);
+        User user = userService.findOneByLogin(login)
+            .orElseGet(() -> registerUser(userDTO, remoteAddr));
 
         if (user.getPasswordSetByUser() == Boolean.TRUE) {
             return GrantType.PASSWORD.getValue();
         } else {
-            sendOtpCode(authorizeUserVm.getLogin(), user);
+            sendOtpCode(login, user);
             return GrantType.OTP.getValue();
         }
     }
@@ -231,5 +232,11 @@ public class AccountService {
             return new UserPassDto(passwordEncoder.encode(managedUser.getPassword()), true);
         }
         return new UserPassDto(passwordEncoder.encode(UUID.randomUUID().toString()), false);
+    }
+
+    private UserDTO buildUserDtoWithLogin(String login) {
+        UserDTO userDTO = new UserDTO();
+        userDTO.addUserLogin(login);
+        return userDTO;
     }
 }

@@ -111,7 +111,7 @@ public class AccountResource {
     @PrivilegeDescription("Privilege to authorize the user")
     public ResponseEntity<String> authorizeAccount(@Valid @RequestBody AuthorizeUserVm user, HttpServletRequest request) {
         captchaService.validateCaptchaIfNecessary(request.getRemoteAddr(), user.getCaptcha());
-        return ResponseEntity.ok(accountService.authorizeAccount(user, request.getRemoteAddr()));
+        return ResponseEntity.ok(accountService.authorizeAccount(user.getLogin(), request.getRemoteAddr()));
     }
 
     @GetMapping("/is-captcha-need")
