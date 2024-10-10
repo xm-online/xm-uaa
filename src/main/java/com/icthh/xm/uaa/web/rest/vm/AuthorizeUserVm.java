@@ -16,5 +16,8 @@ public class AuthorizeUserVm {
     @NotEmpty
     private String login;
 
+    @NotEmpty
+    private String langKey;
+
     private String captcha;
 }
