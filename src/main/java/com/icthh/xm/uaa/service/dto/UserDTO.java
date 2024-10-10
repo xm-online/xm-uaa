@@ -171,4 +171,15 @@ public class UserDTO {
         return isEmpty(this.authorities) && roleKey != null ? List.of(this.roleKey) : authorities;
     }
 
+    public void addUserLogin(String login) {
+        UserLogin userLogin = new UserLogin();
+        userLogin.setTypeKey(UserLoginType.getByRegex(login).getValue());
+        userLogin.setLogin(login);
+
+        if (this.logins == null) {
+            this.logins = new ArrayList<>();
+        }
+        this.logins.add(userLogin);
+    }
+
 }
