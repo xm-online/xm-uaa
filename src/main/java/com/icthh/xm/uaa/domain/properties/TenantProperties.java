@@ -86,6 +86,9 @@ public class TenantProperties {
         @JsonProperty("tfaAccessTokenValiditySeconds")
         private Integer tfaAccessTokenValiditySeconds;
 
+        @JsonProperty("otpThrottlingTimeIntervalInSeconds")
+        private Integer otpThrottlingTimeIntervalInSeconds;
+
         @JsonProperty("accessTokenValiditySeconds")
         private Integer accessTokenValiditySeconds;
 
@@ -244,6 +247,16 @@ public class TenantProperties {
     @ToString
     public static class Communication {
         private Boolean enabled = false;
+        private Map<String, Notification> notifications;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class Notification {
+        private String key;
+        private String templateName;
+        private String titleKey;
     }
 
 }

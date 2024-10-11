@@ -14,10 +14,13 @@ import java.util.Optional;
 public class DefaultOtpSenderFactory implements OtpSenderFactory {
 
     private final EmailOtpSender emailOtpSender;
+    private final SmsOtpSender smsOtpSender;
 
     @Override
     public Optional<OtpSender> getSender(OtpChannelType channelType) {
         switch (channelType) {
+            case SMS:
+                return Optional.of(smsOtpSender);
             case EMAIL:
                 return Optional.of(emailOtpSender);
 

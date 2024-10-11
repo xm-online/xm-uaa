@@ -103,7 +103,7 @@ public class AccountResource {
      *
      * @param user the authorize user View Model
      * @return the ResponseEntity with status 200 (Ok) if the user is authorized or 400 (Bad Request) if the login
-     * is not provided
+     * is not provided and grant type
      */
     @PostMapping(path = "/authorize", produces = {MediaType.APPLICATION_JSON_VALUE})
     @Timed
@@ -112,6 +112,23 @@ public class AccountResource {
     public ResponseEntity<String> authorizeAccount(@Valid @RequestBody AuthorizeUserVm user, HttpServletRequest request) {
         captchaService.validateCaptchaIfNecessary(request.getRemoteAddr(), user.getCaptcha());
         return ResponseEntity.ok(accountService.authorizeAccount(user, request.getRemoteAddr()));
+    }
+
+    /**
+     * POST /sendOtp : send otp code for user verification.
+     *
+     * @param user the authorize user View Model
+     * @return the ResponseEntity with status 200 (Ok) if the code successfully sent or 400 (Bad Request) if the user
+     * by login does not exist
+     */
+    @PostMapping(path = "/sendOtp", produces = {MediaType.APPLICATION_JSON_VALUE})
+    @Timed
+    @PreAuthorize("hasPermission({'user': #user, 'request': #request}, 'ACCOUNT.OTP.SEND')")
+    @PrivilegeDescription("Privilege to send otp code to user")
+    public ResponseEntity<Void> sendOtp(@Valid @RequestBody AuthorizeUserVm user, HttpServletRequest request) {
+        captchaService.validateCaptchaIfNecessary(request.getRemoteAddr(), user.getCaptcha());
+        accountService.sendOtpCode(user.getLogin());
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/is-captcha-need")

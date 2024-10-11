@@ -8,6 +8,7 @@ import com.icthh.xm.uaa.commons.UaaUtils;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.service.UserService;
+import com.icthh.xm.uaa.service.dto.OtpSendDTO;
 import com.icthh.xm.uaa.service.mail.MailService;
 
 import java.util.HashMap;
@@ -34,9 +35,10 @@ public class EmailOtpSender implements OtpSender {
     }
 
     @Override
-    public void send(String otp, String destination, String userKey) {
+    public void send(OtpSendDTO otpSendDTO) {
         TenantKey tenantKey = TenantContextUtils.getRequiredTenantKey(tenantContextHolder);
 
+        String userKey = otpSendDTO.getUserKey();
         User user = userService.getUser(userKey);
         if (user == null) {
             throw new IllegalStateException("User with key '" + userKey + "' not found in tenant: " + tenantKey.getValue());
@@ -45,16 +47,16 @@ public class EmailOtpSender implements OtpSender {
         String applicationUrl = UaaUtils.getApplicationUrl(xmRequestContextHolder);
 
         Map<String, Object> dataBind = new HashMap<>();
-        dataBind.put("otp", otp);
+        dataBind.put("otp", otpSendDTO.getOtp());
         dataBind.put("user", user);
         dataBind.put("tenant", tenantKey.getValue());
         dataBind.put("appBaseUrl", applicationUrl);
 
         mailService.sendEmailFromTemplate(tenantKey,
                                           user,
-                                          "tfaOtpEmail",
-                                          "email.tfa.otp.title",
-                                          destination,
+                                          otpSendDTO.getTemplateName(),
+                                          otpSendDTO.getTitleKey(),
+                                          otpSendDTO.getDestination(),
                                           dataBind,
                                           MdcUtils.getRid());
     }

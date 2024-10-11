@@ -1,12 +1,18 @@
 package com.icthh.xm.uaa.util;
 
+import com.icthh.xm.commons.exceptions.BusinessException;
+import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
+import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -15,6 +21,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
+
+import static com.icthh.xm.uaa.config.Constants.LOGIN_INVALID_CODE;
+import static com.icthh.xm.uaa.config.Constants.OTP_THROTTLING_ERROR_TEXT;
 
 /**
  * The {@link OtpUtils} class.
@@ -22,6 +32,8 @@ import java.util.Optional;
 public final class OtpUtils {
 
     private static final Map<UserLoginType, List<OtpChannelType>> LOGIN_TYPE_TO_CHANNELS;
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[\\w-\\.]+@[\\w-]+\\.[a-z]{2,4}$");
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^\\+?\\d{10,15}$");
 
     static {
         Map<UserLoginType, List<OtpChannelType>> map = new HashMap<>();
@@ -95,4 +107,29 @@ public final class OtpUtils {
         return userDto;
     }
 
+    public static OtpChannelType getOptChanelTypeByLogin(String login) {
+        if (StringUtils.isEmpty(login)) {
+            throw new BusinessException(LOGIN_INVALID_CODE, Constants.LOGIN_INVALID_ERROR_TEXT);
+        }
+        if (EMAIL_PATTERN.matcher(login).matches()) {
+            return OtpChannelType.EMAIL;
+        }
+        if (PHONE_PATTERN.matcher(login).matches()) {
+            return OtpChannelType.SMS;
+        }
+        throw new BusinessException(LOGIN_INVALID_CODE, Constants.LOGIN_INVALID_ERROR_TEXT);
+    }
+
+    public static void validateOptCodeSentInterval(TenantProperties tenantProps, Instant otpCodeCreationDate) {
+        if (otpCodeCreationDate == null) {
+            return;
+        }
+        Duration actualInterval = Duration.between(otpCodeCreationDate, Instant.now());
+        Integer configuredInterval = tenantProps.getSecurity().getOtpThrottlingTimeIntervalInSeconds();
+        int allowedInterval = configuredInterval != null ? configuredInterval : 30;
+
+        if (actualInterval.getSeconds() < allowedInterval) {
+            throw new BusinessException(OTP_THROTTLING_ERROR_TEXT);
+        }
+    }
 }

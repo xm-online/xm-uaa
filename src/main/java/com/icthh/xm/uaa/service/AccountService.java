@@ -15,16 +15,22 @@ import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.repository.RegistrationLogRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
+import com.icthh.xm.uaa.security.oauth2.otp.OtpSender;
+import com.icthh.xm.uaa.security.oauth2.otp.OtpSenderFactory;
+import com.icthh.xm.uaa.service.dto.OtpSendDTO;
 import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.dto.UserPassDto;
 import com.icthh.xm.uaa.service.util.RandomUtil;
+import com.icthh.xm.uaa.util.OtpUtils;
 import com.icthh.xm.uaa.web.rest.vm.AuthorizeUserVm;
 import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.jboss.aerogear.security.otp.Totp;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +40,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import static com.icthh.xm.uaa.config.Constants.LOGIN_NOT_PROVIDED_CODE;
+import static com.icthh.xm.uaa.config.Constants.OTP_EMAIL_TEMPLATE_NAME;
+import static com.icthh.xm.uaa.config.Constants.OTP_EMAIL_TITLE_KEY;
+import static com.icthh.xm.uaa.config.Constants.OTP_SENDER_NOT_FOUND_ERROR_TEXT;
 
 @LepService(group = "service.account")
 @Transactional
@@ -50,6 +58,7 @@ public class AccountService {
     private final UserService userService;
     private final UserLoginService userLoginService;
     private final ProfileEventProducer profileEventProducer;
+    private final OtpSenderFactory otpSenderFactory;
 
     /**
      * Register new user.
@@ -114,8 +123,28 @@ public class AccountService {
         }
     }
 
+    public void sendOtpCode(String login) {
+        User user = userService.findOneByLogin(login)
+            .orElseThrow(() -> new BusinessException(String.format("User by login '%s' not found", login)));
+        sendOtpCode(login, user);
+    }
+
     private void sendOtpCode(String login, User user) {
-        // todo: send otp
+        OtpUtils.validateOptCodeSentInterval(tenantPropertiesService.getTenantProps(), user.getOtpCodeCreationDate());
+
+        OtpChannelType chanelType = OtpUtils.getOptChanelTypeByLogin(login);
+
+        OtpSender sender = otpSenderFactory.getSender(chanelType)
+            .orElseThrow(() -> new AuthenticationServiceException(
+                OTP_SENDER_NOT_FOUND_ERROR_TEXT + chanelType.getTypeName()));
+
+        String otpCode = new Totp(user.getTfaOtpSecret()).now();
+
+        sender.send(new OtpSendDTO(otpCode, login, user.getUserKey(), OTP_EMAIL_TEMPLATE_NAME, OTP_EMAIL_TITLE_KEY));
+
+        user.setOtpCode(otpCode);
+        user.setOtpCodeCreationDate(Instant.now());
+        userRepository.save(user);
     }
 
     /**

@@ -3,6 +3,7 @@ package com.icthh.xm.uaa.config;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.spring.config.TenantContextConfiguration;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
+import com.icthh.xm.uaa.security.oauth2.otp.SmsOtpSender;
 import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpAuthenticationEmbedded;
 import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpAuthenticationOtpMs;
 import com.icthh.xm.uaa.service.otp.OtpService;
@@ -41,17 +42,20 @@ public class TfaOtpConfiguration {
     private final TenantPropertiesService tenantPropertiesService;
     private final MailService mailService;
     private final UserService userService;
+    private final SmsOtpSender smsOtpSender;
 
     public TfaOtpConfiguration(TenantContextHolder tenantContextHolder,
                                XmRequestContextHolder xmRequestContextHolder,
                                TenantPropertiesService tenantPropertiesService,
                                MailService mailService,
-                               UserService userService) {
+                               UserService userService,
+                               SmsOtpSender smsOtpSender) {
         this.tenantContextHolder = tenantContextHolder;
         this.xmRequestContextHolder = xmRequestContextHolder;
         this.tenantPropertiesService = tenantPropertiesService;
         this.mailService = mailService;
         this.userService = userService;
+        this.smsOtpSender = smsOtpSender;
     }
 
     @Bean
@@ -76,7 +80,7 @@ public class TfaOtpConfiguration {
 
     @Bean
     OtpSenderFactory otpSenderFactory() {
-        return new DefaultOtpSenderFactory(emailOtpSender());
+        return new DefaultOtpSenderFactory(emailOtpSender(), smsOtpSender);
     }
 
     @Bean

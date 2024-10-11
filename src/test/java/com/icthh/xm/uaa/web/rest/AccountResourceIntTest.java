@@ -13,6 +13,7 @@ import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
+import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
@@ -21,6 +22,8 @@ import com.icthh.xm.uaa.repository.RegistrationLogRepository;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
+import com.icthh.xm.uaa.security.oauth2.otp.EmailOtpSender;
+import com.icthh.xm.uaa.security.oauth2.otp.OtpSenderFactory;
 import com.icthh.xm.uaa.service.AccountMailService;
 import com.icthh.xm.uaa.service.AccountService;
 import com.icthh.xm.uaa.service.CaptchaService;
@@ -146,6 +149,12 @@ public class AccountResourceIntTest {
     @Mock
     private PasswordResetHandlerFactory passwordResetHandlerFactory;
 
+    @Mock
+    private OtpSenderFactory otpSenderFactory;
+
+    @Mock
+    private EmailOtpSender emailOtpSender;
+
     private MockMvc restUserMockMvc;
 
     private MockMvc restMvc;
@@ -196,6 +205,8 @@ public class AccountResourceIntTest {
         doNothing().when(profileEventProducer).send(any());
         when(profileEventProducer.createEventJson(any(), anyString())).thenReturn(StringUtils.EMPTY);
         when(tenantRoleService.getRolePermissions(anyString())).thenReturn(Collections.emptyList());
+        doNothing().when(emailOtpSender).send(any());
+        when(otpSenderFactory.getSender(OtpChannelType.EMAIL)).thenReturn(Optional.of(emailOtpSender));
 
         RegistrationLogRepository registrationLogRepository = mock(RegistrationLogRepository.class);
         when(registrationLogRepository.findOneByIpAddress(any())).thenReturn(Optional.empty());
@@ -204,7 +215,8 @@ public class AccountResourceIntTest {
             tenantPropertiesService);
 
         AccountService accountService = new AccountService(userRepository, passwordEncoder, registrationLogRepository,
-            xmAuthenticationContextHolder, tenantPropertiesService, userService, userLoginService, profileEventProducer);
+            xmAuthenticationContextHolder, tenantPropertiesService, userService, userLoginService, profileEventProducer,
+            otpSenderFactory);
 
         AccountResource accountResource = new AccountResource(userRepository,
             userLoginService,
