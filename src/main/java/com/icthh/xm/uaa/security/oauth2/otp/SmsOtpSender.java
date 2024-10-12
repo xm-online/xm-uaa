@@ -26,7 +26,7 @@ import java.util.Optional;
 @Component
 public class SmsOtpSender extends AbstractOtpSender {
 
-    private static final String TWILIO_MESSAGE_TYPE = "Twilio";
+    public static final String TWILIO_MESSAGE_TYPE = "Twilio";
 
     private final TenantPropertiesService tenantPropertiesService;
     private final UserMessagingService userMessagingService;

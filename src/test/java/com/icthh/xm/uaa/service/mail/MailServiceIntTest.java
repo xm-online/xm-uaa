@@ -75,7 +75,7 @@ public class MailServiceIntTest {
     private static final String DEFAULT_FIRST_NAME = "AAAAAAAAA";
     private static final String DEFAULT_LANG_KEY = "en";
     private static final String TEMPLATE_NAME = "testTemplate";
-    private static final String EMAIL_TYPE = "Email";
+    private static final String EMAIL_TYPE = "TemplatedEmail";
 
     @Autowired
     private JHipsterProperties jHipsterProperties;

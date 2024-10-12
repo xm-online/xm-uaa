@@ -73,8 +73,6 @@ public final class Constants {
     // Sender constants
     public static final String TFA_OTP_EMAIL_TEMPLATE_NAME = "tfaOtpEmail";
     public static final String TFA_OTP_EMAIL_TITLE_KEY = "email.tfa.otp.title";
-    public static final String OTP_EMAIL_TEMPLATE_NAME = "authOtpEmail";
-    public static final String OTP_EMAIL_TITLE_KEY = "email.auth.otp.title";
 
     // System event data properties
     public static final String SYSTEM_EVENT_PROP_ID = "id";

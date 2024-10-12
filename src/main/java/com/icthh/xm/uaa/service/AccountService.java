@@ -11,7 +11,6 @@ import com.icthh.xm.uaa.domain.GrantType;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.RegistrationLog;
 import com.icthh.xm.uaa.domain.User;
-import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.repository.RegistrationLogRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
@@ -40,9 +39,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import static com.icthh.xm.uaa.config.Constants.OTP_EMAIL_TEMPLATE_NAME;
-import static com.icthh.xm.uaa.config.Constants.OTP_EMAIL_TITLE_KEY;
 import static com.icthh.xm.uaa.config.Constants.OTP_SENDER_NOT_FOUND_ERROR_TEXT;
+import static com.icthh.xm.uaa.security.oauth2.otp.EmailOtpSender.AUTH_OTP_MESSAGE_TYPE;
+import static com.icthh.xm.uaa.security.oauth2.otp.SmsOtpSender.TWILIO_MESSAGE_TYPE;
 
 @LepService(group = "service.account")
 @Transactional
@@ -140,7 +139,7 @@ public class AccountService {
 
         String otpCode = new Totp(user.getTfaOtpSecret()).now();
 
-        sender.send(new OtpSendDTO(otpCode, login, user.getUserKey(), OTP_EMAIL_TEMPLATE_NAME, OTP_EMAIL_TITLE_KEY));
+        sender.send(new OtpSendDTO(otpCode, login, user.getUserKey(), getNotificationKeyByChannel(chanelType)));
 
         user.setOtpCode(otpCode);
         user.setOtpCodeCreationDate(Instant.now());
@@ -268,5 +267,13 @@ public class AccountService {
         userDTO.setLangKey(authorizeUserVm.getLangKey());
         userDTO.addUserLogin(authorizeUserVm.getLogin());
         return userDTO;
+    }
+
+    private String getNotificationKeyByChannel(OtpChannelType chanelType) {
+        switch (chanelType) {
+            case SMS: return TWILIO_MESSAGE_TYPE.toLowerCase();
+            case EMAIL: return AUTH_OTP_MESSAGE_TYPE.toLowerCase();
+        }
+        throw new BusinessException("Authorize otp notification configuration is missing");
     }
 }

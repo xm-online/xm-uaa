@@ -43,19 +43,21 @@ public class TfaOtpConfiguration {
     private final MailService mailService;
     private final UserService userService;
     private final SmsOtpSender smsOtpSender;
+    private final EmailOtpSender emailOtpSender;
 
     public TfaOtpConfiguration(TenantContextHolder tenantContextHolder,
                                XmRequestContextHolder xmRequestContextHolder,
                                TenantPropertiesService tenantPropertiesService,
                                MailService mailService,
                                UserService userService,
-                               SmsOtpSender smsOtpSender) {
+                               SmsOtpSender smsOtpSender, EmailOtpSender emailOtpSender) {
         this.tenantContextHolder = tenantContextHolder;
         this.xmRequestContextHolder = xmRequestContextHolder;
         this.tenantPropertiesService = tenantPropertiesService;
         this.mailService = mailService;
         this.userService = userService;
         this.smsOtpSender = smsOtpSender;
+        this.emailOtpSender = emailOtpSender;
     }
 
     @Bean
@@ -80,12 +82,7 @@ public class TfaOtpConfiguration {
 
     @Bean
     OtpSenderFactory otpSenderFactory() {
-        return new DefaultOtpSenderFactory(emailOtpSender(), smsOtpSender);
-    }
-
-    @Bean
-    EmailOtpSender emailOtpSender() {
-        return new EmailOtpSender(tenantContextHolder, xmRequestContextHolder, mailService, userService);
+        return new DefaultOtpSenderFactory(emailOtpSender, smsOtpSender);
     }
 
     @Bean
