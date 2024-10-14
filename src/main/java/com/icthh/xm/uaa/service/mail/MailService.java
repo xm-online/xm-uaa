@@ -295,7 +295,8 @@ public class MailService {
             .map(TenantProperties::getCommunication)
             .map(TenantProperties.Communication::getEnabled)
             .map(Boolean.TRUE::equals)
-            .orElse(applicationProperties.getCommunication().isEnabled());
+            .orElse(applicationProperties.getCommunication() != null
+                && applicationProperties.getCommunication().isEnabled());
     }
 
     private void sendCommunicationEmailEvent(TenantKey tenantKey,

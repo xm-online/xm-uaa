@@ -10,7 +10,7 @@ import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
-import io.github.jhipster.config.JHipsterProperties;
+import com.icthh.xm.uaa.service.dto.UserDTO;
 import lombok.AllArgsConstructor;
 
 import java.util.HashMap;
@@ -21,7 +21,7 @@ import java.util.Optional;
 public abstract class AbstractOtpSender implements OtpSender {
 
     private final TenantPropertiesService tenantPropertiesService;
-    private final ApplicationProperties applicationProperties;
+    private final ApplicationProperties appProperties;
     private final TenantContextHolder tenantContextHolder;
     private final UserService userService;
     private final XmRequestContextHolder xmRequestContextHolder;
@@ -31,7 +31,7 @@ public abstract class AbstractOtpSender implements OtpSender {
             .map(TenantProperties::getCommunication)
             .map(TenantProperties.Communication::getEnabled)
             .map(Boolean.TRUE::equals)
-            .orElse(applicationProperties.getCommunication().isEnabled());
+            .orElse(appProperties.getCommunication() != null && appProperties.getCommunication().isEnabled());
     }
 
     protected TenantKey getTenantKey() {
@@ -49,7 +49,7 @@ public abstract class AbstractOtpSender implements OtpSender {
 
         Map<String, Object> dataBind = new HashMap<>();
         dataBind.put("otp", otp);
-        dataBind.put("user", user);
+        dataBind.put("user", new UserDTO(user));
         dataBind.put("tenant", tenantKey.getValue());
         dataBind.put("appBaseUrl", applicationUrl);
         return dataBind;

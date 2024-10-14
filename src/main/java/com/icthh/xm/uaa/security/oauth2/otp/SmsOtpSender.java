@@ -1,7 +1,6 @@
 package com.icthh.xm.uaa.security.oauth2.otp;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.messaging.communication.CommunicationMessage;
 import com.icthh.xm.commons.messaging.communication.CommunicationMessageBuilder;
 import com.icthh.xm.commons.messaging.communication.Receiver;
@@ -11,7 +10,6 @@ import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.User;
-import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.OtpSendDTO;
@@ -20,15 +18,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Optional;
 
 @Slf4j
 @Component
 public class SmsOtpSender extends AbstractOtpSender {
 
-    public static final String TWILIO_MESSAGE_TYPE = "Twilio";
-
-    private final TenantPropertiesService tenantPropertiesService;
     private final UserMessagingService userMessagingService;
     private final CommunicationService communicationService;
     private final ObjectMapper objectMapper;
@@ -42,7 +36,6 @@ public class SmsOtpSender extends AbstractOtpSender {
                            UserService userService,
                            XmRequestContextHolder xmContextHolder) {
         super(tenantPropsService, applicationProps, tenantContextHolder, userService, xmContextHolder);
-        this.tenantPropertiesService = tenantPropsService;
         this.userMessagingService = userMessagingService;
         this.communicationService = communicationService;
         this.objectMapper = objectMapper;
@@ -67,15 +60,13 @@ public class SmsOtpSender extends AbstractOtpSender {
     private CommunicationMessage getCommunicationMessage(TenantKey tenantKey, OtpSendDTO otpSendDTO, User user) {
         CommunicationMessage message = new CommunicationMessage();
         message.setCharacteristic(new ArrayList<>());
-        message.setType(TWILIO_MESSAGE_TYPE);
+        message.setType(otpSendDTO.getChannel().getType());
         message.getReceiver().add(getReceiver(otpSendDTO.getDestination()));
 
-        TenantProperties.Notification notificationConfig = getTwilioSmsNotification(tenantKey);
-
         message = new CommunicationMessageBuilder(message, objectMapper)
-            .addSenderId(notificationConfig.getKey())
+            .addSenderId(otpSendDTO.getChannel().getKey())
             .addLanguage(user.getLangKey())
-            .addTemplateName(notificationConfig.getTemplateName())
+            .addTemplateName(otpSendDTO.getChannel().getTemplateName())
             .addTemplateModel(getObjectModel(otpSendDTO.getOtp(), user, tenantKey))
             .build();
         return message;
@@ -85,11 +76,5 @@ public class SmsOtpSender extends AbstractOtpSender {
         Receiver receiver = new Receiver();
         receiver.setPhoneNumber(phoneNumber);
         return receiver;
-    }
-
-    private TenantProperties.Notification getTwilioSmsNotification(TenantKey tenantKey) {
-        return Optional.ofNullable(tenantPropertiesService.getTenantProps(tenantKey))
-            .map(p -> p.getCommunication().getNotifications().get(TWILIO_MESSAGE_TYPE.toLowerCase()))
-            .orElseThrow(() -> new BusinessException("Twilio sms notification configuration is missing"));
     }
 }

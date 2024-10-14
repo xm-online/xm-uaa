@@ -71,6 +71,7 @@ public final class Constants {
     public static final String KEYSTORE_TYPE = "PKCS12";
 
     // Sender constants
+    public static final String AUTH_OPT_NOTIFICATION_KEY = "auth-otp";
     public static final String TFA_OTP_EMAIL_TEMPLATE_NAME = "tfaOtpEmail";
     public static final String TFA_OTP_EMAIL_TITLE_KEY = "email.tfa.otp.title";
 
