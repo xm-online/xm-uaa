@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.service.dto;
 
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,25 +16,24 @@ public class OtpSendDTO {
     private String otp;
     private String destination;
     private String userKey;
+    @Setter(AccessLevel.NONE)
     private TenantProperties.NotificationChannel channel;
+    // fields to support old tfa otp logic
+    private String titleKey;
+    private String templateName;
 
-    public OtpSendDTO(String otp, String destination, String userKey) {
+    public OtpSendDTO(String otp, String destination, String userKey, TenantProperties.NotificationChannel channel) {
         this.otp = otp;
         this.destination = destination;
         this.userKey = userKey;
+        this.channel = channel;
     }
 
-    public void setTitleKey(String titleKey) {
-        if (channel == null) {
-            channel = new TenantProperties.NotificationChannel();
-        }
-        channel.setTitleKey(titleKey);
-    }
-
-    public void setTemplateName(String templateName) {
-        if (channel == null) {
-            channel = new TenantProperties.NotificationChannel();
-        }
-        channel.setTemplateName(templateName);
+    public OtpSendDTO(String otp, String destination, String userKey, String templateName, String titleKey) {
+        this.otp = otp;
+        this.destination = destination;
+        this.userKey = userKey;
+        this.templateName = templateName;
+        this.titleKey = titleKey;
     }
 }

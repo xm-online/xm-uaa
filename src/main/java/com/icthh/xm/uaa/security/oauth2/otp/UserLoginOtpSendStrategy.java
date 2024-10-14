@@ -51,14 +51,8 @@ public class UserLoginOtpSendStrategy implements OtpSendStrategy {
             otpChannel.getType(),
             RequestAttributes.SCOPE_REQUEST);
 
-        sender.send(buildOtpSendDto(otp, otpChannel.getDestination(), userDetails.getUserKey()));
-    }
-
-    private OtpSendDTO buildOtpSendDto(String otp, String destination, String userKey) {
-        OtpSendDTO otpSendDTO = new OtpSendDTO(otp, destination, userKey);
-        otpSendDTO.setTemplateName(TFA_OTP_EMAIL_TEMPLATE_NAME);
-        otpSendDTO.setTitleKey(TFA_OTP_EMAIL_TITLE_KEY);
-        return otpSendDTO;
+        sender.send(new OtpSendDTO(otp, otpChannel.getDestination(), userDetails.getUserKey(),
+            TFA_OTP_EMAIL_TEMPLATE_NAME, TFA_OTP_EMAIL_TITLE_KEY));
     }
 
     private OtpChannel getOtpChannel(DomainUserDetails userDetails) {
