@@ -128,7 +128,7 @@ public final class OtpUtils {
         Integer configuredInterval = tenantProps.getSecurity().getOtpThrottlingTimeIntervalInSeconds();
         int allowedInterval = configuredInterval != null ? configuredInterval : 30;
 
-        if (actualInterval.getSeconds() < allowedInterval) {
+        if (allowedInterval >= 0 && actualInterval.getSeconds() < allowedInterval) {
             throw new BusinessException(OTP_THROTTLING_ERROR_TEXT);
         }
     }
