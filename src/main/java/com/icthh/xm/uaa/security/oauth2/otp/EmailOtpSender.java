@@ -6,6 +6,7 @@ import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.commons.UaaUtils;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
+import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
@@ -21,17 +22,20 @@ import java.util.Map;
  * The {@link EmailOtpSender} class.
  */
 @Component
-public class EmailOtpSender implements OtpSender {
+public class EmailOtpSender extends AbstractOtpSender {
 
     private final TenantContextHolder tenantContextHolder;
     private final XmRequestContextHolder xmRequestContextHolder;
     private final MailService mailService;
     private final UserService userService;
 
-    public EmailOtpSender(TenantContextHolder tenantContextHolder,
+    public EmailOtpSender(TenantPropertiesService tenantPropsService,
+                          ApplicationProperties applicationProps,
+                          TenantContextHolder tenantContextHolder,
                           XmRequestContextHolder xmRequestContextHolder,
                           MailService mailService,
                           UserService userService) {
+        super(tenantPropsService, applicationProps, tenantContextHolder, userService, xmRequestContextHolder);
         this.tenantContextHolder = tenantContextHolder;
         this.xmRequestContextHolder = xmRequestContextHolder;
         this.mailService = mailService;

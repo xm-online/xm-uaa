@@ -32,8 +32,6 @@ import static com.icthh.xm.uaa.config.Constants.OTP_THROTTLING_ERROR_TEXT;
 public final class OtpUtils {
 
     private static final Map<UserLoginType, List<OtpChannelType>> LOGIN_TYPE_TO_CHANNELS;
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[\\w-\\.]+@[\\w-]+\\.[a-z]{2,4}$");
-    private static final Pattern PHONE_PATTERN = Pattern.compile("^\\+?\\d{10,15}$");
 
     static {
         Map<UserLoginType, List<OtpChannelType>> map = new HashMap<>();
@@ -111,10 +109,10 @@ public final class OtpUtils {
         if (StringUtils.isEmpty(login)) {
             throw new BusinessException(LOGIN_INVALID_CODE, Constants.LOGIN_INVALID_ERROR_TEXT);
         }
-        if (EMAIL_PATTERN.matcher(login).matches()) {
+        if (UserLoginType.EMAIL_PATTERN.matcher(login).matches()) {
             return OtpChannelType.EMAIL;
         }
-        if (PHONE_PATTERN.matcher(login).matches()) {
+        if (UserLoginType.PHONE_PATTERN.matcher(login).matches()) {
             return OtpChannelType.SMS;
         }
         throw new BusinessException(LOGIN_INVALID_CODE, Constants.LOGIN_INVALID_ERROR_TEXT);
