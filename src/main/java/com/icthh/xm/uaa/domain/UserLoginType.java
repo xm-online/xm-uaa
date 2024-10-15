@@ -14,8 +14,8 @@ public enum UserLoginType {
     NICKNAME("LOGIN.NICKNAME");
 
     private static final Set<UserLoginType> VALUES = Set.of(values());
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[\\w-\\.]+@[\\w-]+\\.[a-z]{2,4}$");
-    private static final Pattern PHONE_PATTERN = Pattern.compile("^\\+?\\d{10,15}$");
+    public static final Pattern EMAIL_PATTERN = Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\\\.[A-Za-z]{2,4}");
+    public static final Pattern PHONE_PATTERN = Pattern.compile("^\\+?\\d{10,15}$");
 
     private final String value;
 
