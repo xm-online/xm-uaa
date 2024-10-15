@@ -7,6 +7,7 @@ import com.icthh.xm.uaa.security.DomainTokenServices;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.security.TokenConstraintsService;
 import com.icthh.xm.uaa.security.UserSecurityValidator;
+import com.icthh.xm.uaa.security.oauth2.AuthOtpTokenGranter;
 import com.icthh.xm.uaa.security.oauth2.LepTokenGranter;
 import com.icthh.xm.uaa.security.oauth2.athorization.code.CustomAuthorizationCodeServices;
 import com.icthh.xm.uaa.security.oauth2.idp.IdpTokenGranter;
@@ -184,11 +185,21 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
             idpIdTokenMappingService,
             tenantContextHolder);
 
+        granters.add(authOtpTokenGranter(domainUserDetailsService, tokenStore, clientDetailsService, endpoints));
         granters.add(tfaOtpTokenGranter);
         granters.add(idpTokenGranter);
         granters.add(lepTokenGranter(clientDetailsService, authenticationManager));
 
         return new CompositeTokenGranter(granters);
+    }
+
+    @Bean
+    public AuthOtpTokenGranter authOtpTokenGranter(DomainUserDetailsService domainUserDetailsService,
+                                                   TokenStore tokenStore,
+                                                   ClientDetailsService clientDetailsService,
+                                                   AuthorizationServerEndpointsConfigurer endpoints) {
+        return new AuthOtpTokenGranter(domainUserDetailsService, tokenStore, tokenServices(), clientDetailsService,
+            endpoints.getOAuth2RequestFactory());
     }
 
     @Bean
