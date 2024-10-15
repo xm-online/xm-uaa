@@ -1,11 +1,14 @@
 package com.icthh.xm.uaa.security.oauth2.otp;
 
 import static com.icthh.xm.uaa.config.Constants.REQ_ATTR_TFA_OTP_CHANNEL_TYPE;
+import static com.icthh.xm.uaa.config.Constants.TFA_OTP_EMAIL_TEMPLATE_NAME;
+import static com.icthh.xm.uaa.config.Constants.TFA_OTP_EMAIL_TITLE_KEY;
 
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.security.DomainUserDetails;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
+import com.icthh.xm.uaa.service.dto.OtpSendDTO;
 import com.icthh.xm.uaa.service.dto.UserLoginDto;
 import com.icthh.xm.uaa.util.OtpUtils;
 
@@ -48,7 +51,8 @@ public class UserLoginOtpSendStrategy implements OtpSendStrategy {
             otpChannel.getType(),
             RequestAttributes.SCOPE_REQUEST);
 
-        sender.send(otp, otpChannel.getDestination(), userDetails.getUserKey());
+        sender.send(new OtpSendDTO(otp, otpChannel.getDestination(), userDetails.getUserKey(),
+            TFA_OTP_EMAIL_TEMPLATE_NAME, TFA_OTP_EMAIL_TITLE_KEY));
     }
 
     private OtpChannel getOtpChannel(DomainUserDetails userDetails) {
