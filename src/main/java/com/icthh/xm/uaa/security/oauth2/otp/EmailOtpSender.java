@@ -47,8 +47,8 @@ public class EmailOtpSender extends AbstractOtpSender {
 
         mailService.sendEmailFromTemplate(tenantKey,
                                           user,
-                                          otpSendDTO.getChannel().getTemplateName(),
-                                          otpSendDTO.getChannel().getTitleKey(),
+                                          otpSendDTO.getTemplateName(),
+                                          otpSendDTO.getTitleKey(),
                                           otpSendDTO.getDestination(),
                                           getObjectModel(otpSendDTO.getOtp(), user, tenantKey),
                                           MdcUtils.getRid());

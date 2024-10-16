@@ -28,7 +28,7 @@ import java.util.HashMap;
 public class AuthOtpTokenGranter extends AbstractTokenGranter {
 
     private static String TOKEN_REQUEST_OTP_PARAM = "auth_otp";
-    private static String TOKEN_REQUEST_LOGIN_PARAM = "login";
+    private static String TOKEN_REQUEST_USERNAME_PARAM = "username";
 
     private final DomainUserDetailsService domainUserDetailsService;
     private final GrantedAuthoritiesMapper authoritiesMapper;
@@ -50,7 +50,7 @@ public class AuthOtpTokenGranter extends AbstractTokenGranter {
 
     private Authentication getAuthenticationToken(TokenRequest tokenRequest) {
         String otpCode = getParamFromTokenRequest(tokenRequest, TOKEN_REQUEST_OTP_PARAM);
-        String login = getParamFromTokenRequest(tokenRequest, TOKEN_REQUEST_LOGIN_PARAM);
+        String login = getParamFromTokenRequest(tokenRequest, TOKEN_REQUEST_USERNAME_PARAM);
 
         DomainUserDetails domainUserDetails = domainUserDetailsService.loadUserByUsername(login);
 

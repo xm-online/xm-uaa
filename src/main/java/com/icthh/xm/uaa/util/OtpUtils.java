@@ -10,6 +10,7 @@ import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.validator.routines.EmailValidator;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -21,7 +22,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 import static com.icthh.xm.uaa.config.Constants.LOGIN_INVALID_CODE;
 import static com.icthh.xm.uaa.config.Constants.OTP_THROTTLING_ERROR_TEXT;
@@ -109,7 +109,7 @@ public final class OtpUtils {
         if (StringUtils.isEmpty(login)) {
             throw new BusinessException(LOGIN_INVALID_CODE, Constants.LOGIN_INVALID_ERROR_TEXT);
         }
-        if (UserLoginType.EMAIL_PATTERN.matcher(login).matches()) {
+        if (EmailValidator.getInstance().isValid(login)) {
             return OtpChannelType.EMAIL;
         }
         if (UserLoginType.PHONE_PATTERN.matcher(login).matches()) {

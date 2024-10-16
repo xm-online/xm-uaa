@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.domain;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.validator.routines.EmailValidator;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -14,7 +15,6 @@ public enum UserLoginType {
     NICKNAME("LOGIN.NICKNAME");
 
     private static final Set<UserLoginType> VALUES = Set.of(values());
-    public static final Pattern EMAIL_PATTERN = Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\\\.[A-Za-z]{2,4}");
     public static final Pattern PHONE_PATTERN = Pattern.compile("^\\+?\\d{10,15}$");
 
     private final String value;
@@ -53,7 +53,7 @@ public enum UserLoginType {
         if (value == null || value.isEmpty()) {
             throw new IllegalArgumentException("can not build UserLoginType from value: " + value);
         }
-        if (EMAIL_PATTERN.matcher(value).matches()) {
+        if (EmailValidator.getInstance().isValid(value)) {
             return UserLoginType.EMAIL;
         }
         if (PHONE_PATTERN.matcher(value).matches()) {
