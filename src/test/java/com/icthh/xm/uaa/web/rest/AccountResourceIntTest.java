@@ -13,6 +13,7 @@ import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
+import com.icthh.xm.uaa.domain.GrantType;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
@@ -24,6 +25,7 @@ import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
 import com.icthh.xm.uaa.security.oauth2.otp.EmailOtpSender;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpSenderFactory;
+import com.icthh.xm.uaa.security.oauth2.otp.SmsOtpSender;
 import com.icthh.xm.uaa.service.AccountMailService;
 import com.icthh.xm.uaa.service.AccountService;
 import com.icthh.xm.uaa.service.CaptchaService;
@@ -35,6 +37,8 @@ import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.account.password.reset.PasswordResetHandlerFactory;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.mail.MailService;
+import com.icthh.xm.uaa.service.util.RandomUtil;
+import com.icthh.xm.uaa.web.rest.vm.AuthorizeUserVm;
 import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.KeyAndPasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
@@ -71,17 +75,25 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
 import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
 import static com.icthh.xm.uaa.utils.FileUtil.readConfigFile;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -155,6 +167,9 @@ public class AccountResourceIntTest {
     @Mock
     private EmailOtpSender emailOtpSender;
 
+    @Mock
+    private SmsOtpSender smsOtpSender;
+
     private MockMvc restUserMockMvc;
 
     private MockMvc restMvc;
@@ -174,6 +189,9 @@ public class AccountResourceIntTest {
 
     @Autowired
     private UserLoginRepository userLoginRepository;
+
+    @Autowired
+    private RegistrationLogRepository registrationLogRepository;
 
 
     @BeforeTransaction
@@ -197,6 +215,7 @@ public class AccountResourceIntTest {
 
         properties.setRegistrationCaptchaPeriodSeconds(null);
         properties.setSecurity(security);
+        properties.setCommunication(buildCommunicationProperties());
         tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
             new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
 
@@ -206,7 +225,9 @@ public class AccountResourceIntTest {
         when(profileEventProducer.createEventJson(any(), anyString())).thenReturn(StringUtils.EMPTY);
         when(tenantRoleService.getRolePermissions(anyString())).thenReturn(Collections.emptyList());
         doNothing().when(emailOtpSender).send(any());
+        doNothing().when(smsOtpSender).send(any());
         when(otpSenderFactory.getSender(OtpChannelType.EMAIL)).thenReturn(Optional.of(emailOtpSender));
+        when(otpSenderFactory.getSender(OtpChannelType.SMS)).thenReturn(Optional.of(smsOtpSender));
 
         RegistrationLogRepository registrationLogRepository = mock(RegistrationLogRepository.class);
         when(registrationLogRepository.findOneByIpAddress(any())).thenReturn(Optional.empty());
@@ -430,6 +451,86 @@ public class AccountResourceIntTest {
 
         Optional<UserLogin> user = userLoginRepository.findOneByLoginIgnoreCase("joe@example.com");
         assertThat(user.isPresent()).isTrue();
+    }
+
+    @Test
+    @Transactional
+    public void testAuthorizeAccount_shouldRegisterUserAndReturnOtpGrantType() throws Exception {
+        String login = "test@email.com";
+
+        assertTrue(userLoginRepository.findOneByLoginIgnoreCase(login).isEmpty());
+
+        AuthorizeUserVm authorizeUserVm = new AuthorizeUserVm();
+        authorizeUserVm.setLogin(login);
+        authorizeUserVm.setLangKey("ua");
+
+        restMvc.perform(
+                post("/api/authorize")
+                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                    .content(TestUtil.convertObjectToJsonBytes(authorizeUserVm)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").value(GrantType.OTP.getValue()));
+
+        Optional<UserLogin> resultUser = userLoginRepository.findOneByLoginIgnoreCase(login);
+
+        assertFalse(resultUser.isEmpty());
+        assertNotNull(resultUser.get().getUser().getOtpCode());
+        assertNotNull(resultUser.get().getUser().getOtpCodeCreationDate());
+
+        verify(emailOtpSender, times(1)).send(any());
+        verify(smsOtpSender, never()).send(any());
+    }
+
+    @Test
+    @Transactional
+    public void testAuthorizeAccount_shouldAuthorizeUserAndReturnPasswordGrantType() throws Exception {
+        String login = "test@email.com";
+
+        // create user in db
+        userRepository.save(buildUser(login));
+
+        // authorize user
+        assertTrue(userLoginRepository.findOneByLoginIgnoreCase(login).isPresent());
+
+        AuthorizeUserVm authorizeUserVm = new AuthorizeUserVm();
+        authorizeUserVm.setLogin(login);
+        authorizeUserVm.setLangKey("ua");
+
+        restMvc.perform(
+                post("/api/authorize")
+                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                    .content(TestUtil.convertObjectToJsonBytes(authorizeUserVm)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").value(GrantType.PASSWORD.getValue()));
+
+        Optional<UserLogin> resultUser = userLoginRepository.findOneByLoginIgnoreCase(login);
+
+        assertTrue(resultUser.isPresent());
+        assertNull(resultUser.get().getUser().getOtpCode());
+        assertNull(resultUser.get().getUser().getOtpCodeCreationDate());
+
+        verify(emailOtpSender, never()).send(any());
+        verify(smsOtpSender, never()).send(any());
+    }
+
+    @Test
+    @Transactional
+    public void testAuthorizeAccount_missingLogin_shouldReturn400() throws Exception {
+        String login = "test@email.com";
+
+        assertFalse(userLoginRepository.findOneByLoginIgnoreCase(login).isPresent());
+
+        AuthorizeUserVm authorizeUserVm = new AuthorizeUserVm();
+        authorizeUserVm.setLangKey("ua");
+
+        restMvc.perform(
+                post("/api/authorize")
+                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                    .content(TestUtil.convertObjectToJsonBytes(authorizeUserVm)))
+            .andExpect(status().isBadRequest());
+
+        verify(emailOtpSender, never()).send(any());
+        verify(smsOtpSender, never()).send(any());
     }
 
     @Test
@@ -1219,5 +1320,43 @@ public class AccountResourceIntTest {
         restMvc.perform(get("/api/account/reset_password/check?key={key}", "test"))
             .andExpect(status().is4xxClientError())
             .andExpect(jsonPath("$.error").value("error.reset.code.expired"));
+    }
+
+    public User buildUser(String username) {
+        UserLogin userLogin = new UserLogin();
+        userLogin.setTypeKey(UserLoginType.getByRegex(username).getValue());
+        userLogin.setLogin(username);
+
+        User user = new User();
+        user.setUserKey(UUID.randomUUID().toString());
+        user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
+        user.setLangKey("ua");
+        user.setActivationKey(RandomUtil.generateActivationKey());
+        user.setRoleKey("ROLE_VIEW");
+        user.setLogins(List.of(userLogin));
+        user.getLogins().forEach(ul -> ul.setUser(user));
+        return user;
+    }
+
+    private TenantProperties.Communication buildCommunicationProperties() {
+        TenantProperties.NotificationChannel channel1 = new TenantProperties.NotificationChannel();
+        channel1.setKey("SMS_NOTIFICATION");
+        channel1.setType("Twilio");
+        channel1.setTemplateName("sms.template.name");
+
+        TenantProperties.NotificationChannel channel2 = new TenantProperties.NotificationChannel();
+        channel2.setKey("EMAIL_NOTIFICATION");
+        channel2.setType("TemplatedEmail");
+        channel2.setTemplateName("email.template.name");
+
+        TenantProperties.Notification notification = new TenantProperties.Notification();
+        notification.setChannels(Map.of("sms", channel1, "email", channel2));
+
+        TenantProperties.Communication communication = new TenantProperties.Communication();
+        communication.setEnabled(true);
+        communication.setNotifications(Map.of("auth-otp", notification));
+
+        return communication;
     }
 }

@@ -21,7 +21,6 @@ public enum OtpChannelType {
     SLACK("slack"),
     HANGOUTS("hangouts");
 
-    @JsonValue
     private final String typeName;
 
     OtpChannelType(String typeName) {

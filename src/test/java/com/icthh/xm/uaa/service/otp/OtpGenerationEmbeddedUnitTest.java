@@ -87,6 +87,7 @@ public class OtpGenerationEmbeddedUnitTest {
             emptyList(),
             "",
             "",
+            null,
             true,
             "test",
             null,

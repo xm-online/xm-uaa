@@ -355,6 +355,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-ldap"
     implementation "org.freemarker:freemarker:${freemarker_version}"
     implementation "org.jboss.aerogear:aerogear-otp-java:${aerogear_version}"
+    implementation "commons-validator:commons-validator:${commons_validator_version}"
 
     // test dependencies
     testImplementation "com.jayway.jsonpath:json-path"

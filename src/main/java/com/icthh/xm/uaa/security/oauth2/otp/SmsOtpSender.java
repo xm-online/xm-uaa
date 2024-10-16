@@ -27,14 +27,14 @@ public class SmsOtpSender extends AbstractOtpSender {
     private final CommunicationService communicationService;
     private final ObjectMapper objectMapper;
 
-    protected SmsOtpSender(TenantPropertiesService tenantPropsService,
-                           ApplicationProperties applicationProps,
-                           TenantContextHolder tenantContextHolder,
-                           UserMessagingService userMessagingService,
-                           CommunicationService communicationService,
-                           ObjectMapper objectMapper,
-                           UserService userService,
-                           XmRequestContextHolder xmContextHolder) {
+    public SmsOtpSender(TenantPropertiesService tenantPropsService,
+                        ApplicationProperties applicationProps,
+                        TenantContextHolder tenantContextHolder,
+                        UserMessagingService userMessagingService,
+                        CommunicationService communicationService,
+                        ObjectMapper objectMapper,
+                        UserService userService,
+                        XmRequestContextHolder xmContextHolder) {
         super(tenantPropsService, applicationProps, tenantContextHolder, userService, xmContextHolder);
         this.userMessagingService = userMessagingService;
         this.communicationService = communicationService;

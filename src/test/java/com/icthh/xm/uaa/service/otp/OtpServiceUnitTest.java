@@ -138,6 +138,7 @@ public class OtpServiceUnitTest {
             emptyList(),
             "",
             "testUserKey",
+            null,
             true,
             "test",
             null,
