@@ -10,7 +10,7 @@ import java.util.Arrays;
 @AllArgsConstructor
 public enum GrantType {
 
-    OTP("otp"),
+    OTP("otp_token"),
     PASSWORD("password");
 
     private final String value;
