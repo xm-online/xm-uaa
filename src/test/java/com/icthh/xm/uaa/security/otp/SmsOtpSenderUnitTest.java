@@ -36,9 +36,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 public class SmsOtpSenderUnitTest {
@@ -106,7 +106,7 @@ public class SmsOtpSenderUnitTest {
         smsOtpSender.send(otpSendDTO);
 
         verify(communicationService, times(1)).sendEmailEvent(any(CommunicationMessage.class));
-        verify(userMessagingService, never()).sendAuthorizeMessage(any(OtpSendDTO.class));
+        verifyNoMoreInteractions(userMessagingService);
     }
 
     @Test
@@ -118,7 +118,7 @@ public class SmsOtpSenderUnitTest {
 
         smsOtpSender.send(otpSendDTO);
 
-        verify(communicationService, never()).sendEmailEvent(any(CommunicationMessage.class));
+        verifyNoMoreInteractions(communicationService);
         verify(userMessagingService, times(1)).sendAuthorizeMessage(any(OtpSendDTO.class));
     }
 

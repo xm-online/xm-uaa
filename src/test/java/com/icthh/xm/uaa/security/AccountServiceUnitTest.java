@@ -1,19 +1,18 @@
 package com.icthh.xm.uaa.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.exceptions.BusinessException;
-import com.icthh.xm.commons.messaging.communication.service.CommunicationService;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.commons.XmRequestContext;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
+import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.domain.GrantType;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
+import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.repository.RegistrationLogRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
@@ -26,11 +25,15 @@ import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.OtpSendDTO;
+import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.messaging.UserMessagingService;
+import com.icthh.xm.uaa.service.util.RandomUtil;
 import com.icthh.xm.uaa.web.rest.vm.AuthorizeUserVm;
+import liquibase.util.StringUtils;
 import org.jboss.aerogear.security.otp.api.Base32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -48,13 +51,15 @@ import static com.icthh.xm.uaa.config.Constants.OTP_THROTTLING_ERROR_TEXT;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 public class AccountServiceUnitTest {
@@ -122,9 +127,6 @@ public class AccountServiceUnitTest {
         when(mockUser.getLangKey()).thenReturn("ua");
         when(mockUser.getTfaOtpSecret()).thenReturn(Base32.random());
 
-        doNothing().when(emailOtpSender).send(any());
-        doNothing().when(smsOtpSender).send(any());
-
         when(otpSenderFactory.getSender(OtpChannelType.EMAIL)).thenReturn(Optional.of(emailOtpSender));
         when(otpSenderFactory.getSender(OtpChannelType.SMS)).thenReturn(Optional.of(smsOtpSender));
 
@@ -135,96 +137,118 @@ public class AccountServiceUnitTest {
 
     @Test
     public void test_authorizeAccount_shouldRegisterNewUserAndReturnOtpGrandType() {
-        UserLogin userLogin = new UserLogin();
-        userLogin.setTypeKey("LOGIN.EMAIL");
-        userLogin.setLogin(USERNAME_EMAIL);
+        User regiteredUser = buildUser(USERNAME_EMAIL, false);
+        UserLogin userLogin = regiteredUser.getLogins().iterator().next();
+
+        assertNull(regiteredUser.getOtpCode());
+        assertNull(regiteredUser.getOtpCodeCreationDate());
 
         AuthorizeUserVm authorizeUserVm = new AuthorizeUserVm();
-        authorizeUserVm.setLogin(USERNAME_EMAIL);
+        authorizeUserVm.setLogin(userLogin.getLogin());
         authorizeUserVm.setLangKey("ua");
 
-        when(userService.findOneByLogin(USERNAME_EMAIL)).thenReturn(Optional.empty());
-        when(userRepository.save(any())).thenReturn(mockUser);
+        when(userService.findOneByLogin(userLogin.getLogin())).thenReturn(Optional.empty());
+        when(userRepository.save(argThat(new RegisteredUserMatcher(regiteredUser)))).thenReturn(regiteredUser);
 
         String result = accountService.authorizeAccount(authorizeUserVm, REMOTE_ADDR);
 
+        // prepare expected data
+        TenantProperties.NotificationChannel expectedChannel = buildTenantProperties().getCommunication()
+            .getNotifications().get("auth-otp")
+            .getChannels().get("email");
+        OtpSendDTO expectedOtpSendDTO = new OtpSendDTO(OTP_CODE, userLogin.getLogin(), regiteredUser.getUserKey(), expectedChannel);
+
+        // check result
         assertNotNull(result);
         assertEquals(GrantType.OTP.getValue(), result);
 
-        verify(userService).findOneByLogin(eq(USERNAME_EMAIL));
+        assertNotNull(regiteredUser.getOtpCode());
+        assertNotNull(regiteredUser.getOtpCodeCreationDate());
+
+        verify(userService).findOneByLogin(eq(userLogin.getLogin()));
         verify(userLoginService).normalizeLogins(eq(List.of(userLogin)));
-        verify(userLoginService).normalizeLogins(eq(List.of(userLogin)));
-        verify(passwordEncoder).encode(any());
-        verify(registrationLogRepository).save(any());
-        verify(userMessagingService, never()).sendAuthorizeMessage(any(OtpSendDTO.class));
-        verify(profileEventProducer).createEventJson(any(), any());
+        verify(passwordEncoder).encode(anyString());
+        verify(registrationLogRepository).save(argThat(a -> REMOTE_ADDR.equals(a.getIpAddress())));
+        verify(profileEventProducer)
+            .createEventJson(argThat(new DtoFromUserMatcher(regiteredUser)), eq(Constants.CREATE_PROFILE_EVENT_TYPE));
         verify(profileEventProducer).send(any());
-        verify(emailOtpSender).send(any());
-        verify(smsOtpSender, never()).send(any());
-        verify(userRepository, times(2)).save(any());
+        verify(emailOtpSender).send(argThat(new OtpSendDTOMatcher(expectedOtpSendDTO)));
+        verify(userRepository).save(regiteredUser);
+        verify(userRepository)
+            .save(argThat(a -> StringUtils.isNotEmpty(a.getOtpCode()) && a.getOtpCodeCreationDate() != null));
+
+        verifyNoMoreInteractions(userMessagingService);
+        verifyNoMoreInteractions(smsOtpSender);
     }
 
     @Test
     public void test_authorizeAccount_shouldAuthorizeRegisteredUserAndReturnOtpGrandType() {
-        UserLogin userLogin = new UserLogin();
-        userLogin.setTypeKey("LOGIN.EMAIL");
-        userLogin.setLogin(USERNAME_SMS);
+        User regiteredUser = buildUser(USERNAME_SMS, false);
+        String login = regiteredUser.getLogins().iterator().next().getLogin();
+
+        assertNull(regiteredUser.getOtpCode());
+        assertNull(regiteredUser.getOtpCodeCreationDate());
 
         AuthorizeUserVm authorizeUserVm = new AuthorizeUserVm();
-        authorizeUserVm.setLogin(USERNAME_SMS);
+        authorizeUserVm.setLogin(login);
         authorizeUserVm.setLangKey("ua");
 
-        when(userService.findOneByLogin(USERNAME_SMS)).thenReturn(Optional.of(mockUser));
-        when(userRepository.save(any())).thenReturn(mockUser);
+        when(userService.findOneByLogin(login)).thenReturn(Optional.of(regiteredUser));
+        when(userRepository.save(regiteredUser)).thenReturn(regiteredUser);
 
         String result = accountService.authorizeAccount(authorizeUserVm, REMOTE_ADDR);
 
+        // prepare expected data
+        TenantProperties.NotificationChannel expectedChannel = buildTenantProperties().getCommunication()
+            .getNotifications().get("auth-otp")
+            .getChannels().get("sms");
+        OtpSendDTO expectedOtpSendDTO = new OtpSendDTO(OTP_CODE, login, regiteredUser.getUserKey(), expectedChannel);
+
+        // check result
         assertNotNull(result);
         assertEquals(GrantType.OTP.getValue(), result);
 
-        verify(userService).findOneByLogin(eq(USERNAME_SMS));
-        verify(userLoginService, never()).normalizeLogins(eq(List.of(userLogin)));
-        verify(userLoginService, never()).normalizeLogins(eq(List.of(userLogin)));
-        verify(passwordEncoder, never()).encode(any());
-        verify(registrationLogRepository, never()).save(any());
-        verify(userMessagingService, never()).sendAuthorizeMessage(any(OtpSendDTO.class));
-        verify(profileEventProducer, never()).createEventJson(any(), any());
-        verify(profileEventProducer, never()).send(any());
-        verify(emailOtpSender, never()).send(any());
-        verify(smsOtpSender).send(any());
-        verify(userRepository, times(1)).save(any());
+        assertNotNull(regiteredUser.getOtpCode());
+        assertNotNull(regiteredUser.getOtpCodeCreationDate());
+
+        verify(userService).findOneByLogin(eq(login));
+        verify(smsOtpSender).send(argThat(new OtpSendDTOMatcher(expectedOtpSendDTO)));
+        verify(userRepository, times(1)).save(regiteredUser);
+
+        verifyNoMoreInteractions(userLoginService);
+        verifyNoMoreInteractions(passwordEncoder);
+        verifyNoMoreInteractions(registrationLogRepository);
+        verifyNoMoreInteractions(userMessagingService);
+        verifyNoMoreInteractions(profileEventProducer);
+        verifyNoMoreInteractions(emailOtpSender);
     }
 
     @Test
     public void test_authorizeAccount_shouldAuthorizeRegisteredUserAndReturnPasswordGrandType() {
-        UserLogin userLogin = new UserLogin();
-        userLogin.setTypeKey("LOGIN.EMAIL");
-        userLogin.setLogin(USERNAME_SMS);
+        User regiteredUser = buildUser(USERNAME_SMS, true);
+        String login = regiteredUser.getLogins().iterator().next().getLogin();
 
         AuthorizeUserVm authorizeUserVm = new AuthorizeUserVm();
-        authorizeUserVm.setLogin(USERNAME_SMS);
+        authorizeUserVm.setLogin(login);
         authorizeUserVm.setLangKey("ua");
 
-        when(mockUser.getPasswordSetByUser()).thenReturn(true);
-        when(userService.findOneByLogin(USERNAME_SMS)).thenReturn(Optional.of(mockUser));
-        when(userRepository.save(any())).thenReturn(mockUser);
+        when(userService.findOneByLogin(login)).thenReturn(Optional.of(regiteredUser));
 
         String result = accountService.authorizeAccount(authorizeUserVm, REMOTE_ADDR);
 
         assertNotNull(result);
         assertEquals(GrantType.PASSWORD.getValue(), result);
 
-        verify(userService).findOneByLogin(eq(USERNAME_SMS));
-        verify(userLoginService, never()).normalizeLogins(eq(List.of(userLogin)));
-        verify(userLoginService, never()).normalizeLogins(eq(List.of(userLogin)));
-        verify(passwordEncoder, never()).encode(any());
-        verify(registrationLogRepository, never()).save(any());
-        verify(userMessagingService, never()).sendAuthorizeMessage(any(OtpSendDTO.class));
-        verify(profileEventProducer, never()).createEventJson(any(), any());
-        verify(profileEventProducer, never()).send(any());
-        verify(emailOtpSender, never()).send(any());
-        verify(smsOtpSender, never()).send(any());
-        verify(userRepository, never()).save(any());
+        verify(userService).findOneByLogin(eq(login));
+
+        verifyNoMoreInteractions(userLoginService);
+        verifyNoMoreInteractions(passwordEncoder);
+        verifyNoMoreInteractions(registrationLogRepository);
+        verifyNoMoreInteractions(userMessagingService);
+        verifyNoMoreInteractions(profileEventProducer);
+        verifyNoMoreInteractions(emailOtpSender);
+        verifyNoMoreInteractions(smsOtpSender);
+        verifyNoMoreInteractions(userRepository);
     }
 
     @Test
@@ -286,6 +310,24 @@ public class AccountServiceUnitTest {
         );
     }
 
+    public User buildUser(String username, boolean passSetByUser) {
+        UserLogin userLogin = new UserLogin();
+        userLogin.setTypeKey(UserLoginType.getByRegex(username).getValue());
+        userLogin.setLogin(username);
+
+        User user = new User();
+        user.setId(1L);
+        user.setUserKey(UUID.randomUUID().toString());
+        user.setPassword(org.apache.commons.lang3.RandomStringUtils.random(60));
+        user.setPasswordSetByUser(passSetByUser);
+        user.setLangKey("ua");
+        user.setActivationKey(RandomUtil.generateActivationKey());
+        user.setRoleKey("ROLE_VIEW");
+        user.setLogins(List.of(userLogin));
+        user.getLogins().forEach(ul -> ul.setUser(user));
+        return user;
+    }
+
     private TenantProperties buildTenantProperties() {
         TenantProperties.NotificationChannel channel1 = new TenantProperties.NotificationChannel();
         channel1.setKey("SMS_NOTIFICATION");
@@ -311,5 +353,68 @@ public class AccountServiceUnitTest {
         properties.setCommunication(communication);
         properties.setSecurity(security);
         return properties;
+    }
+
+    class OtpSendDTOMatcher implements ArgumentMatcher<OtpSendDTO> {
+
+        private final OtpSendDTO expected;
+
+        OtpSendDTOMatcher(OtpSendDTO expected) {
+            this.expected = expected;
+        }
+
+        @Override
+        public boolean matches(OtpSendDTO actual) {
+            assertEquals(expected.getDestination(), actual.getDestination());
+            assertEquals(expected.getUserKey(), actual.getUserKey());
+            assertEquals(expected.getTemplateName(), actual.getTemplateName());
+            assertEquals(expected.getTitleKey(), actual.getTitleKey());
+            assertEquals(expected.getChannel().getKey(), actual.getChannel().getKey());
+            assertEquals(expected.getChannel().getType(), actual.getChannel().getType());
+            assertEquals(expected.getChannel().getTemplateName(), actual.getChannel().getTemplateName());
+            assertEquals(expected.getChannel().getTitleKey(), actual.getChannel().getTitleKey());
+            return true;
+        }
+
+    }
+
+    class RegisteredUserMatcher implements ArgumentMatcher<User> {
+
+        private final User expected;
+
+        RegisteredUserMatcher(User expected) {
+            this.expected = expected;
+        }
+
+        @Override
+        public boolean matches(User actual) {
+            assertEquals(expected.getPasswordSetByUser(), actual.getPasswordSetByUser());
+            assertEquals(expected.isActivated(), actual.isActivated());
+            assertEquals(expected.getLangKey(), actual.getLangKey());
+            assertEquals(expected.getLogins().size(), actual.getLogins().size());
+            assertEquals(expected.getLogins().iterator().next().getLogin(), actual.getLogins().iterator().next().getLogin());
+            assertEquals(expected.getLogins().iterator().next().getTypeKey(), actual.getLogins().iterator().next().getTypeKey());
+            return true;
+        }
+    }
+
+    class DtoFromUserMatcher implements ArgumentMatcher<UserDTO> {
+
+        private final User expected;
+
+        DtoFromUserMatcher(User expected) {
+            this.expected = expected;
+        }
+
+        @Override
+        public boolean matches(UserDTO actual) {
+            assertEquals(expected.getId(), actual.getId());
+            assertEquals(expected.isActivated(), actual.isActivated());
+            assertEquals(expected.getLangKey(), actual.getLangKey());
+            assertEquals(expected.getLogins().size(), actual.getLogins().size());
+            assertEquals(expected.getLogins().iterator().next().getLogin(), actual.getLogins().iterator().next().getLogin());
+            assertEquals(expected.getLogins().iterator().next().getTypeKey(), actual.getLogins().iterator().next().getTypeKey());
+            return true;
+        }
     }
 }
