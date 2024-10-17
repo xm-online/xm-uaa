@@ -50,7 +50,7 @@ public class AuthOtpTokenGranter extends AbstractTokenGranter {
 
     private Authentication getAuthenticationToken(TokenRequest tokenRequest) {
         String otpCode = getParamFromTokenRequest(tokenRequest, TOKEN_REQUEST_OTP_PARAM);
-        String login = getParamFromTokenRequest(tokenRequest, TOKEN_REQUEST_USERNAME_PARAM);
+        String login = prepareLoginValue(getParamFromTokenRequest(tokenRequest, TOKEN_REQUEST_USERNAME_PARAM));
 
         DomainUserDetails domainUserDetails = domainUserDetailsService.loadUserByUsername(login);
 
@@ -64,6 +64,10 @@ public class AuthOtpTokenGranter extends AbstractTokenGranter {
         userAuthenticationToken.setDetails(tokenRequest.getRequestParameters());
 
         return userAuthenticationToken;
+    }
+
+    private String prepareLoginValue(String login) {
+        return login.startsWith("+") ? login : "+" + login;
     }
 
     private String getParamFromTokenRequest(TokenRequest tokenRequest, String key) {
