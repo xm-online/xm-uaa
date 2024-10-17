@@ -21,6 +21,7 @@ import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.util.RandomUtil;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -75,6 +76,7 @@ public class AuthOtpTokenGranterIntTest {
 
     private static final String OTP_CODE = "123456";
     private static final String USERNAME = "user@test.com.ua";
+    private static final String USERNAME_PHONE_NUMBER = "+3805873645592";
 
     private final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
 
@@ -138,15 +140,45 @@ public class AuthOtpTokenGranterIntTest {
     }
 
     @Test
-    public void testValidOtpCode_shouldReturnAccessToken() {
-        User user = buildUser();
-        user.setActivated(true);
-        user.setOtpCode(OTP_CODE);
-        userRepository.save(user);
+    public void testValidOtpCode_emailUsername_shouldReturnAccessToken() {
+        User user = buildUser(USERNAME, true, OTP_CODE);
+        Map<String, String> requestParameters = builRequestParametersMap(OTP_CODE, USERNAME);
 
-        Map<String, String> requestParameters = new HashMap<>();
-        requestParameters.put("auth_otp", OTP_CODE);
-        requestParameters.put("username", USERNAME);
+        TokenRequest tokenRequest = new TokenRequest(requestParameters, CLIENT_ID, Collections.emptyList(), GrantType.OTP.getValue());
+
+        OAuth2AccessToken result = authOtpTokenGranter.grant(GrantType.OTP.getValue(), tokenRequest);
+
+        assertNotNull(result);
+        assertNotNull(result.getValue());
+        assertNotNull(result.getRefreshToken());
+        assertNotNull(result.getExpiration());
+        assertEquals(result.getTokenType(), "bearer");
+        assertEquals(result.getAdditionalInformation().get("user_key"), user.getUserKey());
+        assertEquals(result.getAdditionalInformation().get("tenant"), TENANT);
+    }
+
+    @Test
+    public void testValidOtpCode_msisdnUsername_shouldReturnAccessToken() {
+        User user = buildUser(USERNAME_PHONE_NUMBER, true, OTP_CODE);
+        Map<String, String> requestParameters = builRequestParametersMap(OTP_CODE, USERNAME_PHONE_NUMBER);
+
+        TokenRequest tokenRequest = new TokenRequest(requestParameters, CLIENT_ID, Collections.emptyList(), GrantType.OTP.getValue());
+
+        OAuth2AccessToken result = authOtpTokenGranter.grant(GrantType.OTP.getValue(), tokenRequest);
+
+        assertNotNull(result);
+        assertNotNull(result.getValue());
+        assertNotNull(result.getRefreshToken());
+        assertNotNull(result.getExpiration());
+        assertEquals(result.getTokenType(), "bearer");
+        assertEquals(result.getAdditionalInformation().get("user_key"), user.getUserKey());
+        assertEquals(result.getAdditionalInformation().get("tenant"), TENANT);
+    }
+
+    @Test
+    public void testValidOtpCode_shouldPreparePhoneNumberLogin() {
+        User user = buildUser(USERNAME_PHONE_NUMBER, true, OTP_CODE);
+        Map<String, String> requestParameters = builRequestParametersMap(OTP_CODE, USERNAME_PHONE_NUMBER.substring(1));
 
         TokenRequest tokenRequest = new TokenRequest(requestParameters, CLIENT_ID, Collections.emptyList(), GrantType.OTP.getValue());
 
@@ -163,13 +195,8 @@ public class AuthOtpTokenGranterIntTest {
 
     @Test
     public void testMissingUsername_shouldThrowInvalidGrantException() {
-        User user = buildUser();
-        user.setActivated(true);
-        user.setOtpCode(OTP_CODE);
-        userRepository.save(user);
-
-        Map<String, String> requestParameters = new HashMap<>();
-        requestParameters.put("auth_otp", OTP_CODE);
+        User user = buildUser(USERNAME, true, OTP_CODE);
+        Map<String, String> requestParameters = builRequestParametersMap(OTP_CODE, null);
 
         TokenRequest tokenRequest = new TokenRequest(requestParameters, CLIENT_ID, Collections.emptyList(), GrantType.OTP.getValue());
 
@@ -180,13 +207,9 @@ public class AuthOtpTokenGranterIntTest {
 
     @Test
     public void testMissingOtp_shouldThrowInvalidGrantException() {
-        User user = buildUser();
-        user.setActivated(true);
-        user.setOtpCode(OTP_CODE);
-        userRepository.save(user);
+        User user = buildUser(USERNAME, true, OTP_CODE);
 
-        Map<String, String> requestParameters = new HashMap<>();
-        requestParameters.put("username", USERNAME);
+        Map<String, String> requestParameters = builRequestParametersMap(null, USERNAME);
 
         TokenRequest tokenRequest = new TokenRequest(requestParameters, CLIENT_ID, Collections.emptyList(), GrantType.OTP.getValue());
 
@@ -197,14 +220,8 @@ public class AuthOtpTokenGranterIntTest {
 
     @Test
     public void testInvalidUsername_shouldThrowUsernameNotFoundException() {
-        User user = buildUser();
-        user.setActivated(true);
-        user.setOtpCode(OTP_CODE);
-        userRepository.save(user);
-
-        Map<String, String> requestParameters = new HashMap<>();
-        requestParameters.put("auth_otp", OTP_CODE);
-        requestParameters.put("username", "invalidUserName");
+        User user = buildUser(USERNAME, true, OTP_CODE);
+        Map<String, String> requestParameters = builRequestParametersMap(OTP_CODE, "invalid@mail.com");
 
         TokenRequest tokenRequest = new TokenRequest(requestParameters, CLIENT_ID, Collections.emptyList(), GrantType.OTP.getValue());
 
@@ -216,14 +233,8 @@ public class AuthOtpTokenGranterIntTest {
 
     @Test
     public void testInvalidOtp() {
-        User user = buildUser();
-        user.setActivated(true);
-        user.setOtpCode(OTP_CODE);
-        userRepository.save(user);
-
-        Map<String, String> requestParameters = new HashMap<>();
-        requestParameters.put("auth_otp", "invalidOtpCode");
-        requestParameters.put("username", USERNAME);
+        User user = buildUser(USERNAME, true, OTP_CODE);
+        Map<String, String> requestParameters = builRequestParametersMap("invalidOtpCode", USERNAME);
 
         TokenRequest tokenRequest = new TokenRequest(requestParameters, CLIENT_ID, Collections.emptyList(), GrantType.OTP.getValue());
 
@@ -234,13 +245,8 @@ public class AuthOtpTokenGranterIntTest {
 
     @Test
     public void testUserNotActive_shouldThrowInvalidGrantException() {
-        User user = buildUser();
-        user.setOtpCode(OTP_CODE);
-        userRepository.save(user);
-
-        Map<String, String> requestParameters = new HashMap<>();
-        requestParameters.put("auth_otp", OTP_CODE);
-        requestParameters.put("username", USERNAME);
+        User user = buildUser(USERNAME, false, OTP_CODE);
+        Map<String, String> requestParameters = builRequestParametersMap(OTP_CODE, USERNAME);
 
         TokenRequest tokenRequest = new TokenRequest(requestParameters, CLIENT_ID, Collections.emptyList(), GrantType.OTP.getValue());
 
@@ -251,14 +257,8 @@ public class AuthOtpTokenGranterIntTest {
 
     @Test
     public void testInvalidClientId() {
-        User user = buildUser();
-        user.setActivated(true);
-        user.setOtpCode(OTP_CODE);
-        userRepository.save(user);
-
-        Map<String, String> requestParameters = new HashMap<>();
-        requestParameters.put("auth_otp", OTP_CODE);
-        requestParameters.put("username", USERNAME);
+        User user = buildUser(USERNAME, true, OTP_CODE);
+        Map<String, String> requestParameters = builRequestParametersMap(OTP_CODE, USERNAME);
 
         TokenRequest tokenRequest = new TokenRequest(requestParameters, "invalidClientId", Collections.emptyList(), GrantType.OTP.getValue());
 
@@ -269,24 +269,29 @@ public class AuthOtpTokenGranterIntTest {
 
     @Test
     public void testDifferentGrantType() {
-        User user = buildUser();
-        user.setActivated(true);
-        user.setOtpCode(OTP_CODE);
-        userRepository.save(user);
-
-        Map<String, String> requestParameters = new HashMap<>();
-        requestParameters.put("auth_otp", OTP_CODE);
-        requestParameters.put("username", USERNAME);
+        User user = buildUser(USERNAME, true, OTP_CODE);
+        Map<String, String> requestParameters = builRequestParametersMap(OTP_CODE, USERNAME);
 
         TokenRequest tokenRequest = new TokenRequest(requestParameters, CLIENT_ID, Collections.emptyList(), GrantType.PASSWORD.getValue());
 
         assertNull(authOtpTokenGranter.grant(GrantType.PASSWORD.getValue(), tokenRequest));
     }
 
-    public User buildUser() {
+    private Map<String, String> builRequestParametersMap(String otp, String username) {
+        Map<String, String> requestParameters = new HashMap<>();
+        if (StringUtils.isNotEmpty(otp)) {
+            requestParameters.put("auth_otp", otp);
+        }
+        if (StringUtils.isNotEmpty(username)) {
+            requestParameters.put("username", username);
+        }
+        return requestParameters;
+    }
+
+    public User buildUser(String username, boolean activated, String otp) {
         UserLogin userLogin = new UserLogin();
-        userLogin.setTypeKey(UserLoginType.getByRegex(USERNAME).getValue());
-        userLogin.setLogin(USERNAME);
+        userLogin.setTypeKey(UserLoginType.getByRegex(username).getValue());
+        userLogin.setLogin(username);
 
         User user = new User();
         user.setUserKey(UUID.randomUUID().toString());
@@ -297,7 +302,11 @@ public class AuthOtpTokenGranterIntTest {
         user.setRoleKey("ROLE_VIEW");
         user.setLogins(List.of(userLogin));
         user.getLogins().forEach(ul -> ul.setUser(user));
-        return user;
+        user.setActivated(activated);
+        if (StringUtils.isNotEmpty(otp)) {
+            user.setOtpCode(otp);
+        }
+        return userRepository.save(user);
     }
 
     private Client buildClient() {

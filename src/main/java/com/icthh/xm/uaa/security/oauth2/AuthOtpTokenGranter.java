@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.security.oauth2;
 
 import com.icthh.xm.uaa.domain.GrantType;
+import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.security.DomainUserDetails;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.security.oauth2.idp.source.model.XmAuthenticationToken;
@@ -67,7 +68,10 @@ public class AuthOtpTokenGranter extends AbstractTokenGranter {
     }
 
     private String prepareLoginValue(String login) {
-        return login.startsWith("+") ? login : "+" + login;
+        if (UserLoginType.MSISDN.equals(UserLoginType.getByRegex(login)) && !login.startsWith("+")) {
+            return "+" + login;
+        }
+        return login;
     }
 
     private String getParamFromTokenRequest(TokenRequest tokenRequest, String key) {
