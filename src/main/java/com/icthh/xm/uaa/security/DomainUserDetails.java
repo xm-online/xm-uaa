@@ -25,6 +25,7 @@ public class DomainUserDetails extends User {
     private final String tfaOtpSecret;
     private final Integer tfaAccessTokenValiditySeconds;
 
+    private String authOtpCode;
     private String tfaEncodedOtp;
     private OtpChannelType tfaOtpChannelType;
 
@@ -107,6 +108,7 @@ public class DomainUserDetails extends User {
                              Collection<? extends GrantedAuthority> authorities,
                              String tenant,
                              String userKey,
+                             String authOtpCode,
                              boolean tfaEnabled,
                              String tfaOtpSecret,
                              OtpChannelType tfaOtpChannelType,
@@ -129,6 +131,7 @@ public class DomainUserDetails extends User {
         this.accessTokenValiditySeconds = accessTokenValiditySeconds;
         this.refreshTokenValiditySeconds = refreshTokenValiditySeconds;
         this.logins = logins;
+        this.authOtpCode = authOtpCode;
         this.tfaEnabled = tfaEnabled;
         this.tfaOtpSecret = tfaOtpSecret;
         this.tfaOtpChannelType = tfaOtpChannelType;

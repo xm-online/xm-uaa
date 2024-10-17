@@ -98,6 +98,7 @@ public class DomainUserDetailsService implements UserDetailsService {
             authorities,
             tenantKey,
             user.getUserKey(),
+            user.getOtpCode(),
             user.isTfaEnabled(),
             user.getTfaOtpSecret(),
             user.getTfaOtpChannelType(),

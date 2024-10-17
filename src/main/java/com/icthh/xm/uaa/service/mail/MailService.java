@@ -71,7 +71,7 @@ public class MailService {
     private static final String TEMPLATE_NAME = "templateName";
     private static final String SUBJECT = "subject";
     private static final String FROM = "from";
-    private static final String EMAIL_TYPE = "Email";
+    private static final String EMAIL_TYPE = "TemplatedEmail";
 
     private static final String USER = "user";
     private static final String BASE_URL = "baseUrl";
@@ -295,7 +295,8 @@ public class MailService {
             .map(TenantProperties::getCommunication)
             .map(TenantProperties.Communication::getEnabled)
             .map(Boolean.TRUE::equals)
-            .orElse(applicationProperties.getCommunication().isEnabled());
+            .orElse(applicationProperties.getCommunication() != null
+                && applicationProperties.getCommunication().isEnabled());
     }
 
     private void sendCommunicationEmailEvent(TenantKey tenantKey,

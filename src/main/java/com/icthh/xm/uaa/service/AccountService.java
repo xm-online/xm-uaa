@@ -6,19 +6,31 @@ import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.security.XmAuthenticationContext;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
+import com.icthh.xm.uaa.config.Constants;
+import com.icthh.xm.uaa.domain.GrantType;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.RegistrationLog;
 import com.icthh.xm.uaa.domain.User;
+import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.repository.RegistrationLogRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
+import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
+import com.icthh.xm.uaa.security.oauth2.otp.OtpSender;
+import com.icthh.xm.uaa.security.oauth2.otp.OtpSenderFactory;
+import com.icthh.xm.uaa.service.dto.OtpSendDTO;
 import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
+import com.icthh.xm.uaa.service.dto.UserPassDto;
 import com.icthh.xm.uaa.service.util.RandomUtil;
+import com.icthh.xm.uaa.util.OtpUtils;
+import com.icthh.xm.uaa.web.rest.vm.AuthorizeUserVm;
 import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.jboss.aerogear.security.otp.Totp;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +39,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
+import static com.icthh.xm.uaa.config.Constants.AUTH_OPT_NOTIFICATION_KEY;
+import static com.icthh.xm.uaa.config.Constants.OTP_SENDER_NOT_FOUND_ERROR_TEXT;
 
 @LepService(group = "service.account")
 @Transactional
@@ -40,6 +55,9 @@ public class AccountService {
     private final XmAuthenticationContextHolder authContextHolder;
     private final TenantPropertiesService tenantPropertiesService;
     private final UserService userService;
+    private final UserLoginService userLoginService;
+    private final ProfileEventProducer profileEventProducer;
+    private final OtpSenderFactory otpSenderFactory;
 
     /**
      * Register new user.
@@ -49,13 +67,13 @@ public class AccountService {
      */
     @Transactional
     @LogicExtensionPoint("Register")
-    public User register(ManagedUserVM user, String ipAddress) {
-        userService.validatePassword(user.getPassword());
-        String encryptedPassword = passwordEncoder.encode(user.getPassword());
+    public User register(UserDTO user, String ipAddress) {
+        UserPassDto userPassDto = getOrGeneratePassword(user);
 
         User newUser = new User();
         newUser.setUserKey(UUID.randomUUID().toString());
-        newUser.setPassword(encryptedPassword);
+        newUser.setPassword(userPassDto.getEncryptedPassword());
+        newUser.setPasswordSetByUser(userPassDto.getSetByUser());
         newUser.setFirstName(user.getFirstName());
         newUser.setLastName(user.getLastName());
         newUser.setImageUrl(user.getImageUrl());
@@ -71,6 +89,61 @@ public class AccountService {
         registrationLogRepository.save(new RegistrationLog(ipAddress));
 
         return resultUser;
+    }
+
+    public User registerUser(UserDTO user, String remoteAddress) {
+        userLoginService.normalizeLogins(user.getLogins());
+        userLoginService.verifyLoginsNotExist(user.getLogins());
+
+        User newUser = register(user, remoteAddress);
+        produceEvent(new UserDTO(newUser), Constants.CREATE_PROFILE_EVENT_TYPE);
+        return newUser;
+    }
+
+    /**
+     * Authorize new user and register if no password provided.
+     *
+     * @param authorizeUserVm user to authorize
+     * @param remoteAddr remote address
+     * @return authorization grant type
+     */
+    @Transactional
+    @LogicExtensionPoint("Authorize")
+    public String authorizeAccount(AuthorizeUserVm authorizeUserVm, String remoteAddr) {
+        UserDTO userDTO = buildUserDtoWithLogin(authorizeUserVm);
+        User user = userService.findOneByLogin(authorizeUserVm.getLogin())
+            .orElseGet(() -> registerUser(userDTO, remoteAddr));
+
+        if (user.getPasswordSetByUser() == Boolean.TRUE) {
+            return GrantType.PASSWORD.getValue();
+        } else {
+            sendOtpCode(authorizeUserVm.getLogin(), user);
+            return GrantType.OTP.getValue();
+        }
+    }
+
+    public void sendOtpCode(String login) {
+        User user = userService.findOneByLogin(login)
+            .orElseThrow(() -> new BusinessException(String.format("User by login '%s' not found", login)));
+        sendOtpCode(login, user);
+    }
+
+    private void sendOtpCode(String login, User user) {
+        OtpUtils.validateOptCodeSentInterval(tenantPropertiesService.getTenantProps(), user.getOtpCodeCreationDate());
+
+        OtpChannelType chanelType = OtpUtils.getOptChanelTypeByLogin(login);
+
+        OtpSender sender = otpSenderFactory.getSender(chanelType)
+            .orElseThrow(() -> new AuthenticationServiceException(
+                OTP_SENDER_NOT_FOUND_ERROR_TEXT + chanelType.getTypeName()));
+
+        String otpCode = new Totp(user.getTfaOtpSecret()).now();
+
+        sender.send(new OtpSendDTO(otpCode, login, user.getUserKey(), getNotificationKeyByChannel(chanelType)));
+
+        user.setOtpCode(otpCode);
+        user.setOtpCodeCreationDate(Instant.now());
+        userRepository.save(user);
     }
 
     /**
@@ -173,5 +246,35 @@ public class AccountService {
     @Transactional
     public Map<OtpChannelType, List<TfaOtpChannelSpec>> getTfaAvailableOtpChannelSpecs() {
         return userService.getTfaAvailableOtpChannelSpecs(getRequiredUserKey());
+    }
+
+    public void produceEvent(UserDTO userDto, String eventType) {
+        String content = profileEventProducer.createEventJson(userDto, eventType);
+        profileEventProducer.send(content);
+    }
+
+    private UserPassDto getOrGeneratePassword(UserDTO user) {
+        if (user instanceof ManagedUserVM) {
+            ManagedUserVM managedUser = (ManagedUserVM) user;
+            userService.validatePassword(managedUser.getPassword());
+            return new UserPassDto(passwordEncoder.encode(managedUser.getPassword()), true);
+        }
+        return new UserPassDto(passwordEncoder.encode(UUID.randomUUID().toString()), false);
+    }
+
+    private UserDTO buildUserDtoWithLogin(AuthorizeUserVm authorizeUserVm) {
+        UserDTO userDTO = new UserDTO();
+        userDTO.setLangKey(authorizeUserVm.getLangKey());
+        userDTO.addUserLogin(authorizeUserVm.getLogin());
+        return userDTO;
+    }
+
+    private TenantProperties.NotificationChannel getNotificationKeyByChannel(OtpChannelType chanelType) {
+        TenantProperties.Notification notification = Optional.ofNullable(tenantPropertiesService.getTenantProps()
+            .getCommunication().getNotifications().get(AUTH_OPT_NOTIFICATION_KEY))
+            .orElseThrow(() -> new BusinessException("Authorize otp notification configuration is missing"));
+
+       return Optional.ofNullable(notification.getChannels().get(chanelType.getTypeName()))
+            .orElseThrow(() -> new BusinessException("Authorize otp notification channel is missing"));
     }
 }

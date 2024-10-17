@@ -57,6 +57,12 @@ public class CaptchaService {
         return registration.map(rl -> rl.moreThenSecondsAgo(captchaPeriod)).orElse(false);
     }
 
+    public void validateCaptchaIfNecessary(String remoteAddress, String captcha) {
+        if (isCaptchaNeed(remoteAddress)) {
+            checkCaptcha(captcha);
+        }
+    }
+
     private long getRegistrationCaptchaPeriodSeconds() {
         Long tenantValue = tenantPropertiesService.getTenantProps().getRegistrationCaptchaPeriodSeconds();
         Long appValue = applicationProperties.getReCaptcha().getRegistrationCaptchaPeriodSeconds();

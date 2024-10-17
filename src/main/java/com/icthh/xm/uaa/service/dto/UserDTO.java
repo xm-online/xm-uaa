@@ -97,6 +97,10 @@ public class UserDTO {
 
     private Instant lastLoginDate;
 
+    private String otpCode;
+
+    private Instant otpCodeCreationDate;
+
     @SuppressWarnings("unused")
     public UserDTO() {
         // Empty constructor needed for Jackson.
@@ -133,7 +137,9 @@ public class UserDTO {
             user.isAutoLogoutEnabled(),
             user.getAutoLogoutTimeoutSeconds(),
             user.getAcceptTocTime(),
-            user.getLastLoginDate()
+            user.getLastLoginDate(),
+            user.getOtpCode(),
+            user.getOtpCodeCreationDate()
         );
         OtpUtils.enrichTfaOtpChannelSpec(this);
     }
@@ -163,6 +169,17 @@ public class UserDTO {
 
     public List<String> getAuthorities(){
         return isEmpty(this.authorities) && roleKey != null ? List.of(this.roleKey) : authorities;
+    }
+
+    public void addUserLogin(String login) {
+        UserLogin userLogin = new UserLogin();
+        userLogin.setTypeKey(UserLoginType.getByRegex(login).getValue());
+        userLogin.setLogin(login);
+
+        if (this.logins == null) {
+            this.logins = new ArrayList<>();
+        }
+        this.logins.add(userLogin);
     }
 
 }
