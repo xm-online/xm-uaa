@@ -1,4 +1,4 @@
-package com.icthh.xm.uaa.security;
+package com.icthh.xm.uaa.service;
 
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
@@ -20,10 +20,6 @@ import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
 import com.icthh.xm.uaa.security.oauth2.otp.EmailOtpSender;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpSenderFactory;
 import com.icthh.xm.uaa.security.oauth2.otp.SmsOtpSender;
-import com.icthh.xm.uaa.service.AccountService;
-import com.icthh.xm.uaa.service.TenantPropertiesService;
-import com.icthh.xm.uaa.service.UserLoginService;
-import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.OtpSendDTO;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.messaging.UserMessagingService;
