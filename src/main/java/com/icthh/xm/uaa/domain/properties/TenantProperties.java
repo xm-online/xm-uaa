@@ -90,6 +90,9 @@ public class TenantProperties {
         @JsonProperty("otpThrottlingTimeIntervalInSeconds")
         private Integer otpThrottlingTimeIntervalInSeconds;
 
+        @JsonProperty("otpThrottlingLifeTimeInSeconds")
+        private Integer otpThrottlingLifeTimeInSeconds;
+
         @JsonProperty("accessTokenValiditySeconds")
         private Integer accessTokenValiditySeconds;
 

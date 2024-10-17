@@ -2,9 +2,11 @@ package com.icthh.xm.uaa.security.oauth2;
 
 import com.icthh.xm.uaa.domain.GrantType;
 import com.icthh.xm.uaa.domain.UserLoginType;
+import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.security.DomainUserDetails;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.security.oauth2.idp.source.model.XmAuthenticationToken;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.core.Authentication;
@@ -21,6 +23,8 @@ import org.springframework.security.oauth2.provider.token.AbstractTokenGranter;
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -33,13 +37,16 @@ public class AuthOtpTokenGranter extends AbstractTokenGranter {
 
     private final DomainUserDetailsService domainUserDetailsService;
     private final GrantedAuthoritiesMapper authoritiesMapper;
+    private final TenantPropertiesService tenantPropertiesService;
 
     public AuthOtpTokenGranter(DomainUserDetailsService domainUserDetailsService,
                                AuthorizationServerTokenServices tokenServices,
                                ClientDetailsService clientDetailsService,
-                               OAuth2RequestFactory requestFactory) {
+                               OAuth2RequestFactory requestFactory,
+                               TenantPropertiesService tenantPropertiesService) {
         super(tokenServices, clientDetailsService, requestFactory, GrantType.OTP.getValue());
         this.domainUserDetailsService = domainUserDetailsService;
+        this.tenantPropertiesService = tenantPropertiesService;
         this.authoritiesMapper = new NullAuthoritiesMapper();
     }
 
@@ -55,7 +62,8 @@ public class AuthOtpTokenGranter extends AbstractTokenGranter {
 
         DomainUserDetails domainUserDetails = domainUserDetailsService.loadUserByUsername(login);
 
-        if (!otpCode.equals(domainUserDetails.getAuthOtpCode())) {
+        if (!otpCode.equals(domainUserDetails.getAuthOtpCode())
+            || isExpiredOtp(domainUserDetails.getAuthOtpCodeCreationDate())) {
             throw new InvalidGrantException("Authorization otp code is invalid");
         }
         Collection<? extends GrantedAuthority> authorities =
@@ -65,6 +73,18 @@ public class AuthOtpTokenGranter extends AbstractTokenGranter {
         userAuthenticationToken.setDetails(tokenRequest.getRequestParameters());
 
         return userAuthenticationToken;
+    }
+
+    private boolean isExpiredOtp(Instant authOtpCodeCreationDate) {
+        if (authOtpCodeCreationDate == null) {
+            return false;
+        }
+        TenantProperties tenantProps = tenantPropertiesService.getTenantProps();
+        Integer configuredInterval = tenantProps.getSecurity().getOtpThrottlingLifeTimeInSeconds();
+        Duration actualInterval = Duration.between(authOtpCodeCreationDate, Instant.now());
+        int allowedInterval = configuredInterval != null ? configuredInterval : 60;
+
+        return allowedInterval < 0 || actualInterval.getSeconds() >= allowedInterval;
     }
 
     private String prepareLoginValue(String login) {

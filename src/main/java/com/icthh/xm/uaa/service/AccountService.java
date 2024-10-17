@@ -139,11 +139,11 @@ public class AccountService {
 
         String otpCode = new Totp(user.getTfaOtpSecret()).now();
 
-        sender.send(new OtpSendDTO(otpCode, login, user.getUserKey(), getNotificationKeyByChannel(chanelType)));
-
         user.setOtpCode(otpCode);
         user.setOtpCodeCreationDate(Instant.now());
         userRepository.save(user);
+
+        sender.send(new OtpSendDTO(otpCode, login, user.getUserKey(), getNotificationKeyByChannel(chanelType)));
     }
 
     /**

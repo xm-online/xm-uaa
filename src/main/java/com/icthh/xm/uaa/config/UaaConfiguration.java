@@ -198,7 +198,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
                                                    ClientDetailsService clientDetailsService,
                                                    AuthorizationServerEndpointsConfigurer endpoints) {
         return new AuthOtpTokenGranter(domainUserDetailsService, tokenServices(), clientDetailsService,
-            endpoints.getOAuth2RequestFactory());
+            endpoints.getOAuth2RequestFactory(), tenantPropertiesService);
     }
 
     @Bean
