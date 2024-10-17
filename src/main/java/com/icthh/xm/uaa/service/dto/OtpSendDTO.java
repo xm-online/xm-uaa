@@ -27,6 +27,8 @@ public class OtpSendDTO {
         this.destination = destination;
         this.userKey = userKey;
         this.channel = channel;
+        this.templateName = channel.getTemplateName();
+        this.titleKey = channel.getTitleKey();
     }
 
     public OtpSendDTO(String otp, String destination, String userKey, String templateName, String titleKey) {
