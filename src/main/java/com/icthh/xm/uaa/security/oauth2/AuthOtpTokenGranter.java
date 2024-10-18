@@ -82,7 +82,6 @@ public class AuthOtpTokenGranter extends AbstractTokenGranter {
         }
         Duration actualInterval = Duration.between(authOtpCodeCreationDate, Instant.now());
         int allowedInterval = getAllowedInterval(tenantPropertiesService.getTenantProps());
-
         return allowedInterval < 0 || actualInterval.getSeconds() >= allowedInterval;
     }
 

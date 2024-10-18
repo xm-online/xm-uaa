@@ -249,8 +249,9 @@ public class AuthOtpTokenGranterIntTest {
     public void testExpiredOtp() {
         User user = buildUser(USERNAME, true, OTP_CODE);
         user.setOtpCodeCreationDate(Instant.now().minus(1, ChronoUnit.MINUTES));
+        userRepository.save(user);
 
-        Map<String, String> requestParameters = builRequestParametersMap("invalidOtpCode", USERNAME);
+        Map<String, String> requestParameters = builRequestParametersMap(OTP_CODE, USERNAME);
 
         TokenRequest tokenRequest = new TokenRequest(requestParameters, CLIENT_ID, Collections.emptyList(), GrantType.OTP.getValue());
 
