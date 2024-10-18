@@ -27,6 +27,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -80,18 +81,16 @@ public class AuthOtpTokenGranter extends AbstractTokenGranter {
             return false;
         }
         Duration actualInterval = Duration.between(authOtpCodeCreationDate, Instant.now());
-        int allowedInterval = getAlloverInterval(tenantPropertiesService.getTenantProps());
+        int allowedInterval = getAllowedInterval(tenantPropertiesService.getTenantProps());
 
         return allowedInterval < 0 || actualInterval.getSeconds() >= allowedInterval;
     }
 
-    private static int getAlloverInterval(TenantProperties tenantProps) {
-        int defaultIntervalInSeconds = 60;
-        TenantProperties.Security security = tenantProps.getSecurity();
-        if (security == null || security.getOtpThrottlingLifeTimeInSeconds() == null) {
-            return defaultIntervalInSeconds;
-        }
-        return security.getOtpThrottlingLifeTimeInSeconds();
+    private static int getAllowedInterval(TenantProperties tenantProps) {
+        return Optional.ofNullable(tenantProps)
+            .map(TenantProperties::getSecurity)
+            .map(TenantProperties.Security::getOtpThrottlingLifeTimeInSeconds)
+            .orElse(60);
     }
 
     private String prepareLoginValue(String login) {
