@@ -97,8 +97,10 @@ public class UserDTO {
 
     private Instant lastLoginDate;
 
+    @JsonIgnore
     private String otpCode;
 
+    @JsonIgnore
     private Instant otpCodeCreationDate;
 
     @SuppressWarnings("unused")

@@ -45,6 +45,8 @@ import org.springframework.util.StreamUtils;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -115,7 +117,7 @@ public class AuthOtpTokenGranterIntTest {
     @Before
     public void setUp() throws IOException {
         authOtpTokenGranter = new AuthOtpTokenGranter(domainUserDetailsService, tokenServices, clientDetailsService,
-            new DefaultOAuth2RequestFactory(clientDetailsService));
+            new DefaultOAuth2RequestFactory(clientDetailsService), tenantPropertiesService);
 
         MockitoAnnotations.initMocks(this);
         TenantContextUtils.setTenant(tenantContextHolder, DEFAULT_TENANT_KEY_VALUE);
@@ -244,6 +246,21 @@ public class AuthOtpTokenGranterIntTest {
     }
 
     @Test
+    public void testExpiredOtp() {
+        User user = buildUser(USERNAME, true, OTP_CODE);
+        user.setOtpCodeCreationDate(Instant.now().minus(1, ChronoUnit.MINUTES));
+        userRepository.save(user);
+
+        Map<String, String> requestParameters = builRequestParametersMap(OTP_CODE, USERNAME);
+
+        TokenRequest tokenRequest = new TokenRequest(requestParameters, CLIENT_ID, Collections.emptyList(), GrantType.OTP.getValue());
+
+        assertThrows("Authorization otp code is invalid", InvalidGrantException.class,
+            () -> authOtpTokenGranter.grant(GrantType.OTP.getValue(), tokenRequest)
+        );
+    }
+
+    @Test
     public void testUserNotActive_shouldThrowInvalidGrantException() {
         User user = buildUser(USERNAME, false, OTP_CODE);
         Map<String, String> requestParameters = builRequestParametersMap(OTP_CODE, USERNAME);
@@ -305,6 +322,7 @@ public class AuthOtpTokenGranterIntTest {
         user.setActivated(activated);
         if (StringUtils.isNotEmpty(otp)) {
             user.setOtpCode(otp);
+            user.setOtpCodeCreationDate(Instant.now());
         }
         return userRepository.save(user);
     }

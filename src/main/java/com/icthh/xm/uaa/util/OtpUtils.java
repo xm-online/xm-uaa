@@ -123,11 +123,17 @@ public final class OtpUtils {
             return;
         }
         Duration actualInterval = Duration.between(otpCodeCreationDate, Instant.now());
-        Integer configuredInterval = tenantProps.getSecurity().getOtpThrottlingTimeIntervalInSeconds();
-        int allowedInterval = configuredInterval != null ? configuredInterval : 30;
+        int allowedInterval = getAllowedInterval(tenantProps);
 
         if (allowedInterval >= 0 && actualInterval.getSeconds() < allowedInterval) {
             throw new BusinessException(OTP_THROTTLING_ERROR_TEXT);
         }
+    }
+
+    private static int getAllowedInterval(TenantProperties tenantProps) {
+        return Optional.ofNullable(tenantProps)
+            .map(TenantProperties::getSecurity)
+            .map(TenantProperties.Security::getOtpThrottlingTimeIntervalInSeconds)
+            .orElse(30);
     }
 }
