@@ -79,12 +79,19 @@ public class AuthOtpTokenGranter extends AbstractTokenGranter {
         if (authOtpCodeCreationDate == null) {
             return false;
         }
-        TenantProperties tenantProps = tenantPropertiesService.getTenantProps();
-        Integer configuredInterval = tenantProps.getSecurity().getOtpThrottlingLifeTimeInSeconds();
         Duration actualInterval = Duration.between(authOtpCodeCreationDate, Instant.now());
-        int allowedInterval = configuredInterval != null ? configuredInterval : 60;
+        int allowedInterval = getAlloverInterval(tenantPropertiesService.getTenantProps());
 
         return allowedInterval < 0 || actualInterval.getSeconds() >= allowedInterval;
+    }
+
+    private static int getAlloverInterval(TenantProperties tenantProps) {
+        int defaultIntervalInSeconds = 60;
+        TenantProperties.Security security = tenantProps.getSecurity();
+        if (security == null || security.getOtpThrottlingLifeTimeInSeconds() == null) {
+            return defaultIntervalInSeconds;
+        }
+        return security.getOtpThrottlingLifeTimeInSeconds();
     }
 
     private String prepareLoginValue(String login) {
