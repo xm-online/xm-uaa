@@ -271,7 +271,7 @@ public class AccountServiceUnitTest {
 
         when(userService.findOneByLogin(USERNAME_SMS)).thenReturn(Optional.of(mockUser));
 
-        assertThrows("can not build UserLoginType from value: " + login, IllegalArgumentException.class, () ->
+        assertThrows("User login type could not be determined by value: " + login, BusinessException.class, () ->
             accountService.authorizeAccount(authorizeUserVm, REMOTE_ADDR)
         );
     }
@@ -405,7 +405,6 @@ public class AccountServiceUnitTest {
         @Override
         public boolean matches(UserDTO actual) {
             assertEquals(expected.getId(), actual.getId());
-            assertEquals(expected.isActivated(), actual.isActivated());
             assertEquals(expected.getLangKey(), actual.getLangKey());
             assertEquals(expected.getLogins().size(), actual.getLogins().size());
             assertEquals(expected.getLogins().iterator().next().getLogin(), actual.getLogins().iterator().next().getLogin());

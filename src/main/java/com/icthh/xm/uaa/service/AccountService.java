@@ -117,6 +117,7 @@ public class AccountService {
         if (user.getPasswordSetByUser() == Boolean.TRUE) {
             return GrantType.PASSWORD.getValue();
         } else {
+            user.setActivated(true);
             sendOtpCode(authorizeUserVm.getLogin(), user);
             return GrantType.OTP.getValue();
         }
@@ -228,6 +229,7 @@ public class AccountService {
         }
         String newPassword = passwordEncoder.encode(password.getNewPassword());
         user.setPassword(newPassword);
+        user.setPasswordSetByUser(true);
         userRepository.saveAndFlush(user);
         log.debug("Changed password for User: {}", user);
         return new UserDTO(user);

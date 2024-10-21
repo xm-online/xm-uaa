@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.domain;
 
+import com.icthh.xm.commons.exceptions.BusinessException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 
@@ -51,7 +52,7 @@ public enum UserLoginType {
 
     public static UserLoginType getByRegex(String value) {
         if (value == null || value.isEmpty()) {
-            throw new IllegalArgumentException("can not build UserLoginType from value: " + value);
+            throw new BusinessException("User login type could not be determined by value: " + value);
         }
         if (EmailValidator.getInstance().isValid(value)) {
             return UserLoginType.EMAIL;
@@ -59,7 +60,7 @@ public enum UserLoginType {
         if (PHONE_PATTERN.matcher(value).matches()) {
             return UserLoginType.MSISDN;
         }
-        throw new IllegalArgumentException("can not build UserLoginType from value: " + value);
+        throw new BusinessException("User login type could not be determined by value: " + value);
     }
 
 }
