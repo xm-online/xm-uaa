@@ -19,6 +19,10 @@ public class ErrorConstants {
     public static final String ERROR_USER_DELETE_HIMSELF = "error.user.delete.himself";
     public static final String ERROR_USER_BLOCK_HIMSELF = "error.user.block.himself";
     public static final String ERROR_USER_ACTIVATES_HIMSELF = "error.user.activate.himself";
+    public static final String ERROR_USER_LOGIN_INVALID = "error.user.login.invalid";
 
     public static final String ERROR_SUPER_ADMIN_FORBIDDEN_OPERATION = "error.super-admin.forbidden-operation";
+
+    // error messages
+    public static final String ERROR_USER_LOGIN_INVALID_MESSAGE = "User login type could not be determined by value: ";
 }

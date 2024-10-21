@@ -448,6 +448,7 @@ public class AccountResourceIntTest {
 
         Optional<UserLogin> user = userLoginRepository.findOneByLoginIgnoreCase("joe@example.com");
         assertThat(user.isPresent()).isTrue();
+        assertThat(user.get().getUser().isActivated()).isFalse();
     }
 
     @Test
@@ -473,6 +474,8 @@ public class AccountResourceIntTest {
         assertFalse(resultUser.isEmpty());
         assertNotNull(resultUser.get().getUser().getOtpCode());
         assertNotNull(resultUser.get().getUser().getOtpCodeCreationDate());
+        assertFalse(resultUser.get().getUser().getPasswordSetByUser());
+        assertTrue(resultUser.get().getUser().isActivated());
 
         verify(emailOtpSender, times(1)).send(any());
         verifyNoMoreInteractions(smsOtpSender);
@@ -505,6 +508,8 @@ public class AccountResourceIntTest {
         assertTrue(resultUser.isPresent());
         assertNull(resultUser.get().getUser().getOtpCode());
         assertNull(resultUser.get().getUser().getOtpCodeCreationDate());
+        assertTrue(resultUser.get().getUser().getPasswordSetByUser());
+        assertFalse(resultUser.get().getUser().isActivated());
 
         verifyNoMoreInteractions(emailOtpSender);
         verifyNoMoreInteractions(smsOtpSender);
@@ -564,6 +569,8 @@ public class AccountResourceIntTest {
 
         Optional<UserLogin> user = userLoginRepository.findOneByLoginIgnoreCase("joe@example.com");
         assertThat(user.isPresent()).isTrue();
+        assertTrue(user.get().getUser().getPasswordSetByUser());
+        assertFalse(user.get().getUser().isActivated());
     }
 
     @Test
@@ -976,7 +983,7 @@ public class AccountResourceIntTest {
             user.setUserKey(DEF_USER_KEY);
             user.setRoleKey(ROLE_USER);
             user.setPassword(passwordEncoder.encode(password));
-            user.setPasswordSetByUser(true);
+            user.setPasswordSetByUser(false);
 
             userRepository.saveAndFlush(user);
 
@@ -996,6 +1003,7 @@ public class AccountResourceIntTest {
             User updatedUser = userRepository.findOneByUserKey(userKey).orElse(null);
             assertThat(updatedUser).isNotNull();
             assertThat(passwordEncoder.matches("1234", updatedUser.getPassword())).isTrue();
+            assertThat(updatedUser.getPasswordSetByUser()).isTrue();
         });
     }
 
@@ -1027,6 +1035,7 @@ public class AccountResourceIntTest {
             User updatedUser = userRepository.findOneByUserKey(DEF_USER_KEY).orElse(null);
             assertThat(updatedUser).isNotNull();
             assertThat(updatedUser.getPassword()).isEqualTo(user.getPassword());
+            assertThat(updatedUser.getPasswordSetByUser()).isTrue();
         });
     }
 
@@ -1202,7 +1211,7 @@ public class AccountResourceIntTest {
         user.setUserKey(DEF_USER_KEY);
         user.setRoleKey(ROLE_USER);
         user.setPassword(RandomStringUtils.random(60));
-        user.setPasswordSetByUser(true);
+        user.setPasswordSetByUser(false);
         user.setActivated(true);
         user.setResetDate(Instant.now().plusSeconds(60));
         user.setResetKey("reset key");
@@ -1224,6 +1233,7 @@ public class AccountResourceIntTest {
         User updatedUser = userRepository.findOneByUserKey(DEF_USER_KEY).orElse(null);
         assertThat(updatedUser).isNotNull();
         assertThat(passwordEncoder.matches(keyAndPassword.getNewPassword(), updatedUser.getPassword())).isTrue();
+        assertThat(updatedUser.getPasswordSetByUser()).isTrue();
     }
 
     @Test
@@ -1252,6 +1262,7 @@ public class AccountResourceIntTest {
         User updatedUser = userRepository.findOneByResetKey(user.getResetKey()).orElse(null);
         assertThat(updatedUser).isNotNull();
         assertThat(passwordEncoder.matches(keyAndPassword.getNewPassword(), updatedUser.getPassword())).isFalse();
+        assertThat(updatedUser.getPasswordSetByUser()).isTrue();
     }
 
 

@@ -99,6 +99,7 @@ public class UserService {
             .map(this::checkResetKey)
             .map(user -> {
                 user.setPassword(passwordEncoder.encode(newPassword));
+                user.setPasswordSetByUser(true);
                 user.setResetKey(null);
                 user.setResetDate(null);
                 user.setUpdatePasswordDate(Instant.now());
