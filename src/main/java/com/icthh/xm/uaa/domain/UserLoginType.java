@@ -9,6 +9,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_LOGIN_INVALID;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_USER_LOGIN_INVALID_MESSAGE;
+
 @SuppressWarnings("unused")
 public enum UserLoginType {
     EMAIL("LOGIN.EMAIL"),
@@ -52,7 +55,7 @@ public enum UserLoginType {
 
     public static UserLoginType getByRegex(String value) {
         if (value == null || value.isEmpty()) {
-            throw new BusinessException("User login type could not be determined by value: " + value);
+            throw new BusinessException(ERROR_USER_LOGIN_INVALID, ERROR_USER_LOGIN_INVALID_MESSAGE + value);
         }
         if (EmailValidator.getInstance().isValid(value)) {
             return UserLoginType.EMAIL;
@@ -60,7 +63,7 @@ public enum UserLoginType {
         if (PHONE_PATTERN.matcher(value).matches()) {
             return UserLoginType.MSISDN;
         }
-        throw new BusinessException("User login type could not be determined by value: " + value);
+        throw new BusinessException(ERROR_USER_LOGIN_INVALID, ERROR_USER_LOGIN_INVALID_MESSAGE + value);
     }
 
 }
