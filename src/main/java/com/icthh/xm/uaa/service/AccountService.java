@@ -110,9 +110,11 @@ public class AccountService {
     @Transactional
     @LogicExtensionPoint("Authorize")
     public String authorizeAccount(AuthorizeUserVm authorizeUserVm, String remoteAddr) {
-        UserDTO userDTO = buildUserDtoWithLogin(authorizeUserVm);
         User user = userService.findOneByLogin(authorizeUserVm.getLogin())
-            .orElseGet(() -> registerUser(userDTO, remoteAddr));
+            .orElseGet(() -> {
+                UserDTO userDTO = buildUserDtoWithLogin(authorizeUserVm);
+                return registerUser(userDTO, remoteAddr);
+            });
 
         if (user.getPasswordSetByUser() == Boolean.TRUE) {
             return GrantType.PASSWORD.getValue();

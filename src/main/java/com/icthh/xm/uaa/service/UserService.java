@@ -166,7 +166,7 @@ public class UserService {
         newUser.setAuthorities(getRequiredRoleKey(user));
         String encryptedPassword = passwordEncoder.encode(RandomUtil.generatePassword());
         newUser.setPassword(encryptedPassword);
-        newUser.setPasswordSetByUser(true);
+        newUser.setPasswordSetByUser(false);
         newUser.setResetKey(RandomUtil.generateResetKey());
         newUser.setResetDate(Instant.now());
         newUser.setActivated(true);
