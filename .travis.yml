@@ -51,4 +51,3 @@ branches:
     only:
       - master
       - main
-      - arm
