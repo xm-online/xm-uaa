@@ -16,6 +16,7 @@ script:
   - "./gradlew --no-daemon --refresh-dependencies clean check test"
   - "./gradlew -x test -Pprod --no-daemon bootWar"
   - docker login -u $DOCKER_USER -p $DOCKER_PASS
+  - docker buildx create --name multi-arch --platform "linux/arm64,linux/amd64,linux/arm/v8" --driver "docker-container" --use
   - export DOCKER_REPO=$(echo  -n $TRAVIS_REPO_SLUG | sed -e 's/^xm-online\//xmonline\//g')
   - export IMAGE_BRANCH=$(echo -n $TRAVIS_BRANCH | sed -e 's/\//-/g')
   - export PROJECT_VERSION="$IMAGE_BRANCH"
@@ -27,13 +28,13 @@ script:
         -Dsonar.projectName="$SONAR_PK" -Dsonar.java.binaries="." -Dsonar.projectVersion="$IMAGE_BRANCH";
         TAGS="$PROJECT_VERSION $PROJECT_VERSION-$TRAVIS_BUILD_NUMBER $(echo $PROJECT_VERSION | awk -F '.' '{printf $1"."$2" "$1}') latest";
     fi
-  - docker build -t app-docker-img --label commit_id="$TRAVIS_COMMIT" --label version="$PROJECT_VERSION" --label build_number="$TRAVIS_BUILD_NUMBER" --label build_url="$TRAVIS_BUILD_WEB_URL" --label git_url="$TRAVIS_REPO_SLUG" --label commit_message="$TRAVIS_COMMIT_MESSAGE" -f src/main/docker/Dockerfile .
+  - TAG_ARGS=""
   - for TAG in $TAGS;
     do
-        docker tag app-docker-img $DOCKER_REPO:$TAG;
-        docker push $DOCKER_REPO:$TAG;
+        TAG_ARGS="$TAG_ARGS -t $DOCKER_REPO:$TAG";
     done
-
+  - docker buildx build --platform linux/amd64,linux/arm64,linux/arm64/v8 $TAG_ARGS --label commit_id="$TRAVIS_COMMIT" --label version="$PROJECT_VERSION" --label build_number="$TRAVIS_BUILD_NUMBER" --label build_url="$TRAVIS_BUILD_WEB_URL" --label git_url="$TRAVIS_REPO_SLUG" --label commit_message="$TRAVIS_COMMIT_MESSAGE" -f src/main/docker/Dockerfile .
+  - docker buildx rm multi-arch || true
 cache:
   directories:
   - "~/.gradle"
@@ -50,3 +51,4 @@ branches:
     only:
       - master
       - main
+      - arm
