@@ -214,6 +214,7 @@ public class LepTokenGranterIntTest {
         user.setRoleKey(RoleConstant.SUPER_ADMIN);
         user.setUserKey(UUID.randomUUID().toString());
         user.setPassword(passwordEncoder.encode(password));
+        user.setPasswordSetByUser(true);
         user.setActivated(true);
         user.setTfaEnabled(true);
         user.setUpdatePasswordDate(Instant.now().plus(1, ChronoUnit.DAYS));

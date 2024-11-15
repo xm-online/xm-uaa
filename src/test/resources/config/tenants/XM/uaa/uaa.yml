@@ -31,4 +31,16 @@ ldapSearchTemplates:
       domain: xm.com
       attributeNames:
         - uid
-
+communication:
+  enabled: true
+  notifications:
+    auth-otp:
+      channels:
+        sms:
+          key: SMS_NOTIFICATION
+          templateName: authOtpEmail
+          type: Twilio
+        email:
+          key: EMAIL_NOTIFICATION
+          templateName: authOtpEmail
+          titleKey: email.auth.otp.title

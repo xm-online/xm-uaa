@@ -99,6 +99,7 @@ public class UserService {
             .map(this::checkResetKey)
             .map(user -> {
                 user.setPassword(passwordEncoder.encode(newPassword));
+                user.setPasswordSetByUser(true);
                 user.setResetKey(null);
                 user.setResetDate(null);
                 user.setUpdatePasswordDate(Instant.now());
@@ -165,6 +166,7 @@ public class UserService {
         newUser.setAuthorities(getRequiredRoleKey(user));
         String encryptedPassword = passwordEncoder.encode(RandomUtil.generatePassword());
         newUser.setPassword(encryptedPassword);
+        newUser.setPasswordSetByUser(false);
         newUser.setResetKey(RandomUtil.generateResetKey());
         newUser.setResetDate(Instant.now());
         newUser.setActivated(true);

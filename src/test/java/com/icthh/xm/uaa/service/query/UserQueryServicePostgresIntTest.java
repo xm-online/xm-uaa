@@ -224,6 +224,7 @@ public class UserQueryServicePostgresIntTest {
         user.setAuthorities(List.of(ROLE_USER, ROLE_B2B_MANAGER));
         String random = RandomStringUtils.random(60);
         user.setPassword(random);
+        user.setPasswordSetByUser(true);
         user.setActivated(true);
         user.getLogins().add(userLogin);
         userLogin.setUser(user);

@@ -22,12 +22,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
 import java.util.List;
 
 import static com.google.common.collect.ImmutableMap.of;
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
+import static org.junit.Assert.assertNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -57,6 +61,9 @@ public class TenantPropertiesResourceIntTest {
 
     @Autowired
     private TenantContextHolder tenantContextHolder;
+
+    @Autowired
+    private WebApplicationContext webApplicationContext;
 
     private MockMvc restMvc;
 
@@ -96,8 +103,11 @@ public class TenantPropertiesResourceIntTest {
 
     @Test
     public void testGetUaaPublicSettings() throws Exception {
+        // to apply all filters and configurations
+        this.restMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
 
         restMvc.perform(get("/api/uaa/properties/settings-public"))
+            .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.passwordSettings.maxLength").value(PASSWORD_MAX_LENGTH))
             .andExpect(jsonPath("$.passwordSettings.minLength").value(PASSWORD_MIN_LENGTH))
@@ -105,7 +115,10 @@ public class TenantPropertiesResourceIntTest {
             .andExpect(jsonPath("$.passwordSettings.patternMessage.en").value(PATTERN_MESSAGE))
             .andExpect(jsonPath("$.passwordPolicies[0].pattern").value(PASSWORD_PATTERN))
             .andExpect(jsonPath("$.passwordPoliciesMinimalMatchCount").value(PASSWORD_POLICIES_MINIMAL_MATCH_COUNT))
-            .andExpect(jsonPath("$.passwordPolicies[0].patternMessage.en").value(PATTERN_MESSAGE));
+            .andExpect(jsonPath("$.passwordPolicies[0].patternMessage.en").value(PATTERN_MESSAGE))
+            .andExpect(header().doesNotExist("Set-Cookie"))
+            .andExpect(result -> assertNull(result.getRequest().getSession(false)))
+        ;
 
     }
 
@@ -130,6 +143,19 @@ public class TenantPropertiesResourceIntTest {
                 .andExpect(jsonPath("$.dataSpec").doesNotExist())
                 .andExpect(jsonPath("$.dataForm").doesNotExist());
 
+    }
+
+    @Test
+    @SneakyThrows
+    public void testNullUserSpec() {
+        tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
+            new ObjectMapper(new YAMLFactory()).writeValueAsString(new TenantProperties()));
+
+        restMvc.perform(get("/api/uaa/properties/data-schema/ROLE_1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.roleKey").value("ROLE_1"))
+            .andExpect(jsonPath("$.dataSpec").doesNotExist())
+            .andExpect(jsonPath("$.dataForm").doesNotExist());
     }
 
 }

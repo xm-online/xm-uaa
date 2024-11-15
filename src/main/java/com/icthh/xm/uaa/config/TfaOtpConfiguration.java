@@ -3,6 +3,7 @@ package com.icthh.xm.uaa.config;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.spring.config.TenantContextConfiguration;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
+import com.icthh.xm.uaa.security.oauth2.otp.SmsOtpSender;
 import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpAuthenticationEmbedded;
 import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpAuthenticationOtpMs;
 import com.icthh.xm.uaa.service.otp.OtpService;
@@ -41,17 +42,22 @@ public class TfaOtpConfiguration {
     private final TenantPropertiesService tenantPropertiesService;
     private final MailService mailService;
     private final UserService userService;
+    private final SmsOtpSender smsOtpSender;
+    private final EmailOtpSender emailOtpSender;
 
     public TfaOtpConfiguration(TenantContextHolder tenantContextHolder,
                                XmRequestContextHolder xmRequestContextHolder,
                                TenantPropertiesService tenantPropertiesService,
                                MailService mailService,
-                               UserService userService) {
+                               UserService userService,
+                               SmsOtpSender smsOtpSender, EmailOtpSender emailOtpSender) {
         this.tenantContextHolder = tenantContextHolder;
         this.xmRequestContextHolder = xmRequestContextHolder;
         this.tenantPropertiesService = tenantPropertiesService;
         this.mailService = mailService;
         this.userService = userService;
+        this.smsOtpSender = smsOtpSender;
+        this.emailOtpSender = emailOtpSender;
     }
 
     @Bean
@@ -76,12 +82,7 @@ public class TfaOtpConfiguration {
 
     @Bean
     OtpSenderFactory otpSenderFactory() {
-        return new DefaultOtpSenderFactory(emailOtpSender());
-    }
-
-    @Bean
-    EmailOtpSender emailOtpSender() {
-        return new EmailOtpSender(tenantContextHolder, xmRequestContextHolder, mailService, userService);
+        return new DefaultOtpSenderFactory(emailOtpSender, smsOtpSender);
     }
 
     @Bean

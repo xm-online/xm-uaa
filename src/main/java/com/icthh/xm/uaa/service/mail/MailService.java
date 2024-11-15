@@ -71,10 +71,12 @@ public class MailService {
     private static final String TEMPLATE_NAME = "templateName";
     private static final String SUBJECT = "subject";
     private static final String FROM = "from";
-    private static final String EMAIL_TYPE = "Email";
+    private static final String EMAIL_TYPE = "TemplatedEmail";
 
     private static final String USER = "user";
     private static final String BASE_URL = "baseUrl";
+    private static final String RESET_KEY = "resetKey";
+    private static final String ACTIVATION_KEY = "activationKey";
     private static final String TENANT_KEY_VALUE = "tenant";
 
     private final JHipsterProperties jHipsterProperties;
@@ -119,6 +121,7 @@ public class MailService {
 
             Map<String, Object> objectModel = new HashMap<>();
             objectModel.put(USER, user);
+            objectModel.put(ACTIVATION_KEY, user.getActivationKey());
             objectModel.put(BASE_URL, applicationUrl);
             objectModel.put(TENANT_KEY_VALUE, tenantKey.getValue());
 
@@ -144,6 +147,7 @@ public class MailService {
 
             Map<String, Object> objectModel = new HashMap<>();
             objectModel.put(USER, user);
+            objectModel.put(RESET_KEY, user.getResetKey());
             objectModel.put(BASE_URL, applicationUrl);
             objectModel.put(TENANT_KEY_VALUE, tenantKey.getValue());
 
@@ -172,6 +176,7 @@ public class MailService {
             log.info("Sending password reset email to '{}'", user.getEmail());
             Map<String, Object> objectModel = new HashMap<>();
             objectModel.put(USER, user);
+            objectModel.put(RESET_KEY, user.getResetKey());
             objectModel.put(BASE_URL, applicationUrl);
             objectModel.put(TENANT_KEY_VALUE, tenantKey.getValue());
 
@@ -295,7 +300,8 @@ public class MailService {
             .map(TenantProperties::getCommunication)
             .map(TenantProperties.Communication::getEnabled)
             .map(Boolean.TRUE::equals)
-            .orElse(applicationProperties.getCommunication().isEnabled());
+            .orElse(applicationProperties.getCommunication() != null
+                && applicationProperties.getCommunication().isEnabled());
     }
 
     private void sendCommunicationEmailEvent(TenantKey tenantKey,
@@ -337,13 +343,13 @@ public class MailService {
             return;
         }
 
-        String templateKey = EmailTemplateUtil.emailTemplateKey(tenantKey, user.getLangKey(), templateName);
-        String emailTemplate = tenantEmailTemplateService.getEmailTemplate(templateKey);
+        String emailTemplate = tenantEmailTemplateService.getEmailTemplate(tenantKey.getValue(), user.getLangKey(), templateName);
         Locale locale = forLanguageTag(user.getLangKey());
 
         try {
             tenantContextHolder.getPrivilegedContext().setTenant(new PlainTenant(tenantKey));
 
+            String templateKey = EmailTemplateUtil.emailTemplateKey(tenantKey, user.getLangKey(), templateName);
             Template mailTemplate = new Template(templateKey, emailTemplate, freeMarker);
             String content = FreeMarkerTemplateUtils.processTemplateIntoString(mailTemplate, objectModel);
             String subject = messageSource.getMessage(titleKey, null, locale);

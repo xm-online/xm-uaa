@@ -10,7 +10,6 @@ import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.repository.UserRepository;
-import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
 import com.icthh.xm.uaa.service.AccountMailService;
 import com.icthh.xm.uaa.service.AccountService;
 import com.icthh.xm.uaa.service.CaptchaService;
@@ -22,6 +21,7 @@ import com.icthh.xm.uaa.service.dto.TfaEnableRequest;
 import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.web.rest.util.HeaderUtil;
+import com.icthh.xm.uaa.web.rest.vm.AuthorizeUserVm;
 import com.icthh.xm.uaa.web.rest.vm.CaptchaVM;
 import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.KeyAndPasswordVM;
@@ -37,7 +37,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.web.util.TextEscapeUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,7 +51,6 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 
@@ -73,7 +71,6 @@ public class AccountResource {
     private final UserLoginService userLoginService;
     private final UserService userService;
     private final AccountService accountService;
-    private final ProfileEventProducer profileEventProducer;
     private final CaptchaService captchaService;
     private final XmRequestContextHolder xmRequestContextHolder;
     private final TenantContextHolder tenantContextHolder;
@@ -95,16 +92,43 @@ public class AccountResource {
         if (user.getEmail() == null) {
             throw new BusinessException("Email can't be empty");
         }
-        userLoginService.normalizeLogins(user.getLogins());
-        userLoginService.verifyLoginsNotExist(user.getLogins());
-
-        if (captchaService.isCaptchaNeed(request.getRemoteAddr())) {
-            captchaService.checkCaptcha(user.getCaptcha());
-        }
-        User newUser = accountService.register(user, request.getRemoteAddr());
-        produceEvent(new UserDTO(newUser), Constants.CREATE_PROFILE_EVENT_TYPE);
+        captchaService.validateCaptchaIfNecessary(request.getRemoteAddr(), user.getCaptcha());
+        User newUser = accountService.registerUser(user, request.getRemoteAddr());
         accountMailService.sendMailOnRegistration(newUser);
         return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    /**
+     * POST /authorize : authorize user and register if no password provided.
+     *
+     * @param user the authorize user View Model
+     * @return the ResponseEntity with status 200 (Ok) if the user is authorized or 400 (Bad Request) if the login
+     * is not provided and grant type
+     */
+    @PostMapping(path = "/authorize", produces = {MediaType.APPLICATION_JSON_VALUE})
+    @Timed
+    @PreAuthorize("hasPermission({'user': #user, 'request': #request}, 'ACCOUNT.AUTHORIZE')")
+    @PrivilegeDescription("Privilege to authorize the user")
+    public ResponseEntity<String> authorizeAccount(@Valid @RequestBody AuthorizeUserVm user, HttpServletRequest request) {
+        captchaService.validateCaptchaIfNecessary(request.getRemoteAddr(), user.getCaptcha());
+        return ResponseEntity.ok(accountService.authorizeAccount(user, request.getRemoteAddr()));
+    }
+
+    /**
+     * POST /sendOtp : send otp code for user verification.
+     *
+     * @param user the authorize user View Model
+     * @return the ResponseEntity with status 200 (Ok) if the code successfully sent or 400 (Bad Request) if the user
+     * by login does not exist
+     */
+    @PostMapping(path = "/sendOtp", produces = {MediaType.APPLICATION_JSON_VALUE})
+    @Timed
+    @PreAuthorize("hasPermission({'user': #user, 'request': #request}, 'ACCOUNT.OTP.SEND')")
+    @PrivilegeDescription("Privilege to send otp code to user")
+    public ResponseEntity<Void> sendOtp(@Valid @RequestBody AuthorizeUserVm user, HttpServletRequest request) {
+        captchaService.validateCaptchaIfNecessary(request.getRemoteAddr(), user.getCaptcha());
+        accountService.sendOtpCode(user.getLogin());
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/is-captcha-need")
@@ -132,7 +156,7 @@ public class AccountResource {
     public ResponseEntity<String> activateAccount(@RequestParam("key") String key) {
         return accountService.activateRegistration(key)
             .map(user -> {
-                produceEvent(user, Constants.ACTIVATE_PROFILE_EVENT_TYPE);
+                accountService.produceEvent(user, Constants.ACTIVATE_PROFILE_EVENT_TYPE);
                 return new ResponseEntity<String>(HttpStatus.OK);
             })
             .orElse(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
@@ -203,7 +227,7 @@ public class AccountResource {
         userLoginService.verifyLoginsNotExist(user.getLogins(), user.getId());
         Optional<UserDTO> updatedUser = accountService.updateAccount(user);
 
-        updatedUser.ifPresent(userDTO -> produceEvent(userDTO, Constants.UPDATE_PROFILE_EVENT_TYPE));
+        updatedUser.ifPresent(userDTO -> accountService.produceEvent(userDTO, Constants.UPDATE_PROFILE_EVENT_TYPE));
         return ResponseUtil.wrapOrNotFound(updatedUser,
                                            HeaderUtil.createAlert("userManagement.updated", user.getUserKey()));
     }
@@ -226,7 +250,7 @@ public class AccountResource {
         userLoginService.verifyLoginsNotExist(user.getLogins(), user.getId());
         String requiredUserKey = userService.getRequiredUserKey();
         Optional<UserDTO> updatedUser = userService.updateUserLogins(requiredUserKey, user.getLogins());
-        updatedUser.ifPresent(userDTO -> produceEvent(userDTO, Constants.UPDATE_PROFILE_EVENT_TYPE));
+        updatedUser.ifPresent(userDTO -> accountService.produceEvent(userDTO, Constants.UPDATE_PROFILE_EVENT_TYPE));
         return ResponseUtil.wrapOrNotFound(updatedUser,
                                            HeaderUtil.createAlert("userManagement.updated", user.getUserKey()));
     }
@@ -244,7 +268,7 @@ public class AccountResource {
     @PrivilegeDescription("Privilege to changes the current user's password")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordVM password) {
         UserDTO userDTO = accountService.changePassword(password);
-        produceEvent(userDTO, Constants.CHANGE_PASSWORD_EVENT_TYPE);
+        accountService.produceEvent(userDTO, Constants.CHANGE_PASSWORD_EVENT_TYPE);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
@@ -325,11 +349,6 @@ public class AccountResource {
         return !StringUtils.isEmpty(password)
             && password.length() >= ManagedUserVM.PASSWORD_MIN_LENGTH
             && password.length() <= ManagedUserVM.PASSWORD_MAX_LENGTH;
-    }
-
-    private void produceEvent(UserDTO userDto, String eventType) {
-        String content = profileEventProducer.createEventJson(userDto, eventType);
-        profileEventProducer.send(content);
     }
 
     /**

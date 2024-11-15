@@ -13,6 +13,8 @@ import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
+import com.icthh.xm.uaa.domain.GrantType;
+import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
@@ -21,6 +23,9 @@ import com.icthh.xm.uaa.repository.RegistrationLogRepository;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
+import com.icthh.xm.uaa.security.oauth2.otp.EmailOtpSender;
+import com.icthh.xm.uaa.security.oauth2.otp.OtpSenderFactory;
+import com.icthh.xm.uaa.security.oauth2.otp.SmsOtpSender;
 import com.icthh.xm.uaa.service.AccountMailService;
 import com.icthh.xm.uaa.service.AccountService;
 import com.icthh.xm.uaa.service.CaptchaService;
@@ -32,6 +37,8 @@ import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.account.password.reset.PasswordResetHandlerFactory;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.mail.MailService;
+import com.icthh.xm.uaa.service.util.RandomUtil;
+import com.icthh.xm.uaa.web.rest.vm.AuthorizeUserVm;
 import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.KeyAndPasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
@@ -68,17 +75,24 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
 import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
 import static com.icthh.xm.uaa.utils.FileUtil.readConfigFile;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -103,9 +117,6 @@ public class AccountResourceIntTest {
 
     @Autowired
     private UserService userService;
-
-    @Autowired
-    private AccountService accountService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -149,6 +160,15 @@ public class AccountResourceIntTest {
     @Mock
     private PasswordResetHandlerFactory passwordResetHandlerFactory;
 
+    @Mock
+    private OtpSenderFactory otpSenderFactory;
+
+    @Mock
+    private EmailOtpSender emailOtpSender;
+
+    @Mock
+    private SmsOtpSender smsOtpSender;
+
     private MockMvc restUserMockMvc;
 
     private MockMvc restMvc;
@@ -168,6 +188,9 @@ public class AccountResourceIntTest {
 
     @Autowired
     private UserLoginRepository userLoginRepository;
+
+    @Autowired
+    private RegistrationLogRepository registrationLogRepository;
 
 
     @BeforeTransaction
@@ -191,13 +214,17 @@ public class AccountResourceIntTest {
 
         properties.setRegistrationCaptchaPeriodSeconds(null);
         properties.setSecurity(security);
+        properties.setCommunication(buildCommunicationProperties());
         tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
             new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
 
         MockitoAnnotations.initMocks(this);
         doNothing().when(mockMailService).sendActivationEmail(any(), anyString(), any(), anyString());
         doNothing().when(profileEventProducer).send(any());
+        when(profileEventProducer.createEventJson(any(), anyString())).thenReturn(StringUtils.EMPTY);
         when(tenantRoleService.getRolePermissions(anyString())).thenReturn(Collections.emptyList());
+        when(otpSenderFactory.getSender(OtpChannelType.EMAIL)).thenReturn(Optional.of(emailOtpSender));
+        when(otpSenderFactory.getSender(OtpChannelType.SMS)).thenReturn(Optional.of(smsOtpSender));
 
         RegistrationLogRepository registrationLogRepository = mock(RegistrationLogRepository.class);
         when(registrationLogRepository.findOneByIpAddress(any())).thenReturn(Optional.empty());
@@ -205,11 +232,14 @@ public class AccountResourceIntTest {
         CaptchaService captchaService = new CaptchaService(applicationProperties, registrationLogRepository,
             tenantPropertiesService);
 
+        AccountService accountService = new AccountService(userRepository, passwordEncoder, registrationLogRepository,
+            xmAuthenticationContextHolder, tenantPropertiesService, userService, userLoginService, profileEventProducer,
+            otpSenderFactory);
+
         AccountResource accountResource = new AccountResource(userRepository,
             userLoginService,
             userService,
             accountService,
-            profileEventProducer,
             captchaService,
             xmRequestContextHolder,
             tenantContextHolder, tenantPermissionService, accountMailService);
@@ -218,7 +248,6 @@ public class AccountResourceIntTest {
             userLoginService,
             mockUserService,
             accountService,
-            profileEventProducer,
             captchaService,
             xmRequestContextHolder,
             tenantContextHolder, tenantPermissionService, accountMailService);
@@ -409,7 +438,7 @@ public class AccountResourceIntTest {
             ROLE_USER, "test",
             null, null, null, null,
             Collections.singletonList(login), false, null, null,
-            List.of("test"), null);
+            List.of("test"), null, true, null, null);
 
         restMvc.perform(
             post("/api/register")
@@ -419,6 +448,91 @@ public class AccountResourceIntTest {
 
         Optional<UserLogin> user = userLoginRepository.findOneByLoginIgnoreCase("joe@example.com");
         assertThat(user.isPresent()).isTrue();
+        assertThat(user.get().getUser().isActivated()).isFalse();
+    }
+
+    @Test
+    @Transactional
+    public void testAuthorizeAccount_shouldRegisterUserAndReturnOtpGrantType() throws Exception {
+        String login = "test@email.com";
+
+        assertTrue(userLoginRepository.findOneByLoginIgnoreCase(login).isEmpty());
+
+        AuthorizeUserVm authorizeUserVm = new AuthorizeUserVm();
+        authorizeUserVm.setLogin(login);
+        authorizeUserVm.setLangKey("ua");
+
+        restMvc.perform(
+                post("/api/authorize")
+                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                    .content(TestUtil.convertObjectToJsonBytes(authorizeUserVm)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").value(GrantType.OTP.getValue()));
+
+        Optional<UserLogin> resultUser = userLoginRepository.findOneByLoginIgnoreCase(login);
+
+        assertFalse(resultUser.isEmpty());
+        assertNotNull(resultUser.get().getUser().getOtpCode());
+        assertNotNull(resultUser.get().getUser().getOtpCodeCreationDate());
+        assertFalse(resultUser.get().getUser().getPasswordSetByUser());
+        assertTrue(resultUser.get().getUser().isActivated());
+
+        verify(emailOtpSender, times(1)).send(any());
+        verifyNoMoreInteractions(smsOtpSender);
+    }
+
+    @Test
+    @Transactional
+    public void testAuthorizeAccount_shouldAuthorizeUserAndReturnPasswordGrantType() throws Exception {
+        String login = "test@email.com";
+
+        // create user in db
+        userRepository.save(buildUser(login));
+
+        // authorize user
+        assertTrue(userLoginRepository.findOneByLoginIgnoreCase(login).isPresent());
+
+        AuthorizeUserVm authorizeUserVm = new AuthorizeUserVm();
+        authorizeUserVm.setLogin(login);
+        authorizeUserVm.setLangKey("ua");
+
+        restMvc.perform(
+                post("/api/authorize")
+                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                    .content(TestUtil.convertObjectToJsonBytes(authorizeUserVm)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").value(GrantType.PASSWORD.getValue()));
+
+        Optional<UserLogin> resultUser = userLoginRepository.findOneByLoginIgnoreCase(login);
+
+        assertTrue(resultUser.isPresent());
+        assertNull(resultUser.get().getUser().getOtpCode());
+        assertNull(resultUser.get().getUser().getOtpCodeCreationDate());
+        assertTrue(resultUser.get().getUser().getPasswordSetByUser());
+        assertFalse(resultUser.get().getUser().isActivated());
+
+        verifyNoMoreInteractions(emailOtpSender);
+        verifyNoMoreInteractions(smsOtpSender);
+    }
+
+    @Test
+    @Transactional
+    public void testAuthorizeAccount_missingLogin_shouldReturn400() throws Exception {
+        String login = "test@email.com";
+
+        assertFalse(userLoginRepository.findOneByLoginIgnoreCase(login).isPresent());
+
+        AuthorizeUserVm authorizeUserVm = new AuthorizeUserVm();
+        authorizeUserVm.setLangKey("ua");
+
+        restMvc.perform(
+                post("/api/authorize")
+                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                    .content(TestUtil.convertObjectToJsonBytes(authorizeUserVm)))
+            .andExpect(status().isBadRequest());
+
+        verifyNoMoreInteractions(emailOtpSender);
+        verifyNoMoreInteractions(smsOtpSender);
     }
 
     @Test
@@ -445,7 +559,7 @@ public class AccountResourceIntTest {
             ROLE_USER, "test",
             null, null, null,
             null, Collections.singletonList(login), false,
-            null, null, List.of("test"), null);
+            null, null, List.of("test"), null, true, null, null);
 
         restMvc.perform(
             post("/api/register")
@@ -455,6 +569,8 @@ public class AccountResourceIntTest {
 
         Optional<UserLogin> user = userLoginRepository.findOneByLoginIgnoreCase("joe@example.com");
         assertThat(user.isPresent()).isTrue();
+        assertTrue(user.get().getUser().getPasswordSetByUser());
+        assertFalse(user.get().getUser().isActivated());
     }
 
     @Test
@@ -481,7 +597,7 @@ public class AccountResourceIntTest {
             ROLE_USER, "test",
             null, null, null, null,
             Collections.singletonList(login), false, null,
-            null, List.of("test"), null);
+            null, List.of("test"), null, true, null, null);
 
         restUserMockMvc.perform(
             post("/api/register")
@@ -517,7 +633,7 @@ public class AccountResourceIntTest {
             ROLE_USER, "test",
             null, null, null,
             null, Collections.singletonList(login), false, null,
-            null, List.of("test"), null);
+            null, List.of("test"), null, true, null, null);
 
         restUserMockMvc.perform(
             post("/api/register")
@@ -554,7 +670,7 @@ public class AccountResourceIntTest {
             ROLE_USER, "test",
             null, null, null, null,
             Collections.singletonList(login), false, null,
-            null, List.of("test"), null);
+            null, List.of("test"), null, true, null, null);
 
         // Duplicate login, different login
         UserLogin loginNew = new UserLogin();
@@ -571,7 +687,7 @@ public class AccountResourceIntTest {
             validUser.getAccessTokenValiditySeconds(), validUser.getRefreshTokenValiditySeconds(),
             validUser.getTfaAccessTokenValiditySeconds(),
             null, Arrays.asList(login, loginNew), false, null,
-            null, validUser.getAuthorities(), null);
+            null, validUser.getAuthorities(), null, true, null, null);
 
         // Good user
         restMvc.perform(
@@ -616,7 +732,7 @@ public class AccountResourceIntTest {
             ROLE_USER, "test",
             null, null, null, null,
             Collections.singletonList(loginOld), false, null,
-            null, List.of("test"), null);
+            null, List.of("test"), null, true, null, null);
 
         // Duplicate login, different login
         UserLogin loginNew = new UserLogin();
@@ -636,7 +752,7 @@ public class AccountResourceIntTest {
             validUser.getAccessTokenValiditySeconds(), validUser.getRefreshTokenValiditySeconds(),
             validUser.getTfaAccessTokenValiditySeconds(),
             null, Arrays.asList(loginOldWithWhitespaces, loginNew), false,
-            null, null, List.of("test"), null);
+            null, null, List.of("test"), null, true, null, null);
 
         // Good user
         restMvc.perform(
@@ -680,7 +796,7 @@ public class AccountResourceIntTest {
             RoleConstant.SUPER_ADMIN, "test",
             null, null, null, null,
             Collections.singletonList(login), false,
-            null, null, List.of("test"), null);
+            null, null, List.of("test"), null, true, null, null);
 
         restMvc.perform(
             post("/api/register")
@@ -701,6 +817,7 @@ public class AccountResourceIntTest {
         user.setUserKey("test");
         user.setRoleKey(ROLE_USER);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.setActivated(false);
         user.setActivationKey(activationKey);
 
@@ -734,6 +851,7 @@ public class AccountResourceIntTest {
             user.setUserKey("test");
             user.setRoleKey(ROLE_USER);
             user.setPassword(RandomStringUtils.random(60));
+            user.setPasswordSetByUser(true);
             user.setActivated(true);
             user.getLogins().add(userLogin);
             userLogin.setUser(user);
@@ -760,7 +878,7 @@ public class AccountResourceIntTest {
                 null, null, null,
                 null, Collections.singletonList(userLogin),
                 Collections.emptyList(), false, null,
-                null, null);
+                null, null, null, null);
 
             try {
                 restMvc.perform(
@@ -798,6 +916,7 @@ public class AccountResourceIntTest {
             User user = new User();
             user.setUserKey("test");
             user.setPassword(RandomStringUtils.random(60));
+            user.setPasswordSetByUser(true);
             user.setActivated(true);
             user.setRoleKey(ROLE_USER);
             userLogin.setUser(user);
@@ -808,6 +927,7 @@ public class AccountResourceIntTest {
             User anotherUser = new User();
             anotherUser.setUserKey("test1");
             anotherUser.setPassword(RandomStringUtils.random(60));
+            anotherUser.setPasswordSetByUser(true);
             anotherUser.setActivated(true);
             anotherUser.setRoleKey(ROLE_USER);
 
@@ -832,7 +952,7 @@ public class AccountResourceIntTest {
                 List.of("test1"),
                 null, null, null, null,
                 Collections.singletonList(userLogin),
-                Collections.emptyList(), false, null, null, null);
+                Collections.emptyList(), false, null, null, null, null, null);
 
             try {
                 restMvc.perform(
@@ -863,6 +983,7 @@ public class AccountResourceIntTest {
             user.setUserKey(DEF_USER_KEY);
             user.setRoleKey(ROLE_USER);
             user.setPassword(passwordEncoder.encode(password));
+            user.setPasswordSetByUser(false);
 
             userRepository.saveAndFlush(user);
 
@@ -882,6 +1003,7 @@ public class AccountResourceIntTest {
             User updatedUser = userRepository.findOneByUserKey(userKey).orElse(null);
             assertThat(updatedUser).isNotNull();
             assertThat(passwordEncoder.matches("1234", updatedUser.getPassword())).isTrue();
+            assertThat(updatedUser.getPasswordSetByUser()).isTrue();
         });
     }
 
@@ -894,6 +1016,7 @@ public class AccountResourceIntTest {
             user.setUserKey(DEF_USER_KEY);
             user.setRoleKey(ROLE_USER);
             user.setPassword(passwordEncoder.encode(password));
+            user.setPasswordSetByUser(true);
 
             userRepository.saveAndFlush(user);
 
@@ -912,6 +1035,7 @@ public class AccountResourceIntTest {
             User updatedUser = userRepository.findOneByUserKey(DEF_USER_KEY).orElse(null);
             assertThat(updatedUser).isNotNull();
             assertThat(updatedUser.getPassword()).isEqualTo(user.getPassword());
+            assertThat(updatedUser.getPasswordSetByUser()).isTrue();
         });
     }
 
@@ -924,6 +1048,7 @@ public class AccountResourceIntTest {
             user.setUserKey(DEF_USER_KEY);
             user.setRoleKey(ROLE_USER);
             user.setPassword(RandomStringUtils.random(60));
+            user.setPasswordSetByUser(true);
 
             userRepository.saveAndFlush(user);
 
@@ -951,6 +1076,7 @@ public class AccountResourceIntTest {
         executeForUserKey(DEF_USER_KEY, () -> {
             User user = new User();
             user.setPassword(RandomStringUtils.random(60));
+            user.setPasswordSetByUser(true);
             user.setUserKey(DEF_USER_KEY);
             user.setRoleKey(ROLE_USER);
 
@@ -984,6 +1110,7 @@ public class AccountResourceIntTest {
         User user = new User();
         user.setUserKey(DEF_USER_KEY);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.setActivated(true);
         user.setRoleKey(ROLE_USER);
         user.getLogins().add(userLogin);
@@ -1007,6 +1134,7 @@ public class AccountResourceIntTest {
         User user = new User();
         user.setUserKey(DEF_USER_KEY);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.setActivated(true);
         user.setRoleKey(ROLE_USER);
         user.getLogins().add(userLogin);
@@ -1042,6 +1170,7 @@ public class AccountResourceIntTest {
         User user = new User();
         user.setUserKey(DEF_USER_KEY);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.setActivated(true);
         user.setRoleKey(ROLE_USER);
         user.getLogins().add(userLogin);
@@ -1082,6 +1211,7 @@ public class AccountResourceIntTest {
         user.setUserKey(DEF_USER_KEY);
         user.setRoleKey(ROLE_USER);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(false);
         user.setActivated(true);
         user.setResetDate(Instant.now().plusSeconds(60));
         user.setResetKey("reset key");
@@ -1103,6 +1233,7 @@ public class AccountResourceIntTest {
         User updatedUser = userRepository.findOneByUserKey(DEF_USER_KEY).orElse(null);
         assertThat(updatedUser).isNotNull();
         assertThat(passwordEncoder.matches(keyAndPassword.getNewPassword(), updatedUser.getPassword())).isTrue();
+        assertThat(updatedUser.getPasswordSetByUser()).isTrue();
     }
 
     @Test
@@ -1112,6 +1243,7 @@ public class AccountResourceIntTest {
         user.setUserKey(DEF_USER_KEY);
         user.setRoleKey(ROLE_USER);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.setResetDate(Instant.now().plusSeconds(60));
         user.setResetKey("reset key too small");
 
@@ -1130,6 +1262,7 @@ public class AccountResourceIntTest {
         User updatedUser = userRepository.findOneByResetKey(user.getResetKey()).orElse(null);
         assertThat(updatedUser).isNotNull();
         assertThat(passwordEncoder.matches(keyAndPassword.getNewPassword(), updatedUser.getPassword())).isFalse();
+        assertThat(updatedUser.getPasswordSetByUser()).isTrue();
     }
 
 
@@ -1153,6 +1286,7 @@ public class AccountResourceIntTest {
         User user = new User();
         user.setUserKey(DEF_USER_KEY);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.setResetKey("test");
         user.setResetDate(Instant.now());
         user.setRoleKey(ROLE_USER);
@@ -1169,6 +1303,7 @@ public class AccountResourceIntTest {
         User user = new User();
         user.setUserKey(DEF_USER_KEY);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.setRoleKey(ROLE_USER);
         user = userRepository.saveAndFlush(user);
 
@@ -1183,6 +1318,7 @@ public class AccountResourceIntTest {
         User user = new User();
         user.setUserKey(DEF_USER_KEY);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.setResetKey("test");
         user.setResetDate(Instant.now().minusSeconds(86401));
         user.setRoleKey(ROLE_USER);
@@ -1192,5 +1328,43 @@ public class AccountResourceIntTest {
         restMvc.perform(get("/api/account/reset_password/check?key={key}", "test"))
             .andExpect(status().is4xxClientError())
             .andExpect(jsonPath("$.error").value("error.reset.code.expired"));
+    }
+
+    public User buildUser(String username) {
+        UserLogin userLogin = new UserLogin();
+        userLogin.setTypeKey(UserLoginType.getByRegex(username).getValue());
+        userLogin.setLogin(username);
+
+        User user = new User();
+        user.setUserKey(UUID.randomUUID().toString());
+        user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
+        user.setLangKey("ua");
+        user.setActivationKey(RandomUtil.generateActivationKey());
+        user.setRoleKey("ROLE_VIEW");
+        user.setLogins(List.of(userLogin));
+        user.getLogins().forEach(ul -> ul.setUser(user));
+        return user;
+    }
+
+    private TenantProperties.Communication buildCommunicationProperties() {
+        TenantProperties.NotificationChannel channel1 = new TenantProperties.NotificationChannel();
+        channel1.setKey("SMS_NOTIFICATION");
+        channel1.setType("Twilio");
+        channel1.setTemplateName("sms.template.name");
+
+        TenantProperties.NotificationChannel channel2 = new TenantProperties.NotificationChannel();
+        channel2.setKey("EMAIL_NOTIFICATION");
+        channel2.setType("TemplatedEmail");
+        channel2.setTemplateName("email.template.name");
+
+        TenantProperties.Notification notification = new TenantProperties.Notification();
+        notification.setChannels(Map.of("sms", channel1, "email", channel2));
+
+        TenantProperties.Communication communication = new TenantProperties.Communication();
+        communication.setEnabled(true);
+        communication.setNotifications(Map.of("auth-otp", notification));
+
+        return communication;
     }
 }

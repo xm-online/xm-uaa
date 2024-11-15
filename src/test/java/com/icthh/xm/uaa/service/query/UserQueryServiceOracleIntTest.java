@@ -170,6 +170,7 @@ public class UserQueryServiceOracleIntTest {
         user.setUserKey(userKey);
         user.setAuthorities(List.of(ROLE_USER, ROLE_B2B_MANAGER));
         user.setPassword(repeat("p", 60));
+        user.setPasswordSetByUser(true);
         user.setActivated(true);
         user.getLogins().add(userLogin);
         userLogin.setUser(user);

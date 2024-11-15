@@ -13,6 +13,7 @@ import com.icthh.xm.uaa.domain.UserSpec;
 import com.icthh.xm.uaa.service.otp.OtpType;
 import com.icthh.xm.uaa.security.ldap.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +46,7 @@ public class TenantProperties {
     private Security security = new Security();
 
     @JsonProperty("userSpec")
-    private List<UserSpec> userSpec;
+    private List<UserSpec> userSpec = new ArrayList<>();
 
 
     @Getter
@@ -85,6 +86,12 @@ public class TenantProperties {
 
         @JsonProperty("tfaAccessTokenValiditySeconds")
         private Integer tfaAccessTokenValiditySeconds;
+
+        @JsonProperty("otpThrottlingTimeIntervalInSeconds")
+        private Integer otpThrottlingTimeIntervalInSeconds;
+
+        @JsonProperty("otpThrottlingLifeTimeInSeconds")
+        private Integer otpThrottlingLifeTimeInSeconds;
 
         @JsonProperty("accessTokenValiditySeconds")
         private Integer accessTokenValiditySeconds;
@@ -244,6 +251,24 @@ public class TenantProperties {
     @ToString
     public static class Communication {
         private Boolean enabled = false;
+        private Map<String, Notification> notifications = new HashMap<>();
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class Notification {
+        private Map<String, NotificationChannel> channels = new HashMap<>();
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class NotificationChannel {
+        private String key;
+        private String templateName;
+        private String titleKey;
+        private String type;
     }
 
 }

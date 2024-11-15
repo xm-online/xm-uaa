@@ -36,8 +36,14 @@ public final class Constants {
     public static final String DB_SCHEMA_CREATETION_ENABLED = "db.schema.creation.enabled";
     public static final String CHANGE_LOG_PATH = "classpath:config/liquibase/master.xml";
     public static final String LOGIN_USED_CODE = "error.login.already.used";
+    public static final String LOGIN_NOT_PROVIDED_CODE = "error.login.not.provided";
+    public static final String LOGIN_INVALID_CODE = "error.login.invalid";
     public static final String LOGIN_USED_PARAM = "loginTypeKey";
     public static final String LOGIN_IS_USED_ERROR_TEXT = "Login already in use";
+    public static final String LOGIN_NOT_PROVIDED_ERROR_TEXT = "Login is not provided";
+    public static final String LOGIN_INVALID_ERROR_TEXT = "Login is invalid";
+    public static final String OTP_SENDER_NOT_FOUND_ERROR_TEXT = "Can't find OTP sender for channel type: ";
+    public static final String OTP_THROTTLING_ERROR_TEXT = "Otp code is request to soon";
     public static final String ACTIVATE_PROFILE_EVENT_TYPE = "ACTIVATE_PROFILE";
     public static final String CREATE_PROFILE_EVENT_TYPE = "CREATE_PROFILE";
     public static final String CHANGE_PASSWORD_EVENT_TYPE = "CHANGE_PASSWORD";
@@ -63,6 +69,11 @@ public final class Constants {
 
     public static final String CERTIFICATE = "X.509";
     public static final String KEYSTORE_TYPE = "PKCS12";
+
+    // Sender constants
+    public static final String AUTH_OPT_NOTIFICATION_KEY = "auth-otp";
+    public static final String TFA_OTP_EMAIL_TEMPLATE_NAME = "tfaOtpEmail";
+    public static final String TFA_OTP_EMAIL_TITLE_KEY = "email.tfa.otp.title";
 
     // System event data properties
     public static final String SYSTEM_EVENT_PROP_ID = "id";

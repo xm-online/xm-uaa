@@ -110,6 +110,7 @@ public class UserServiceIntTest {
         user.setUserKey("test");
         user.setRoleKey(ROLE_USER);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.setActivated(true);
         user.getLogins().add(userLogin);
         userLogin.setUser(user);
@@ -137,6 +138,7 @@ public class UserServiceIntTest {
         user.setUserKey("test");
         user.setRoleKey(ROLE_USER);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.setActivated(false);
         user.getLogins().add(userLogin);
         userLogin.setUser(user);
@@ -157,6 +159,7 @@ public class UserServiceIntTest {
         user.setUserKey("test");
         user.setRoleKey(ROLE_USER);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.getLogins().add(userLogin);
         userLogin.setUser(user);
 
@@ -183,6 +186,7 @@ public class UserServiceIntTest {
         user.setUserKey("test");
         user.setRoleKey(ROLE_USER);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.getLogins().add(userLogin);
         userLogin.setUser(user);
 
@@ -206,6 +210,7 @@ public class UserServiceIntTest {
         user.setUserKey("test");
         user.setRoleKey(ROLE_USER);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.getLogins().add(userLogin);
         userLogin.setUser(user);
 
@@ -347,6 +352,7 @@ public class UserServiceIntTest {
         user.setUserKey("test");
         user.setRoleKey(ROLE_USER);
         user.setPassword(RandomStringUtils.random(60));
+        user.setPasswordSetByUser(true);
         user.getLogins().add(userLogin);
         userLogin.setUser(user);
 

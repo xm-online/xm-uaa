@@ -20,12 +20,16 @@ final class EmailTemplateUtil {
      * @return generated key
      */
     static String emailTemplateKey(TenantKey tenantKey, String langKey, String templateName) {
+        return emailTemplateKey(tenantKey.getValue(), langKey, templateName);
+    }
+
+    static String emailTemplateKey(String tenantKey, String langKey, String templateName) {
         if (StringUtils.isBlank(langKey) || StringUtils.isBlank(templateName)
             || tenantKey == null
-            || StringUtils.isBlank(tenantKey.getValue())) {
+            || StringUtils.isBlank(tenantKey)) {
             throw new IllegalStateException("Language key, template name and tenant must be not blank");
         }
-        return tenantKey.getValue() + SLASH_SIGN + langKey + SLASH_SIGN + templateName;
+        return tenantKey + SLASH_SIGN + langKey + SLASH_SIGN + templateName;
     }
 
 }

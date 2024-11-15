@@ -198,7 +198,7 @@ application:
         secretKey:
         publicKey:
         registration-captcha-period-seconds: 21600
-    client-grant-types: client_credentials, refresh_token, password, tfa_otp_token, authorization_code, idp_token
+    client-grant-types: client_credentials, refresh_token, password, tfa_otp_token, authorization_code, idp_token, otp
     client-scope: openid
     default-client-id: internal
     default-client-secret: aW50ZXJuYWw6aW50ZXJuYWw=

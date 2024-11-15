@@ -90,4 +90,22 @@ public class MailServiceTemplateIntTest {
         verify(mailService).sendEmail(any(), any(), eq("OTHER_BASE_START_CUSTOM_BASE_END"), any(), any());
     }
 
+
+    @Test
+    public void testDefaultTemplateLangEmail() {
+
+        String onlyEnVersion = "/config/tenants/" + TENANT_NAME + "/uaa/emails/en/" + TEMPLATE_NAME + "_1.ftl";
+        String enVersion = "/config/tenants/" + TENANT_NAME + "/uaa/emails/en/" + TEMPLATE_NAME + "_2.ftl";
+        String ukVersion = "/config/tenants/" + TENANT_NAME + "/uaa/emails/uk/" + TEMPLATE_NAME + "_2.ftl";
+        templateService.onRefresh(onlyEnVersion, "onlyEnVersion");
+        templateService.onRefresh(enVersion, "enVersion");
+        templateService.onRefresh(ukVersion, "ukVersion");
+        User user = new User();
+        user.setLangKey("uk");
+        mailService.sendEmailFromTemplate(TenantKey.valueOf(TENANT_NAME), user, TEMPLATE_NAME + "_2", SUBJECT, EMAIL, Map.of());
+        verify(mailService).sendEmail(any(), any(), eq("ukVersion"), any(), any());
+        mailService.sendEmailFromTemplate(TenantKey.valueOf(TENANT_NAME), user, TEMPLATE_NAME + "_1", SUBJECT, EMAIL, Map.of());
+        verify(mailService).sendEmail(any(), any(), eq("onlyEnVersion"), any(), any());
+    }
+
 }

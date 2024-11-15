@@ -10,6 +10,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +26,8 @@ public class DomainUserDetails extends User {
     private final String tfaOtpSecret;
     private final Integer tfaAccessTokenValiditySeconds;
 
+    private String authOtpCode;
+    private Instant authOtpCodeCreationDate;
     private String tfaEncodedOtp;
     private OtpChannelType tfaOtpChannelType;
 
@@ -107,6 +110,8 @@ public class DomainUserDetails extends User {
                              Collection<? extends GrantedAuthority> authorities,
                              String tenant,
                              String userKey,
+                             String authOtpCode,
+                             Instant authOtpCodeCreationDate,
                              boolean tfaEnabled,
                              String tfaOtpSecret,
                              OtpChannelType tfaOtpChannelType,
@@ -129,6 +134,8 @@ public class DomainUserDetails extends User {
         this.accessTokenValiditySeconds = accessTokenValiditySeconds;
         this.refreshTokenValiditySeconds = refreshTokenValiditySeconds;
         this.logins = logins;
+        this.authOtpCode = authOtpCode;
+        this.authOtpCodeCreationDate = authOtpCodeCreationDate;
         this.tfaEnabled = tfaEnabled;
         this.tfaOtpSecret = tfaOtpSecret;
         this.tfaOtpChannelType = tfaOtpChannelType;

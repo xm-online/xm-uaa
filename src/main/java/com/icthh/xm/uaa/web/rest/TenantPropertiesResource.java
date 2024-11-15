@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
@@ -92,7 +93,8 @@ public class TenantPropertiesResource {
     @PreAuthorize("hasPermission({'roleKey': #roleKey}, 'UAA.TENANT.USER_SPEC.GET')")
     @PrivilegeDescription("Privilege to get role data schema")
     public UserSpec getRoleUserSpec(@PathVariable String roleKey) {
-        return tenantPropertiesService.getTenantProps().getUserSpec()
+        List<UserSpec> userSpec = tenantPropertiesService.getTenantProps().getUserSpec();
+        return userSpec
                 .stream()
                 .filter(it -> roleKey.equals(it.getRoleKey())).findFirst()
                 .orElse(new UserSpec(roleKey, null, null));
