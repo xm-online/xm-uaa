@@ -30,7 +30,6 @@ import java.util.HashMap;
 import java.util.Optional;
 
 @Slf4j
-@Service
 public class AuthOtpTokenGranter extends AbstractTokenGranter {
 
     private static String TOKEN_REQUEST_OTP_PARAM = "auth_otp";

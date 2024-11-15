@@ -185,20 +185,19 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
             idpIdTokenMappingService,
             tenantContextHolder);
 
-        granters.add(authOtpTokenGranter(domainUserDetailsService, clientDetailsService, endpoints));
+        AuthOtpTokenGranter authOtpTokenGranter = new AuthOtpTokenGranter(
+            domainUserDetailsService,
+            tokenServices(),
+            clientDetailsService,
+            endpoints.getOAuth2RequestFactory(),
+            tenantPropertiesService);
+
         granters.add(tfaOtpTokenGranter);
         granters.add(idpTokenGranter);
+        granters.add(authOtpTokenGranter);
         granters.add(lepTokenGranter(clientDetailsService, authenticationManager));
 
         return new CompositeTokenGranter(granters);
-    }
-
-    @Bean
-    public AuthOtpTokenGranter authOtpTokenGranter(DomainUserDetailsService domainUserDetailsService,
-                                                   ClientDetailsService clientDetailsService,
-                                                   AuthorizationServerEndpointsConfigurer endpoints) {
-        return new AuthOtpTokenGranter(domainUserDetailsService, tokenServices(), clientDetailsService,
-            endpoints.getOAuth2RequestFactory(), tenantPropertiesService);
     }
 
     @Bean
