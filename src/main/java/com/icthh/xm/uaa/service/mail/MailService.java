@@ -75,6 +75,8 @@ public class MailService {
 
     private static final String USER = "user";
     private static final String BASE_URL = "baseUrl";
+    private static final String RESET_KEY = "resetKey";
+    private static final String ACTIVATION_KEY = "activationKey";
     private static final String TENANT_KEY_VALUE = "tenant";
 
     private final JHipsterProperties jHipsterProperties;
@@ -119,6 +121,7 @@ public class MailService {
 
             Map<String, Object> objectModel = new HashMap<>();
             objectModel.put(USER, user);
+            objectModel.put(ACTIVATION_KEY, user.getActivationKey());
             objectModel.put(BASE_URL, applicationUrl);
             objectModel.put(TENANT_KEY_VALUE, tenantKey.getValue());
 
@@ -144,6 +147,7 @@ public class MailService {
 
             Map<String, Object> objectModel = new HashMap<>();
             objectModel.put(USER, user);
+            objectModel.put(RESET_KEY, user.getResetKey());
             objectModel.put(BASE_URL, applicationUrl);
             objectModel.put(TENANT_KEY_VALUE, tenantKey.getValue());
 
@@ -172,6 +176,7 @@ public class MailService {
             log.info("Sending password reset email to '{}'", user.getEmail());
             Map<String, Object> objectModel = new HashMap<>();
             objectModel.put(USER, user);
+            objectModel.put(RESET_KEY, user.getResetKey());
             objectModel.put(BASE_URL, applicationUrl);
             objectModel.put(TENANT_KEY_VALUE, tenantKey.getValue());
 
