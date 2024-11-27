@@ -8,11 +8,12 @@
     <property name="jsonType" value="varchar" dbms="h2"/>
     <property name="jsonType" value="jsonb" dbms="postgresql"/>
     <property name="jsonType" value="text" dbms="oracle"/>
+    <property name="jsonType" value="JSON" dbms="mariadb"/>
 
     <changeSet id="20230731165500" author="aroze">
-        <preConditions onFail="CONTINUE">
-            <dbms type="postgresql"/>
-        </preConditions>
+<!--        <preConditions onFail="CONTINUE">-->
+<!--            <dbms type="postgresql"/>-->
+<!--        </preConditions>-->
         <modifyDataType
             columnName="data"
             newDataType="${jsonType}"
