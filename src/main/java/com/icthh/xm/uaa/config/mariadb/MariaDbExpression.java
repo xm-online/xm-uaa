@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.config.mariadb;
 
 import com.icthh.xm.commons.migration.db.jsonb.CustomExpression;
+import com.icthh.xm.commons.migration.db.jsonb.HibernateInlineExpression;
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -15,35 +16,34 @@ import javax.persistence.criteria.Root;
 public class MariaDbExpression implements CustomExpression {
 
     public MariaDbExpression() {
-        System.out.println("MariaDbExpression");
     }
 
     public Expression<JsonBinaryType> jsonQuery(CriteriaBuilder cb, Root<?> root, String column, String jsonPath) {
-        throw new NotImplementedException("Not implemented yet");
+        return this.jsonQuery(cb, root, column, jsonPath, JsonBinaryType.class);
     }
 
     public <T> Expression<T> jsonQuery(CriteriaBuilder cb, Root<?> root, String column, String jsonPath, Class<T> type) {
-        throw new NotImplementedException("Not implemented yet");
+        return cb.function("JSON_VALUE", type, new Expression[]{root.get(column), new HibernateInlineExpression(cb, jsonPath)});
     }
 
     public Expression<?> toExpression(CriteriaBuilder cb, Object object) {
-        throw new NotImplementedException("Not implemented yet");
+        return this.toJsonB(cb, object);
     }
 
     public Expression<?> toJsonB(CriteriaBuilder cb, Object object) {
-        throw new NotImplementedException("Not implemented yet");
+        return this.toJsonB(cb, object, String.class);
     }
 
     public <T> Expression<T> toJsonB(CriteriaBuilder cb, Object object, Class<T> type) {
-        throw new NotImplementedException("Not implemented yet");
+        return this.toJsonB(cb, cb.literal(object), type);
     }
 
     public Expression<JsonBinaryType> toJsonB(CriteriaBuilder cb, Expression<?> expression) {
-        throw new NotImplementedException("Not implemented yet");
+        return this.toJsonB(cb, expression, JsonBinaryType.class);
     }
 
     public <T> Expression<T> toJsonB(CriteriaBuilder cb, Expression<?> expression, Class<T> type) {
-        throw new NotImplementedException("Not implemented yet");
+        return cb.function("JSON_COMPACT", type, expression);
     }
 }
 
