@@ -9,7 +9,7 @@
     <property name="now" value="current_timestamp" dbms="postgresql"/>
 
     <property name="nextId"
-              value="(SELECT CAST(CASE WHEN max(id) is null THEN 1 ELSE max(id)+1 END AS int) FROM ${database.defaultSchemaName}.client)"/>
+              value="(SELECT COALESCE(MAX(id), 0) + 1 FROM (SELECT id FROM ${database.defaultSchemaName}.client) AS subquery)"/>
 
     <changeSet id="20181213101500" author="akoidan">
 

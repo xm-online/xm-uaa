@@ -269,7 +269,7 @@ dependencies {
     implementation "javax.transaction:javax.transaction-api"
     implementation "org.hibernate:hibernate-entitymanager"
     implementation "org.hibernate.validator:hibernate-validator"
-    implementation "org.liquibase:liquibase-core"
+    implementation 'org.liquibase:liquibase-core:3.5.5'
     liquibaseRuntime "org.liquibase:liquibase-core"
     liquibaseRuntime "org.liquibase.ext:liquibase-hibernate5:${liquibase_hibernate5_version}"
     liquibaseRuntime sourceSets.main.compileClasspath
@@ -310,6 +310,12 @@ dependencies {
     }
     implementation "io.springfox:springfox-bean-validators"
     implementation "org.postgresql:postgresql"
+
+
+    implementation 'org.mariadb.jdbc:mariadb-java-client:3.2.0'
+
+
+
     implementation "com.h2database:h2"
     liquibaseRuntime "org.postgresql:postgresql"
     implementation "org.mapstruct:mapstruct:${mapstruct_version}"
@@ -406,3 +412,9 @@ wrapper {
 
 compileJava.dependsOn processResources
 processResources.dependsOn bootBuildInfo
+
+configurations.all {
+    resolutionStrategy {
+        force 'org.liquibase:liquibase-core:3.5.5'
+    }
+}

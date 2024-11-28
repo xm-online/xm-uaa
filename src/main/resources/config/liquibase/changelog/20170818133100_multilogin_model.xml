@@ -7,6 +7,7 @@
     <property name="uuid_function" value="MD5(random()::text)" dbms="postgresql"/>
     <property name="uuid_function" value="sys_guid()" dbms="oracle"/>
     <property name="uuid_function" value="random_uuid()" dbms="h2"/>
+    <property name="uuid_function" value="UUID()" dbms="mariadb"/>
 
     <changeSet id="20170818133100" author="ekashina">
         <dropColumn columnName="login"
@@ -91,11 +92,13 @@
                         primaryKey="id"
                         separator=";"
                         tableName="jhi_user">
+            <column name="activated" type="BOOLEAN" />
         </loadUpdateData>
         <loadData encoding="UTF-8"
                   file="config/liquibase/user_login.csv"
                   separator=";"
                   tableName="user_login">
+            <column name="removed" type="BOOLEAN" />
         </loadData>
     </changeSet>
 </databaseChangeLog>
