@@ -4,6 +4,8 @@ import com.icthh.xm.uaa.security.oauth2.UaaClientAuthenticationHandler;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerInterceptor;
 import org.springframework.cloud.client.loadbalancer.RestTemplateCustomizer;
@@ -35,15 +37,23 @@ public class RestTemplateConfiguration {
     private final UaaClientAuthenticationHandler uaaClientAuthenticationHandler;
     private final LoadBalancerClient loadBalancerClient;
 
+    @Value("${ribbon.http.client.enabled:true}")
+    private Boolean ribbonTemplateEnabled;
+
     @Bean
-    public RestTemplate loadBalancedRestTemplate(RestTemplateCustomizer customizer) {
+    public RestTemplate loadBalancedRestTemplate(ObjectProvider<RestTemplateCustomizer> customizerProvider) {
         RestTemplate restTemplate = new RestTemplate();
-        customizer.customize(restTemplate);
+
+        if (ribbonTemplateEnabled) {
+            log.info("loadBalancedRestTemplate: using Ribbon load balancer");
+            customizerProvider.ifAvailable(customizer -> customizer.customize(restTemplate));
+        }
+
         return restTemplate;
     }
 
     @Bean
-    public OAuth2RestTemplate oAuth2RestTemplate(RestTemplateCustomizer customizer) {
+    public OAuth2RestTemplate oAuth2RestTemplate(ObjectProvider<RestTemplateCustomizer> customizerProvider) {
         ClientCredentialsResourceDetails resource = new ClientCredentialsResourceDetails();
         resource.setClientId(findClientId());
         resource.setClientSecret(applicationProperties.getDefaultClientSecret());
@@ -62,7 +72,10 @@ public class RestTemplateConfiguration {
         accessTokenProvider.setInterceptors(singletonList(loadBalancerInterceptor));
         oAuth2RestTemplate.setAccessTokenProvider(accessTokenProvider);
 
-        customizer.customize(oAuth2RestTemplate);
+        if (ribbonTemplateEnabled) {
+            log.info("oAuth2RestTemplate: using Ribbon load balancer");
+            customizerProvider.ifAvailable(customizer -> customizer.customize(oAuth2RestTemplate));
+        }
 
         return oAuth2RestTemplate;
     }
