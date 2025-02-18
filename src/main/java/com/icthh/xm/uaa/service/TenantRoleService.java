@@ -181,7 +181,6 @@ public class TenantRoleService {
             throw new BusinessException("Role doesn't exist");
         }
 
-        roleToUpdate.setName(roleDto.getName());
         roleToUpdate.setDescription(roleDto.getDescription());
         roleToUpdate.setUpdatedBy(xmAuthenticationContextHolder.getContext().getRequiredLogin());
         roleToUpdate.setUpdatedDate(Instant.now().toString());

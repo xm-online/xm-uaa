@@ -101,17 +101,6 @@ public class RoleResourceIntTest {
 
     @Test
     @SneakyThrows
-    public void testRestGetRoles(){
-        restMvc.perform(get("/api/roles"))
-            .andDo(print())
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$", hasSize(3)))
-            .andExpect(jsonPath("$[1].name.en").value("Administrative"))
-            .andExpect(jsonPath("$[1].name.uk").value("Адміністратор"));
-    }
-
-    @Test
-    @SneakyThrows
     public void testRestGetRoleByKeyWithCustomPrivileges() {
         restMvc.perform(get("/api/roles/SUPER-ADMIN"))
             .andExpect(status().isOk())

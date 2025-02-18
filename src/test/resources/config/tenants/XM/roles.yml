@@ -12,9 +12,6 @@ SUPER-ADMIN:
   updatedDate: "2017-10-20T09:50:09.921Z"
   updatedBy: "xm"
 ROLE_ADMIN:
-  name:
-    en: Administrative
-    uk: Адміністратор
   description: "role admin"
   createdDate: "2017-10-20T09:49:54.017Z"
   createdBy: "xm"
