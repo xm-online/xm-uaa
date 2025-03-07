@@ -43,7 +43,7 @@ public class OtpService {
     private final OtpServiceClient otpServiceClient;
 
     @LoggingAspectConfig(inputExcludeParams = "userDetails")
-    @LogicExtensionPoint("prepareOtpRequest")
+    @LogicExtensionPoint("PrepareOtpRequest")
     public Long prepareOtpRequest(@NonNull final DomainUserDetails userDetails) {
         log.debug("Prepare otp request for user: {}", userDetails);
         Map<String, String> additionalDetails = userDetails.getAdditionalDetails();
@@ -80,7 +80,7 @@ public class OtpService {
     }
 
     @LoggingAspectConfig(inputExcludeParams = "otp")
-    @LogicExtensionPoint("checkOtpRequest")
+    @LogicExtensionPoint("CheckOtpRequest")
     public boolean checkOtpRequest(Long otpId, String otp) {
 
         String url = tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpCheckUrl();
