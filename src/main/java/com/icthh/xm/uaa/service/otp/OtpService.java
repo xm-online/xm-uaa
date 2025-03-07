@@ -48,6 +48,7 @@ public class OtpService {
         log.debug("Prepare otp request for user: {}", userDetails);
         Map<String, String> additionalDetails = userDetails.getAdditionalDetails();
         log.debug("Additional details: {}", additionalDetails);
+
         String url = Optional.ofNullable(additionalDetails.get(TOKEN_AUTH_DETAILS_TFA_OTP_GENERATE_URL))
             .orElse(tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpGenerateUrl());
         if (StringUtils.isEmpty(url)) {
@@ -55,6 +56,7 @@ public class OtpService {
             throw new BusinessException("error.get.otp.password.url", "Can not get otp password url");
         }
         log.debug("Otp url: {}", url);
+
         String tfaOtpTypeKey = Optional.ofNullable(additionalDetails.get(TOKEN_AUTH_DETAILS_TFA_OTP_TYPE_KEY))
             .orElse(tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpTypeKey());
         log.info("tfaOtpTypeKey: {}", tfaOtpTypeKey);
@@ -95,6 +97,7 @@ public class OtpService {
     private UserLoginDto findUserLogin(final DomainUserDetails userDetails, final String receiverTypeKey) {
         log.info("Find user login by receiverTypeKey: {}", receiverTypeKey);
         UserLoginDto userLogin;
+
         if (ReceiverTypeKey.PHONE_NUMBER.getValue().equalsIgnoreCase(receiverTypeKey)) {
             userLogin = userDetails.getLogins().stream()
                 .filter(UserLoginDto -> UserLoginType.MSISDN.getValue().equalsIgnoreCase(UserLoginDto.getTypeKey()))
