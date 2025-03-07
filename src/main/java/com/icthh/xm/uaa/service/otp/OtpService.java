@@ -2,6 +2,8 @@ package com.icthh.xm.uaa.service.otp;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.icthh.xm.commons.exceptions.BusinessException;
+import com.icthh.xm.commons.lep.LogicExtensionPoint;
+import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.logging.LoggingAspectConfig;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.security.DomainUserDetails;
@@ -11,6 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
@@ -22,11 +25,16 @@ import org.springframework.util.StringUtils;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_DESTINATION;
+import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_OTP_GENERATE_URL;
+import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_OTP_RECEIVER_TYPE_KEY;
+import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_OTP_TYPE_KEY;
 
 @Slf4j
 @Service
+@LepService(group = "service.otp")
 @RequiredArgsConstructor
 public class OtpService {
 
@@ -34,23 +42,31 @@ public class OtpService {
 
     private final OtpServiceClient otpServiceClient;
 
-    public Long prepareOtpRequest(DomainUserDetails userDetails) {
-
-        String url = tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpGenerateUrl();
+    @LoggingAspectConfig(inputExcludeParams = "userDetails")
+    @LogicExtensionPoint("prepareOtpRequest")
+    public Long prepareOtpRequest(@NonNull final DomainUserDetails userDetails) {
+        log.debug("Prepare otp request for user: {}", userDetails);
+        Map<String, String> additionalDetails = userDetails.getAdditionalDetails();
+        log.debug("Additional details: {}", additionalDetails);
+        String url = Optional.ofNullable(additionalDetails.get(TOKEN_AUTH_DETAILS_TFA_OTP_GENERATE_URL))
+            .orElse(tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpGenerateUrl());
         if (StringUtils.isEmpty(url)) {
             log.error("OneTimePasswordUrl is empty: {}", url);
             throw new BusinessException("error.get.otp.password.url", "Can not get otp password url");
         }
-
-        String tfaOtpTypeKey = tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpTypeKey();
+        log.debug("Otp url: {}", url);
+        String tfaOtpTypeKey = Optional.ofNullable(additionalDetails.get(TOKEN_AUTH_DETAILS_TFA_OTP_TYPE_KEY))
+            .orElse(tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpTypeKey());
         log.info("tfaOtpTypeKey: {}", tfaOtpTypeKey);
-        String receiverTypeKey = tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpReceiverTypeKey();
+        String receiverTypeKey = Optional.ofNullable(additionalDetails.get(TOKEN_AUTH_DETAILS_TFA_OTP_RECEIVER_TYPE_KEY))
+            .orElse(tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpReceiverTypeKey());
         log.info("receiverTypeKey: {}", receiverTypeKey);
 
         UserLoginDto userLogin = findUserLogin(userDetails, receiverTypeKey);
 
         String destination = userLogin.getLogin();
-        userDetails.getAdditionalDetails().put(TOKEN_AUTH_DETAILS_TFA_DESTINATION, destination);
+        log.debug("destination: {}", destination);
+        additionalDetails.put(TOKEN_AUTH_DETAILS_TFA_DESTINATION, destination);
 
         OneTimePasswordDto oneTimePasswordDto = new OneTimePasswordDto();
         oneTimePasswordDto.setReceiver(destination);
@@ -62,6 +78,7 @@ public class OtpService {
     }
 
     @LoggingAspectConfig(inputExcludeParams = "otp")
+    @LogicExtensionPoint("checkOtpRequest")
     public boolean checkOtpRequest(Long otpId, String otp) {
 
         String url = tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpCheckUrl();
@@ -75,21 +92,28 @@ public class OtpService {
         return otpServiceClient.checkOtp(url, oneTimePasswordCheckDto);
     }
 
-    private UserLoginDto findUserLogin(DomainUserDetails userDetails, String receiverTypeKey) {
+    private UserLoginDto findUserLogin(final DomainUserDetails userDetails, final String receiverTypeKey) {
+        log.info("Find user login by receiverTypeKey: {}", receiverTypeKey);
         UserLoginDto userLogin;
-        if (ReceiverTypeKey.PHONE_NUMBER.getValue().equals(receiverTypeKey)) {
+        if (ReceiverTypeKey.PHONE_NUMBER.getValue().equalsIgnoreCase(receiverTypeKey)) {
             userLogin = userDetails.getLogins().stream()
-                .filter(UserLoginDto -> UserLoginType.MSISDN.getValue().equals(UserLoginDto.getTypeKey()))
+                .filter(UserLoginDto -> UserLoginType.MSISDN.getValue().equalsIgnoreCase(UserLoginDto.getTypeKey()))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException("error.find.otp.phone.number.receiver", "Can not get otp phone number receiver"));
-        } else if (ReceiverTypeKey.EMAIL.getValue().equals(receiverTypeKey)) {
+        } else if (ReceiverTypeKey.EMAIL.getValue().equalsIgnoreCase(receiverTypeKey)) {
             userLogin = userDetails.getLogins().stream()
-                .filter(UserLoginDto -> UserLoginType.EMAIL.getValue().equals(UserLoginDto.getTypeKey()))
+                .filter(UserLoginDto -> UserLoginType.EMAIL.getValue().equalsIgnoreCase(UserLoginDto.getTypeKey()))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException("error.find.otp.email.receiver", "Can not get otp email receiver"));
+        } else if (ReceiverTypeKey.NAME.getValue().equalsIgnoreCase(receiverTypeKey)) {
+            userLogin = userDetails.getLogins().stream()
+                .filter(UserLoginDto -> UserLoginType.NICKNAME.getValue().equalsIgnoreCase(UserLoginDto.getTypeKey()))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException("error.find.otp.nickname.receiver", "Can not get otp name receiver"));
         } else {
             throw new NotImplementedException("Not implemented otp receiver type key: " + receiverTypeKey);
         }
+        log.debug("userLogin: {}", userLogin);
         return userLogin;
     }
 
