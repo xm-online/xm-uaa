@@ -58,6 +58,9 @@ public final class Constants {
     public static final String TOKEN_AUTH_DETAILS_TFA_OTP_CHANNEL_TYPE = "tfaOtpChannel";
     public static final String TOKEN_AUTH_DETAILS_TFA_OTP_ID = "otpId";
     public static final String TOKEN_AUTH_DETAILS_TFA_DESTINATION = "destination";
+    public static final String TOKEN_AUTH_DETAILS_TFA_OTP_TYPE_KEY = "tfaOtpTypeKey";
+    public static final String TOKEN_AUTH_DETAILS_TFA_OTP_RECEIVER_TYPE_KEY = "tfaOtpReceiverTypeKey";
+    public static final String TOKEN_AUTH_DETAILS_TFA_OTP_GENERATE_URL = "tfaOtpGenerateUrl";
 
     public static final String ACCESS_TOKEN_URL = "http://uaa/oauth/token";
 

@@ -23,7 +23,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Optional;
 
+import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_OTP_RECEIVER_TYPE_KEY;
+import static com.icthh.xm.uaa.config.Constants.TOKEN_AUTH_DETAILS_TFA_OTP_TYPE_KEY;
 import static com.icthh.xm.uaa.service.otp.ReceiverTypeKey.EMAIL;
+import static com.icthh.xm.uaa.service.otp.ReceiverTypeKey.NAME;
 import static com.icthh.xm.uaa.service.otp.ReceiverTypeKey.PHONE_NUMBER;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -36,7 +39,9 @@ public class OtpServiceUnitTest {
 
     private static final String TENANT = "testTenant";
     private static final String TFA_OTP_TYPE_KEY = "2FACTOR-AD-OTP-SIGN-IN";
+    private static final String TFA_OTP_TYPE_KEY_CUSTOM = "2FACTOR-AD-OTP-SIGN-IN-CUSTOM";
     private static final String DESTINATION_PHONE = "+380663127876";
+    private static final String DESTINATION_NAME = "vodafone";
     private static final String DESTINATION_EMAIL = "test@gmail.com";
     private static final Long OTP_ID = 1L;
     private static final String OTP = "otp";
@@ -76,6 +81,19 @@ public class OtpServiceUnitTest {
         OneTimePasswordDto expectedBody = buildOneTimePasswordDto(DESTINATION_PHONE, PHONE_NUMBER.getValue());
 
         otpService.prepareOtpRequest(buildDomainUserDetails(UserLoginType.MSISDN.getValue(), DESTINATION_PHONE));
+
+        verify(otpServiceClient).createOtp(ArgumentMatchers.eq(GENERATE_OTP_URL), ArgumentMatchers.eq(expectedBody));
+    }
+
+    @Test
+    public void prepareOtpRequest_nickname_withCustomTfaOtpConfigAndReceiverType() {
+        when(tenantProperties.getSecurity().getTfaOtpGenerateUrl()).thenReturn(GENERATE_OTP_URL);
+        when(tenantProperties.getSecurity().getTfaOtpReceiverTypeKey()).thenReturn(PHONE_NUMBER.getValue());
+        var userDetails = buildDomainUserDetailsCustom(UserLoginType.NICKNAME.getValue(), DESTINATION_NAME);
+
+        otpService.prepareOtpRequest(userDetails);
+
+        OneTimePasswordDto expectedBody = buildCustomOneTimePasswordDto(DESTINATION_NAME, NAME.getValue());
 
         verify(otpServiceClient).createOtp(ArgumentMatchers.eq(GENERATE_OTP_URL), ArgumentMatchers.eq(expectedBody));
     }
@@ -153,6 +171,33 @@ public class OtpServiceUnitTest {
         );
     }
 
+
+    private DomainUserDetails buildDomainUserDetailsCustom(String userLoginType, String login) {
+        DomainUserDetails details = new DomainUserDetails(
+            "username",
+            "password",
+            emptyList(),
+            "",
+            "testUserKey",
+            null,
+            null,
+            true,
+            "test",
+            null,
+            null,
+            null,
+            null,
+            false,
+            null,
+            singletonList(buildUserLoginDto(buildUserLogin(userLoginType, login))),
+            LANG_KEY
+        );
+
+        details.getAdditionalDetails().put(TOKEN_AUTH_DETAILS_TFA_OTP_TYPE_KEY, TFA_OTP_TYPE_KEY_CUSTOM);
+        details.getAdditionalDetails().put(TOKEN_AUTH_DETAILS_TFA_OTP_RECEIVER_TYPE_KEY, NAME.getValue());
+        return details;
+    }
+
     private UserLogin buildUserLogin(String typeKey, String login) {
         UserLogin userLogin = new UserLogin();
         userLogin.setTypeKey(typeKey);
@@ -167,6 +212,10 @@ public class OtpServiceUnitTest {
 
     private OneTimePasswordDto buildOneTimePasswordDto(String destination, String receiverTypeKey) {
         return new OneTimePasswordDto(null, destination, receiverTypeKey, TFA_OTP_TYPE_KEY, LANG_KEY);
+    }
+
+    private OneTimePasswordDto buildCustomOneTimePasswordDto(String destination, String receiverTypeKey) {
+        return new OneTimePasswordDto(null, destination, receiverTypeKey, TFA_OTP_TYPE_KEY_CUSTOM, LANG_KEY);
     }
 
     private OneTimePasswordCheckDto buildOneTimePasswordCheckDto() {
