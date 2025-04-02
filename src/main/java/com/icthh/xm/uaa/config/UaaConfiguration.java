@@ -17,6 +17,7 @@ import com.icthh.xm.uaa.security.oauth2.otp.OtpSendStrategy;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
 import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpTokenGranter;
 import com.icthh.xm.uaa.security.provider.DefaultAuthenticationRefreshProvider;
+import com.icthh.xm.uaa.security.provider.UaaDaoAuthenticationProvider;
 import com.icthh.xm.uaa.service.IdpIdTokenMappingService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserLoginService;
@@ -240,7 +241,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
     @Bean
     public DaoAuthenticationProvider daoAuthenticationProvider(UserDetailsService userDetailsService,
                                                                PasswordEncoder passwordEncoder) {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        DaoAuthenticationProvider provider = new UaaDaoAuthenticationProvider();
         provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
         return provider;

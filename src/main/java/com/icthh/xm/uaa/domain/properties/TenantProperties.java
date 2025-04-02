@@ -271,4 +271,44 @@ public class TenantProperties {
         private String type;
     }
 
+    private ImpersonateAuth impersonateAuth;
+
+    @Getter
+    @Setter
+    @ToString
+    public static class ImpersonateAuth {
+        private Boolean enabled;
+        private List<AuthRole> rolesMapping;
+        private Integer tokenValiditySeconds;
+
+        @Getter
+        @Setter
+        @ToString
+        public static class AuthRole {
+            private InboundTenantRole canAuthFromInboundTenantRole;
+            private List<RoleConfiguration> canAuthToRoles;
+            private Boolean canAuthToAllLogins;
+            private List<String> canAuthToLogins;
+            private Integer tokenValiditySeconds;
+        }
+
+        @Getter
+        @Setter
+        @ToString
+        public static class InboundTenantRole {
+            private String role;
+            private String tenant;
+        }
+
+        @Getter
+        @Setter
+        @ToString
+        public static class RoleConfiguration {
+            private String role;
+            private String authenticateAsRole;
+        }
+    }
+
+
+
 }

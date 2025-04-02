@@ -41,7 +41,7 @@ public class AuthenticationService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
-    private String findClientId() {
+    public String findClientId() {
         String clientId = applicationProperties.getDefaultClientId().stream()
             .findFirst()
             .orElseThrow(() -> new IllegalArgumentException("Default client id not found"));

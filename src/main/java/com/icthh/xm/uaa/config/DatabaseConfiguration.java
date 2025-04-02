@@ -7,6 +7,8 @@ import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
 import com.icthh.xm.commons.domainevent.db.config.DatabaseSourceInterceptorCustomizer;
 import com.icthh.xm.commons.migration.db.XmMultiTenantSpringLiquibase;
 import com.icthh.xm.commons.migration.db.XmSpringLiquibase;
+import com.icthh.xm.commons.migration.db.jsonb.CustomExpression;
+import com.icthh.xm.commons.migration.db.jsonb.DefaultExpression;
 import com.icthh.xm.commons.migration.db.tenant.SchemaResolver;
 import io.github.jhipster.config.JHipsterConstants;
 import liquibase.integration.spring.MultiTenantSpringLiquibase;
@@ -71,6 +73,11 @@ public class DatabaseConfiguration {
     @Profile(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)
     public Server h2TCPServer() throws SQLException {
         return Server.createTcpServer("-tcp", "-tcpAllowOthers");
+    }
+
+    @Bean // TODO remove this
+    public CustomExpression customExpression() {
+        return new DefaultExpression();
     }
 
     @Bean
