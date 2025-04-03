@@ -75,11 +75,6 @@ public class DatabaseConfiguration {
         return Server.createTcpServer("-tcp", "-tcpAllowOthers");
     }
 
-    @Bean // TODO remove this
-    public CustomExpression customExpression() {
-        return new DefaultExpression();
-    }
-
     @Bean
     public SpringLiquibase liquibase(DataSource dataSource, LiquibaseProperties liquibaseProperties) {
         schemaResolver.createSchemas(dataSource);
