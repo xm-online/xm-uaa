@@ -25,6 +25,7 @@ import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
+import com.icthh.xm.uaa.repository.ImpersonateLoginAuditEventRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
@@ -43,6 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -87,6 +89,8 @@ public class ImpersonateLoginIntTest {
     private UserRepository userRepository;
     @Autowired
     private LepManager lepManager;
+    @Autowired
+    private ImpersonateLoginAuditEventRepository auditEventRepository;
 
     private ObjectMapper objectMapper;
 
@@ -146,6 +150,16 @@ public class ImpersonateLoginIntTest {
         long exp = (int) tokenValue.get("exp");
         long ttl = exp * 1000 - (long)tokenValue.get("createTokenTime");
         assertTrue((tokenLifeTime - 100) * 1000L < ttl && ttl < (tokenLifeTime + 100) * 1000L);
+
+        tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
+        TenantContextUtils.setTenant(tenantContextHolder, targetTenant == null ? inboundTenant : targetTenant);
+        var event = auditEventRepository.findAll(Sort.by("eventDate").descending()).get(0);
+
+        assertEquals(inboundUser, event.getInboundLogin());
+        assertEquals(inboundTenant, event.getInboundTenant());
+        assertEquals(targetRole, event.getUserRole());
+        assertEquals(targetUser, event.getUserLogin());
+
     }
 
     @SneakyThrows

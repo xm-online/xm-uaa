@@ -48,6 +48,10 @@ public class ImpersonateLoginAuditEvent implements Serializable {
     private String inboundUserKey;
 
     @NotNull
+    @Column(name = "user_login", nullable = false)
+    private String userLogin;
+
+    @NotNull
     @Column(name = "user_key", nullable = false)
     private String userKey;
 

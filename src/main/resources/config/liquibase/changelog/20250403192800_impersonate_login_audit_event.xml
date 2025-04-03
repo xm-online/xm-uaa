@@ -25,6 +25,9 @@
             <column name="user_key" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
+            <column name="user_login" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
             <column name="user_role" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>

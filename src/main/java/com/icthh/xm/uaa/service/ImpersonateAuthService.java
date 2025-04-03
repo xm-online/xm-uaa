@@ -111,6 +111,7 @@ public class ImpersonateAuthService {
         auditEvent.setInboundRole(inboundRoleKey);
         auditEvent.setInboundUserKey(authContext.getRequiredUserKey());
         auditEvent.setUserKey(processedAuthentication.getUserKey());
+        auditEvent.setUserLogin(processedAuthentication.getUsername());
         auditEvent.setUserRole(processedAuthentication.getAuthorities().iterator().next().getAuthority());
         auditEventRepository.save(auditEvent);
     }
