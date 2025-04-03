@@ -1,0 +1,30 @@
+---
+uaa:
+  ROLE_TEST_ADMIN:
+  - privilegeKey: "UAA.IMPERSONATE_LOGIN"
+    disabled: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: "SKIP"
+  - privilegeKey: "ACCOUNT.REGISTER"
+    disabled: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: "SKIP"
+  ROLE_TEST_USER:
+  - privilegeKey: "UAA.IMPERSONATE_LOGIN"
+    disabled: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: "SKIP"
+  - privilegeKey: "ACCOUNT.REGISTER"
+    disabled: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: "SKIP"
+  ROLE_ANONYMOUS:
+  - privilegeKey: "ACCOUNT.REGISTER"
+    disabled: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: "SKIP"

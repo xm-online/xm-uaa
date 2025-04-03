@@ -287,7 +287,7 @@ public class TenantProperties {
         public static class AuthRole {
             private InboundTenantRole canAuthFromInboundTenantRole;
             private List<RoleConfiguration> canAuthToRoles;
-            private Boolean canAuthToAllLogins;
+            private Boolean canAuthByAllLogins;
             private List<String> canAuthToLogins;
             private Integer tokenValiditySeconds;
         }

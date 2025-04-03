@@ -15,6 +15,7 @@ spring:
             hibernate.cache.use_query_cache: false
             hibernate.generate_statistics: true
             hibernate.hbm2ddl.auto: none
+            hibernate.jdbc.time_zone: UTC
             hibernate.dialect: com.icthh.xm.commons.migration.db.jsonb.CustomPostgreSQL95Dialect
     liquibase:
         change-log: config/liquibase/master.xml

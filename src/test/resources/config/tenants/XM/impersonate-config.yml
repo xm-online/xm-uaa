@@ -1,0 +1,28 @@
+---
+registrationCaptchaPeriodSeconds: 0
+security:
+    defaultUserRole: ROLE_TEST_USER
+    accessTokenValiditySeconds: 3600
+impersonateAuth:
+    enabled: true
+    tokenValiditySeconds: 360
+    rolesMapping:
+        - canAuthFromInboundTenantRole:
+              role: ROLE_TEST_ADMIN
+          canAuthToRoles:
+              - role: ROLE_TEST_USER
+              - role: ROLE_TEST_OPERATOR
+          canAuthByAllLogins: true
+        - canAuthFromInboundTenantRole:
+              role: ROLE_TEST_USER
+          canAuthToRoles:
+              - role: ROLE_TEST_OPERATOR
+                authenticateAsRole: ROLE_OPERATOR_READ_ONLY
+          canAuthToLogins: [operator1@example.com]
+          tokenValiditySeconds: 36
+        - canAuthFromInboundTenantRole:
+              role: ROLE_TEST_ADMIN
+              tenant: DEMO
+          canAuthToRoles:
+              - role: ROLE_TEST_USER
+          canAuthByAllLogins: true

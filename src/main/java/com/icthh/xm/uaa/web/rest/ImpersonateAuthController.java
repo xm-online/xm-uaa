@@ -32,9 +32,10 @@ public class ImpersonateAuthController {
     public ResponseEntity<?> impersonateLogin(@PathVariable("login") String login,
                                               @RequestParam(value = "tenant", required = false) String tenant) {
         String inboundTenant = tenantContextHolder.getTenantKey().toUpperCase();
-        if (StringUtils.isBlank(tenant)) {
-            tenant = inboundTenant;
+        if (StringUtils.isBlank(tenant) || tenant.equalsIgnoreCase(inboundTenant)) {
+            return ResponseEntity.ok(impersonateAuthService.impersonateLogin(login, inboundTenant));
         }
+
         PrivilegedTenantContext privilegedContext = tenantContextHolder.getPrivilegedContext();
         var token = privilegedContext.execute(buildTenant(tenant.toUpperCase()), () ->
             impersonateAuthService.impersonateLogin(login, inboundTenant)

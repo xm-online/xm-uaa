@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="20250403192800" author="ssenko">
+
+        <createTable tableName="impersonate_login_audit_event">
+            <column name="id" type="bigint">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="inbound_login" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="inbound_tenant" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="inbound_role" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="inbound_user_key" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_key" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_role" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_date" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+    </changeSet>
+
+</databaseChangeLog>

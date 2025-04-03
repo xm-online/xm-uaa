@@ -39,6 +39,7 @@
     <include file="classpath:config/liquibase/changelog/20230216125200_change_user_name_length.xml" relativeToChangelogFile="false" />
     <include file="classpath:config/liquibase/changelog/20230731165500_add_data_field_jsonb.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20241004170000_add_otp_attribute_columns_to_user.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20250403192800_impersonate_login_audit_event.xml" relativeToChangelogFile="false"/>
     <includeAll path="classpath:config/liquibase/changelog/extended/" errorIfMissingOrEmpty="false"/>
 
     <!-- jhipster-needle-liquibase-add-changelog - JHipster will add liquibase changelogs here -->
