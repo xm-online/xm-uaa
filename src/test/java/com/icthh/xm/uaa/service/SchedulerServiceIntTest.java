@@ -11,6 +11,7 @@ import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.LepConfiguration;
+import com.icthh.xm.uaa.config.xm.LepTextConfiguration;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -32,9 +33,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {
+    LepTextConfiguration.class,
     UaaApp.class,
-    XmOverrideConfiguration.class,
-    LepConfiguration.class
+    XmOverrideConfiguration.class
 })
 public class SchedulerServiceIntTest {
 

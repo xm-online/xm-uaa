@@ -12,6 +12,7 @@ import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
+import com.icthh.xm.uaa.config.xm.LepTextConfiguration;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.GrantType;
 import com.icthh.xm.uaa.domain.OtpChannelType;
@@ -107,6 +108,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {
+    LepTextConfiguration.class,
     UaaApp.class,
     XmOverrideConfiguration.class
 })

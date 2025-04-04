@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.service;
 
+import com.icthh.xm.commons.lep.api.LepManagementService;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.config.ApplicationProperties;
@@ -24,14 +25,14 @@ public class AuthenticationService {
     private static final String DEFAULT_TENANT = "XM";
 
     private final TokenEndpoint tokenEndpoint;
-
     private final TenantContextHolder tenantContextHolder;
-
+    private final LepManagementService lepManagementService;
     private final ApplicationProperties applicationProperties;
 
     public void authenticate() throws HttpRequestMethodNotSupportedException {
         log.info("Authenticating request for privileges config");
         TenantContextUtils.setTenant(tenantContextHolder, DEFAULT_TENANT);
+        lepManagementService.beginThreadContext();
         OAuth2Request request = new OAuth2Request(Collections.singletonMap("grant_type", "client_credentials"),
             findClientId(), null, true, null, null, null, null, null);
         OAuth2Authentication authentication = new OAuth2Authentication(request, null);
@@ -39,6 +40,7 @@ public class AuthenticationService {
             Collections.singletonMap("grant_type", "client_credentials"));
         authentication.setDetails(tokenResponse.getBody().getValue());
         SecurityContextHolder.getContext().setAuthentication(authentication);
+        lepManagementService.endThreadContext();
     }
 
     private String findClientId() {

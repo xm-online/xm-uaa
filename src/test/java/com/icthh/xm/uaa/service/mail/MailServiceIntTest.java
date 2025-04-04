@@ -12,6 +12,7 @@ import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.ApplicationProperties;
+import com.icthh.xm.uaa.config.xm.LepTextConfiguration;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
@@ -62,6 +63,7 @@ import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {
+    LepTextConfiguration.class,
     UaaApp.class,
     XmOverrideConfiguration.class
 })

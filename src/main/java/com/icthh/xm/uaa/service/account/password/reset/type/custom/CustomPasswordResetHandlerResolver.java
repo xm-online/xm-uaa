@@ -1,25 +1,23 @@
 package com.icthh.xm.uaa.service.account.password.reset.type.custom;
 
-import com.icthh.xm.commons.lep.AppendLepKeyResolver;
-import com.icthh.xm.lep.api.LepManagerService;
-import com.icthh.xm.lep.api.LepMethod;
-import com.icthh.xm.lep.api.commons.SeparatorSegmentedLepKey;
-import com.icthh.xm.uaa.service.account.password.reset.PasswordResetRequest;
-import org.springframework.stereotype.Component;
-
 import static org.apache.commons.lang3.StringUtils.upperCase;
 
+import com.icthh.xm.lep.api.LepKeyResolver;
+import com.icthh.xm.lep.api.LepMethod;
+import com.icthh.xm.uaa.service.account.password.reset.PasswordResetRequest;
+import java.util.List;
+import org.springframework.stereotype.Component;
+
 @Component
-public class CustomPasswordResetHandlerResolver extends AppendLepKeyResolver {
+public class CustomPasswordResetHandlerResolver implements LepKeyResolver {
 
     public static final String RESET_REQUEST = "resetRequest";
 
     @Override
-    protected String[] getAppendSegments(SeparatorSegmentedLepKey baseKey, LepMethod method, LepManagerService managerService) {
-        PasswordResetRequest resetType = getRequiredParam(method, RESET_REQUEST, PasswordResetRequest.class);
-        String translatedLocationTypeKey = upperCase(translateToLepConvention(resetType.getResetType()));
-        return new String[] {
-            translatedLocationTypeKey
-        };
+    public List<String> segments(LepMethod method) {
+        PasswordResetRequest resetType = method.getParameter(RESET_REQUEST, PasswordResetRequest.class);
+        return List.of(
+            upperCase(resetType.getResetType())
+        );
     }
 }

@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.web.rest;
 
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.UaaApp;
+import com.icthh.xm.uaa.config.xm.LepTextConfiguration;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import org.junit.After;
 import org.junit.Before;
@@ -33,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Ignore
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {
+    LepTextConfiguration.class,
     UaaApp.class,
     XmOverrideConfiguration.class
 })
