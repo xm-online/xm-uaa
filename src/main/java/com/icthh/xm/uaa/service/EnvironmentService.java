@@ -9,6 +9,7 @@ import com.icthh.xm.commons.permission.config.PermissionProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -41,6 +42,7 @@ public class EnvironmentService {
     }
 
     @SneakyThrows
+    @Async
     public void updateConfigs(List<String> envVars) {
 
         if (!authenticate()) {

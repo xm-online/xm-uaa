@@ -1,11 +1,11 @@
 package com.icthh.xm.uaa.web.filter;
 
 import com.icthh.xm.commons.config.client.repository.TenantListRepository;
+import com.icthh.xm.commons.lep.api.LepManagementService;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.PrivilegedTenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
-import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.uaa.commons.XmPrivilegedRequestContext;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
@@ -73,7 +73,7 @@ public class ProxyFilterUnitTest {
     @Mock
     private XmAuthenticationContextHolder xmAuthContextHolder;
     @Mock
-    private LepManager lepManager;
+    private LepManagementService lepManager;
     @Mock
     private TokenStore tokenStore;
     @Mock

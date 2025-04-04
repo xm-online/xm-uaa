@@ -6,6 +6,7 @@ import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.config.audit.AuditEventConverter;
+import com.icthh.xm.uaa.config.xm.LepTextConfiguration;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.PersistentAuditEvent;
 import com.icthh.xm.uaa.service.SeparateTransactionExecutor;
@@ -42,6 +43,7 @@ import static org.mockito.Mockito.when;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {
+    LepTextConfiguration.class,
     UaaApp.class,
     XmOverrideConfiguration.class
 })

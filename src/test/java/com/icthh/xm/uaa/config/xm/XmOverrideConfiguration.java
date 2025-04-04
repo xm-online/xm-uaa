@@ -1,5 +1,15 @@
 package com.icthh.xm.uaa.config.xm;
 
+import static org.mockito.Mockito.mock;
+
+import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
+import com.icthh.xm.commons.config.client.repository.TenantListRepository;
+import com.icthh.xm.commons.config.client.service.TenantAliasService;
+import com.icthh.xm.commons.config.client.service.TenantAliasServiceImpl;
+import com.icthh.xm.commons.lep.groovy.GroovyLepEngineConfiguration;
+import com.icthh.xm.commons.lep.spring.LepUpdateMode;
+import com.icthh.xm.commons.logging.config.LoggingConfigService;
+import com.icthh.xm.commons.logging.config.LoggingConfigServiceStub;
 import com.icthh.xm.commons.migration.db.jsonb.CustomExpression;
 import com.icthh.xm.commons.migration.db.jsonb.JsonbExpression;
 import com.icthh.xm.commons.migration.db.jsonb.OracleExpression;
@@ -47,7 +57,7 @@ public class XmOverrideConfiguration {
     @Bean
     @Primary
     public RestTemplate loadBalancedRestTemplate(RestTemplateCustomizer customizer) {
-        RestTemplate template = Mockito.mock(RestTemplate.class);
+        RestTemplate template = mock(RestTemplate.class);
         Mockito.when(template.exchange(Mockito.anyString(),
             Mockito.any(),
             Mockito.any(),
@@ -59,7 +69,7 @@ public class XmOverrideConfiguration {
     @Bean
     @Primary
     public OAuth2RestTemplate oAuth2RestTemplate() {
-        OAuth2RestTemplate template = Mockito.mock(OAuth2RestTemplate.class);
+        OAuth2RestTemplate template = mock(OAuth2RestTemplate.class);
         Mockito.when(template.exchange(Mockito.anyString(),
             Mockito.any(),
             Mockito.any(),
