@@ -25,6 +25,7 @@ import com.icthh.xm.uaa.service.otp.OtpGenerationStrategy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -238,6 +239,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
     }
 
     @Bean
+    @ConditionalOnMissingBean(DaoAuthenticationProvider.class)
     public DaoAuthenticationProvider daoAuthenticationProvider(UserDetailsService userDetailsService,
                                                                PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
