@@ -1,29 +1,20 @@
 package com.icthh.xm.uaa.lep.keyresolver;
 
-import com.icthh.xm.commons.lep.AppendLepKeyResolver;
-import com.icthh.xm.commons.lep.SeparatorSegmentedLepKeyResolver;
-import com.icthh.xm.lep.api.LepManagerService;
+import static java.util.Optional.ofNullable;
+
+import com.icthh.xm.lep.api.LepKeyResolver;
 import com.icthh.xm.lep.api.LepMethod;
-import com.icthh.xm.lep.api.commons.SeparatorSegmentedLepKey;
+import java.util.List;
+import java.util.Optional;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.Optional;
-
-import static java.util.Optional.ofNullable;
-
 @Component
-public class OptionalProfileHeaderResolver extends AppendLepKeyResolver {
-
+public class OptionalProfileHeaderResolver implements LepKeyResolver {
     @Override
-    protected String[] getAppendSegments(SeparatorSegmentedLepKey baseKey,
-                                         LepMethod method,
-                                         LepManagerService managerService) {
-        return getHeaderValue("profile", String.class)
-            .map(SeparatorSegmentedLepKeyResolver::translateToLepConvention)
-            .map(translated -> new String[]{translated})
-            .orElseGet(() -> new String[0]);
+    public List<String> segments(LepMethod method) {
+        return getHeaderValue("profile", String.class).map(List::of).orElse(List.of());
     }
 
     private <T> Optional<T> getHeaderValue(final String headerName, final Class<T> valueType) {

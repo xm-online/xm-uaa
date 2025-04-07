@@ -1,11 +1,11 @@
 package com.icthh.xm.uaa.web.filter;
 
 import com.icthh.xm.commons.config.client.repository.TenantListRepository;
+import com.icthh.xm.commons.lep.api.LepManagementService;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
-import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.uaa.commons.XmPrivilegedRequestContext;
 import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
@@ -37,8 +37,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
-import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
-import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
 import static com.icthh.xm.uaa.config.Constants.AUTH_TENANT_KEY;
 import static com.icthh.xm.uaa.config.Constants.AUTH_USERNAME;
 import static com.icthh.xm.uaa.config.Constants.AUTH_USER_NAME;
@@ -70,8 +68,7 @@ public class ProxyFilter implements Filter {
     private final TenantContextHolder tenantContextHolder;
     private final XmRequestContextHolder requestContextHolder;
     private final TenantListRepository tenantListRepository;
-    private final XmAuthenticationContextHolder xmAuthContextHolder;
-    private final LepManager lepManager;
+    private final LepManagementService lepManager;
     private final LepRequestEnrichmentService lepRequestEnrichmentService;
 
     private TokenStore tokenStore;
@@ -124,17 +121,10 @@ public class ProxyFilter implements Filter {
         requestContext.putValue(REQUEST_CTX_PORT, httpRequest.getHeader(HEADER_PORT));
         requestContext.putValue(REQUEST_CTX_WEB_APP, httpRequest.getHeader(HEADER_WEBAPP_URL));
 
-        // init lep context
-        lepManager.beginThreadContext(scopedContext -> {
-            scopedContext.setValue(THREAD_CONTEXT_KEY_TENANT_CONTEXT, tenantContextHolder.getContext());
-            scopedContext.setValue(BINDING_KEY_AUTH_CONTEXT, xmAuthContextHolder.getContext());
-        });
-
-        try {
+        try(var context = lepManager.beginThreadContext()) {
             ServletRequest enrichedRequest = lepRequestEnrichmentService.enrichRequest(request);
             chain.doFilter(enrichedRequest, response);
         } finally {
-            lepManager.endThreadContext();
             requestContext.destroyCurrentContext();
             tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
             MdcUtils.clear();

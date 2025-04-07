@@ -6,6 +6,7 @@ import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.config.Constants;
+import com.icthh.xm.uaa.config.xm.LepTextConfiguration;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.repository.CustomAuditEventRepository;
 import org.junit.Before;
@@ -37,6 +38,7 @@ import static org.springframework.boot.actuate.security.AuthenticationAuditListe
 @Transactional
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {
+    LepTextConfiguration.class,
     UaaApp.class,
     XmOverrideConfiguration.class
 })

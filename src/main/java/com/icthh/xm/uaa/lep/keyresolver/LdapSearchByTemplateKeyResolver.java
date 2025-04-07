@@ -1,19 +1,14 @@
 package com.icthh.xm.uaa.lep.keyresolver;
 
-import com.icthh.xm.commons.lep.AppendLepKeyResolver;
-import com.icthh.xm.lep.api.LepManagerService;
+import com.icthh.xm.lep.api.LepKeyResolver;
 import com.icthh.xm.lep.api.LepMethod;
-import com.icthh.xm.lep.api.commons.SeparatorSegmentedLepKey;
+import java.util.List;
 import org.springframework.stereotype.Component;
 
 @Component
-public class LdapSearchByTemplateKeyResolver extends AppendLepKeyResolver {
+public class LdapSearchByTemplateKeyResolver implements LepKeyResolver {
     @Override
-    protected String[] getAppendSegments(SeparatorSegmentedLepKey baseKey, LepMethod method, LepManagerService managerService) {
-        String templateKey = getRequiredParam(method, "templateKey", String.class);
-        String translatedTemplate = translateToLepConvention(templateKey);
-        return new String[] {
-            translatedTemplate
-        };
+    public List<String> segments(LepMethod method) {
+        return List.of(method.getParameter("templateKey", String.class));
     }
 }
