@@ -1,5 +1,7 @@
 package com.icthh.xm.uaa.config;
 
+import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
+
 import com.icthh.xm.commons.lep.spring.web.LepInterceptor;
 import com.icthh.xm.commons.web.spring.TenantInterceptor;
 import com.icthh.xm.commons.web.spring.XmLoggingInterceptor;
@@ -40,6 +42,6 @@ public class WebMvcConfiguration extends XmWebMvcConfigurerAdapter {
 
     @Override
     protected List<String> getTenantIgnorePathPatterns() {
-        return appProps.getTenantIgnoredPathList();
+        return firstNonNull(appProps.getTenantIgnoredPathList(), List.of());
     }
 }
