@@ -108,7 +108,8 @@ public class TenantPropertiesResourceIntTest {
         // to apply all filters and configurations
         this.restMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
 
-        restMvc.perform(get("/api/uaa/properties/settings-public"))
+        restMvc.perform(get("/api/uaa/properties/settings-public")
+                .header("x-tenant", DEFAULT_TENANT_KEY_VALUE))
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.passwordSettings.maxLength").value(PASSWORD_MAX_LENGTH))
