@@ -177,6 +177,7 @@ application:
     timeline-ignored-http-methods:
     audit-events-enabled: false
     scheduler-enabled: false
+    permission-context-provider: defaultCtxImpl
     tenant-properties-path-pattern: /config/tenants/{tenantName}/uaa/${application.tenant-properties-name}
     tenant-properties-name: uaa.yml
     tenant-login-properties-path-pattern: /config/tenants/{tenantName}/uaa/${application.tenant-login-properties-name}

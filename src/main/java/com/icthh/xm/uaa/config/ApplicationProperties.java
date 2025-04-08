@@ -49,6 +49,7 @@ public class ApplicationProperties {
     private boolean timelinesEnabled;
     private String dbSchemaSuffix;
     private boolean schedulerEnabled;
+    private String permissionContextProvider = "defaultCtxImpl";
     private String keystoreFile;
     private String keystorePassword;
     private String privateKey;

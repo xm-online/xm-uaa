@@ -13,6 +13,7 @@ import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.service.AccountMailService;
 import com.icthh.xm.uaa.service.AccountService;
 import com.icthh.xm.uaa.service.CaptchaService;
+import com.icthh.xm.uaa.service.PermissionContextProvider;
 import com.icthh.xm.uaa.service.TenantPermissionService;
 import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
@@ -27,6 +28,7 @@ import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.KeyAndPasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
 import com.icthh.xm.uaa.web.rest.vm.ResetPasswordVM;
+import com.icthh.xm.uaa.service.dto.UserWithContext;
 import io.github.jhipster.web.util.ResponseUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -76,6 +78,7 @@ public class AccountResource {
     private final TenantContextHolder tenantContextHolder;
     private final TenantPermissionService tenantPermissionService;
     private final AccountMailService accountMailService;
+    private final PermissionContextProvider permissionContextProvider;
 
     /**
      * POST /register : register the user.
@@ -191,12 +194,13 @@ public class AccountResource {
     @Timed
     @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'ACCOUNT.GET_LIST.ITEM')")
     @PrivilegeDescription("Privilege to get the current user")
-    public ResponseEntity<UserDTO> getAccount() {
+    public ResponseEntity<UserWithContext> getAccount() {
         String requiredUserKey = userService.getRequiredUserKey();
         return ResponseUtil.wrapOrNotFound(userService.findOneWithLoginsByUserKey(requiredUserKey)
                                                .map(user -> {
-                                                   UserDTO userDto = new UserDTO(user);
+                                                   UserWithContext userDto = new UserWithContext(user);
                                                    userDto.getPermissions().addAll(tenantPermissionService.getEnabledPermissionByRole(user.getAuthorities()));
+                                                   userDto.setContext(permissionContextProvider.getPermissionContext(requiredUserKey));
                                                    return userDto;
                                                }));
     }
