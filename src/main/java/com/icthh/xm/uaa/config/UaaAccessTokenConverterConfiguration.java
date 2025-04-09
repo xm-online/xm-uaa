@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.config;
 
 import com.icthh.xm.commons.repository.JwksRepository;
+import com.icthh.xm.commons.security.oauth2.OAuth2Properties;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.spring.config.TenantContextConfiguration;
 import com.icthh.xm.uaa.security.DomainJwtAccessTokenConverter;
@@ -30,7 +31,6 @@ import com.icthh.xm.uaa.security.oauth2.idp.XmJwkTokenStore;
 import com.icthh.xm.uaa.security.oauth2.idp.config.IdpConfigRepository;
 import com.icthh.xm.uaa.security.oauth2.idp.converter.XmJwkVerifyingJwtAccessTokenConverter;
 import com.icthh.xm.uaa.security.oauth2.idp.source.XmJwkDefinitionSource;
-import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -65,18 +65,20 @@ public class UaaAccessTokenConverterConfiguration {
     private final ApplicationProperties applicationProperties;
     private final IdpConfigRepository idpConfigRepository;
     private final JwksRepository jwksRepository;
+    private final OAuth2Properties oauth2Properties;
 
     public UaaAccessTokenConverterConfiguration(TenantContextHolder tenantContextHolder,
                                                 @Qualifier("loadBalancedRestTemplate") RestTemplate keyUriRestTemplate,
                                                 ApplicationProperties applicationProperties,
                                                 IdpConfigRepository idpConfigRepository,
                                                 TenantPropertiesService tenantPropertiesService,
-                                                JwksRepository jwksRepository) {
+                                                JwksRepository jwksRepository, OAuth2Properties oauth2Properties) {
         this.tenantContextHolder = tenantContextHolder;
         this.keyUriRestTemplate = keyUriRestTemplate;
         this.applicationProperties = applicationProperties;
         this.idpConfigRepository = idpConfigRepository;
         this.jwksRepository = jwksRepository;
+        this.oauth2Properties = oauth2Properties;
     }
 
     /**
@@ -105,9 +107,11 @@ public class UaaAccessTokenConverterConfiguration {
         return accessTokenConverter;
     }
 
-    private static PublicKey getKeyFromConfigServer(RestTemplate keyUriRestTemplate)
+    private PublicKey getKeyFromConfigServer(RestTemplate keyUriRestTemplate)
         throws CertificateException, IOException {
         HttpEntity<Void> request = new HttpEntity<>(new HttpHeaders());
+        String tokenEndpointUrl = oauth2Properties.getSignatureVerification().getPublicKeyEndpointUri();
+
         String content = keyUriRestTemplate
             .exchange("http://config/api/token_key", HttpMethod.GET, request, String.class).getBody();
 
