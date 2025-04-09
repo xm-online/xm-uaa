@@ -20,7 +20,6 @@ import org.springframework.util.AntPathMatcher;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
-@Service
 @RequiredArgsConstructor
 @IgnoreLogginAspect
 public abstract class AbstractTenantPropertiesService<T extends TenantProperties> implements RefreshableConfiguration {
