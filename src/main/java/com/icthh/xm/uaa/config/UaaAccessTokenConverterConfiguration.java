@@ -113,7 +113,7 @@ public class UaaAccessTokenConverterConfiguration {
         String tokenEndpointUrl = oauth2Properties.getSignatureVerification().getPublicKeyEndpointUri();
 
         String content = keyUriRestTemplate
-            .exchange("http://config/api/token_key", HttpMethod.GET, request, String.class).getBody();
+            .exchange(tokenEndpointUrl, HttpMethod.GET, request, String.class).getBody();
 
         if (StringUtils.isBlank(content)) {
             throw new CertificateException("Received empty public key from config.");
