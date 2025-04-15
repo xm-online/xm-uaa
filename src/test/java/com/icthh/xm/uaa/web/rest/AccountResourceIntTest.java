@@ -37,6 +37,7 @@ import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.account.password.reset.PasswordResetHandlerFactory;
 import com.icthh.xm.uaa.service.dto.UserDTO;
+import com.icthh.xm.uaa.service.impl.DefaultPermissionContextProvider;
 import com.icthh.xm.uaa.service.mail.MailService;
 import com.icthh.xm.uaa.service.util.RandomUtil;
 import com.icthh.xm.uaa.web.rest.vm.AuthorizeUserVm;
@@ -89,6 +90,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -146,6 +148,9 @@ public class AccountResourceIntTest {
 
     @Mock
     private UserService mockUserService;
+
+    @Mock
+    private DefaultPermissionContextProvider contextProvider;
 
     @Mock
     private MailService mockMailService;
@@ -244,7 +249,8 @@ public class AccountResourceIntTest {
             accountService,
             captchaService,
             xmRequestContextHolder,
-            tenantContextHolder, tenantPermissionService, accountMailService);
+            tenantContextHolder, tenantPermissionService, accountMailService,
+            contextProvider);
 
         AccountResource accountUserMockResource = new AccountResource(userRepository,
             userLoginService,
@@ -252,7 +258,8 @@ public class AccountResourceIntTest {
             accountService,
             captchaService,
             xmRequestContextHolder,
-            tenantContextHolder, tenantPermissionService, accountMailService);
+            tenantContextHolder, tenantPermissionService, accountMailService,
+            contextProvider);
 
         this.restMvc = MockMvcBuilders.standaloneSetup(accountResource)
             .setMessageConverters(httpMessageConverters).setControllerAdvice(exceptionTranslator)
@@ -339,6 +346,7 @@ public class AccountResourceIntTest {
 
             when(mockUserService.getRequiredUserKey()).thenReturn(user.getUserKey());
             when(mockUserService.findOneWithLoginsByUserKey(anyString())).thenReturn(Optional.of(user));
+            when(contextProvider.getPermissionContext(eq(user.getUserKey()))).thenReturn(new HashMap<>());
 
             try {
                 restUserMockMvc.perform(get("/api/account")
@@ -350,7 +358,8 @@ public class AccountResourceIntTest {
                     .andExpect(jsonPath("$.imageUrl").value("http://placehold.it/50x50"))
                     .andExpect(jsonPath("$.langKey").value("en"))
                     .andExpect(jsonPath("$.logins[0].login").value("email"))
-                    .andExpect(jsonPath("$.roleKey").value(RoleConstant.SUPER_ADMIN));
+                    .andExpect(jsonPath("$.roleKey").value(RoleConstant.SUPER_ADMIN))
+                    .andExpect(jsonPath("$.context").value(new HashMap<>()));
             } catch (Exception e) {
                 throw new IllegalStateException(e);
             }
@@ -374,6 +383,7 @@ public class AccountResourceIntTest {
             user.getLogins().add(userLogin);
             when(mockUserService.getRequiredUserKey()).thenReturn(user.getUserKey());
             when(mockUserService.findOneWithLoginsByUserKey(anyString())).thenReturn(Optional.of(user));
+            when(contextProvider.getPermissionContext(eq(user.getUserKey()))).thenReturn(new HashMap<>());
 
             tenantPermissionService.onRefresh("/config/tenants/XM/permissions.yml",
                 readConfigFile("/config/tenants/XM/permissions_multiple_apps.yml"));
@@ -394,7 +404,54 @@ public class AccountResourceIntTest {
                     .andExpect(jsonPath("$.permissions[1].privilegeKey").value("ATTACHMENT.DELETE"))
                     .andExpect(jsonPath("$.permissions[2].msName").value("uaa"))
                     .andExpect(jsonPath("$.permissions[2].privilegeKey").value("MISSING.PRIVILEGE"))
-                    .andExpect(jsonPath("$.roleKey").value("ROLE_ADMIN"));
+                    .andExpect(jsonPath("$.roleKey").value("ROLE_ADMIN"))
+                    .andExpect(jsonPath("$.context").value(new HashMap<>()));
+
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        });
+    }
+
+    @Test
+    public void testGetExistingAccount_shouldReturnPermissionContext() {
+        executeForUserKey(DEF_USER_KEY, () -> {
+            UserLogin userLogin = new UserLogin();
+            userLogin.setLogin("email");
+            userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
+
+            User user = new User();
+            user.setUserKey("test");
+            user.setFirstName("john");
+            user.setLastName("doe");
+            user.setImageUrl("http://placehold.it/50x50");
+            user.setLangKey("en");
+            user.setRoleKey(RoleConstant.SUPER_ADMIN);
+            user.getLogins().add(userLogin);
+
+            when(mockUserService.getRequiredUserKey()).thenReturn(user.getUserKey());
+            when(mockUserService.findOneWithLoginsByUserKey(anyString())).thenReturn(Optional.of(user));
+            when(contextProvider.getPermissionContext(eq(user.getUserKey()))).thenReturn(Map.of(
+                "value1", 111,
+                "value2", true,
+                "value3", "aaaaaaa"
+            ));
+
+            try {
+                restUserMockMvc.perform(get("/api/account")
+                        .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                    .andExpect(jsonPath("$.firstName").value("john"))
+                    .andExpect(jsonPath("$.lastName").value("doe"))
+                    .andExpect(jsonPath("$.imageUrl").value("http://placehold.it/50x50"))
+                    .andExpect(jsonPath("$.langKey").value("en"))
+                    .andExpect(jsonPath("$.logins[0].login").value("email"))
+                    .andExpect(jsonPath("$.roleKey").value(RoleConstant.SUPER_ADMIN))
+                    .andExpect(jsonPath("$.context.value1").value(111))
+                    .andExpect(jsonPath("$.context.value2").value(true))
+                    .andExpect(jsonPath("$.context.value3").value("aaaaaaa"));
+
             } catch (Exception e) {
                 throw new IllegalStateException(e);
             }
