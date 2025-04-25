@@ -4,13 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
 @Getter
 @Setter
 @AllArgsConstructor
-public class PermissionContextDto {
+public class PermissionContextDto implements Serializable {
 
     private List<String> permissions;
     private Map<String, Object> ctx;
