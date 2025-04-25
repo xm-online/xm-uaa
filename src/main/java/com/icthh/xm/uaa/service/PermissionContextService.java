@@ -4,15 +4,12 @@ import com.icthh.xm.uaa.service.dto.PermissionContextDto;
 
 import java.util.Map;
 
-/**
- * This interface is used to manage user auth permissions context
- */
-public interface PermissionContextProvider {
+public interface PermissionContextService {
 
     /**
-     * Get user auth permission context by userKey
+     * This method returns the latest auth permission context by userKey
      * @param userKey   userKey
-     * @return          permission context
+     * @return          permission context map
      */
     Map<String, PermissionContextDto> getPermissionContext(String userKey);
 

@@ -36,6 +36,7 @@ import com.icthh.xm.uaa.service.TenantRoleService;
 import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.account.password.reset.PasswordResetHandlerFactory;
+import com.icthh.xm.uaa.service.dto.PermissionContextDto;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.impl.DefaultPermissionContextProvider;
 import com.icthh.xm.uaa.service.mail.MailService;
@@ -429,13 +430,16 @@ public class AccountResourceIntTest {
             user.setRoleKey(RoleConstant.SUPER_ADMIN);
             user.getLogins().add(userLogin);
 
-            when(mockUserService.getRequiredUserKey()).thenReturn(user.getUserKey());
-            when(mockUserService.findOneWithLoginsByUserKey(anyString())).thenReturn(Optional.of(user));
-            when(contextProvider.getPermissionContext(eq(user.getUserKey()))).thenReturn(Map.of(
+            PermissionContextDto contextDto = new PermissionContextDto();
+            contextDto.setCtx(Map.of(
                 "value1", 111,
                 "value2", true,
                 "value3", "aaaaaaa"
             ));
+
+            when(mockUserService.getRequiredUserKey()).thenReturn(user.getUserKey());
+            when(mockUserService.findOneWithLoginsByUserKey(anyString())).thenReturn(Optional.of(user));
+            when(contextProvider.getPermissionContext(eq(user.getUserKey()))).thenReturn(Map.of("service", contextDto));
 
             try {
                 restUserMockMvc.perform(get("/api/account")
@@ -448,9 +452,9 @@ public class AccountResourceIntTest {
                     .andExpect(jsonPath("$.langKey").value("en"))
                     .andExpect(jsonPath("$.logins[0].login").value("email"))
                     .andExpect(jsonPath("$.roleKey").value(RoleConstant.SUPER_ADMIN))
-                    .andExpect(jsonPath("$.context.value1").value(111))
-                    .andExpect(jsonPath("$.context.value2").value(true))
-                    .andExpect(jsonPath("$.context.value3").value("aaaaaaa"));
+                    .andExpect(jsonPath("$.context.service.ctx.value1").value(111))
+                    .andExpect(jsonPath("$.context.service.ctx.value2").value(true))
+                    .andExpect(jsonPath("$.context.service.ctx.value3").value("aaaaaaa"));
 
             } catch (Exception e) {
                 throw new IllegalStateException(e);

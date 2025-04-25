@@ -48,6 +48,8 @@ public class TenantProperties {
     @JsonProperty("userSpec")
     private List<UserSpec> userSpec = new ArrayList<>();
 
+    @JsonProperty("contextPermission")
+    private ContextPermission contextPermission = new ContextPermission();
 
     @Getter
     @Setter
@@ -269,6 +271,14 @@ public class TenantProperties {
         private String templateName;
         private String titleKey;
         private String type;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class ContextPermission {
+        private List<String> services = List.of();
     }
 
 }

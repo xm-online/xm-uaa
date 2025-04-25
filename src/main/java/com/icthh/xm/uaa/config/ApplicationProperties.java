@@ -50,6 +50,7 @@ public class ApplicationProperties {
     private String dbSchemaSuffix;
     private boolean schedulerEnabled;
     private String permissionContextProvider = "defaultCtxImpl";
+    private String permissionContextPathPattern = "/api/permission/context";
     private String keystoreFile;
     private String keystorePassword;
     private String privateKey;
