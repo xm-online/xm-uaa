@@ -54,7 +54,7 @@ public class DefaultPermissionContextService implements PermissionContextService
             .collect(toMap(Map.Entry::getKey, e -> (PermissionContextDto) e.getValue().join()));
     }
 
-    public CompletableFuture<PermissionContextDto> getContextFromService(String service, String userKey) {
+    private CompletableFuture<PermissionContextDto> getContextFromService(String service, String userKey) {
         log.info("Get permission context from {} by userKey: {}", service, userKey);
         HttpEntity<Void> request = new HttpEntity<>(createAuthHeaders());
 
