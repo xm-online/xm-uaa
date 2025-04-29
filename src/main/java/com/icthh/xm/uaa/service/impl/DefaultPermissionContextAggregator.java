@@ -34,7 +34,7 @@ public class DefaultPermissionContextAggregator implements PermissionContextAggr
 
     public DefaultPermissionContextAggregator(ApplicationProperties applicationProperties,
                                               TenantPropertiesService tenantPropertiesService,
-                                              @Qualifier("loadBalancedRestTemplate") RestTemplate restTemplate) {
+                                              @Qualifier("loadBalancedRestTemplateWithTimeout") RestTemplate restTemplate) {
         this.permissionContextPathPattern = applicationProperties.getPermissionContextPathPattern();
         this.tenantPropertiesService = tenantPropertiesService;
         this.restTemplate = restTemplate;

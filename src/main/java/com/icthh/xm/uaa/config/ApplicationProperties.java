@@ -6,7 +6,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -45,6 +47,7 @@ public class ApplicationProperties {
     private String defaultClientSecret;
     private Integer connectTimeoutMillis;
     private Integer readTimeoutMillis;
+    private HttpTimeoutConfig loadBalanced = new HttpTimeoutConfig();
     private String emailPathPattern;
     private boolean timelinesEnabled;
     private String dbSchemaSuffix;
@@ -108,5 +111,15 @@ public class ApplicationProperties {
     @Setter
     public static class DomainEvent {
         private Boolean enabled;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class HttpTimeoutConfig {
+        private Integer connectionTimeout = 5000;
+        private Integer connectionRequestTimeout = 5000;
+        private Integer readTimeout = 3000;
     }
 }

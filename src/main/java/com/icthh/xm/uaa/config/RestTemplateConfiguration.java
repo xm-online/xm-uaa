@@ -53,6 +53,22 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
+    public RestTemplate loadBalancedRestTemplateWithTimeout(ObjectProvider<RestTemplateCustomizer> customizerProvider) {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(applicationProperties.getLoadBalanced().getConnectionTimeout());
+        factory.setReadTimeout(applicationProperties.getLoadBalanced().getReadTimeout());
+
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.setRequestFactory(factory);
+
+        if (ribbonTemplateEnabled) {
+            log.info("loadBalancedRestTemplateWithTimeout: using Ribbon load balancer");
+            customizerProvider.ifAvailable(customizer -> customizer.customize(restTemplate));
+        }
+        return restTemplate;
+    }
+
+    @Bean
     public OAuth2RestTemplate oAuth2RestTemplate(ObjectProvider<RestTemplateCustomizer> customizerProvider) {
         ClientCredentialsResourceDetails resource = new ClientCredentialsResourceDetails();
         resource.setClientId(findClientId());
