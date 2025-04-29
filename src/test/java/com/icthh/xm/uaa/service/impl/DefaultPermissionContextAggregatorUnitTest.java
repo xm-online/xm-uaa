@@ -37,7 +37,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
-public class DefaultPermissionContextServiceUnitTest {
+public class DefaultPermissionContextAggregatorUnitTest {
 
     private static final String TOKEN = UUID.randomUUID().toString();
     private static final String USER_KEY = UUID.randomUUID().toString();
@@ -64,7 +64,7 @@ public class DefaultPermissionContextServiceUnitTest {
     @Mock
     private TenantProperties.ContextPermission contextPermission;
 
-    private DefaultPermissionContextService service;
+    private DefaultPermissionContextAggregator service;
 
     private final String permissionContextPathPattern = "api/permissions/context";
 
@@ -79,7 +79,7 @@ public class DefaultPermissionContextServiceUnitTest {
         ApplicationProperties applicationProperties = new ApplicationProperties();
         applicationProperties.setPermissionContextPathPattern(permissionContextPathPattern);
 
-        service = new DefaultPermissionContextService(applicationProperties, tenantPropertiesService, restTemplate);
+        service = new DefaultPermissionContextAggregator(applicationProperties, tenantPropertiesService, restTemplate);
 
         // Mock SecurityContextHolder
         SecurityContext securityContext = mock(SecurityContext.class);
@@ -94,7 +94,7 @@ public class DefaultPermissionContextServiceUnitTest {
     }
 
     @Test
-    public void getPermissionContext_ShouldReturnResultFromEachService() {
+    public void loadPermissionsFromServices_ShouldReturnResultFromEachService() {
         PermissionContextDto dtoA = buildDefaultContextDto(List.of("PERMISSION_A1", "PERMISSION_A2"));
         PermissionContextDto dtoB = buildDefaultContextDto(List.of("PERMISSION_B1", "PERMISSION_B2"));
 
@@ -112,7 +112,7 @@ public class DefaultPermissionContextServiceUnitTest {
             eq(PermissionContextDto.class)
         )).thenReturn(new ResponseEntity<>(dtoB, HttpStatus.OK));
 
-        Map<String, PermissionContextDto> result = service.getPermissionContext(USER_KEY);
+        Map<String, PermissionContextDto> result = service.loadPermissionsFromServices(USER_KEY);
 
         assertEquals(2, result.size());
         assertTrue(result.containsKey("serviceA"));
@@ -139,7 +139,7 @@ public class DefaultPermissionContextServiceUnitTest {
             eq(PermissionContextDto.class)
         )).thenThrow(new RuntimeException("Service unavailable"));
 
-        Map<String, PermissionContextDto> result = service.getPermissionContext(USER_KEY);
+        Map<String, PermissionContextDto> result = service.loadPermissionsFromServices(USER_KEY);
 
         assertNotNull(result);
         assertEquals(2, result.size());

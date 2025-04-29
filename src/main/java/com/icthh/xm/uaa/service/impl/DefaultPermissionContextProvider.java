@@ -1,7 +1,7 @@
 package com.icthh.xm.uaa.service.impl;
 
 import com.icthh.xm.uaa.service.PermissionContextProvider;
-import com.icthh.xm.uaa.service.PermissionContextService;
+import com.icthh.xm.uaa.service.PermissionContextAggregator;
 import com.icthh.xm.uaa.service.dto.PermissionContextDto;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,11 +21,11 @@ import java.util.Map;
 @ConditionalOnProperty(value = "application.permission-context-provider", havingValue = "defaultCtxImpl", matchIfMissing = true)
 public class DefaultPermissionContextProvider implements PermissionContextProvider {
 
-    private final PermissionContextService permissionContextService;
+    private final PermissionContextAggregator permissionContextAggregator;
 
     @Override
     public Map<String, PermissionContextDto> getPermissionContext(String userKey) {
         log.info("Default implementation of user permission context provider");
-        return permissionContextService.getPermissionContext(userKey);
+        return permissionContextAggregator.loadPermissionsFromServices(userKey);
     }
 }

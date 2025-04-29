@@ -3,7 +3,7 @@ package com.icthh.xm.uaa.service.impl;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.uaa.config.ApplicationProperties;
-import com.icthh.xm.uaa.service.PermissionContextService;
+import com.icthh.xm.uaa.service.PermissionContextAggregator;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.dto.PermissionContextDto;
 import lombok.extern.slf4j.Slf4j;
@@ -25,24 +25,24 @@ import static java.util.stream.Collectors.toMap;
 
 @Slf4j
 @Transactional
-@LepService(group = "service.permission")
-public class DefaultPermissionContextService implements PermissionContextService {
+@LepService(group = "service.permission.load")
+public class DefaultPermissionContextAggregator implements PermissionContextAggregator {
 
     private final String permissionContextPathPattern;
     private final TenantPropertiesService tenantPropertiesService;
     private final RestTemplate restTemplate;
 
-    public DefaultPermissionContextService(ApplicationProperties applicationProperties,
-                                           TenantPropertiesService tenantPropertiesService,
-                                           @Qualifier("loadBalancedRestTemplate") RestTemplate restTemplate) {
+    public DefaultPermissionContextAggregator(ApplicationProperties applicationProperties,
+                                              TenantPropertiesService tenantPropertiesService,
+                                              @Qualifier("loadBalancedRestTemplate") RestTemplate restTemplate) {
         this.permissionContextPathPattern = applicationProperties.getPermissionContextPathPattern();
         this.tenantPropertiesService = tenantPropertiesService;
         this.restTemplate = restTemplate;
     }
 
     @Override
-    @LogicExtensionPoint("Context")
-    public Map<String, PermissionContextDto> getPermissionContext(String userKey) {
+    @LogicExtensionPoint("LoadServicePermissions")
+    public Map<String, PermissionContextDto> loadPermissionsFromServices(String userKey) {
         List<String> services = tenantPropertiesService.getTenantProps().getContextPermission().getServices();
 
         Map<String, CompletableFuture<?>> contextFutures = services.stream()
