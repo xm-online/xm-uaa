@@ -1,8 +1,11 @@
 package com.icthh.xm.uaa.service.impl;
 
 import com.icthh.xm.commons.tenant.TenantContext;
+import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
+import com.icthh.xm.uaa.service.ContextPrivilegesRefreshableConfiguration;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.dto.PermissionContextDto;
 import org.junit.Before;
@@ -22,6 +25,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -56,17 +60,24 @@ public class DefaultPermissionContextAggregatorUnitTest {
     private RestTemplate restTemplate;
 
     @Mock
-    private TenantContext tenantContext;
-
-    @Mock
     private TenantProperties tenantProperties;
 
     @Mock
     private TenantProperties.ContextPermission contextPermission;
 
+    @Mock
+    private TenantContextHolder tenantContextHolder;
+
+    @Mock
+    private TenantContext tenantContext;
+
+    @Mock
+    private ContextPrivilegesRefreshableConfiguration contextPrivilegesService;
+
     private DefaultPermissionContextAggregator service;
 
     private final String permissionContextPathPattern = "api/permissions/context";
+    private static final String TENANT = "TENANT_KEY";
 
     @Before
     public void setUp() {
@@ -79,7 +90,8 @@ public class DefaultPermissionContextAggregatorUnitTest {
         ApplicationProperties applicationProperties = new ApplicationProperties();
         applicationProperties.setPermissionContextPathPattern(permissionContextPathPattern);
 
-        service = new DefaultPermissionContextAggregator(applicationProperties, tenantPropertiesService, restTemplate);
+        service = new DefaultPermissionContextAggregator(applicationProperties, tenantPropertiesService, restTemplate,
+            tenantContextHolder, contextPrivilegesService);
 
         // Mock SecurityContextHolder
         SecurityContext securityContext = mock(SecurityContext.class);
@@ -91,6 +103,17 @@ public class DefaultPermissionContextAggregatorUnitTest {
         when(authDetails.getTokenValue()).thenReturn(TOKEN);
 
         SecurityContextHolder.setContext(securityContext);
+
+        // Mock TenantContextHolder
+        when(tenantContextHolder.getContext()).thenReturn(tenantContext);
+        when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(TENANT)));
+
+        // Mock allowed privileges for each service
+        when(contextPrivilegesService.getPrivileges())
+            .thenReturn(Map.of(
+                "serviceA", List.of("PERMISSION_A1", "PERMISSION_A2"),
+                "serviceB", List.of("PERMISSION_B1", "PERMISSION_B2")
+            ));
     }
 
     @Test
@@ -147,6 +170,36 @@ public class DefaultPermissionContextAggregatorUnitTest {
         assertTrue(result.containsKey("serviceB"));
         assertEquals(new PermissionContextDto(), result.get("serviceA"));
         assertEquals(new PermissionContextDto(), result.get("serviceB"));
+
+        verify(restTemplate, times(2)).exchange(anyString(), eq(HttpMethod.GET), any(), eq(PermissionContextDto.class));
+    }
+
+    @Test
+    public void getContextFromService_shouldReturnFilterContextPrivileges() {
+        PermissionContextDto dtoA = buildDefaultContextDto(List.of("PERMISSION_A1", "PERMISSION_A3"));
+        PermissionContextDto dtoB = buildDefaultContextDto(List.of("PERMISSION_B3", "PERMISSION_B4"));
+
+        when(restTemplate.exchange(
+            eq("http://serviceA/" + permissionContextPathPattern + "?userKey=" + USER_KEY),
+            eq(HttpMethod.GET),
+            argThat(new TokenHeaderExists()),
+            eq(PermissionContextDto.class)
+        )).thenReturn(new ResponseEntity<>(dtoA, HttpStatus.OK));
+
+        when(restTemplate.exchange(
+            eq("http://serviceB/" + permissionContextPathPattern + "?userKey=" + USER_KEY),
+            eq(HttpMethod.GET),
+            argThat(new TokenHeaderExists()),
+            eq(PermissionContextDto.class)
+        )).thenReturn(new ResponseEntity<>(dtoB, HttpStatus.OK));
+
+        Map<String, PermissionContextDto> result = service.loadPermissionsFromServices(USER_KEY);
+
+        assertEquals(2, result.size());
+        assertTrue(result.containsKey("serviceA"));
+        assertTrue(result.containsKey("serviceB"));
+        assertEquals(List.of("PERMISSION_A1"), result.get("serviceA").getPermissions());
+        assertEquals(List.of(), result.get("serviceB").getPermissions());
 
         verify(restTemplate, times(2)).exchange(anyString(), eq(HttpMethod.GET), any(), eq(PermissionContextDto.class));
     }

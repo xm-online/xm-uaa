@@ -2,7 +2,10 @@ package com.icthh.xm.uaa.service.impl;
 
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
+import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.config.ApplicationProperties;
+import com.icthh.xm.uaa.service.ContextPrivilegesRefreshableConfiguration;
 import com.icthh.xm.uaa.service.PermissionContextAggregator;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.dto.PermissionContextDto;
@@ -21,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import static com.icthh.xm.commons.config.client.utils.RequestUtils.createAuthHeaders;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 @Slf4j
@@ -31,13 +35,19 @@ public class DefaultPermissionContextAggregator implements PermissionContextAggr
     private final String permissionContextPathPattern;
     private final TenantPropertiesService tenantPropertiesService;
     private final RestTemplate restTemplate;
+    private final TenantContextHolder tenantContextHolder;
+    private final ContextPrivilegesRefreshableConfiguration contextPrivilegesService;
 
     public DefaultPermissionContextAggregator(ApplicationProperties applicationProperties,
                                               TenantPropertiesService tenantPropertiesService,
-                                              @Qualifier("loadBalancedRestTemplateWithTimeout") RestTemplate restTemplate) {
+                                              @Qualifier("loadBalancedRestTemplateWithTimeout") RestTemplate restTemplate,
+                                              TenantContextHolder tenantContextHolder,
+                                              ContextPrivilegesRefreshableConfiguration contextPrivilegesService) {
         this.permissionContextPathPattern = applicationProperties.getPermissionContextPathPattern();
         this.tenantPropertiesService = tenantPropertiesService;
         this.restTemplate = restTemplate;
+        this.tenantContextHolder = tenantContextHolder;
+        this.contextPrivilegesService = contextPrivilegesService;
     }
 
     @Override
@@ -50,8 +60,14 @@ public class DefaultPermissionContextAggregator implements PermissionContextAggr
 
         CompletableFuture.allOf(contextFutures.values().toArray(CompletableFuture[]::new)).join();
 
+        String tenantName = TenantContextUtils.getRequiredTenantKeyValue(tenantContextHolder.getContext());
+        Map<String, List<String>> privileges = contextPrivilegesService.getPrivileges();
+
         return contextFutures.entrySet().stream()
-            .collect(toMap(Map.Entry::getKey, e -> (PermissionContextDto) e.getValue().join()));
+            .collect(toMap(
+                Map.Entry::getKey,
+                e -> filterPermissions((PermissionContextDto) e.getValue().join(), privileges, e.getKey(), tenantName)
+            ));
     }
 
     private CompletableFuture<PermissionContextDto> getContextFromService(String service, String userKey) {
@@ -69,5 +85,26 @@ public class DefaultPermissionContextAggregator implements PermissionContextAggr
                 return new PermissionContextDto();
             }
         });
+    }
+
+    private PermissionContextDto filterPermissions(PermissionContextDto dto,
+                                                   Map<String, List<String>> privileges,
+                                                   String service, String tenant) {
+        List<String> allowedPermissions = privileges.getOrDefault(service, List.of());
+
+        List<String> filteredPermissions = dto.getPermissions().stream()
+            .filter(p -> isAllowed(p, allowedPermissions, service, tenant))
+            .collect(toList());
+
+        dto.setPermissions(filteredPermissions);
+        return dto;
+    }
+
+    private boolean isAllowed(String permission, List<String> allowedPermissions, String service, String tenant) {
+        if (allowedPermissions.contains(permission)) {
+            return true;
+        }
+        log.debug("Context permission {} is not registered for service {} for tenant {}", permission, service, tenant);
+        return false;
     }
 }
