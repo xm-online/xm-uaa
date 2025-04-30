@@ -20,7 +20,7 @@ import java.util.Map;
 @ToString(callSuper = true)
 public class UserWithContext extends UserDTO {
 
-    private Map<String, Object> context = new HashMap<>();
+    private Map<String, PermissionContextDto> context = new HashMap<>();
 
     public UserWithContext(User user) {
         super(user);

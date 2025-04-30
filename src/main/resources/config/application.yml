@@ -178,6 +178,7 @@ application:
     audit-events-enabled: false
     scheduler-enabled: false
     permission-context-provider: defaultCtxImpl
+    permission-context-path-pattern: /api/permission/context
     tenant-properties-path-pattern: /config/tenants/{tenantName}/uaa/${application.tenant-properties-name}
     tenant-properties-name: uaa.yml
     tenant-login-properties-path-pattern: /config/tenants/{tenantName}/uaa/${application.tenant-login-properties-name}

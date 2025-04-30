@@ -1,14 +1,14 @@
 package com.icthh.xm.uaa.service.impl;
 
-import com.icthh.xm.commons.lep.LogicExtensionPoint;
-import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.uaa.service.PermissionContextProvider;
+import com.icthh.xm.uaa.service.PermissionContextAggregator;
+import com.icthh.xm.uaa.service.dto.PermissionContextDto;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -17,14 +17,15 @@ import java.util.Map;
 @Slf4j
 @Transactional
 @AllArgsConstructor
-@LepService(group = "service.user")
+@Service
 @ConditionalOnProperty(value = "application.permission-context-provider", havingValue = "defaultCtxImpl", matchIfMissing = true)
 public class DefaultPermissionContextProvider implements PermissionContextProvider {
 
-    @LogicExtensionPoint("PermissionContext")
+    private final PermissionContextAggregator permissionContextAggregator;
+
     @Override
-    public Map<String, Object> getPermissionContext(String userKey) {
+    public Map<String, PermissionContextDto> getPermissionContext(String userKey) {
         log.info("Default implementation of user permission context provider");
-        return new HashMap<>();
+        return permissionContextAggregator.loadPermissionsFromServices(userKey);
     }
 }

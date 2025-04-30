@@ -1,5 +1,7 @@
 package com.icthh.xm.uaa.service;
 
+import com.icthh.xm.uaa.service.dto.PermissionContextDto;
+
 import java.util.Map;
 
 /**
@@ -12,6 +14,6 @@ public interface PermissionContextProvider {
      * @param userKey   userKey
      * @return          permission context
      */
-    Map<String, Object> getPermissionContext(String userKey);
+    Map<String, PermissionContextDto> getPermissionContext(String userKey);
 
 }
