@@ -3,18 +3,13 @@ package com.icthh.xm.uaa.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
-import com.icthh.xm.commons.tenant.TenantContextHolder;
-import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLoginType;
-import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.service.AccountMailService;
 import com.icthh.xm.uaa.service.AccountService;
 import com.icthh.xm.uaa.service.CaptchaService;
-import com.icthh.xm.uaa.service.PermissionContextProvider;
-import com.icthh.xm.uaa.service.TenantPermissionService;
 import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.account.password.reset.PasswordResetRequest;
@@ -69,16 +64,11 @@ public class AccountResource {
     private static final String INCORRECT_LOGIN_TYPE = "Incorrect login type";
     private static final String CHECK_ERROR_MESSAGE = "Incorrect password";
 
-    private final UserRepository userRepository;
     private final UserLoginService userLoginService;
     private final UserService userService;
     private final AccountService accountService;
     private final CaptchaService captchaService;
-    private final XmRequestContextHolder xmRequestContextHolder;
-    private final TenantContextHolder tenantContextHolder;
-    private final TenantPermissionService tenantPermissionService;
     private final AccountMailService accountMailService;
-    private final PermissionContextProvider permissionContextProvider;
 
     /**
      * POST /register : register the user.
@@ -195,14 +185,7 @@ public class AccountResource {
     @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'ACCOUNT.GET_LIST.ITEM')")
     @PrivilegeDescription("Privilege to get the current user")
     public ResponseEntity<UserWithContext> getAccount() {
-        String requiredUserKey = userService.getRequiredUserKey();
-        return ResponseUtil.wrapOrNotFound(userService.findOneWithLoginsByUserKey(requiredUserKey)
-                                               .map(user -> {
-                                                   UserWithContext userDto = new UserWithContext(user);
-                                                   userDto.getPermissions().addAll(tenantPermissionService.getEnabledPermissionByRole(user.getAuthorities()));
-                                                   userDto.setContext(permissionContextProvider.getPermissionContext(requiredUserKey));
-                                                   return userDto;
-                                               }));
+        return ResponseUtil.wrapOrNotFound(userService.getUserAccount());
     }
 
     @PostMapping(path = "/account/reset_activation_key",
