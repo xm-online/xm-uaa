@@ -244,23 +244,19 @@ public class AccountResourceIntTest {
             xmAuthenticationContextHolder, tenantPropertiesService, userService, userLoginService, profileEventProducer,
             otpSenderFactory);
 
-        AccountResource accountResource = new AccountResource(userRepository,
+        AccountResource accountResource = new AccountResource(
             userLoginService,
             userService,
             accountService,
             captchaService,
-            xmRequestContextHolder,
-            tenantContextHolder, tenantPermissionService, accountMailService,
-            contextProvider);
+            accountMailService);
 
-        AccountResource accountUserMockResource = new AccountResource(userRepository,
+        AccountResource accountUserMockResource = new AccountResource(
             userLoginService,
             mockUserService,
             accountService,
             captchaService,
-            xmRequestContextHolder,
-            tenantContextHolder, tenantPermissionService, accountMailService,
-            contextProvider);
+            accountMailService);
 
         this.restMvc = MockMvcBuilders.standaloneSetup(accountResource)
             .setMessageConverters(httpMessageConverters).setControllerAdvice(exceptionTranslator)

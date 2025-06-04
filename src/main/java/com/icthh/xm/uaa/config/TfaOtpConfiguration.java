@@ -1,8 +1,6 @@
 package com.icthh.xm.uaa.config;
 
-import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.spring.config.TenantContextConfiguration;
-import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.security.oauth2.otp.SmsOtpSender;
 import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpAuthenticationEmbedded;
 import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpAuthenticationOtpMs;
@@ -16,10 +14,7 @@ import com.icthh.xm.uaa.security.oauth2.otp.OtpSenderFactory;
 import com.icthh.xm.uaa.security.oauth2.otp.OtpStore;
 import com.icthh.xm.uaa.security.oauth2.otp.PseudoTimeOtpGenerator;
 import com.icthh.xm.uaa.security.oauth2.otp.UserLoginOtpSendStrategy;
-import com.icthh.xm.uaa.security.oauth2.tfa.TfaOtpAuthenticationProvider;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
-import com.icthh.xm.uaa.service.UserService;
-import com.icthh.xm.uaa.service.mail.MailService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -37,25 +32,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 })
 public class TfaOtpConfiguration {
 
-    private final TenantContextHolder tenantContextHolder;
-    private final XmRequestContextHolder xmRequestContextHolder;
     private final TenantPropertiesService tenantPropertiesService;
-    private final MailService mailService;
-    private final UserService userService;
     private final SmsOtpSender smsOtpSender;
     private final EmailOtpSender emailOtpSender;
 
-    public TfaOtpConfiguration(TenantContextHolder tenantContextHolder,
-                               XmRequestContextHolder xmRequestContextHolder,
-                               TenantPropertiesService tenantPropertiesService,
-                               MailService mailService,
-                               UserService userService,
+    public TfaOtpConfiguration(TenantPropertiesService tenantPropertiesService,
                                SmsOtpSender smsOtpSender, EmailOtpSender emailOtpSender) {
-        this.tenantContextHolder = tenantContextHolder;
-        this.xmRequestContextHolder = xmRequestContextHolder;
         this.tenantPropertiesService = tenantPropertiesService;
-        this.mailService = mailService;
-        this.userService = userService;
         this.smsOtpSender = smsOtpSender;
         this.emailOtpSender = emailOtpSender;
     }
