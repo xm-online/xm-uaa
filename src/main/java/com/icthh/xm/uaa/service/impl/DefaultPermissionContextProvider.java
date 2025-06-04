@@ -18,7 +18,7 @@ import java.util.Map;
 @Transactional
 @AllArgsConstructor
 @Service
-//@ConditionalOnProperty(value = "application.permission-context-provider", havingValue = "defaultCtxImpl", matchIfMissing = true)
+@ConditionalOnProperty(value = "application.permission-context-provider", havingValue = "defaultCtxImpl", matchIfMissing = true)
 public class DefaultPermissionContextProvider implements PermissionContextProvider {
 
     private final PermissionContextAggregator permissionContextAggregator;
