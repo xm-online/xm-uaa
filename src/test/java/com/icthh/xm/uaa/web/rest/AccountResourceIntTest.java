@@ -1431,11 +1431,4 @@ public class AccountResourceIntTest {
 
         return communication;
     }
-
-    private AccPermissionDTO buildAccPermissionDTO(String msName, String privilegeKey) {
-        Permission permission = new Permission();
-        permission.setMsName(msName);
-        permission.setPrivilegeKey(privilegeKey);
-        return new AccPermissionDTO(permission);
-    }
 }
