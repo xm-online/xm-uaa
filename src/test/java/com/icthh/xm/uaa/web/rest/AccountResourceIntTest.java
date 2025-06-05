@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.i18n.error.web.ExceptionTranslator;
 import com.icthh.xm.commons.permission.constants.RoleConstant;
+import com.icthh.xm.commons.permission.domain.Permission;
 import com.icthh.xm.commons.security.XmAuthenticationConstants;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
@@ -36,8 +37,10 @@ import com.icthh.xm.uaa.service.TenantRoleService;
 import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.account.password.reset.PasswordResetHandlerFactory;
+import com.icthh.xm.uaa.service.dto.AccPermissionDTO;
 import com.icthh.xm.uaa.service.dto.PermissionContextDto;
 import com.icthh.xm.uaa.service.dto.UserDTO;
+import com.icthh.xm.uaa.service.dto.UserWithContext;
 import com.icthh.xm.uaa.service.impl.DefaultPermissionContextProvider;
 import com.icthh.xm.uaa.service.mail.MailService;
 import com.icthh.xm.uaa.service.util.RandomUtil;
@@ -46,7 +49,9 @@ import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.KeyAndPasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
 import com.icthh.xm.uaa.web.rest.vm.ResetPasswordVM;
+
 import java.util.List;
+
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -91,7 +96,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -244,23 +248,19 @@ public class AccountResourceIntTest {
             xmAuthenticationContextHolder, tenantPropertiesService, userService, userLoginService, profileEventProducer,
             otpSenderFactory);
 
-        AccountResource accountResource = new AccountResource(userRepository,
+        AccountResource accountResource = new AccountResource(
             userLoginService,
             userService,
             accountService,
             captchaService,
-            xmRequestContextHolder,
-            tenantContextHolder, tenantPermissionService, accountMailService,
-            contextProvider);
+            accountMailService);
 
-        AccountResource accountUserMockResource = new AccountResource(userRepository,
+        AccountResource accountUserMockResource = new AccountResource(
             userLoginService,
             mockUserService,
             accountService,
             captchaService,
-            xmRequestContextHolder,
-            tenantContextHolder, tenantPermissionService, accountMailService,
-            contextProvider);
+            accountMailService);
 
         this.restMvc = MockMvcBuilders.standaloneSetup(accountResource)
             .setMessageConverters(httpMessageConverters).setControllerAdvice(exceptionTranslator)
@@ -299,7 +299,7 @@ public class AccountResourceIntTest {
     @Test
     public void testNonAuthenticatedUser() throws Exception {
         restUserMockMvc.perform(get("/api/authenticate")
-            .accept(MediaType.APPLICATION_JSON))
+                .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isUnauthorized())
             .andExpect(content().string(""));
     }
@@ -320,11 +320,11 @@ public class AccountResourceIntTest {
         when(mockUserService.getRequiredUserKey()).thenReturn(userKey);
 
         restUserMockMvc.perform(get("/api/authenticate")
-            .with(request -> {
-                request.setRemoteUser("test");
-                return request;
-            })
-            .accept(MediaType.APPLICATION_JSON))
+                .with(request -> {
+                    request.setRemoteUser("test");
+                    return request;
+                })
+                .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(content().string(userKey));
     }
@@ -336,22 +336,21 @@ public class AccountResourceIntTest {
             userLogin.setLogin("email");
             userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
 
-            User user = new User();
+            UserWithContext user = new UserWithContext();
             user.setUserKey("test");
             user.setFirstName("john");
             user.setLastName("doe");
             user.setImageUrl("http://placehold.it/50x50");
             user.setLangKey("en");
             user.setRoleKey(RoleConstant.SUPER_ADMIN);
-            user.getLogins().add(userLogin);
+            user.setLogins(List.of(userLogin));
+            user.setContext(new HashMap<>());
 
-            when(mockUserService.getRequiredUserKey()).thenReturn(user.getUserKey());
-            when(mockUserService.findOneWithLoginsByUserKey(anyString())).thenReturn(Optional.of(user));
-            when(contextProvider.getPermissionContext(eq(user.getUserKey()))).thenReturn(new HashMap<>());
+            when(mockUserService.getUserAccount()).thenReturn(Optional.of(user));
 
             try {
                 restUserMockMvc.perform(get("/api/account")
-                    .accept(MediaType.APPLICATION_JSON))
+                        .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
                     .andExpect(jsonPath("$.firstName").value("john"))
@@ -374,20 +373,23 @@ public class AccountResourceIntTest {
             userLogin.setLogin("email");
             userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
 
-            User user = new User();
+            UserWithContext user = new UserWithContext();
             user.setUserKey("test");
             user.setFirstName("john");
             user.setLastName("doe");
             user.setImageUrl("http://placehold.it/50x50");
             user.setLangKey("en");
             user.setRoleKey("ROLE_ADMIN");
-            user.getLogins().add(userLogin);
-            when(mockUserService.getRequiredUserKey()).thenReturn(user.getUserKey());
-            when(mockUserService.findOneWithLoginsByUserKey(anyString())).thenReturn(Optional.of(user));
-            when(contextProvider.getPermissionContext(eq(user.getUserKey()))).thenReturn(new HashMap<>());
+            user.setLogins(List.of(userLogin));
+            user.setContext(new HashMap<>());
 
             tenantPermissionService.onRefresh("/config/tenants/XM/permissions.yml",
                 readConfigFile("/config/tenants/XM/permissions_multiple_apps.yml"));
+
+            List<AccPermissionDTO> permissionDTOS = tenantPermissionService.getEnabledPermissionByRole(user.getAuthorities());
+            user.setPermissions(permissionDTOS);
+
+            when(mockUserService.getUserAccount()).thenReturn(Optional.of(user));
 
             try {
                 restUserMockMvc.perform(get("/api/account")
@@ -421,14 +423,14 @@ public class AccountResourceIntTest {
             userLogin.setLogin("email");
             userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
 
-            User user = new User();
+            UserWithContext user = new UserWithContext();
             user.setUserKey("test");
             user.setFirstName("john");
             user.setLastName("doe");
             user.setImageUrl("http://placehold.it/50x50");
             user.setLangKey("en");
             user.setRoleKey(RoleConstant.SUPER_ADMIN);
-            user.getLogins().add(userLogin);
+            user.setLogins(List.of(userLogin));
 
             PermissionContextDto contextDto = new PermissionContextDto();
             contextDto.setCtx(Map.of(
@@ -436,10 +438,9 @@ public class AccountResourceIntTest {
                 "value2", true,
                 "value3", "aaaaaaa"
             ));
+            user.setContext(Map.of("service", contextDto));
 
-            when(mockUserService.getRequiredUserKey()).thenReturn(user.getUserKey());
-            when(mockUserService.findOneWithLoginsByUserKey(anyString())).thenReturn(Optional.of(user));
-            when(contextProvider.getPermissionContext(eq(user.getUserKey()))).thenReturn(Map.of("service", contextDto));
+            when(mockUserService.getUserAccount()).thenReturn(Optional.of(user));
 
             try {
                 restUserMockMvc.perform(get("/api/account")
@@ -1019,9 +1020,9 @@ public class AccountResourceIntTest {
 
             try {
                 restMvc.perform(
-                    post("/api/account")
-                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
-                        .content(TestUtil.convertObjectToJsonBytes(userDTO)))
+                        post("/api/account")
+                            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                            .content(TestUtil.convertObjectToJsonBytes(userDTO)))
                     .andExpect(status().isBadRequest());
             } catch (Exception e) {
                 throw new IllegalStateException(e);
@@ -1182,7 +1183,7 @@ public class AccountResourceIntTest {
         userRepository.saveAndFlush(user);
 
         restMvc.perform(post("/api/account/reset_password/init")
-            .content("password-reset@example.com"))
+                .content("password-reset@example.com"))
             .andExpect(status().isOk());
     }
 
@@ -1258,8 +1259,8 @@ public class AccountResourceIntTest {
     @Test
     public void testRequestPasswordResetWrongEmail() throws Exception {
         restMvc.perform(
-            post("/api/account/reset_password/init")
-                .content("password-reset-wrong-email@example.com"))
+                post("/api/account/reset_password/init")
+                    .content("password-reset-wrong-email@example.com"))
             .andExpect(status().isOk());
     }
 
@@ -1288,9 +1289,9 @@ public class AccountResourceIntTest {
         keyAndPassword.setNewPassword("new password");
 
         restMvc.perform(
-            post("/api/account/reset_password/finish")
-                .contentType(TestUtil.APPLICATION_JSON_UTF8)
-                .content(TestUtil.convertObjectToJsonBytes(keyAndPassword)))
+                post("/api/account/reset_password/finish")
+                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                    .content(TestUtil.convertObjectToJsonBytes(keyAndPassword)))
             .andExpect(status().isOk());
 
         User updatedUser = userRepository.findOneByUserKey(DEF_USER_KEY).orElse(null);
@@ -1317,9 +1318,9 @@ public class AccountResourceIntTest {
         keyAndPassword.setNewPassword("foo");
 
         restMvc.perform(
-            post("/api/account/reset_password/finish")
-                .contentType(TestUtil.APPLICATION_JSON_UTF8)
-                .content(TestUtil.convertObjectToJsonBytes(keyAndPassword)))
+                post("/api/account/reset_password/finish")
+                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                    .content(TestUtil.convertObjectToJsonBytes(keyAndPassword)))
             .andExpect(status().isBadRequest());
 
         User updatedUser = userRepository.findOneByResetKey(user.getResetKey()).orElse(null);
@@ -1337,9 +1338,9 @@ public class AccountResourceIntTest {
         keyAndPassword.setNewPassword("new password");
 
         restMvc.perform(
-            post("/api/account/reset_password/finish")
-                .contentType(TestUtil.APPLICATION_JSON_UTF8)
-                .content(TestUtil.convertObjectToJsonBytes(keyAndPassword)))
+                post("/api/account/reset_password/finish")
+                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                    .content(TestUtil.convertObjectToJsonBytes(keyAndPassword)))
             .andExpect(status().isBadRequest());
     }
 

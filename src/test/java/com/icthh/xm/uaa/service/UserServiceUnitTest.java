@@ -10,7 +10,10 @@ import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.security.TokenConstraintsService;
+import com.icthh.xm.uaa.service.dto.AccPermissionDTO;
+import com.icthh.xm.uaa.service.dto.PermissionContextDto;
 import com.icthh.xm.uaa.service.dto.UserDTO;
+import com.icthh.xm.uaa.service.dto.UserWithContext;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -20,6 +23,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -60,6 +64,10 @@ public class UserServiceUnitTest {
     private TokenConstraintsService tokenConstraintsService;
     @Mock
     private ApplicationProperties applicationProperties;
+    @Mock
+    private TenantPermissionService tenantPermissionService;
+    @Mock
+    private PermissionContextProvider permissionContextProvider;
 
     @Before
     public void setUp() throws Exception {
@@ -385,6 +393,33 @@ public class UserServiceUnitTest {
         verify(tenantPropertiesService).getTenantProps();
         verify(userRepository).findOneByUserKey(USER_KEY);
         verify(applicationProperties).isLastLoginDateEnabled();
+    }
+
+    @Test
+    public void shouldReturnUserAccountWithContext(){
+        XmAuthenticationContext mockContext = mock(XmAuthenticationContext.class);
+        when(mockContext.getRequiredUserKey()).thenReturn(USER_KEY);
+
+        List<String> authorities = List.of("ROLE_USER");
+        List<AccPermissionDTO> accPermissionDTOS = List.of(new AccPermissionDTO());
+
+        User mockUser = mock(User.class);
+        when(mockUser.getAuthorities()).thenReturn(authorities);
+
+        PermissionContextDto mockedContextDto = mock(PermissionContextDto.class);
+        Map<String, PermissionContextDto> permissionContextDtoMap = Map.of("service", mockedContextDto);
+
+        given(xmAuthenticationContextHolder.getContext()).willReturn(mockContext);
+        given(userRepository.findOneWithLoginsByUserKey(USER_KEY)).willReturn(Optional.of(mockUser));
+        given(tenantPermissionService.getEnabledPermissionByRole(authorities)).willReturn(accPermissionDTOS);
+        given(permissionContextProvider.getPermissionContext(USER_KEY)).willReturn(permissionContextDtoMap);
+
+        Optional<UserWithContext> result = service.getUserAccount();
+
+        assertThat(result.isPresent()).isTrue();
+        assertEquals(result.get().getAuthorities(), authorities);
+        assertEquals(result.get().getPermissions(), accPermissionDTOS);
+        assertEquals(result.get().getContext(), permissionContextDtoMap);
     }
 
     private User createUser() {

@@ -24,6 +24,7 @@ import com.icthh.xm.uaa.service.account.password.reset.PasswordResetHandlerFacto
 import com.icthh.xm.uaa.service.account.password.reset.PasswordResetRequest;
 import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
+import com.icthh.xm.uaa.service.dto.UserWithContext;
 import com.icthh.xm.uaa.service.util.RandomUtil;
 import com.icthh.xm.uaa.util.OtpUtils;
 import java.util.stream.Collectors;
@@ -77,6 +78,8 @@ public class UserService {
     private final TokenConstraintsService tokenConstraints;
     private final PasswordResetHandlerFactory passwordResetHandlerFactory;
     private final ApplicationProperties applicationProperties;
+    private final TenantPermissionService tenantPermissionService;
+    private final PermissionContextProvider permissionContextProvider;
     @Setter(onMethod = @__(@Autowired))
     private UserService self;
 
@@ -312,6 +315,21 @@ public class UserService {
         } else {
             return userPermittedRepository.findAll(pageable, User.class, privilegeKey).map(UserDTO::new);
         }
+    }
+
+    /**
+     * Get authenticated user account with actual permissions by authorities & permission authentication context
+     * @return  UserDTO with auth context
+     */
+    public Optional<UserWithContext> getUserAccount() {
+        String requiredUserKey = getRequiredUserKey();
+        return findOneWithLoginsByUserKey(requiredUserKey)
+            .map(user -> {
+                UserWithContext userDto = new UserWithContext(user);
+                userDto.getPermissions().addAll(tenantPermissionService.getEnabledPermissionByRole(user.getAuthorities()));
+                userDto.setContext(permissionContextProvider.getPermissionContext(requiredUserKey));
+                return userDto;
+            });
     }
 
     /**

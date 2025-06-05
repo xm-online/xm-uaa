@@ -247,9 +247,4 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
         provider.setPasswordEncoder(passwordEncoder);
         return provider;
     }
-
-    @Bean(name = "allPermissionMappingService")
-    public PermissionMappingService allPermissionMappingService() {
-        return new PermissionMappingService(p -> true);
-    }
 }
