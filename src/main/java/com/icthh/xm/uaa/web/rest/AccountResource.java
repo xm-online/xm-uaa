@@ -182,7 +182,7 @@ public class AccountResource {
      */
     @GetMapping("/account")
     @Timed
-//    @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'ACCOUNT.GET_LIST.ITEM')")
+    @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'ACCOUNT.GET_LIST.ITEM')")
     @PrivilegeDescription("Privilege to get the current user")
     public ResponseEntity<UserWithContext> getAccount() {
         return ResponseUtil.wrapOrNotFound(userService.getUserAccount());
