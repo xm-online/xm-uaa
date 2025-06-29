@@ -10,6 +10,7 @@ import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.repository.kafka.ProfileEventProducer;
+import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserMailService;
 import com.icthh.xm.uaa.service.UserService;
@@ -17,6 +18,8 @@ import com.icthh.xm.uaa.service.dto.TfaEnableRequest;
 import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.dto.UserPublicDTO;
+import com.icthh.xm.uaa.service.otp.OtpService;
+import com.icthh.xm.uaa.service.otp.OtpServiceClient;
 import com.icthh.xm.uaa.service.query.UserQueryService;
 import com.icthh.xm.uaa.service.query.filter.SoftUserFilterQuery;
 import com.icthh.xm.uaa.service.query.filter.StrictUserFilterQuery;
@@ -95,6 +98,10 @@ public class UserResource {
 
     private final UserQueryService userQueryService;
 
+    private final TenantPropertiesService tenantPropertiesService;
+
+    private final OtpServiceClient otpServiceClient;
+
 
     /**
      * POST /users : Creates a new user.
@@ -157,10 +164,30 @@ public class UserResource {
     @PreAuthorize("hasPermission(null, 'USER.BLOCK')")
     @PrivilegeDescription("Privilege to blocks user")
     public ResponseEntity<UserDTO> blockUser(@NotEmpty @PathVariable String userKey) {
-        Optional<UserDTO> updatedUser = userService.blockUserAccount(userKey);
-        updatedUser.ifPresent(this::produceUpdateEvent);
-        return ResponseUtil.wrapOrNotFound(updatedUser,
-            HeaderUtil.createAlert("userManagement.blocked", userKey));
+        log.info("Start !!!!!!!!!!");
+
+        String url = tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpGenerateUrl();
+
+        String tfaOtpTypeKey = tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpTypeKey();
+        log.info("tfaOtpTypeKey: {}", tfaOtpTypeKey);
+        String receiverTypeKey = tenantPropertiesService.getTenantProps().getSecurity().getTfaOtpReceiverTypeKey();
+        log.info("receiverTypeKey: {}", receiverTypeKey);
+
+        OtpService.OneTimePasswordDto oneTimePasswordDto = new OtpService.OneTimePasswordDto();
+        oneTimePasswordDto.setReceiver(userKey);
+        oneTimePasswordDto.setReceiverTypeKey(receiverTypeKey);
+        oneTimePasswordDto.setTypeKey(tfaOtpTypeKey);
+        oneTimePasswordDto.setLangKey("uk");
+
+        Long otp = otpServiceClient.createOtp(url, oneTimePasswordDto);
+
+        log.info("OTP - {}", otp);
+
+        return ResponseEntity.ok().build();
+//        Optional<UserDTO> updatedUser = userService.blockUserAccount(userKey);
+//        updatedUser.ifPresent(this::produceUpdateEvent);
+//        return ResponseUtil.wrapOrNotFound(updatedUser,
+//            HeaderUtil.createAlert("userManagement.blocked", userKey));
     }
 
     /**
