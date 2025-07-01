@@ -84,14 +84,15 @@ public class RestTemplateConfiguration {
 
         ClientCredentialsAccessTokenProvider accessTokenProvider = new ClientCredentialsAccessTokenProvider();
         accessTokenProvider.setAuthenticationHandler(uaaClientAuthenticationHandler);
-        LoadBalancerInterceptor loadBalancerInterceptor = new LoadBalancerInterceptor(loadBalancerClient);
-        accessTokenProvider.setInterceptors(singletonList(loadBalancerInterceptor));
-        oAuth2RestTemplate.setAccessTokenProvider(accessTokenProvider);
 
         if (ribbonTemplateEnabled) {
             log.info("oAuth2RestTemplate: using Ribbon load balancer");
+            LoadBalancerInterceptor loadBalancerInterceptor = new LoadBalancerInterceptor(loadBalancerClient);
+            accessTokenProvider.setInterceptors(singletonList(loadBalancerInterceptor));
             customizerProvider.ifAvailable(customizer -> customizer.customize(oAuth2RestTemplate));
         }
+
+        oAuth2RestTemplate.setAccessTokenProvider(accessTokenProvider);
 
         return oAuth2RestTemplate;
     }
