@@ -11,6 +11,7 @@ import com.icthh.xm.uaa.service.AccountMailService;
 import com.icthh.xm.uaa.service.AccountService;
 import com.icthh.xm.uaa.service.CaptchaService;
 import com.icthh.xm.uaa.service.UserLoginService;
+import com.icthh.xm.uaa.service.UserRegistrationComponent;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.account.password.reset.PasswordResetRequest;
 import com.icthh.xm.uaa.service.dto.TfaEnableRequest;
@@ -79,13 +80,13 @@ public class AccountResource {
      */
     @PostMapping(path = "/register", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_PLAIN_VALUE})
     @Timed
-    @PreAuthorize("hasPermission({'user': #user, 'request': #request}, 'ACCOUNT.REGISTER')")
-    @PrivilegeDescription("Privilege to register the user")
+//    @PreAuthorize("hasPermission({'user': #user, 'request': #request}, 'ACCOUNT.REGISTER')")
+//    @PrivilegeDescription("Privilege to register the user")
     public ResponseEntity<Void> registerAccount(@Valid @RequestBody ManagedUserVM user, HttpServletRequest request) {
-        if (user.getEmail() == null) {
-            throw new BusinessException("Email can't be empty");
-        }
-        captchaService.validateCaptchaIfNecessary(request.getRemoteAddr(), user.getCaptcha());
+//        if (user.getEmail() == null) {
+//            throw new BusinessException("Email can't be empty");
+//        }
+//        captchaService.validateCaptchaIfNecessary(request.getRemoteAddr(), user.getCaptcha());
         User newUser = accountService.registerUser(user, request.getRemoteAddr());
         accountMailService.sendMailOnRegistration(newUser);
         return new ResponseEntity<>(HttpStatus.CREATED);
