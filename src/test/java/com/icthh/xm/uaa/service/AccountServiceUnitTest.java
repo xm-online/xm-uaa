@@ -96,6 +96,9 @@ public class AccountServiceUnitTest {
     private OtpSenderFactory otpSenderFactory;
 
     @Mock
+    private UserRegistrationComponent userRegistrationComponent;
+
+    @Mock
     private SmsOtpSender smsOtpSender;
 
     @Mock
@@ -126,9 +129,9 @@ public class AccountServiceUnitTest {
         when(otpSenderFactory.getSender(OtpChannelType.EMAIL)).thenReturn(Optional.of(emailOtpSender));
         when(otpSenderFactory.getSender(OtpChannelType.SMS)).thenReturn(Optional.of(smsOtpSender));
 
-        accountService = new AccountService(userRepository, passwordEncoder, registrationLogRepository,
-            authContextHolder, tenantPropertiesService, userService, userLoginService, profileEventProducer,
-            otpSenderFactory);
+        accountService = new AccountService(userRepository, passwordEncoder,
+                authContextHolder, tenantPropertiesService, userService, userLoginService, profileEventProducer,
+                otpSenderFactory, userRegistrationComponent);
     }
 
     @Test
