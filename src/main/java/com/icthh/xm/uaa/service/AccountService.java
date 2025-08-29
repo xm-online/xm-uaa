@@ -27,9 +27,12 @@ import com.icthh.xm.uaa.web.rest.vm.AuthorizeUserVm;
 import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.jboss.aerogear.security.otp.Totp;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,26 +48,59 @@ import static com.icthh.xm.uaa.config.Constants.OTP_SENDER_NOT_FOUND_ERROR_TEXT;
 
 @LepService(group = "service.account")
 @Transactional
-@AllArgsConstructor
 @Slf4j
+@RequiredArgsConstructor
 public class AccountService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RegistrationLogRepository registrationLogRepository;
     private final XmAuthenticationContextHolder authContextHolder;
     private final TenantPropertiesService tenantPropertiesService;
     private final UserService userService;
     private final UserLoginService userLoginService;
     private final ProfileEventProducer profileEventProducer;
     private final OtpSenderFactory otpSenderFactory;
-    private final UserRegistrationComponent userRegistrationComponent;
+    @Setter(onMethod = @__(@Autowired))
+    public AccountService self;
 
+    /**
+     * Register new user.
+     *
+     * @param user user dto
+     * @return new user
+     */
+    @Transactional
+    @LogicExtensionPoint("Register")
+    public User register(UserDTO user, String ipAddress) {
+        UserPassDto userPassDto = getOrGeneratePassword(user);
+
+        User newUser = new User();
+        newUser.setUserKey(UUID.randomUUID().toString());
+        newUser.setPassword(userPassDto.getEncryptedPassword());
+        newUser.setPasswordSetByUser(userPassDto.getSetByUser());
+        newUser.setFirstName(user.getFirstName());
+        newUser.setLastName(user.getLastName());
+        newUser.setImageUrl(user.getImageUrl());
+        newUser.setLangKey(user.getLangKey());
+        newUser.setActivationKey(RandomUtil.generateActivationKey());
+        newUser.setRoleKey(tenantPropertiesService.getTenantProps().getSecurity().getDefaultUserRole());
+        newUser.setLogins(user.getLogins());
+        newUser.getLogins().forEach(userLogin -> userLogin.setUser(newUser));
+        newUser.setData(user.getData());
+
+        User resultUser = userRepository.save(newUser);
+
+        registrationLogRepository.save(new RegistrationLog(ipAddress));
+
+        return resultUser;
+    }
 
     public User registerUser(UserDTO user, String remoteAddress) {
         userLoginService.normalizeLogins(user.getLogins());
         userLoginService.verifyLoginsNotExist(user.getLogins());
 
-        User newUser = userRegistrationComponent.register(user, remoteAddress);
+        User newUser = self.register(user, remoteAddress);
         produceEvent(new UserDTO(newUser), Constants.CREATE_PROFILE_EVENT_TYPE);
         return newUser;
     }
@@ -224,6 +260,15 @@ public class AccountService {
     public void produceEvent(UserDTO userDto, String eventType) {
         String content = profileEventProducer.createEventJson(userDto, eventType);
         profileEventProducer.send(content);
+    }
+
+    private UserPassDto getOrGeneratePassword(UserDTO user) {
+        if (user instanceof ManagedUserVM) {
+            ManagedUserVM managedUser = (ManagedUserVM) user;
+            userService.validatePassword(managedUser.getPassword());
+            return new UserPassDto(passwordEncoder.encode(managedUser.getPassword()), true);
+        }
+        return new UserPassDto(passwordEncoder.encode(UUID.randomUUID().toString()), false);
     }
 
     private UserDTO buildUserDtoWithLogin(AuthorizeUserVm authorizeUserVm) {

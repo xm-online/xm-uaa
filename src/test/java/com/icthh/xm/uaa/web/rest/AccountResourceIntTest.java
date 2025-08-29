@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.i18n.error.web.ExceptionTranslator;
 import com.icthh.xm.commons.permission.constants.RoleConstant;
-import com.icthh.xm.commons.permission.domain.Permission;
 import com.icthh.xm.commons.security.XmAuthenticationConstants;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
@@ -35,7 +34,6 @@ import com.icthh.xm.uaa.service.TenantPermissionService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.TenantRoleService;
 import com.icthh.xm.uaa.service.UserLoginService;
-import com.icthh.xm.uaa.service.UserRegistrationComponent;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.account.password.reset.PasswordResetHandlerFactory;
 import com.icthh.xm.uaa.service.dto.AccPermissionDTO;
@@ -182,9 +180,6 @@ public class AccountResourceIntTest {
     @Mock
     private SmsOtpSender smsOtpSender;
 
-    @Mock
-    private UserRegistrationComponent userRegistrationComponent;
-
     private MockMvc restUserMockMvc;
 
     private MockMvc restMvc;
@@ -250,7 +245,7 @@ public class AccountResourceIntTest {
 
         AccountService accountService = new AccountService(userRepository, passwordEncoder,
             xmAuthenticationContextHolder, tenantPropertiesService, userService, userLoginService, profileEventProducer,
-            otpSenderFactory, userRegistrationComponent);
+            otpSenderFactory);
 
         AccountResource accountResource = new AccountResource(
             userLoginService,

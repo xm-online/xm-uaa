@@ -11,7 +11,6 @@ import com.icthh.xm.uaa.service.AccountMailService;
 import com.icthh.xm.uaa.service.AccountService;
 import com.icthh.xm.uaa.service.CaptchaService;
 import com.icthh.xm.uaa.service.UserLoginService;
-import com.icthh.xm.uaa.service.UserRegistrationComponent;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.account.password.reset.PasswordResetRequest;
 import com.icthh.xm.uaa.service.dto.TfaEnableRequest;
