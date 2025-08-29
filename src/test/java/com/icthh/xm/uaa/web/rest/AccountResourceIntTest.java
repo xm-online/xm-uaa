@@ -248,6 +248,8 @@ public class AccountResourceIntTest {
             xmAuthenticationContextHolder, tenantPropertiesService, userService, userLoginService, profileEventProducer,
             otpSenderFactory);
 
+        accountService.setSelf(accountService);
+
         AccountResource accountResource = new AccountResource(
             userLoginService,
             userService,
