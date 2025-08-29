@@ -100,6 +100,7 @@ public class AccountService {
         return newUser;
     }
 
+
     /**
      * Authorize new user and register if no password provided.
      *
