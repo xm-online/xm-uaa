@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.i18n.error.web.ExceptionTranslator;
 import com.icthh.xm.commons.permission.constants.RoleConstant;
+import com.icthh.xm.commons.permission.domain.Permission;
 import com.icthh.xm.commons.security.XmAuthenticationConstants;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
@@ -243,7 +244,7 @@ public class AccountResourceIntTest {
         CaptchaService captchaService = new CaptchaService(applicationProperties, registrationLogRepository,
             tenantPropertiesService);
 
-        AccountService accountService = new AccountService(userRepository, passwordEncoder,
+        AccountService accountService = new AccountService(userRepository, passwordEncoder, registrationLogRepository,
             xmAuthenticationContextHolder, tenantPropertiesService, userService, userLoginService, profileEventProducer,
             otpSenderFactory);
 
