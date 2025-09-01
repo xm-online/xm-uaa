@@ -5,11 +5,14 @@ import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.commons.permission.domain.EnvironmentVariable;
 import com.icthh.xm.commons.permission.inspector.PrivilegeInspector;
 import com.icthh.xm.uaa.config.ApplicationProperties;
+import com.icthh.xm.uaa.health_check.KafkaTopicsHealthIndicator;
 import com.icthh.xm.uaa.repository.kafka.SystemTopicConsumer;
 import com.icthh.xm.uaa.service.EnvironmentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.Status;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
@@ -40,12 +43,14 @@ public class ApplicationStartup implements ApplicationListener<ApplicationReadyE
     private final Environment env;
     private final KafkaProperties kafkaProperties;
     private final EnvironmentService environmentService;
+    private final KafkaTopicsHealthIndicator kafkaTopicsHealthIndicator;
 
     private final PrivilegeInspector privilegeInspector;
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
         if (applicationProperties.isKafkaEnabled()) {
+            waitForKafkaTopicsReady();
             createKafkaConsumers();
             privilegeInspector.readPrivileges(MdcUtils.getRid());
         } else {
@@ -54,6 +59,27 @@ public class ApplicationStartup implements ApplicationListener<ApplicationReadyE
         }
 
         updateEnvironmentListForPermissions();
+    }
+
+    private void waitForKafkaTopicsReady() {
+        int retries = applicationProperties.getRetry().getMaxAttempts();
+        long delayMs = applicationProperties.getRetry().getDelay();
+
+        for (int i = 0; i < retries; i++) {
+            final Health health = kafkaTopicsHealthIndicator.health();
+            if (health.getStatus().equals(Status.UP)) {
+                log.info("Kafka topics are ready.");
+                return;
+            }
+            log.warn("Kafka topics not ready yet, attempt {}/{}", i + 1, retries);
+            try {
+                Thread.sleep(delayMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted while waiting for Kafka topics", e);
+            }
+        }
+        throw new IllegalStateException("Kafka topics are not ready after retries");
     }
 
     private void updateEnvironmentListForPermissions() {

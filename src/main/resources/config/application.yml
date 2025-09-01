@@ -192,8 +192,8 @@ application:
     kafka-metadata-max-age: 60000 #in milliseconds
     auto-system-queue-enabled: true
     retry:
-        max-attempts: 3
-        delay: 1000 #in milliseconds
+        max-attempts: 10
+        delay: 2000 #in milliseconds
         multiplier: 2
     reCaptcha:
         url: https://www.google.com/recaptcha/api/siteverify

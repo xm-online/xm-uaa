@@ -65,7 +65,7 @@ public class ApplicationProperties {
 
     @Getter
     @Setter
-    private static class Retry {
+    public static class Retry {
 
         private int maxAttempts;
         private long delay;
