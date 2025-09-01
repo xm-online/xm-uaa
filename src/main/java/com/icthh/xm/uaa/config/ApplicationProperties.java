@@ -70,6 +70,8 @@ public class ApplicationProperties {
         private int maxAttempts;
         private long delay;
         private int multiplier;
+        private int maxAttemptsTopic;
+        private long delayTopic;
     }
 
     @Getter
