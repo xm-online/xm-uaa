@@ -27,9 +27,12 @@ import com.icthh.xm.uaa.web.rest.vm.AuthorizeUserVm;
 import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.jboss.aerogear.security.otp.Totp;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,8 +48,8 @@ import static com.icthh.xm.uaa.config.Constants.OTP_SENDER_NOT_FOUND_ERROR_TEXT;
 
 @LepService(group = "service.account")
 @Transactional
-@AllArgsConstructor
 @Slf4j
+@RequiredArgsConstructor
 public class AccountService {
 
     private final UserRepository userRepository;
@@ -58,6 +61,8 @@ public class AccountService {
     private final UserLoginService userLoginService;
     private final ProfileEventProducer profileEventProducer;
     private final OtpSenderFactory otpSenderFactory;
+    @Setter(onMethod = @__(@Autowired))
+    public AccountService self;
 
     /**
      * Register new user.
@@ -95,7 +100,7 @@ public class AccountService {
         userLoginService.normalizeLogins(user.getLogins());
         userLoginService.verifyLoginsNotExist(user.getLogins());
 
-        User newUser = register(user, remoteAddress);
+        User newUser = self.register(user, remoteAddress);
         produceEvent(new UserDTO(newUser), Constants.CREATE_PROFILE_EVENT_TYPE);
         return newUser;
     }

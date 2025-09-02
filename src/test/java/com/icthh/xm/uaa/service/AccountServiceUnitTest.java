@@ -129,6 +129,8 @@ public class AccountServiceUnitTest {
         accountService = new AccountService(userRepository, passwordEncoder, registrationLogRepository,
             authContextHolder, tenantPropertiesService, userService, userLoginService, profileEventProducer,
             otpSenderFactory);
+
+        accountService.setSelf(accountService);
     }
 
     @Test
