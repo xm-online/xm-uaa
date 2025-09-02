@@ -1,7 +1,10 @@
 language: java
 jdk:
-- oraclejdk11
+  - openjdk11
+dist: bionic
 install: true
+services:
+  - docker
 addons:
   sonarcloud:
     organization: xm-online
@@ -13,7 +16,7 @@ addons:
 
 script:
   - set -e
-  - "./gradlew --no-daemon --refresh-dependencies clean check -x test"
+  - "./gradlew --no-daemon --refresh-dependencies clean check test"
   - "./gradlew -x test -Pprod --no-daemon bootWar"
   - docker login -u $DOCKER_USER -p $DOCKER_PASS
   - export DOCKER_REPO=$(echo  -n $TRAVIS_REPO_SLUG | sed -e 's/^xm-online\//xmonline\//g')

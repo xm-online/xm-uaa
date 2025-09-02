@@ -3,6 +3,8 @@ spring:
         active: pg-test
     datasource:
         driver-class-name: org.postgresql.Driver
+        username: xm
+        password: xm
     jpa:
         database-platform: com.icthh.xm.commons.migration.db.jsonb.CustomPostgreSQL95Dialect
         database: POSTGRESQL
