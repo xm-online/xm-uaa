@@ -58,8 +58,8 @@ public class ApplicationStartup implements ApplicationListener<ApplicationReadyE
 
     private void updateEnvironmentListForPermissions() {
         List<String> envVars = Arrays.stream(EnvironmentVariable.values())
-                .map(EnvironmentVariable::getName)
-                .collect(Collectors.toList());
+            .map(EnvironmentVariable::getName)
+            .collect(Collectors.toList());
 
         environmentService.updateConfigs(envVars);
 
@@ -82,9 +82,10 @@ public class ApplicationStartup implements ApplicationListener<ApplicationReadyE
         ConsumerFactory<String, String> factory = new DefaultKafkaConsumerFactory<>(props);
 
         ConcurrentMessageListenerContainer<String, String> container =
-                new ConcurrentMessageListenerContainer<>(factory, containerProps);
+            new ConcurrentMessageListenerContainer<>(factory, containerProps);
         container.setupMessageListener(consumeEvent);
         container.start();
         log.info("Successfully created kafka consumer for topic {}", name);
     }
+
 }
