@@ -195,8 +195,6 @@ application:
         max-attempts: 3
         delay: 1000 #in milliseconds
         multiplier: 2
-        max-attempts-topic: 10
-        delay-topic: 3000 #in milliseconds
     reCaptcha:
         url: https://www.google.com/recaptcha/api/siteverify
         secretKey:
