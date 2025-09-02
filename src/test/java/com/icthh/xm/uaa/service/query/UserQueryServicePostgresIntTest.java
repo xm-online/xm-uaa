@@ -88,7 +88,7 @@ public class UserQueryServicePostgresIntTest {
     private static final Boolean THIRD_VALUE_BOOLEAN = true;
 
     @ClassRule
-    public static PostgreSQLContainer postgreSQLContainer = new PostgreSQLContainer("postgres:12.7")
+    public static PostgreSQLContainer postgreSQLContainer = new PostgreSQLContainer("postgres:17")
         .withDatabaseName("uaa");
 
     static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
