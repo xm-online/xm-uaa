@@ -1,7 +1,10 @@
 language: java
 jdk:
-- oraclejdk11
+  - openjdk11
+dist: bionic
 install: true
+services:
+  - docker
 addons:
   sonarcloud:
     organization: xm-online
