@@ -89,7 +89,9 @@ public class UserQueryServicePostgresIntTest {
 
     @ClassRule
     public static PostgreSQLContainer postgreSQLContainer = new PostgreSQLContainer("postgres:14.17")
-        .withDatabaseName("uaa");
+         .withDatabaseName("uaa")
+         .withUsername("xm")
+         .withPassword("xm");
 
     static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
