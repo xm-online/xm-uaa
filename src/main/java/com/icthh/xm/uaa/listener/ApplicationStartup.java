@@ -7,6 +7,8 @@ import com.icthh.xm.commons.permission.inspector.PrivilegeInspector;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.repository.kafka.SystemTopicConsumer;
 import com.icthh.xm.uaa.service.EnvironmentService;
+import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -17,14 +19,12 @@ import org.springframework.core.env.Environment;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
-import org.springframework.kafka.listener.MessageListener;
 import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.MessageListener;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -50,7 +50,7 @@ public class ApplicationStartup implements ApplicationListener<ApplicationReadyE
             privilegeInspector.readPrivileges(MdcUtils.getRid());
         } else {
             log.warn("WARNING! Privileges inspection is disabled by "
-                + "configuration parameter 'application.kafka-enabled'");
+                    + "configuration parameter 'application.kafka-enabled'");
         }
 
         updateEnvironmentListForPermissions();
@@ -73,6 +73,7 @@ public class ApplicationStartup implements ApplicationListener<ApplicationReadyE
     private void createSystemConsumer(String name, MessageListener<String, String> consumeEvent) {
         log.info("Creating kafka consumer for topic {}", name);
         ContainerProperties containerProps = new ContainerProperties(name);
+        containerProps.setMissingTopicsFatal(false); // do not throw exception if topic is not found
 
         Map<String, Object> props = kafkaProperties.buildConsumerProperties();
         if (name.equals(applicationProperties.getKafkaSystemTopic())) {
