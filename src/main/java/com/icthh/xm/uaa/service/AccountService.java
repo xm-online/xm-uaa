@@ -25,8 +25,8 @@ import com.icthh.xm.uaa.service.util.RandomUtil;
 import com.icthh.xm.uaa.util.OtpUtils;
 import com.icthh.xm.uaa.web.rest.vm.AuthorizeUserVm;
 import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
+import com.icthh.xm.uaa.web.rest.vm.LanguageChangeRequestVM;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -214,6 +214,14 @@ public class AccountService {
             user.setAccessTokenValiditySeconds(updatedUser.getAccessTokenValiditySeconds());
             user.setRefreshTokenValiditySeconds(updatedUser.getRefreshTokenValiditySeconds());
             return userService.updateUserAutoLogoutSettings(updatedUser, user);
+        }).map(UserDTO::new);
+    }
+
+    @LogicExtensionPoint("UpdateLanguage")
+    public Optional<UserDTO> updateLanguage(LanguageChangeRequestVM languageChangeRequestVM) {
+        return userRepository.findOneWithLoginsByUserKey(getRequiredUserKey()).map(user -> {
+            user.setLangKey(languageChangeRequestVM.getLangKey());
+            return user;
         }).map(UserDTO::new);
     }
 

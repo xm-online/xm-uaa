@@ -21,6 +21,7 @@ import com.icthh.xm.uaa.web.rest.vm.AuthorizeUserVm;
 import com.icthh.xm.uaa.web.rest.vm.CaptchaVM;
 import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.KeyAndPasswordVM;
+import com.icthh.xm.uaa.web.rest.vm.LanguageChangeRequestVM;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
 import com.icthh.xm.uaa.web.rest.vm.ResetPasswordVM;
 import com.icthh.xm.uaa.service.dto.UserWithContext;
@@ -219,6 +220,24 @@ public class AccountResource {
                                            HeaderUtil.createAlert("userManagement.updated", user.getUserKey()));
     }
 
+
+    /**
+     * PUT /account/language: update the current user language.
+     *
+     * @param languageChangeRequestVM new user language to be set.
+     * @return the ResponseEntity with status 200 (OK), or status 400 (Bad Request) or 500 (Internal Server Error) if
+     * the user couldn't be updated
+     */
+    @PutMapping("/account/language")
+    @Timed
+    @PreAuthorize("hasPermission(null, 'ACCOUNT.CHANGE_LANGUAGE')")
+    @PrivilegeDescription("Privilege to update the current user information")
+    public ResponseEntity<UserDTO> changeLanguage(@Valid @RequestBody LanguageChangeRequestVM languageChangeRequestVM) {
+        Optional<UserDTO> updatedUser = accountService.updateLanguage(languageChangeRequestVM);
+        updatedUser.ifPresent(userDTO -> accountService.produceEvent(userDTO, Constants.UPDATE_PROFILE_EVENT_TYPE));
+        return ResponseUtil.wrapOrNotFound(updatedUser,
+            HeaderUtil.createAlert("userManagement.updated", updatedUser.map(UserDTO::getUserKey).orElse(null)));
+    }
 
     /**
      * PUT /account/logins : Updates an existing Account logins.
