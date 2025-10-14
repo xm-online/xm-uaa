@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.i18n.error.web.ExceptionTranslator;
 import com.icthh.xm.commons.permission.constants.RoleConstant;
-import com.icthh.xm.commons.permission.domain.Permission;
 import com.icthh.xm.commons.security.XmAuthenticationConstants;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
@@ -47,6 +46,7 @@ import com.icthh.xm.uaa.service.util.RandomUtil;
 import com.icthh.xm.uaa.web.rest.vm.AuthorizeUserVm;
 import com.icthh.xm.uaa.web.rest.vm.ChangePasswordVM;
 import com.icthh.xm.uaa.web.rest.vm.KeyAndPasswordVM;
+import com.icthh.xm.uaa.web.rest.vm.LanguageChangeRequestVM;
 import com.icthh.xm.uaa.web.rest.vm.ManagedUserVM;
 import com.icthh.xm.uaa.web.rest.vm.ResetPasswordVM;
 
@@ -104,6 +104,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -970,6 +971,77 @@ public class AccountResourceIntTest {
         });
     }
 
+
+    @Test
+    @Transactional
+    public void testChangeAccountLanguage() {
+        executeForUserKey("test", () -> {
+            UserLogin userLogin = new UserLogin();
+            userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
+            userLogin.setLogin("save-account");
+
+            User user = new User();
+            user.setUserKey("test");
+            user.setRoleKey(ROLE_USER);
+            user.setPassword(RandomStringUtils.random(60));
+            user.setPasswordSetByUser(true);
+            user.setActivated(true);
+            user.getLogins().add(userLogin);
+            userLogin.setUser(user);
+
+            userRepository.saveAndFlush(user);
+
+            UserDTO userDTO = new UserDTO(
+                user.getId(),                      // id
+                "firstname",                // firstName
+                "lastname",                  // lastName
+                "http://placehold.it/50x50", //imageUrl
+                false,                   // activated
+                false,                   // tfaEnabled
+                null, // tfaOtpChannelType
+                null, // tfaOtpChannelSpec
+                "en",                   // langKey
+                null,                   // createdBy
+                null,                   // createdDate
+                null,                   // lastModifiedBy
+                null,                   // lastModifiedDate
+                RoleConstant.SUPER_ADMIN,
+                "test",
+                List.of("test"),
+                null, null, null,
+                null, Collections.singletonList(userLogin),
+                Collections.emptyList(), false, null,
+                null, null, null, null);
+
+            try {
+                restMvc.perform(
+                        post("/api/account")
+                            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                            .content(TestUtil.convertObjectToJsonBytes(userDTO)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.langKey").value("en"));
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+
+            String newLangKey = "uk";
+            LanguageChangeRequestVM languageChangeRequestVM = new LanguageChangeRequestVM();
+            languageChangeRequestVM.setLangKey(newLangKey);
+
+            try {
+                restMvc.perform(
+                        put("/api/account/language")
+                            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                            .content(TestUtil.convertObjectToJsonBytes(languageChangeRequestVM)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.langKey").value(newLangKey));
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+
+        });
+    }
+
     @Test
     @Transactional
     public void testSaveExistingEmail() {
@@ -1038,7 +1110,6 @@ public class AccountResourceIntTest {
             assertThat(updatedUser.getImageUrl()).isNullOrEmpty();
         });
     }
-
 
     @Test
     @Transactional
