@@ -207,9 +207,6 @@ public class AccountService {
             user.setLastName(updatedUser.getLastName());
             user.setLangKey(updatedUser.getLangKey());
             user.setImageUrl(updatedUser.getImageUrl());
-            if(CollectionUtils.isNotEmpty(updatedUser.getAuthorities())){
-                user.setAuthorities(updatedUser.getAuthorities());
-            }
             user.setData(updatedUser.getData());
             user.setAccessTokenValiditySeconds(updatedUser.getAccessTokenValiditySeconds());
             user.setRefreshTokenValiditySeconds(updatedUser.getRefreshTokenValiditySeconds());
