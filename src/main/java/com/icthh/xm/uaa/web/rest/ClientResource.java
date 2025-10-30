@@ -5,7 +5,6 @@ import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.uaa.domain.Client;
 import com.icthh.xm.uaa.service.ClientService;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
-import com.icthh.xm.uaa.service.query.ClientQueryService;
 import com.icthh.xm.uaa.service.query.filter.StrictClientFilterQuery;
 import com.icthh.xm.uaa.web.rest.util.HeaderUtil;
 import com.icthh.xm.uaa.web.rest.util.PaginationUtil;
@@ -46,15 +45,12 @@ public class ClientResource {
 
     private final ClientService clientService;
     private final ClientResource clientResource;
-    private final ClientQueryService clientQueryService;
 
     public ClientResource(
         ClientService clientService,
-        @Lazy ClientResource clientResource,
-        ClientQueryService clientQueryService) {
+        @Lazy ClientResource clientResource) {
         this.clientService = clientService;
         this.clientResource = clientResource;
-        this.clientQueryService = clientQueryService;
     }
 
     /**
@@ -124,7 +120,7 @@ public class ClientResource {
     @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'CLIENT.GET_BY_FILTER.LIST')")
     @Timed
     public ResponseEntity<List<ClientDTO>> getAllClientsFilter(@ApiParam Pageable pageable, StrictClientFilterQuery query) {
-        Page<ClientDTO> page = clientQueryService.findAllByStrictMatch(query, pageable);
+        Page<ClientDTO> page = clientService.findAllFiltered(query, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/clients/filter");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }

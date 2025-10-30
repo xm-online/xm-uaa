@@ -13,6 +13,9 @@ import com.icthh.xm.uaa.domain.ClientState;
 import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
 import java.util.Optional;
+
+import com.icthh.xm.uaa.service.query.ClientQueryService;
+import com.icthh.xm.uaa.service.query.filter.StrictClientFilterQuery;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
@@ -33,6 +36,7 @@ public class ClientService {
     private final ClientRepository clientRepository;
     private final PasswordEncoder passwordEncoder;
     private final PermittedRepository permittedRepository;
+    private final ClientQueryService clientQueryService;
 
     private static final String PSWRD_MASK = "*****";
 
@@ -110,6 +114,16 @@ public class ClientService {
     public Page<ClientDTO> findAll(Pageable pageable, String privilegeKey) {
         return permittedRepository.findAll(pageable, Client.class, privilegeKey).map(
             source -> new ClientDTO(source.clientSecret(PSWRD_MASK)));
+    }
+
+    /**
+     * Get all the clients by filter.
+     *
+     * @return the list of entities
+     */
+    @Transactional(readOnly = true)
+    public Page<ClientDTO> findAllFiltered(StrictClientFilterQuery query, Pageable pageable) {
+        return clientQueryService.findAllByStrictMatch(query, pageable);
     }
 
     /**
