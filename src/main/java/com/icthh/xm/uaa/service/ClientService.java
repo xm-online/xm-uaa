@@ -113,6 +113,19 @@ public class ClientService {
     }
 
     /**
+     * Get all the clients by condition.
+     *
+     * @return the list of entities
+     */
+    @Transactional(readOnly = true)
+    @FindWithPermission("CLIENT.GET_FILTERED_LIST")
+    @PrivilegeDescription("Privilege to get all the clients by cindition")
+    public Page<ClientDTO> findAllByFilter(Pageable pageable, String privilegeKey) {
+        return permittedRepository.findAll(pageable, Client.class, privilegeKey).map(
+            source -> new ClientDTO(source.clientSecret(PSWRD_MASK)));
+    }
+
+    /**
      * Get one client by id.
      *
      * @param id the id of the entity
