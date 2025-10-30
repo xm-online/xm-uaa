@@ -5,7 +5,8 @@ import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.uaa.domain.Client;
 import com.icthh.xm.uaa.service.ClientService;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
-import com.icthh.xm.uaa.service.dto.UserDTO;
+import com.icthh.xm.uaa.service.query.ClientQueryService;
+import com.icthh.xm.uaa.service.query.filter.StrictClientFilterQuery;
 import com.icthh.xm.uaa.web.rest.util.HeaderUtil;
 import com.icthh.xm.uaa.web.rest.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -45,12 +46,15 @@ public class ClientResource {
 
     private final ClientService clientService;
     private final ClientResource clientResource;
+    private final ClientQueryService clientQueryService;
 
     public ClientResource(
-                    ClientService clientService,
-                    @Lazy ClientResource clientResource) {
+        ClientService clientService,
+        @Lazy ClientResource clientResource,
+        ClientQueryService clientQueryService) {
         this.clientService = clientService;
         this.clientResource = clientResource;
+        this.clientQueryService = clientQueryService;
     }
 
     /**
@@ -108,6 +112,20 @@ public class ClientResource {
     public ResponseEntity<List<ClientDTO>> getAllClients(@ApiParam Pageable pageable) {
         Page<ClientDTO> page = clientService.findAll(pageable, null);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/clients");
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * GET  /clients : get all the clients by filter.
+     *
+     * @return the ResponseEntity with status 200 (OK) and the list of clients in body
+     */
+    @GetMapping("/clients/filter")
+    @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'CLIENT.GET_BY_FILTER.LIST')")
+    @Timed
+    public ResponseEntity<List<ClientDTO>> getAllClientsFilter(@ApiParam Pageable pageable, StrictClientFilterQuery query) {
+        Page<ClientDTO> page = clientQueryService.findAllByStrictMatch(query, pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/clients/filter");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
