@@ -202,14 +202,23 @@ public class AccountService {
      */
     @LogicExtensionPoint("UpdateAccount")
     public Optional<UserDTO> updateAccount(UserDTO updatedUser) {
+        log.debug("updateAccount: updating user id: {}", updatedUser.getId());
         return userRepository.findOneWithLoginsByUserKey(getRequiredUserKey()).map(user -> {
             user.setFirstName(updatedUser.getFirstName());
             user.setLastName(updatedUser.getLastName());
             user.setLangKey(updatedUser.getLangKey());
             user.setImageUrl(updatedUser.getImageUrl());
-            if(CollectionUtils.isNotEmpty(updatedUser.getAuthorities())){
-                user.setAuthorities(updatedUser.getAuthorities());
+
+            if (tenantPropertiesService.getTenantProps().isStrictUserManagement()) {
+                log.debug("updateAccount: authorities update is not available due to strictUserManagement property");
+            } else {
+                if (CollectionUtils.isNotEmpty(updatedUser.getAuthorities())) {
+                    List<String> authorities = updatedUser.getAuthorities();
+                    log.debug("updateAccount: updating authorities to: {}", authorities);
+                    user.setAuthorities(authorities);
+                }
             }
+
             user.setData(updatedUser.getData());
             user.setAccessTokenValiditySeconds(updatedUser.getAccessTokenValiditySeconds());
             user.setRefreshTokenValiditySeconds(updatedUser.getRefreshTokenValiditySeconds());
