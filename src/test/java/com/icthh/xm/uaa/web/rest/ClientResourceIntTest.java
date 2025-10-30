@@ -17,6 +17,7 @@ import com.icthh.xm.uaa.service.ClientService;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
 import java.nio.charset.Charset;
 import java.util.Optional;
+import com.icthh.xm.uaa.service.query.ClientQueryService;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -100,6 +101,9 @@ public class ClientResourceIntTest {
     private ClientService clientService;
 
     @Autowired
+    private ClientQueryService clientQueryService;
+
+    @Autowired
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
 
     @Autowired
@@ -140,7 +144,7 @@ public class ClientResourceIntTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        this.restClientMockMvc = MockMvcBuilders.standaloneSetup(new ClientResource(clientService, clientResource))
+        this.restClientMockMvc = MockMvcBuilders.standaloneSetup(new ClientResource(clientService, clientResource, clientQueryService))
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)
             .setMessageConverters(jacksonMessageConverter).build();
