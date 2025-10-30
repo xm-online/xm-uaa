@@ -18,6 +18,7 @@ import javax.persistence.metamodel.SingularAttribute;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static com.icthh.xm.uaa.service.ClientService.PSWRD_MASK;
 import static java.util.Optional.ofNullable;
 
 @Service
@@ -29,7 +30,8 @@ public class ClientQueryService extends QueryService<Client> {
 
     public Page<ClientDTO> findAllByStrictMatch(StrictClientFilterQuery filterQuery, Pageable pageable) {
         Specification<Client> specification = createStrictSpecification(filterQuery);
-        return clientRepository.findAll(specification, pageable).map(ClientDTO::new);
+        return clientRepository.findAll(specification, pageable)
+            .map(source -> new ClientDTO(source.clientSecret(PSWRD_MASK)));
     }
 
     private Specification<Client> createStrictSpecification(StrictClientFilterQuery filterQuery) {

@@ -38,7 +38,7 @@ public class ClientService {
     private final PermittedRepository permittedRepository;
     private final ClientQueryService clientQueryService;
 
-    private static final String PSWRD_MASK = "*****";
+    public static final String PSWRD_MASK = "*****";
 
     /**
      * Save a client.
@@ -122,6 +122,7 @@ public class ClientService {
      * @return the list of entities
      */
     @Transactional(readOnly = true)
+    @LogicExtensionPoint("FindAllFiltered")
     public Page<ClientDTO> findAllFiltered(StrictClientFilterQuery query, Pageable pageable) {
         return clientQueryService.findAllByStrictMatch(query, pageable);
     }
@@ -144,6 +145,7 @@ public class ClientService {
      *
      * @param id the id of the entity
      */
+    @LogicExtensionPoint("DeleteClient")
     public void delete(Long id) {
         clientRepository.deleteById(id);
     }
