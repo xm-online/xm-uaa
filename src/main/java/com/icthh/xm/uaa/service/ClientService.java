@@ -13,6 +13,9 @@ import com.icthh.xm.uaa.domain.ClientState;
 import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
 import java.util.Optional;
+
+import com.icthh.xm.uaa.service.query.ClientQueryService;
+import com.icthh.xm.uaa.service.query.filter.StrictClientFilterQuery;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
@@ -33,8 +36,9 @@ public class ClientService {
     private final ClientRepository clientRepository;
     private final PasswordEncoder passwordEncoder;
     private final PermittedRepository permittedRepository;
+    private final ClientQueryService clientQueryService;
 
-    private static final String PSWRD_MASK = "*****";
+    public static final String PSWRD_MASK = "*****";
 
     /**
      * Save a client.
@@ -113,6 +117,17 @@ public class ClientService {
     }
 
     /**
+     * Get all the clients by filter.
+     *
+     * @return the list of entities
+     */
+    @Transactional(readOnly = true)
+    @LogicExtensionPoint("FindAllFiltered")
+    public Page<ClientDTO> findAllFiltered(StrictClientFilterQuery query, Pageable pageable) {
+        return clientQueryService.findAllByStrictMatch(query, pageable);
+    }
+
+    /**
      * Get one client by id.
      *
      * @param id the id of the entity
@@ -130,6 +145,7 @@ public class ClientService {
      *
      * @param id the id of the entity
      */
+    @LogicExtensionPoint("DeleteClient")
     public void delete(Long id) {
         clientRepository.deleteById(id);
     }
