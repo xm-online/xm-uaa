@@ -19,6 +19,8 @@ import com.icthh.xm.uaa.service.query.ClientQueryService;
 import com.icthh.xm.uaa.service.query.filter.StrictClientFilterQuery;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+
+import static java.util.stream.Collectors.toList;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -168,7 +170,7 @@ public class ClientService {
     public List<ClientDTO> findAllByClientIdIn(List<String> clientIds) {
         return clientRepository.findAllByClientIdIn(clientIds).stream()
               .map(client -> new ClientDTO(client.clientSecret(PSWRD_MASK)))
-              .collect(java.util.stream.Collectors.toList());
+              .collect(toList());
     }
 
     public Optional<ClientDTO> blockClient(String clientKey) {
