@@ -12,6 +12,7 @@ import com.icthh.xm.uaa.domain.Client;
 import com.icthh.xm.uaa.domain.ClientState;
 import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
+import java.util.List;
 import java.util.Optional;
 
 import com.icthh.xm.uaa.service.query.ClientQueryService;
@@ -160,6 +161,14 @@ public class ClientService {
     public Page<ClientDTO> findAllByClientIdContains(String clientId, Pageable pageable) {
         return clientRepository.findAllByClientIdContainingIgnoreCase(clientId, pageable)
               .map(client -> new ClientDTO(client.clientSecret(PSWRD_MASK)));
+    }
+
+    @LogicExtensionPoint("FindAllByClientIdIn")
+    @Transactional(readOnly = true)
+    public List<ClientDTO> findAllByClientIdIn(List<String> clientIds) {
+        return clientRepository.findAllByClientIdIn(clientIds).stream()
+              .map(client -> new ClientDTO(client.clientSecret(PSWRD_MASK)))
+              .collect(java.util.stream.Collectors.toList());
     }
 
     public Optional<ClientDTO> blockClient(String clientKey) {

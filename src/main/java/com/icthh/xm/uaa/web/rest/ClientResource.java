@@ -143,6 +143,21 @@ public class ClientResource {
     }
 
     /**
+     * GET  /clients/by-client-ids : get the clients by list of clientIds.
+     *
+     * @param clientIds list of clientIds of the clients to find
+     * @return the ResponseEntity with status 200 (OK) and body with list of clients, or the empty list
+     */
+    @GetMapping("/clients/by-client-ids")
+    @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'CLIENT.GET_LIST.ITEM')")
+    @Timed
+    @PrivilegeDescription("Privilege to get clients by list of clientIds")
+    public ResponseEntity<List<ClientDTO>> getClientsByClientIds(@RequestParam List<String> clientIds) {
+        List<ClientDTO> clients = clientService.findAllByClientIdIn(clientIds);
+        return new ResponseEntity<>(clients, HttpStatus.OK);
+    }
+
+    /**
      * GET  /clients/:id : get the "id" client.
      *
      * @param id the id of the client to retrieve

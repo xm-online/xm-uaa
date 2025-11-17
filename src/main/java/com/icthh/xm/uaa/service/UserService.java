@@ -561,6 +561,12 @@ public class UserService {
               .map(UserLogin::getUser);
     }
 
+    @LogicExtensionPoint("FindAllByUserKeyIn")
+    @Transactional(readOnly = true)
+    public List<User> findAllByUserKeyIn(List<String> userKeys) {
+        return userRepository.findAllByUserKeyIn(userKeys);
+    }
+
     private void validatePasswordPattern(String password, PasswordSettings passwordSettings) {
         if (isEmpty(passwordSettings.getPattern())) {
             return;
