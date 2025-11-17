@@ -1,8 +1,8 @@
 package com.icthh.xm.uaa.web.rest;
 
 import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
-import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
+import static java.util.stream.Collectors.toList;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
@@ -334,7 +334,7 @@ public class UserResource {
      */
     @GetMapping("/users/by-user-keys")
     @Timed
-    @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'USER.GET_LIST.ITEM')")
+    @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'USER.GET_LIST_BY_USER_KEYS')")
     @PrivilegeDescription("Privilege to get users by list of userKeys")
     public ResponseEntity<List<UserDTO>> getUsersByUserKeys(@RequestParam List<String> userKeys) {
         List<UserDTO> users = userService.findAllByUserKeyIn(userKeys).stream()

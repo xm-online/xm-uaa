@@ -1,5 +1,7 @@
 package com.icthh.xm.uaa.service;
 
+import static java.util.stream.Collectors.toList;
+
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
@@ -12,15 +14,12 @@ import com.icthh.xm.uaa.domain.Client;
 import com.icthh.xm.uaa.domain.ClientState;
 import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
-import java.util.List;
-import java.util.Optional;
-
 import com.icthh.xm.uaa.service.query.ClientQueryService;
 import com.icthh.xm.uaa.service.query.filter.StrictClientFilterQuery;
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-
-import static java.util.stream.Collectors.toList;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;

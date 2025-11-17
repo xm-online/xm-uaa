@@ -149,7 +149,7 @@ public class ClientResource {
      * @return the ResponseEntity with status 200 (OK) and body with list of clients, or the empty list
      */
     @GetMapping("/clients/by-client-ids")
-    @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'CLIENT.GET_LIST.ITEM')")
+    @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'CLIENT.GET_LIST_BY_CLIENT_IDS')")
     @Timed
     @PrivilegeDescription("Privilege to get clients by list of clientIds")
     public ResponseEntity<List<ClientDTO>> getClientsByClientIds(@RequestParam List<String> clientIds) {
