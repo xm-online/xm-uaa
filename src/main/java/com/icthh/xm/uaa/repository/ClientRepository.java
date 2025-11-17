@@ -25,4 +25,6 @@ public interface ClientRepository extends JpaRepository<Client, Long>, ResourceR
 
     Page<Client> findAllByClientIdContainingIgnoreCase(String clientId, Pageable pageable);
 
+    List<Client> findAllByClientIdIn(List<String> clientIds);
+
 }

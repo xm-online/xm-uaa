@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.web.rest;
 
 import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
+import static java.util.stream.Collectors.toList;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
@@ -323,6 +324,23 @@ public class UserResource {
         Page<UserDTO> page = userService.findAllByLoginContains(login, pageable).map(UserDTO::new);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/users/logins-contains");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * GET  /users/by-user-keys : get the users by list of userKeys.
+     *
+     * @param userKeys list of userKeys of the users to find
+     * @return the ResponseEntity with status 200 (OK) and body with list of users, or the empty list
+     */
+    @GetMapping("/users/by-user-keys")
+    @Timed
+    @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'USER.GET_LIST_BY_USER_KEYS')")
+    @PrivilegeDescription("Privilege to get users by list of userKeys")
+    public ResponseEntity<List<UserDTO>> getUsersByUserKeys(@RequestParam List<String> userKeys) {
+        List<UserDTO> users = userService.findAllByUserKeyIn(userKeys).stream()
+            .map(UserDTO::new)
+            .collect(toList());
+        return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
     /**

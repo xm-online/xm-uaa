@@ -33,4 +33,7 @@ public interface UserRepository extends JpaRepository<User, Long>, ResourceRepos
     Page<User> findAll(Pageable pageable);
 
     List<User> findByRoleKey(String roleKey);
+
+    @EntityGraph(attributePaths = "logins")
+    List<User> findAllByUserKeyIn(List<String> userKeys);
 }

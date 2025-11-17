@@ -622,6 +622,34 @@ public class UserResourceIntTest {
 
     @Test
     @Transactional
+    public void getUsersByUserKeys() throws Exception {
+        // Initialize the database
+        userRepository.saveAndFlush(user);
+
+        User user2 = createEntity("ROLE_USER");
+        user2.getLogins().get(0).setLogin("test2");
+        userRepository.saveAndFlush(user2);
+
+        // Get users by userKeys
+        restUserMockMvc.perform(get("/api/users/by-user-keys?userKeys={userKey1}&userKeys={userKey2}",
+                user.getUserKey(), user2.getUserKey()))
+              .andDo(print())
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+              .andExpect(jsonPath("$", hasSize(2)))
+              .andExpect(jsonPath("$[*].userKey").value(hasItem(user.getUserKey())))
+              .andExpect(jsonPath("$[*].userKey").value(hasItem(user2.getUserKey())));
+
+        // Test with non-existing userKey
+        restUserMockMvc.perform(get("/api/users/by-user-keys?userKeys=non-existing-key"))
+              .andDo(print())
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+              .andExpect(content().json("[]"));
+    }
+
+    @Test
+    @Transactional
     public void getPublicUser() throws Exception {
         // Initialize the database
         userRepository.saveAndFlush(user);

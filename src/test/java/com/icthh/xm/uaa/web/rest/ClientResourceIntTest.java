@@ -46,6 +46,7 @@ import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CON
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -441,6 +442,33 @@ public class ClientResourceIntTest {
         getUserByLoginContainsMatcher(DEFAULT_CLIENT_ID.substring(DEFAULT_CLIENT_ID.length() - 2));
 
         restClientMockMvc.perform(get("/api/clients/clientid-contains?clientId=www"))
+              .andDo(print())
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+              .andExpect(content().json("[]"));
+    }
+
+    @Test
+    @Transactional
+    public void getClientsByClientIds() throws Exception {
+        // Initialize the database
+        clientService.save(client);
+        Client client2 = createEntity(em);
+        client2.setClientId(UPDATED_CLIENT_ID);
+        clientService.save(client2);
+
+        // Get clients by clientIds
+        restClientMockMvc.perform(get("/api/clients/by-client-ids?clientIds={clientId1}&clientIds={clientId2}",
+                DEFAULT_CLIENT_ID, UPDATED_CLIENT_ID))
+              .andDo(print())
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+              .andExpect(jsonPath("$", hasSize(2)))
+              .andExpect(jsonPath("$[*].clientId").value(hasItem(DEFAULT_CLIENT_ID)))
+              .andExpect(jsonPath("$[*].clientId").value(hasItem(UPDATED_CLIENT_ID)));
+
+        // Test with non-existing clientId
+        restClientMockMvc.perform(get("/api/clients/by-client-ids?clientIds=non-existing-id"))
               .andDo(print())
               .andExpect(status().isOk())
               .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
