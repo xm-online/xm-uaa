@@ -26,6 +26,7 @@ import com.icthh.xm.uaa.service.dto.TfaOtpChannelSpec;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.dto.UserWithContext;
 import com.icthh.xm.uaa.service.util.RandomUtil;
+import com.icthh.xm.uaa.service.websocket.WebSocketIntegrationService;
 import com.icthh.xm.uaa.util.OtpUtils;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +50,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.icthh.xm.uaa.service.util.RandomUtil.generateActivationKey;
+import static com.icthh.xm.uaa.service.websocket.WebSocketIntegrationService.SOCKET_KEY_LOGOUT;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.*;
 import static com.icthh.xm.uaa.web.rest.util.VerificationUtils.assertNotSuperAdmin;
 import static java.util.UUID.randomUUID;
@@ -80,6 +83,7 @@ public class UserService {
     private final ApplicationProperties applicationProperties;
     private final TenantPermissionService tenantPermissionService;
     private final PermissionContextProvider permissionContextProvider;
+    private final WebSocketIntegrationService webSocketIntegrationService;
     @Setter(onMethod = @__(@Autowired))
     private UserService self;
 
@@ -717,5 +721,18 @@ public class UserService {
     public void passwordAttemptsExceeded(User user) {
         user.setActivated(false);
         user.resetPasswordAttempts();
+    }
+
+    public void logoutUserAccount(String userKey) {
+        if (!isUserLogoutAllowed(userKey)) {
+            log.info("Current user is not allowed to logout userKey {} according to business logic", userKey);
+            throw new AccessDeniedException("Access denied");
+        }
+        webSocketIntegrationService.sendSystemUserLogoutKafkaSocket(SOCKET_KEY_LOGOUT, Map.of("userKey", userKey));
+    }
+
+    @LogicExtensionPoint(value = "IsUserLogoutAllowed")
+    private boolean isUserLogoutAllowed(String userKey) {
+        return true;
     }
 }

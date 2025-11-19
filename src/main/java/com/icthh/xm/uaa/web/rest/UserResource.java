@@ -182,6 +182,21 @@ public class UserResource {
     }
 
     /**
+     * POST  /users/{userKey}/logout : Close user active session by userKey
+     *
+     * @param userKey the user to logout
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("/users/{userKey}/logout")
+    @Timed
+    @PreAuthorize("hasPermission(null, 'USER.ACCOUNT.LOGOUT')")
+    @PrivilegeDescription("Privilege to force logout other user by userKey")
+    public ResponseEntity<Void> logoutUser(@NotEmpty @PathVariable String userKey) {
+        userService.logoutUserAccount(userKey);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * PUT  /users/role : change role key for user account
      *
      * @param user container with new role
