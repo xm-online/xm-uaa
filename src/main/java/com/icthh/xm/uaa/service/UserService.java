@@ -723,16 +723,8 @@ public class UserService {
         user.resetPasswordAttempts();
     }
 
+    @LogicExtensionPoint(value = "LogoutUserAccount")
     public void logoutUserAccount(String userKey) {
-        if (!isUserLogoutAllowed(userKey)) {
-            log.info("Current user is not allowed to logout userKey {} according to business logic", userKey);
-            throw new AccessDeniedException("Access denied");
-        }
         webSocketIntegrationService.sendSystemUserLogoutKafkaSocket(SOCKET_KEY_LOGOUT, Map.of("userKey", userKey));
-    }
-
-    @LogicExtensionPoint(value = "IsUserLogoutAllowed")
-    private boolean isUserLogoutAllowed(String userKey) {
-        return true;
     }
 }
