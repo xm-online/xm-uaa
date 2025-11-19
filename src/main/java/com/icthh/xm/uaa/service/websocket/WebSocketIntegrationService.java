@@ -21,7 +21,7 @@ public class WebSocketIntegrationService {
     public static final String SOCKET_KEY_LOGOUT = "system-user-logout";
 
     private static final String SOCKET_KAFKA_TRANSPORT_SUFFIX = "_ws_out_";
-    private static final String TOPIC_SUFFIX = "system_logout";
+    private static final String TOPIC_SUFFIX = "system";
 
     private final UaaKafkaTemplateService kafkaTemplateService;
     private final TenantContextHolder tenantContextHolder;
