@@ -23,15 +23,23 @@
     </appender>
 -->
 
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <appender name="STDOUT"
+              class="com.icthh.xm.commons.logging.aop.SecurityMaskingConsoleAppender">
         <encoder>
             <charset>utf-8</charset>
             <Pattern>%d %-5level [%thread] [${springAppName:-}] [%X{traceId:-}] [%X{rid}] %logger{0}: %msg%n</Pattern>
         </encoder>
+
+        <keywords>${LOGBACK_SECURITY_MASKING_KEYWORDS: }</keywords>
+        <replacementMessage>${LOGBACK_SECURITY_MASKING_REPLACEMENT_MESSAGE:this log was removed due to potential security breach}</replacementMessage>
     </appender>
 
-    <appender name="STDOUT_JSON" class="ch.qos.logback.core.ConsoleAppender">
+    <appender name="STDOUT_JSON"
+              class="com.icthh.xm.commons.logging.aop.SecurityMaskingConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+
+        <keywords>${LOGBACK_SECURITY_MASKING_KEYWORDS: }</keywords>
+        <replacementMessage>${LOGBACK_SECURITY_MASKING_REPLACEMENT_MESSAGE:this log was removed due to potential security breach}</replacementMessage>
     </appender>
 
     <logger name="com.icthh.xm.uaa" level="#logback.loglevel#"/>
