@@ -77,11 +77,16 @@ public class AuthOtpTokenGranter extends AbstractTokenGranter {
 
     private boolean isExpiredOtp(Instant authOtpCodeCreationDate) {
         if (authOtpCodeCreationDate == null) {
+            log.info("Auth otp code creation time is null");
             return false;
         }
         Duration actualInterval = Duration.between(authOtpCodeCreationDate, Instant.now());
+        log.info("actualInterval: {}", actualInterval);
         int allowedInterval = getAllowedInterval(tenantPropertiesService.getTenantProps());
-        return allowedInterval < 0 || actualInterval.getSeconds() >= allowedInterval;
+        log.info("allowedInterval: {}", allowedInterval);
+        boolean expired = allowedInterval < 0 || actualInterval.getSeconds() >= allowedInterval;
+        log.info("expired: {}", expired);
+        return expired;
     }
 
     private static int getAllowedInterval(TenantProperties tenantProps) {
