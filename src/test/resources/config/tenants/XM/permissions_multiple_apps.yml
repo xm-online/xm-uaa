@@ -6,6 +6,12 @@ entity:
     envCondition: null
     resourceCondition: null
     reactionStrategy: "SKIP"
+  - privilegeKey: "PERMISSION_PRESENT_IN_TWO_MS"
+    disabled: false
+    deleted: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: null
   ROLE_PRODUCT_MANAGER:
   - privilegeKey: "ATTACHMENT.CREATE"
     disabled: false
@@ -24,6 +30,12 @@ uaa:
     envCondition: null
     resourceCondition: null
     reactionStrategy: "SKIP"
+  - privilegeKey: "PERMISSION_PRESENT_IN_TWO_MS"
+    disabled: false
+    deleted: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: null
   ROLE_ANONYMOUS:
   - privilegeKey: "ATTACHMENT.CREATE"
     disabled: false
