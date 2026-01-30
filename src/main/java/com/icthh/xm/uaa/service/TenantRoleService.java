@@ -211,10 +211,9 @@ public class TenantRoleService {
             return Collections.emptyList();
         }
 
-        Map<String, Permission> permissions = permissionMappingService.ymlToPermissions(permissionsFile);
+        List<Permission> permissions = permissionMappingService.ymlToPermissionsList(permissionsFile);
 
-        return permissions.values()
-                          .stream()
+        return permissions.stream()
                           .filter(perm -> roleKey.equals(perm.getRoleKey()))
                           .map(PermissionDTO::new)
                           .collect(Collectors.toList());

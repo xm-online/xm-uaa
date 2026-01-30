@@ -90,6 +90,7 @@ import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CON
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
 import static com.icthh.xm.uaa.utils.FileUtil.readConfigFile;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -105,6 +106,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -398,18 +400,24 @@ public class AccountResourceIntTest {
                 restUserMockMvc.perform(get("/api/account")
                     .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
+                    .andDo(print())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
                     .andExpect(jsonPath("$.firstName").value("john"))
                     .andExpect(jsonPath("$.lastName").value("doe"))
                     .andExpect(jsonPath("$.imageUrl").value("http://placehold.it/50x50"))
                     .andExpect(jsonPath("$.langKey").value("en"))
                     .andExpect(jsonPath("$.logins[0].login").value("email"))
-                    .andExpect(jsonPath("$.permissions[0].msName").value("uaa"))
-                    .andExpect(jsonPath("$.permissions[0].privilegeKey").value("ATTACHMENT.CREATE"))
+                    .andExpect(jsonPath("$.permissions[0].msName").value("entity"))
+                    .andExpect(jsonPath("$.permissions[0].privilegeKey").value("ATTACHMENT.DELETE"))
                     .andExpect(jsonPath("$.permissions[1].msName").value("entity"))
-                    .andExpect(jsonPath("$.permissions[1].privilegeKey").value("ATTACHMENT.DELETE"))
+                    .andExpect(jsonPath("$.permissions[1].privilegeKey").value("PERMISSION_PRESENT_IN_TWO_MS"))
                     .andExpect(jsonPath("$.permissions[2].msName").value("uaa"))
-                    .andExpect(jsonPath("$.permissions[2].privilegeKey").value("MISSING.PRIVILEGE"))
+                    .andExpect(jsonPath("$.permissions[2].privilegeKey").value("ATTACHMENT.CREATE"))
+                    .andExpect(jsonPath("$.permissions[3].msName").value("uaa"))
+                    .andExpect(jsonPath("$.permissions[3].privilegeKey").value("MISSING.PRIVILEGE"))
+                    .andExpect(jsonPath("$.permissions[4].msName").value("uaa"))
+                    .andExpect(jsonPath("$.permissions[4].privilegeKey").value("PERMISSION_PRESENT_IN_TWO_MS"))
+                    .andExpect(jsonPath("$.permissions", hasSize(5)))
                     .andExpect(jsonPath("$.roleKey").value("ROLE_ADMIN"))
                     .andExpect(jsonPath("$.context").value(new HashMap<>()));
 

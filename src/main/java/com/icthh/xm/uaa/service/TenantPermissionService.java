@@ -9,7 +9,10 @@ import com.icthh.xm.commons.permission.service.PermissionMappingService;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.service.dto.AccPermissionDTO;
+
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -77,12 +80,13 @@ public class TenantPermissionService implements RefreshableConfiguration {
                 tenantRolePermissions.remove(tenant);
                 log.info("Permission configuration was removed for tenant [{}] by key [{}]", tenant, updatedKey);
             } else {
-                Map<String, Permission> permissions = permissionMappingService.ymlToPermissions(config);
+                List<Permission> permissions = permissionMappingService.ymlToPermissionsList(config);
+                List<Permission> mutableList = new ArrayList<>(permissions);
+                mutableList.sort(Comparator.comparing(Permission::toString));
 
                 Map<String, List<Permission>> tenantPermissions = new HashMap<>();
 
-                permissions.values()
-                           .forEach(p -> tenantPermissions.computeIfAbsent(p.getRoleKey(), role -> new LinkedList<>())
+                mutableList.forEach(p -> tenantPermissions.computeIfAbsent(p.getRoleKey(), role -> new LinkedList<>())
                                                           .add(p));
 
                 tenantRolePermissions.put(tenant, Collections.unmodifiableMap(tenantPermissions));

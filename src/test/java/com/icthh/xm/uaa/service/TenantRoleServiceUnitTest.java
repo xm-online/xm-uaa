@@ -159,19 +159,27 @@ public class TenantRoleServiceUnitTest {
         when(tenantConfigRepository.getConfigFullPath(XM_TENANT, PERMISSIONS_PATH))
             .thenReturn(readConfigFile("/config/tenants/XM/permissions_multiple_apps.yml"));
         List<PermissionDTO> rolePermissions = tenantRoleService.getRolePermissions(roleKey);
-        assertThat(rolePermissions).size().isEqualTo(3);
+        assertThat(rolePermissions).size().isEqualTo(5);
 
         PermissionDTO permissionDT1 = rolePermissions.get(0);
         assertEquals("ROLE_ADMIN", permissionDT1.getRoleKey());
-        assertEquals("ATTACHMENT.CREATE", permissionDT1.getPrivilegeKey());
+        assertEquals("ATTACHMENT.DELETE", permissionDT1.getPrivilegeKey());
 
         PermissionDTO permissionDT2 = rolePermissions.get(1);
         assertEquals("ROLE_ADMIN", permissionDT2.getRoleKey());
-        assertEquals("ATTACHMENT.DELETE", permissionDT2.getPrivilegeKey());
+        assertEquals("PERMISSION_PRESENT_IN_TWO_MS", permissionDT2.getPrivilegeKey());
 
         PermissionDTO permissionDT3 = rolePermissions.get(2);
         assertEquals("ROLE_ADMIN", permissionDT3.getRoleKey());
-        assertEquals("MISSING.PRIVILEGE", permissionDT3.getPrivilegeKey());
+        assertEquals("ATTACHMENT.CREATE", permissionDT3.getPrivilegeKey());
+
+        PermissionDTO permissionDT4 = rolePermissions.get(3);
+        assertEquals("ROLE_ADMIN", permissionDT4.getRoleKey());
+        assertEquals("MISSING.PRIVILEGE", permissionDT4.getPrivilegeKey());
+
+        PermissionDTO permissionDT5 = rolePermissions.get(4);
+        assertEquals("ROLE_ADMIN", permissionDT5.getRoleKey());
+        assertEquals("PERMISSION_PRESENT_IN_TWO_MS", permissionDT5.getPrivilegeKey());
 
         verify(tenantConfigRepository, times(1)).getConfigFullPath(eq(XM_TENANT), eq(PERMISSIONS_PATH));
     }

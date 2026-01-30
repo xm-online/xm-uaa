@@ -434,7 +434,7 @@ public class ClientResourceIntTest {
     @Test
     @Transactional
     public void getClientsByClientIdContains() throws Exception {
-        clientService.save(client);
+        client = clientService.save(client);
 
         getUserByLoginContainsMatcher(DEFAULT_CLIENT_ID);
         getUserByLoginContainsMatcher(DEFAULT_CLIENT_ID.toLowerCase());
@@ -452,7 +452,7 @@ public class ClientResourceIntTest {
     @Transactional
     public void getClientsByClientIds() throws Exception {
         // Initialize the database
-        clientService.save(client);
+        client = clientService.save(client);
         Client client2 = createEntity(em);
         client2.setClientId(UPDATED_CLIENT_ID);
         clientService.save(client2);
