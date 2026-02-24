@@ -1,0 +1,422 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+  "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+  "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+    Checkstyle configuration for Spring Boot 4 + Java 25
+    Based on: Google Java Style Guide (https://google.github.io/styleguide/javaguide.html)
+    Checkstyle version: 10.x+
+    Build tool: Gradle
+
+    To integrate in build.gradle.kts:
+
+        plugins {
+            checkstyle
+        }
+
+        checkstyle {
+            toolVersion = "10.21.0"
+            configFile = file("config/checkstyle/checkstyle.xml")
+            isIgnoreFailures = false
+            maxWarnings = 0
+        }
+-->
+
+<module name="Checker">
+
+  <property name="charset" value="UTF-8"/>
+  <property name="severity" value="error"/>
+  <property name="fileExtensions" value="java"/>
+
+  <!-- ============================================================ -->
+  <!--  FILE-LEVEL CHECKS                                           -->
+  <!-- ============================================================ -->
+
+  <!-- No tab characters in source files -->
+  <module name="FileTabCharacter">
+    <property name="eachLine" value="true"/>
+  </module>
+
+  <!-- Files must end with a newline -->
+  <module name="NewlineAtEndOfFile">
+    <property name="lineSeparator" value="lf"/>
+  </module>
+
+  <!-- Max line length: 120 chars (relaxed from Google's 100 for modern wide screens) -->
+  <module name="LineLength">
+    <property name="max" value="120"/>
+    <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
+  </module>
+
+  <!-- Suppress checks on generated sources -->
+  <module name="SuppressWarningsFilter"/>
+
+  <!-- ============================================================ -->
+  <!--  TREE WALKER (AST-based checks)                              -->
+  <!-- ============================================================ -->
+  <module name="TreeWalker">
+
+    <!-- Enable @SuppressWarnings support -->
+    <module name="SuppressWarningsHolder"/>
+
+    <!-- ========================================================
+         IMPORTS
+         ======================================================== -->
+
+    <!-- No wildcard imports -->
+    <module name="AvoidStarImport"/>
+
+    <!-- No redundant imports -->
+    <module name="RedundantImport"/>
+
+    <!-- No unused imports -->
+    <module name="UnusedImports">
+      <property name="processJavadoc" value="false"/>
+    </module>
+
+    <!-- Import order: regular imports first, then static imports at bottom -->
+    <module name="ImportOrder">
+      <property name="groups" value="*,/^java\./,/^javax\./"/>
+      <property name="ordered" value="true"/>
+      <property name="separated" value="true"/>
+      <property name="separatedStaticGroups" value="true"/>
+      <property name="option" value="bottom"/>
+      <property name="sortStaticImportsAlphabetically" value="true"/>
+    </module>
+
+    <!-- ========================================================
+         NAMING CONVENTIONS  (Google Style)
+         ======================================================== -->
+
+    <!-- Packages: lowercase letters and digits only -->
+    <module name="PackageName">
+      <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>
+    </module>
+
+    <!-- Types: UpperCamelCase -->
+    <module name="TypeName">
+      <property name="format" value="^[A-Z][a-zA-Z0-9]*$"/>
+    </module>
+
+    <!-- Interfaces: UpperCamelCase -->
+    <module name="InterfaceTypeParameterName">
+      <property name="format" value="^[A-Z][a-zA-Z0-9]*$"/>
+    </module>
+
+    <!-- Methods: lowerCamelCase -->
+    <module name="MethodName">
+      <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+    </module>
+
+    <!-- Parameters: lowerCamelCase -->
+    <module name="ParameterName">
+      <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+    </module>
+
+    <!-- Local variables: lowerCamelCase -->
+    <module name="LocalVariableName">
+      <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+    </module>
+
+    <!-- Instance variables: lowerCamelCase (no underscores) -->
+    <module name="MemberName">
+      <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+    </module>
+
+    <!-- Static variables: lowerCamelCase (non-final) -->
+    <module name="StaticVariableName">
+      <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+    </module>
+
+    <!-- Constants (static final): UPPER_SNAKE_CASE -->
+    <module name="ConstantName">
+      <property name="format" value="^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$"/>
+    </module>
+
+    <!-- Type parameters: single capital letter or UpperCamelCase followed by T -->
+    <module name="ClassTypeParameterName">
+      <property name="format" value="^[A-Z][a-zA-Z0-9]*$"/>
+    </module>
+
+    <module name="MethodTypeParameterName">
+      <property name="format" value="^[A-Z][a-zA-Z0-9]*$"/>
+    </module>
+
+    <!-- Catch parameters: lowerCamelCase -->
+    <module name="CatchParameterName">
+      <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+    </module>
+
+    <!-- Lambda parameters: lowerCamelCase -->
+    <module name="LambdaParameterName">
+      <property name="format" value="^(_|[a-z][a-zA-Z0-9]*)$"/>
+    </module>
+
+    <!-- Record components: lowerCamelCase (Java 16+) -->
+    <module name="RecordComponentName">
+      <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+    </module>
+
+    <!-- Pattern variable names: lowerCamelCase (Java 16+) -->
+    <module name="PatternVariableName">
+      <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+    </module>
+
+    <!-- ========================================================
+         WHITESPACE
+         ======================================================== -->
+
+    <!-- No trailing whitespace -->
+    <module name="RegexpSinglelineJava">
+      <property name="format" value="[ \t]+$"/>
+      <property name="message" value="Trailing whitespace is not allowed."/>
+    </module>
+
+    <!-- Spaces around generic type parameters -->
+    <module name="GenericWhitespace"/>
+
+    <!-- Method params: no space before opening paren -->
+    <module name="MethodParamPad"/>
+
+    <!-- No space before semicolons or commas -->
+    <module name="NoWhitespaceBefore">
+      <property name="tokens" value="COMMA, SEMI, POST_INC, POST_DEC, ELLIPSIS, LABELED_STAT"/>
+    </module>
+
+    <!-- No space after unary operators -->
+    <module name="NoWhitespaceAfter">
+      <property name="tokens" value="BNOT, DEC, DOT, INC, LNOT, UNARY_MINUS, UNARY_PLUS, ARRAY_DECLARATOR"/>
+    </module>
+
+    <!-- Spaces around operators -->
+    <module name="WhitespaceAround">
+      <property name="allowEmptyConstructors" value="true"/>
+      <property name="allowEmptyLambdas" value="true"/>
+      <property name="allowEmptyMethods" value="true"/>
+      <property name="allowEmptyTypes" value="true"/>
+      <property name="allowEmptyLoops" value="true"/>
+      <property name="tokens" value="ASSIGN, BAND, BAND_ASSIGN, BOR, BOR_ASSIGN, BSR, BSR_ASSIGN,
+                BXOR, BXOR_ASSIGN, COLON, DIV, DIV_ASSIGN, DO_WHILE, EQUAL, GE, GT, LAMBDA,
+                LAND, LCURLY, LE, LITERAL_CATCH, LITERAL_DO, LITERAL_ELSE, LITERAL_FINALLY,
+                LITERAL_FOR, LITERAL_IF, LITERAL_RETURN, LITERAL_SWITCH, LITERAL_SYNCHRONIZED,
+                LITERAL_TRY, LITERAL_WHILE, LOR, LT, MINUS, MINUS_ASSIGN, MOD, MOD_ASSIGN,
+                NOT_EQUAL, PLUS, PLUS_ASSIGN, QUESTION, RCURLY, SL, SLIST, SL_ASSIGN, SR,
+                SR_ASSIGN, STAR, STAR_ASSIGN, LITERAL_ASSERT, TYPE_EXTENSION_AND"/>
+    </module>
+
+    <!-- Whitespace after commas, semicolons, and type casts -->
+    <module name="WhitespaceAfter">
+      <property name="tokens" value="COMMA, SEMI, TYPECAST, LITERAL_IF, LITERAL_ELSE,
+                LITERAL_WHILE, LITERAL_DO, LITERAL_FOR, DO_WHILE"/>
+    </module>
+
+    <!-- No spaces inside parentheses -->
+    <module name="ParenPad"/>
+
+    <!-- No space after type cast -->
+    <module name="TypecastParenPad"/>
+
+    <!-- Single space after keywords -->
+    <module name="NoWhitespaceBeforeCaseDefaultColon"/>
+
+    <!-- ========================================================
+         BRACES & BLOCKS
+         ======================================================== -->
+
+    <!-- Always use braces, even for single-line if/else/for/while -->
+    <module name="NeedBraces">
+      <property name="tokens" value="LITERAL_DO, LITERAL_ELSE, LITERAL_FOR,
+                LITERAL_IF, LITERAL_WHILE"/>
+    </module>
+
+    <!-- Opening brace on same line (K&R style, required by Google Style) -->
+    <module name="LeftCurly"/>
+
+    <!-- Closing brace on its own line -->
+    <module name="RightCurly">
+      <property name="option" value="same"/>
+      <property name="tokens" value="LITERAL_TRY, LITERAL_CATCH, LITERAL_FINALLY,
+                LITERAL_IF, LITERAL_ELSE, LITERAL_DO"/>
+    </module>
+
+    <!-- Empty blocks must have a comment -->
+    <module name="EmptyBlock">
+      <property name="option" value="TEXT"/>
+      <property name="tokens" value="LITERAL_TRY, LITERAL_CATCH, LITERAL_FINALLY,
+                LITERAL_IF, LITERAL_ELSE, LITERAL_SWITCH"/>
+    </module>
+
+    <!-- Empty catch blocks: must have a comment or variable named "expected/ignored" -->
+    <module name="EmptyCatchBlock">
+      <property name="exceptionVariableName" value="expected|ignored"/>
+    </module>
+
+    <!-- ========================================================
+         INDENTATION  (Google: 2 spaces, but 4 is common in Spring)
+         Using 4 spaces as Spring Boot ecosystem standard
+         ======================================================== -->
+
+    <module name="Indentation">
+      <property name="basicOffset" value="4"/>
+      <property name="braceAdjustment" value="0"/>
+      <property name="caseIndent" value="4"/>
+      <property name="throwsIndent" value="4"/>
+      <property name="lineWrappingIndentation" value="4"/>
+      <property name="arrayInitIndent" value="4"/>
+    </module>
+
+    <!-- ========================================================
+         CLASS DESIGN
+         ======================================================== -->
+
+    <!-- Utility classes should have private constructor -->
+    <module name="HideUtilityClassConstructor"/>
+
+    <!-- Interfaces must contain methods or constants (no marker-only) -->
+    <!-- Disabled: Spring uses marker interfaces like Serializable -->
+
+    <!-- One top-level type per file -->
+    <module name="OneTopLevelClass"/>
+
+    <!-- ========================================================
+         CODING BEST PRACTICES
+         ======================================================== -->
+
+    <!-- No empty statements (lone semicolons) -->
+    <module name="EmptyStatement"/>
+
+    <!-- Use equals() properly (avoid == for objects) -->
+    <module name="EqualsHashCode"/>
+
+    <!-- Avoid assignments in subexpressions -->
+    <module name="InnerAssignment"/>
+
+    <!-- Default label in switch -->
+    <module name="DefaultComesLast"/>
+
+    <!-- No fall-through in switch cases (must comment intentional fall-throughs) -->
+    <module name="FallThrough"/>
+
+    <!-- Boolean expressions should not be over-complicated -->
+    <module name="SimplifyBooleanExpression"/>
+
+    <!-- Boolean returns should not be trivial -->
+    <module name="SimplifyBooleanReturn"/>
+
+    <!-- String literals: use equals(), not == -->
+    <module name="StringLiteralEquality"/>
+
+    <!-- No multiple variable declarations per line -->
+    <module name="MultipleVariableDeclarations"/>
+
+    <!-- One statement per line -->
+    <module name="OneStatementPerLine"/>
+
+    <!-- Array declarations: Java style (String[] args), not C style (String args[]) -->
+    <module name="ArrayTypeStyle"/>
+
+    <!-- Avoid unnecessary parentheses -->
+    <module name="UnnecessaryParentheses"/>
+
+
+    <!-- Avoid redundant modifiers (e.g. public on interface methods) -->
+    <module name="RedundantModifier"/>
+
+    <!-- Use override annotation -->
+    <module name="MissingOverride"/>
+
+    <!-- No System.out/err (use a logger) -->
+    <module name="RegexpSinglelineJava">
+      <property name="format" value="System\.(out|err)\.print"/>
+      <property name="message" value="Use a logger instead of System.out/err."/>
+    </module>
+
+    <!-- No printStackTrace() -->
+    <module name="RegexpSinglelineJava">
+      <property name="format" value="\.printStackTrace\(\)"/>
+      <property name="message" value="Use a logger instead of printStackTrace()."/>
+    </module>
+
+    <!-- Avoid TODO comments left in production code (warn only) -->
+    <module name="TodoComment">
+      <property name="severity" value="warning"/>
+      <property name="format" value="(TODO|FIXME|HACK|XXX):"/>
+    </module>
+
+    <!-- Upper-case L suffix for long literals (e.g. 100L not 100l) -->
+    <module name="UpperEll"/>
+
+    <!-- ========================================================
+         MODIFIERS ORDER  (JLS order)
+         ======================================================== -->
+
+    <module name="ModifierOrder"/>
+
+    <!-- ========================================================
+         METRICS / COMPLEXITY
+         ======================================================== -->
+
+    <!-- Limit method length -->
+    <module name="MethodLength">
+      <property name="max" value="80"/>
+      <property name="countEmpty" value="false"/>
+    </module>
+
+    <!-- Limit number of method parameters -->
+    <module name="ParameterNumber">
+      <property name="max" value="8"/>
+    </module>
+
+    <!-- Cyclomatic complexity -->
+    <module name="CyclomaticComplexity">
+      <property name="max" value="15"/>
+    </module>
+
+    <!-- Boolean complexity -->
+    <module name="BooleanExpressionComplexity">
+      <property name="max" value="5"/>
+    </module>
+
+    <!-- ========================================================
+         ANNOTATIONS
+         ======================================================== -->
+
+    <!-- Annotations should be on their own line -->
+    <module name="AnnotationLocation">
+      <property name="allowSamelineSingleParameterlessAnnotation" value="false"/>
+    </module>
+
+    <!-- ========================================================
+         JAVA 21+ / MODERN JAVA FEATURES
+         ======================================================== -->
+
+    <!-- Sealed classes: permit list on same line is fine — no specific check needed -->
+
+    <!-- Records: component names already covered by RecordComponentName above -->
+
+    <!-- Pattern matching instanceof: variable naming covered by PatternVariableName -->
+
+    <!-- No magic numbers (except commonly accepted ones) -->
+    <module name="MagicNumber">
+      <property name="severity" value="warning"/>
+      <property name="ignoreNumbers" value="-1, 0, 1, 2, 3, 4, 5, 8, 10, 16, 32, 64, 100, 1000"/>
+      <property name="ignoreAnnotation" value="true"/>
+      <property name="ignoreHashCodeMethod" value="true"/>
+    </module>
+
+    <!-- ========================================================
+         MISCELLANEOUS
+         ======================================================== -->
+
+    <!-- Checks that there is no whitespace before and after the ... in varargs -->
+    <module name="NoWhitespaceBeforeCaseDefaultColon"/>
+
+    <!-- Ensure classes that define equals() also define hashCode() -->
+    <module name="EqualsHashCode"/>
+
+    <!-- Long lines in string literals excluded from line length via ignorePattern above -->
+
+  </module>
+
+</module>

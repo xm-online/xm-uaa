@@ -1,0 +1,13 @@
+dependencies {
+    // jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
+}
+
+springBoot {
+    buildInfo {
+        excludes = ['time']
+    }
+}
+
+bootRun {
+    args = ["--spring.profiles.active=${springProfiles}"]
+}

@@ -1,0 +1,116 @@
+
+buildscript {
+  repositories {
+    mavenLocal()
+    mavenCentral()
+    gradlePluginPortal()
+    maven { url = "https://repo.spring.io/plugins-release" }
+  }
+  dependencies {
+  }
+}
+
+plugins {
+    id "java"
+    id "maven-publish"
+    id "idea"
+    id "jacoco"
+    id "checkstyle"
+    id "pmd"
+    id "eclipse"
+    id "org.springframework.boot"
+    id "org.liquibase.gradle"
+    id "org.sonarqube"
+    id "war"
+    id "io.spring.dependency-management"
+}
+
+dependencyManagement {
+  imports {
+    mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
+    mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+  }
+}
+
+group = "com.icthh.xm.uaa"
+description = ""
+
+java {
+    sourceCompatibility=25
+    targetCompatibility=25
+}
+assert System.properties["java.specification.version"] == "25"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+      url = "https://reposilite.jevera.software/releases"
+    }
+}
+
+apply from: "gradle/liquibase.gradle"
+apply from: "gradle/sonar.gradle"
+apply from: "gradle/spring-boot.gradle"
+apply from: "gradle/version.gradle"
+apply from: "gradle/test.gradle"
+
+idea {
+    module {
+        excludeDirs += files("node_modules")
+    }
+}
+
+eclipse {
+    sourceSets {
+        main {
+            java {
+                srcDirs += ["build/generated/sources/annotationProcessor/java/main"]
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation "org.springframework.boot:spring-boot-micrometer-tracing-brave" // TODO: can be removed after finishing opne-telemetry task
+    implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa"
+    implementation "org.springframework.boot:spring-boot-starter-web"
+    implementation "org.springframework.boot:spring-boot-starter-security-oauth2-client"
+    implementation "org.springframework.boot:spring-boot-starter-security-oauth2-resource-server"
+
+    implementation "org.springframework.cloud:spring-cloud-starter-consul-discovery"
+
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
+    implementation "tools.jackson.datatype:jackson-datatype-hibernate7"
+    implementation "org.postgresql:postgresql"
+
+    implementation "com.icthh.xm.commons:xm-commons-permission:${xmCommonsVersion}"
+    implementation "com.icthh.xm.commons:xm-commons-migration-db:${xmCommonsVersion}"
+    implementation "com.icthh.xm.commons:xm-commons-lep:${xmCommonsVersion}"
+    implementation "com.icthh.xm.commons:xm-commons-lep-groovy:${xmCommonsVersion}"
+
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+
+    testImplementation "org.projectlombok:lombok:${lombokVersion}"
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
+    testImplementation "org.springframework.boot:spring-boot-testcontainers"
+    testImplementation("org.testcontainers:junit-jupiter:1.21.4") // todo: version is necessary ??
+    testImplementation "org.testcontainers:testcontainers-postgresql"
+    testImplementation "org.testcontainers:testcontainers-kafka"
+
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+}
+
+checkstyle {
+  toolVersion = "${checkstyleToolVersion}"
+  ignoreFailures = false
+  checkstyleTest.configFile = rootProject.file("config/checkstyle/checkstyle-test.xml")
+}
+
+pmd {
+  toolVersion = "${pmdToolVersion}"
+  ignoreFailures = false
+  ruleSetFiles = files("config/pmd/pmd.xml")
+}

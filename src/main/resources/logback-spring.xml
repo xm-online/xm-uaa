@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration scan="true">
+  <springProperty scope="context" name="springAppName" source="spring.application.name"/>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <charset>utf-8</charset>
+      <Pattern>%d %-5level [%thread] [${springAppName:-}] [%X{traceId:-}] [%X{rid}] %logger{0}: %msg%n</Pattern>
+    </encoder>
+  </appender>
+
+  <appender name="STDOUT_JSON" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+  </appender>
+
+  <logger name="com.icthh.xm.gate" level="#logback.loglevel#"/>
+
+  <logger name="io.github.jhipster" level="#logback.loglevel#"/>
+
+  <logger name="javax.activation" level="WARN"/>
+  <logger name="javax.mail" level="WARN"/>
+  <logger name="javax.xml.bind" level="WARN"/>
+  <logger name="ch.qos.logback" level="WARN"/>
+  <logger name="com.codahale.metrics" level="WARN"/>
+  <logger name="com.netflix" level="WARN"/>
+  <logger name="com.netflix.discovery" level="INFO"/>
+  <logger name="com.ryantenney" level="WARN"/>
+  <logger name="com.sun" level="WARN"/>
+  <logger name="com.zaxxer" level="WARN"/>
+  <logger name="io.undertow" level="WARN"/>
+  <logger name="io.undertow.websockets.jsr" level="ERROR"/>
+  <logger name="org.apache" level="WARN"/>
+  <logger name="org.apache.catalina.startup.DigesterFactory" level="OFF"/>
+  <logger name="org.bson" level="WARN"/>
+  <logger name="org.hibernate.validator" level="WARN"/>
+  <logger name="org.springframework" level="WARN"/>
+  <logger name="org.springframework.web" level="WARN"/>
+  <logger name="org.springframework.security" level="WARN"/>
+  <logger name="org.springframework.cache" level="WARN"/>
+  <logger name="org.thymeleaf" level="WARN"/>
+  <logger name="org.xnio" level="WARN"/>
+  <logger name="springfox" level="WARN"/>
+  <logger name="sun.rmi" level="WARN"/>
+  <logger name="sun.net.www" level="INFO"/>
+  <logger name="sun.rmi.transport" level="WARN"/>
+  <logger name="org.reflections" level="INFO"/>
+  <logger name="org.apache.kafka.clients" level="ERROR"/>
+  <logger name="org.springframework.boot.actuate.endpoint.EndpointId" level="ERROR"/>
+  <logger name="com.netflix.config.sources.URLConfigurationSource" level="ERROR"/>
+
+  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+    <resetJUL>true</resetJUL>
+  </contextListener>
+
+  <root level="#logback.loglevel#">
+    <appender-ref ref="${LOG_APPENDER_NAME:-STDOUT}"/>
+    <!--
+            <appender-ref ref="FILE"/>
+    -->
+  </root>
+
+</configuration>

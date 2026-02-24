@@ -1,0 +1,45 @@
+tasks.register('getProjectVersion') {
+  doLast {
+    println project.version
+  }
+}
+
+tasks.register('incrementProjectVersion') {
+  group = 'versioning'
+  doLast {
+    def propsFile = file("${project.projectDir}/gradle.properties")
+    String version = project.version.toString()
+    println "old version: $version"
+
+    def (major, minor, patch) = version.tokenize(".")
+    String newVersion = "${major}.${minor}.${patch.toInteger() + 1}"
+    println "new version: $newVersion"
+
+    updateVersion(propsFile, newVersion)
+  }
+}
+
+tasks.register('decrementProjectVersion') {
+  group = 'versioning'
+  dependsOn processResources
+  doLast {
+    def propsFile = file("${project.projectDir}/gradle.properties")
+    String version = project.version.toString()
+    println "old version: $version"
+
+    def (major, minor, patch) = version.tokenize(".")
+    int patchInt = patch.toInteger()
+    String newVersion = patchInt > 0 ? "${major}.${minor}.${patchInt - 1}" : version
+    println "new version: $newVersion"
+
+    updateVersion(propsFile, newVersion)
+  }
+}
+
+static def updateVersion(File propsFile, String newVersion) {
+  def lines = propsFile.readLines()
+  def updated = lines.collect { line ->
+    line =~ /^version\s*=/ ? "version=${newVersion}" : line
+  }
+  propsFile.text = updated.join('\n')
+}

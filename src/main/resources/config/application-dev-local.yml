@@ -1,0 +1,32 @@
+logging:
+  level:
+    ROOT: DEBUG
+    tech.jhipster: DEBUG
+    org.hibernate.SQL: DEBUG
+    com.icthh.xm.gate: DEBUG
+    com.icthh.xm: DEBUG
+#    org.springframework.boot.autoconfigure: DEBUG
+
+management:
+  endpoint:
+    health:
+      show-details: always
+
+xm-config:
+  enabled: true
+#  xmConfigUrl: http://localhost:8084
+  kafka-config-topic: config_topic
+  configMode: FILE
+  configDirPath: /home/vosiievska/work/defnerd/xm-ms-config-repository
+
+oauth2:
+  signature-verification:
+    public-key-endpoint-uri: http://localhost:8084/api/token_key
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          oidc:
+            client-secret: 58kTzuPUPArpc8TOUrSuLGTpJucNqiOe

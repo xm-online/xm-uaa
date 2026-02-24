@@ -1,0 +1,52 @@
+configurations {
+    liquibaseRuntime.extendsFrom sourceSets.main.compileClasspath
+}
+
+dependencies {
+  implementation "org.springframework.boot:spring-boot-starter-liquibase"
+
+  implementation "org.liquibase:liquibase-core"
+  liquibaseRuntime "org.liquibase:liquibase-core"
+//  liquibaseRuntime "info.picocli:picocli:4.7.7"
+  liquibaseRuntime "org.postgresql:postgresql"
+//  liquibaseRuntime "org.liquibase.ext:liquibase-hibernate6:${liquibaseVersion}"
+}
+
+project.ext.diffChangelogFile = "src/main/resources/config/liquibase/changelog/" + new Date().format("yyyyMMddHHmmss") + "_changelog.xml"
+if (!project.hasProperty("runList")) {
+ project.ext.runList = "main"
+}
+
+liquibase {
+  activities {
+    main {
+      driver "org.postgresql.Driver"
+      url "jdbc:postgresql://localhost:5432/uaa"
+      username "uaa"
+      changelogFile "src/main/resources/config/liquibase/master.xml"
+      logLevel "debug"
+      classpath "src/main/resources/"
+    }
+    diffLog {
+      driver "org.postgresql.Driver"
+      url "jdbc:postgresql://localhost:5432/uaa"
+      username "uaa"
+      changelogFile project.ext.diffChangelogFile
+      referenceUrl "hibernate:spring:com.icthh.xm.uaa.domain?dialect=org.hibernate.dialect.PostgreSQLDialect&hibernate.physical_naming_strategy=org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy&hibernate.implicit_naming_strategy=org.springframework.boot.hibernate.SpringImplicitNamingStrategy"
+      logLevel "debug"
+      classpath "${project.projectDir}/classes/java/main"
+      excludeObjects "oauth_access_token, oauth_approvals, oauth_client_details, oauth_client_token, oauth_code, oauth_refresh_token"
+    }
+  }
+
+  runList = project.ext.runList
+}
+
+liquibaseDiff.dependsOn(compileJava)
+liquibaseDiffChangelog.dependsOn(compileJava)
+
+ext {
+  if (project.hasProperty("no-liquibase")) {
+    springProfiles += ",no-liquibase"
+  }
+}

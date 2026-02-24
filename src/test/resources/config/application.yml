@@ -1,0 +1,106 @@
+# ===================================================================
+# Spring Boot configuration.
+#
+# This configuration is used for unit/integration tests.
+#
+# More information on profiles: https://www.jhipster.tech/profiles/
+# More information on configuration properties: https://www.jhipster.tech/common-application-properties/
+# ===================================================================
+
+# ===================================================================
+# Standard Spring Boot properties.
+# Full reference is available at:
+# https://docs.spring.io/spring-boot/appendix/application-properties/index.html
+# ===================================================================
+
+spring:
+  application:
+    name: uaa
+  cloud:
+    consul:
+      discovery:
+        enabled: false
+        instanceId: ${spring.application.name}:${spring.application.instance-id:${random.value}}
+      config:
+        enabled: false
+      enabled: false
+    function:
+      definition: kafkaConsumer;kafkaProducer
+    stream:
+      kafka:
+        binder:
+          brokers: localhost
+          zk-nodes: localhost
+  security:
+    oauth2:
+      client:
+        provider:
+          oidc:
+            issuer-uri: http://localhost:9080/realms/test
+        registration:
+          oidc:
+            client-id: webapp
+            client-secret: xxx
+            scope: openid, profile, email
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9080/realms/test
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    url: jdbc:postgresql://localhost:5432/uaa
+    username: postgres
+    password: postgres
+  jpa:
+    database-platform: com.icthh.xm.commons.migration.db.jsonb.CustomPostgreSQLDialect
+    database: POSTGRESQL
+    show-sql: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate.id.db_structure_naming_strategy: single # use legacy hibernate_sequence - tests only
+      hibernate.model.generator_name_as_sequence_name: false
+      hibernate.id.new_generator_mappings: true
+      hibernate.cache.use_second_level_cache: false
+      hibernate.cache.use_query_cache: false
+      hibernate.cache.use_minimal_puts: true
+      hibernate.hbm2ddl.auto: none
+      hibernate.show_sql: true
+      hibernate.format_sql: true
+      hibernate.interceptor: com.icthh.xm.commons.domainevent.db.service.DatabaseSourceInterceptor
+      hibernate:
+        dialect: com.icthh.xm.commons.migration.db.jsonb.CustomPostgreSQLDialect
+  liquibase:
+    contexts: test
+    change-log: classpath:config/liquibase/master-test.xml
+    parameters:
+      tenant.defaultLang: en
+  mail:
+    host: localhost
+  main:
+    allow-bean-definition-overriding: true
+  messages:
+    basename: i18n/messages
+  task:
+    execution:
+      thread-name-prefix: uaa-task-
+      pool:
+        core-size: 1
+        max-size: 50
+        queue-capacity: 10000
+    scheduling:
+      thread-name-prefix: uaa-scheduling-
+      pool:
+        size: 20
+  thymeleaf:
+    mode: HTML
+
+server:
+  port: 10344
+  address: localhost
+
+xm-config:
+  enabled: false
+
+application:
+  lep-message-handling:
+    disabled: true

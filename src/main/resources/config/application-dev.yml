@@ -1,0 +1,103 @@
+# ===================================================================
+# Spring Boot configuration for the "dev" profile.
+#
+# This configuration overrides the application.yml file.
+#
+# More information on profiles: https://www.jhipster.tech/profiles/
+# More information on configuration properties: https://www.jhipster.tech/common-application-properties/
+# ===================================================================
+
+# ===================================================================
+# Standard Spring Boot properties.
+# Full reference is available at:
+# https://docs.spring.io/spring-boot/appendix/application-properties/index.html
+# ===================================================================
+
+logging:
+  level:
+    ROOT: DEBUG
+    tech.jhipster: DEBUG
+    org.hibernate.SQL: DEBUG
+    com.icthh.xm.uaa: DEBUG
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0 # report 100% of traces
+
+spring:
+  jackson:
+    serialization:
+      indent-output: true
+  security:
+    oauth2:
+      client:
+        provider:
+          oidc:
+            issuer-uri: http://localhost:9080/realms/test
+        registration:
+          oidc:
+            client-id: webapp
+            client-secret: xxx
+            scope: openid, profile, email
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9080/realms/test
+  cloud:
+    consul:
+      config:
+        fail-fast: false # if not in "prod" profile, do not force to use Spring Cloud Config
+        format: yaml
+        profile-separator: '-'
+      discovery:
+        prefer-ip-address: true
+        tags:
+          - profile=${spring.profiles.active}
+          - version='@project.version@'
+          - git-version=${git.commit.id.describe:}
+          - git-commit=${git.commit.id.abbrev:}
+          - git-branch=${git.branch:}
+      host: localhost
+      port: 8500
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    url: jdbc:postgresql://localhost:5432/uaa
+    username: postgres
+    password: postgres
+  jpa:
+    database-platform: com.icthh.xm.commons.migration.db.jsonb.CustomPostgreSQLDialect
+    database: POSTGRESQL
+    show-sql: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate.model.generator_name_as_sequence_name: false
+      hibernate.id.new_generator_mappings: true
+      hibernate.cache.use_second_level_cache: false
+      hibernate.cache.use_query_cache: false
+      hibernate.cache.use_minimal_puts: true
+      hibernate.hbm2ddl.auto: none
+      hibernate.show_sql: true
+      hibernate.format_sql: true
+      hibernate.interceptor: com.icthh.xm.commons.domainevent.db.service.DatabaseSourceInterceptor
+      hibernate:
+        dialect: com.icthh.xm.commons.migration.db.jsonb.CustomPostgreSQLDialect
+  liquibase:
+    # Remove 'faker' if you do not want the sample data to be loaded automatically
+    contexts: dev, faker
+  messages:
+    cache-duration: PT1S # 1 second, see the ISO 8601 standard
+  thymeleaf:
+    cache: false
+
+server:
+  port: 9999
+  # make sure requests the proxy uri instead of the server one
+  forward-headers-strategy: native
+
+application:
+  security:
+    oauth2:
+      audience:
+        - account
+        - web_app

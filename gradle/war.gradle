@@ -1,0 +1,14 @@
+apply plugin: "war"
+
+bootWar {
+    webAppDirectory = file("build/resources/main/static/")
+    mainClass = "com.icthh.xm.uaa.UaaApp"
+    includes = ["WEB-INF/**", "META-INF/**"]
+}
+
+war {
+    webAppDirectory = file("build/resources/main/static/")
+    enabled = true
+    archiveExtension = "war.original"
+    includes = ["WEB-INF/**", "META-INF/**"]
+}

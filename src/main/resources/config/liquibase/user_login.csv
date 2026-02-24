@@ -1,0 +1,5 @@
+id;type_key;state_key;login;removed;user_key
+1;LOGIN.NICKNAME;LOGIN.NEW;system;0;user_key1
+2;LOGIN.NICKNAME;LOGIN.NEW;anonymoususer;0;user_key2
+3;LOGIN.NICKNAME;LOGIN.NEW;admin;0;user_key3
+4;LOGIN.NICKNAME;LOGIN.NEW;user;0;user_key4

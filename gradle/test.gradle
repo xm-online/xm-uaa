@@ -1,0 +1,37 @@
+
+test {
+  systemProperty "spring.profiles.active", "test"
+  include '**/*UnitTest*'
+  include '**/*IntTest*'
+
+  maxHeapSize = "1G"
+  description = "Execute integration & unit tests."
+  group = "verification"
+  reports.html.required = false
+  testLogging {
+    exceptionFormat = 'full'
+    events = ['PASSED', 'FAILED', 'SKIPPED', 'STANDARD_OUT', 'STANDARD_ERROR']
+  }
+  useJUnitPlatform()
+}
+
+tasks.register('cucumberTest', Test) {
+  include "**/*CucumberIT*"
+
+  description = "Execute cucumber BDD tests."
+  group = "verification"
+  reports.html.required = false
+}
+
+check.dependsOn cucumberTest
+check.dependsOn test
+
+tasks.register('testReport', TestReport) {
+  destinationDirectory = file(layout.buildDirectory.dir("reports/tests"))
+  testResults.from(test)
+}
+
+tasks.register('cucumberTestReport', TestReport) {
+  destinationDirectory = file(layout.buildDirectory.dir("reports/tests"))
+  testResults.from(cucumberTest)
+}
