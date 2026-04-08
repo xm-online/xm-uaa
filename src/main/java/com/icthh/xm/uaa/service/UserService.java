@@ -166,7 +166,7 @@ public class UserService {
         newUser.setLastName(user.getLastName());
         newUser.setImageUrl(user.getImageUrl());
         newUser.setLangKey(user.getLangKey() == null ? "en" : user.getLangKey());
-        newUser.setAuthorities(getRequiredRoleKey(user));
+        newUser.setAuthorities(getRequiredRoleKey(user)); // default role is ROLE_USER
         String encryptedPassword = passwordEncoder.encode(RandomUtil.generatePassword());
         newUser.setPassword(encryptedPassword);
         newUser.setPasswordSetByUser(false);
@@ -263,6 +263,7 @@ public class UserService {
      * @param logins  the list of new logins
      * @return new user
      */
+    @LogicExtensionPoint("UpdateUserLogins")
     public Optional<UserDTO> updateUserLogins(String userKey, List<UserLogin> logins) {
         Optional<User> f = userRepository
             .findOneByUserKey(userKey)
@@ -282,6 +283,7 @@ public class UserService {
      *
      * @param userKey user key;
      */
+    @LogicExtensionPoint("DeleteUser")
     public void deleteUser(String userKey) {
         deleteUser(userKey, userDTO -> log.info("No delete notification sent"));
     }
@@ -291,6 +293,7 @@ public class UserService {
      *
      * @param userKey user key;
      */
+    @LogicExtensionPoint("DeleteUserWithNotification")
     public void deleteUser(String userKey, Consumer<UserDTO> notification) {
         xmAuthenticationContextHolder.getContext().getUserKey().ifPresent(key -> {
             if (key.equals(userKey)) {
