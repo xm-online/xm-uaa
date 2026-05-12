@@ -12,6 +12,8 @@ import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.UserSpec;
 import com.icthh.xm.uaa.service.otp.OtpType;
 import com.icthh.xm.uaa.security.ldap.Type;
+
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -149,7 +151,7 @@ public class TenantProperties {
 
         @Data
         public static class ApiKey {
-            private String defaultTtl;
+            private Duration defaultTtl;
             private String secret;
         }
     }
