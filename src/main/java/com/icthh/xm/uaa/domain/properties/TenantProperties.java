@@ -128,6 +128,9 @@ public class TenantProperties {
         @JsonProperty("idp")
         private Idp idp;
 
+        @JsonProperty("apiKey")
+        private ApiKey apiKey;
+
         @Data
         @JsonIgnoreProperties(ignoreUnknown = true)
         public static class Idp {
@@ -144,6 +147,11 @@ public class TenantProperties {
             }
         }
 
+        @Data
+        public static class ApiKey {
+            private String defaultTtl;
+            private String secret;
+        }
     }
 
     private PublicSettings publicSettings;
