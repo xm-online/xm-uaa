@@ -27,4 +27,6 @@ public interface ClientRepository extends JpaRepository<Client, Long>, ResourceR
 
     List<Client> findAllByClientIdIn(List<String> clientIds);
 
+    Client getReferenceById(Long id);
+
 }

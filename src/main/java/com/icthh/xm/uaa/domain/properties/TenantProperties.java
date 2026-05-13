@@ -12,6 +12,8 @@ import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.domain.UserSpec;
 import com.icthh.xm.uaa.service.otp.OtpType;
 import com.icthh.xm.uaa.security.ldap.Type;
+
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -128,6 +130,9 @@ public class TenantProperties {
         @JsonProperty("idp")
         private Idp idp;
 
+        @JsonProperty("apiKey")
+        private ApiKey apiKey;
+
         @Data
         @JsonIgnoreProperties(ignoreUnknown = true)
         public static class Idp {
@@ -144,6 +149,11 @@ public class TenantProperties {
             }
         }
 
+        @Data
+        public static class ApiKey {
+            private Duration defaultTtl;
+            private String secret;
+        }
     }
 
     private PublicSettings publicSettings;
