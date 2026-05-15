@@ -151,7 +151,7 @@ public class TenantProperties {
 
         @Data
         public static class ApiKey {
-            private Duration defaultTtl;
+            private Long defaultTtlInSeconds;
             private String secret;
         }
     }
