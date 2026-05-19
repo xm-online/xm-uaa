@@ -23,5 +23,6 @@ spring:
                     - version=${build.version}
                     - git-branch=${git.branch:}
                     - git-commit=${git.commit.id.abbrev:}
+                    - swagger=v2
             host: localhost
             port: 8500
