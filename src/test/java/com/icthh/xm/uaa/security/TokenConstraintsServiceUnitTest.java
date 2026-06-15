@@ -254,8 +254,20 @@ public class TokenConstraintsServiceUnitTest {
         assertThat(result).hasValue(longerThanGlobal);
     }
 
-    // -----------------------------------------------------------------------
-    // Tests: integration with getAccessTokenValiditySeconds(OAuth2Authentication)
+    @Test
+    public void givenNonPositiveGlobalDefault_whenClientExceedsIt_thenReturnsClientValueUnchanged() {
+        // global default of 0 means non-expiring; extension guard must not cap a valid positive value to 0
+        security.setAccessTokenValiditySeconds(0);
+        security.setAllowClientTokenLifetimeExtension(false);
+        int clientAccess = 1800;
+        addClientConfig(CLIENT_A, clientAccess, null);
+
+        Optional<Integer> result = service.resolveClientSpecificAccessTokenValidity(CLIENT_A);
+
+        assertThat(result).hasValue(clientAccess);
+    }
+
+
     // -----------------------------------------------------------------------
 
     @Test
@@ -284,11 +296,8 @@ public class TokenConstraintsServiceUnitTest {
 
     @Test
     public void givenClientSpecificAccessConfig_whenGetRefreshTokenValidity_thenReturnsGlobalDefaultForRefresh() {
-        // Only access token configured → refresh should fall back to global default
+        // Only access token configured → refresh should fall back to global default (no DB lookup)
         addClientConfig(CLIENT_A, 1800, null);
-        ClientDetails clientDetails = mock(ClientDetails.class);
-        when(clientDetails.getRefreshTokenValiditySeconds()).thenReturn(null);
-        when(clientDetailsService.loadClientByClientId(CLIENT_A)).thenReturn(clientDetails);
 
         OAuth2Authentication auth = buildAuthentication(CLIENT_A, "user");
         int result = service.getRefreshTokenValiditySeconds(auth);

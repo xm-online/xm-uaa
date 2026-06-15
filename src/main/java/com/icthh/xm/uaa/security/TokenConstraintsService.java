@@ -122,12 +122,10 @@ public class TokenConstraintsService {
             }
         }
 
-        return loadClientInfo(authentication, ClientDetails::getRefreshTokenValiditySeconds)
-            .orElse(firstNonNull(
-                tenantPropertiesService.getTenantProps().getSecurity().getRefreshTokenValiditySeconds(),
-                applicationProperties.getSecurity().getRefreshTokenValiditySeconds(),
-                defaultRefreshTokenValiditySeconds
-            )
+        return firstNonNull(
+            tenantPropertiesService.getTenantProps().getSecurity().getRefreshTokenValiditySeconds(),
+            applicationProperties.getSecurity().getRefreshTokenValiditySeconds(),
+            defaultRefreshTokenValiditySeconds
         );
     }
 
@@ -216,6 +214,9 @@ public class TokenConstraintsService {
         }
 
         TenantProperties.Security.ClientTokenLifetime lifetime = clientLifetimes.get(clientId);
+        if (lifetime == null) {
+            return Optional.empty();
+        }
         Integer configured = extractor.apply(lifetime);
         if (configured == null) {
             return Optional.empty();
@@ -230,7 +231,7 @@ public class TokenConstraintsService {
 
         if (!security.isAllowClientTokenLifetimeExtension()) {
             int globalDefault = globalDefaultSupplier.getAsInt();
-            if (configured > globalDefault) {
+            if (globalDefault > 0 && configured > globalDefault) {
                 log.warn("Client-specific {} token validity {} for clientId='{}' exceeds global default {}. "
                         + "Capping at global default. Set 'allowClientTokenLifetimeExtension: true' to " +
                         "permit extensions.",
