@@ -117,6 +117,22 @@ public class TenantProperties {
         @JsonProperty("maxPasswordAttempts")
         private Integer maxPasswordAttempts;
 
+        /**
+         * Per-client token lifetime overrides, keyed by client_id.
+         * When present, the configured value takes precedence over global defaults.
+         * By default, per-client values may only reduce (not extend) the global lifetime.
+         */
+        @JsonProperty("clientTokenLifetimes")
+        private Map<String, ClientTokenLifetime> clientTokenLifetimes = new HashMap<>();
+
+        /**
+         * When {@code false} (default), per-client token lifetimes that exceed the
+         * global/tenant default are silently capped at the global default.
+         * Set to {@code true} only if clients intentionally need longer-than-default lifetimes.
+         */
+        @JsonProperty("allowClientTokenLifetimeExtension")
+        private boolean allowClientTokenLifetimeExtension = false;
+
         @JsonSetter("accessTokenValiditySeconds")
         public void setAccessTokenValiditySeconds(Integer accessTokenValiditySeconds) {
             this.accessTokenValiditySeconds = accessTokenValiditySeconds;
@@ -132,6 +148,23 @@ public class TenantProperties {
 
         @JsonProperty("apiKey")
         private ApiKey apiKey;
+
+        /**
+         * Per-client token lifetime configuration for a single client.
+         * Both fields are optional; a {@code null} value means "use global default".
+         */
+        @Data
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        public static class ClientTokenLifetime {
+
+            /** Access token validity in seconds for this client. Must be positive if set. */
+            @JsonProperty("accessTokenValiditySeconds")
+            private Integer accessTokenValiditySeconds;
+
+            /** Refresh token validity in seconds for this client. Must be positive if set. */
+            @JsonProperty("refreshTokenValiditySeconds")
+            private Integer refreshTokenValiditySeconds;
+        }
 
         @Data
         @JsonIgnoreProperties(ignoreUnknown = true)

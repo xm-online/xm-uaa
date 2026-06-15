@@ -2,14 +2,17 @@ package com.icthh.xm.uaa.security;
 
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.uaa.config.ApplicationProperties;
+import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.provider.ClientDetails;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -21,6 +24,7 @@ import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
  * The {@link TokenConstraintsService} class.
  */
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @IgnoreLogginAspect
 public class TokenConstraintsService {
@@ -46,6 +50,13 @@ public class TokenConstraintsService {
      * @return the access token validity period in seconds
      */
     public int getAccessTokenValiditySeconds(OAuth2Authentication authentication) {
+        String clientId = authentication.getOAuth2Request().getClientId();
+        Optional<Integer> clientSpecific = resolveClientSpecificAccessTokenValidity(clientId);
+        if (clientSpecific.isPresent()) {
+            log.debug("Using client-specific access token validity for clientId='{}': {} seconds", clientId, clientSpecific.get());
+            return clientSpecific.get();
+        }
+
         Object principal = authentication.getPrincipal();
         if (principal instanceof DomainUserDetails) {
             return getAccessTokenValiditySeconds(DomainUserDetails.class.cast(principal));
@@ -94,6 +105,14 @@ public class TokenConstraintsService {
      * @return the refresh token validity period in seconds
      */
     public int getRefreshTokenValiditySeconds(OAuth2Authentication authentication) {
+        String clientId = authentication.getOAuth2Request().getClientId();
+        Optional<Integer> clientSpecific = resolveClientSpecificRefreshTokenValidity(clientId);
+        if (clientSpecific.isPresent()) {
+            log.debug("Using client-specific refresh token validity for clientId='{}': {} seconds",
+                clientId, clientSpecific.get());
+            return clientSpecific.get();
+        }
+
         Integer validity;
         Object principal = authentication.getPrincipal();
         if (principal instanceof DomainUserDetails) {
@@ -144,6 +163,91 @@ public class TokenConstraintsService {
 
         // get default
         return defaultTfaAccessTokenValiditySeconds;
+    }
+
+    /**
+     * Resolves per-client access token validity from tenant properties (external {@code uaa.yaml}).
+     * Returns empty if: no config exists for the client, the configured value is invalid (≤ 0),
+     * or the value would exceed the global default when extension is not allowed.
+     *
+     * @param clientId OAuth2 client identifier
+     * @return resolved access token validity seconds, or empty to fall back to default chain
+     */
+    Optional<Integer> resolveClientSpecificAccessTokenValidity(String clientId) {
+        return resolveClientSpecificValidity(
+            clientId,
+            TenantProperties.Security.ClientTokenLifetime::getAccessTokenValiditySeconds,
+            this::getTenantRelatedAccessTokenValiditySeconds,
+            "access"
+        );
+    }
+
+    /**
+     * Resolves per-client refresh token validity from tenant properties (external {@code uaa.yaml}).
+     * Returns empty if: no config exists for the client, the configured value is invalid (≤ 0),
+     * or the value would exceed the global default when extension is not allowed.
+     *
+     * @param clientId OAuth2 client identifier
+     * @return resolved refresh token validity seconds, or empty to fall back to default chain
+     */
+    Optional<Integer> resolveClientSpecificRefreshTokenValidity(String clientId) {
+        return resolveClientSpecificValidity(
+            clientId,
+            TenantProperties.Security.ClientTokenLifetime::getRefreshTokenValiditySeconds,
+            this::getTenantRelatedRefreshTokenValiditySeconds,
+            "refresh"
+        );
+    }
+
+    private Optional<Integer> resolveClientSpecificValidity(
+        String clientId,
+        Function<TenantProperties.Security.ClientTokenLifetime, Integer> extractor,
+        java.util.function.IntSupplier globalDefaultSupplier,
+        String tokenType
+    ) {
+        if (clientId == null) {
+            return Optional.empty();
+        }
+
+        TenantProperties.Security security = tenantPropertiesService.getTenantProps().getSecurity();
+        Map<String, TenantProperties.Security.ClientTokenLifetime> clientLifetimes = security.getClientTokenLifetimes();
+        if (clientLifetimes == null || !clientLifetimes.containsKey(clientId)) {
+            return Optional.empty();
+        }
+
+        TenantProperties.Security.ClientTokenLifetime lifetime = clientLifetimes.get(clientId);
+        Integer configured = extractor.apply(lifetime);
+        if (configured == null) {
+            return Optional.empty();
+        }
+
+        if (configured <= 0) {
+            log.warn("Invalid {} token validity seconds {} configured for clientId='{}'; must be > 0. " +
+                    "Falling back to default.",
+                tokenType, configured, clientId);
+            return Optional.empty();
+        }
+
+        if (!security.isAllowClientTokenLifetimeExtension()) {
+            int globalDefault = globalDefaultSupplier.getAsInt();
+            if (configured > globalDefault) {
+                log.warn("Client-specific {} token validity {} for clientId='{}' exceeds global default {}. "
+                        + "Capping at global default. Set 'allowClientTokenLifetimeExtension: true' to " +
+                        "permit extensions.",
+                    tokenType, configured, clientId, globalDefault);
+                return Optional.of(globalDefault);
+            }
+        }
+
+        return Optional.of(configured);
+    }
+
+    private int getTenantRelatedRefreshTokenValiditySeconds() {
+        return firstNonNull(
+            tenantPropertiesService.getTenantProps().getSecurity().getRefreshTokenValiditySeconds(),
+            applicationProperties.getSecurity().getRefreshTokenValiditySeconds(),
+            defaultRefreshTokenValiditySeconds
+        );
     }
 
     public int getDefaultRefreshTokenValiditySeconds() {
