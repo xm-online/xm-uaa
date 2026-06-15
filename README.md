@@ -2,12 +2,17 @@
 
 # uaa
 
-This application was generated using JHipster 6.5.1, you can find documentation and help at [https://www.jhipster.tech/documentation-archive/v6.5.1](https://www.jhipster.tech/documentation-archive/v6.5.1).
+This application was generated using JHipster 6.5.1, you can find documentation and help
+at [https://www.jhipster.tech/documentation-archive/v6.5.1](https://www.jhipster.tech/documentation-archive/v6.5.1).
 
-This is a "uaa" application intended to be part of a microservice architecture, please refer to the [Doing microservices with JHipster][] page of the documentation for more information.
+This is a "uaa" application intended to be part of a microservice architecture, please refer to
+the [Doing microservices with JHipster][] page of the documentation for more information.
 
-This is also a JHipster User Account and Authentication (UAA) Server, refer to [Using UAA for Microservice Security][] for details on how to secure JHipster microservices with OAuth2.
-This application is configured for Service Discovery and Configuration with Consul. On launch, it will refuse to start if it is not able to connect to Consul at [http://localhost:8500](http://localhost:8500). For more information, read our documentation on [Service Discovery and Configuration with Consul][].
+This is also a JHipster User Account and Authentication (UAA) Server, refer to [Using UAA for Microservice Security][]
+for details on how to secure JHipster microservices with OAuth2.
+This application is configured for Service Discovery and Configuration with Consul. On launch, it will refuse to start
+if it is not able to connect to Consul at [http://localhost:8500](http://localhost:8500). For more information, read our
+documentation on [Service Discovery and Configuration with Consul][].
 
 ## Development
 
@@ -53,7 +58,9 @@ Sonar is used to analyse code quality. You can start a local Sonar server (acces
 docker-compose -f src/main/docker/sonar.yml up -d
 ```
 
-You can run a Sonar analysis with using the [sonar-scanner](https://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner) or by using the gradle plugin.
+You can run a Sonar analysis with using
+the [sonar-scanner](https://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner) or by using the gradle
+plugin.
 
 Then, run a Sonar analysis:
 
@@ -65,7 +72,8 @@ For more information, refer to the [Code quality page][].
 
 ## Using Docker to simplify development (optional)
 
-You can use Docker to improve your JHipster development experience. A number of docker-compose configuration are available in the [src/main/docker](src/main/docker) folder to launch required third party services.
+You can use Docker to improve your JHipster development experience. A number of docker-compose configuration are
+available in the [src/main/docker](src/main/docker) folder to launch required third party services.
 
 For example, to start a postgresql database in a docker container, run:
 
@@ -84,70 +92,51 @@ Then run:
 
     docker-compose -f src/main/docker/app.yml up -d
 
-For more information refer to [Using Docker and Docker-Compose][], this page also contains information on the docker-compose sub-generator (`jhipster docker-compose`), which is able to generate docker configurations for one or several JHipster applications.
+For more information refer to [Using Docker and Docker-Compose][], this page also contains information on the
+docker-compose sub-generator (`jhipster docker-compose`), which is able to generate docker configurations for one or
+several JHipster applications.
 
 ## Continuous Integration (optional)
 
-To configure CI for your project, run the ci-cd sub-generator (`jhipster ci-cd`), this will let you generate configuration files for a number of Continuous Integration systems. Consult the [Setting up Continuous Integration][] page for more information.
+To configure CI for your project, run the ci-cd sub-generator (`jhipster ci-cd`), this will let you generate
+configuration files for a number of Continuous Integration systems. Consult the [Setting up Continuous Integration][]
+page for more information.
 
 ## Per-Client Token Lifetime Configuration
 
-By default, all OAuth2 clients share a single global access-token and refresh-token lifetime that is configured in the
-external `uaa.yml`, for example:
+By default all OAuth2 clients share a single global access-token and refresh-token lifetime
+configured in the external `uaa.yml`:
 
-```yaml
+```
 security:
     accessTokenValiditySeconds: 86400    # 24 hours (global default)
     refreshTokenValiditySeconds: 7776000 # 90 days  (global default)
 ```
 
-### Adding per-client overrides
+### Per-client overrides via the database
 
-Individual clients can be given shorter (or, with `allowClientTokenLifetimeExtension: true`, longer) token lifetimes by
-adding a `clientTokenLifetimes` map under `security:` in the **external** `uaa.yaml` (deployment-specific configuration,
-**not** committed to this repository):
+Each `Client` record in the database has two optional columns:
 
-```yaml
-security:
-    accessTokenValiditySeconds: 86400
-    refreshTokenValiditySeconds: 7776000
+| Column                   | Java field                    | Purpose                                         |
+|--------------------------|-------------------------------|-------------------------------------------------|
+| `access_token_validity`  | `accessTokenValiditySeconds`  | Override access token lifetime for this client  |
+| `refresh_token_validity` | `refreshTokenValiditySeconds` | Override refresh token lifetime for this client |
 
-    # Optional: allow clients to have longer-than-global lifetimes (default: false).
-    # Set to true only when a client intentionally needs a longer lifetime.
-    allowClientTokenLifetimeExtension: false
-
-    clientTokenLifetimes:
-        example-short-lived-client:
-            accessTokenValiditySeconds: 1800    # 30 minutes
-            refreshTokenValiditySeconds: 43200  # 12 hours
-        example-api-client:
-            accessTokenValiditySeconds: 900     # 15 minutes
-            # refreshTokenValiditySeconds not set → falls back to global default
-```
+When a column is `NULL` the global/tenant default is used. Set it to a positive integer (seconds)
+to shorten (or lengthen) the lifetime for that specific client.
 
 ### Resolution priority (highest → lowest)
 
-1. Per-client value from `security.clientTokenLifetimes.<clientId>` in `uaa.yml`
-2. Per-user value stored on the `User` entity (only for user-credential flows)
-3. Per-client value stored on the `Client` entity in the database (access token only)
-4. Tenant-level global from `security.accessTokenValiditySeconds` / `security.refreshTokenValiditySeconds` in `uaa.yml`
-5. Application-level from `application.security.accessTokenValiditySeconds` in `application.yml`
-6. Hard-coded fallback: 12 h (access) / 30 d (refresh)
-
-### Validation rules
-
-* Values must be **positive** integers (seconds). Zero or negative values are rejected and fall back to the global
-  default (a warning is logged).
-* Without `allowClientTokenLifetimeExtension: true`, any per-client value that **exceeds** the global default is
-  silently capped at the global default.
-* Configuring only one of `accessTokenValiditySeconds` / `refreshTokenValiditySeconds` for a client is valid; the other
-  field falls back through the normal chain.
+1. Per-user value stored on the `User` entity (user-credential flows)
+2. Per-client value stored on the `Client` DB entity (`access_token_validity` / `refresh_token_validity`)
+3. Tenant-level global from `security.accessTokenValiditySeconds` / `security.refreshTokenValiditySeconds` in `uaa.yml`
+4. Application-level from `application.security.accessTokenValiditySeconds` in `application.yml`
+5. Hard-coded fallback: 12 h (access) / 30 d (refresh)
 
 ### Backward compatibility
 
-* Existing `uaa.yml` files without `clientTokenLifetimes` work exactly as before.
-* No database schema changes are required.
-* The `clientTokenLifetimes` map is fully optional.
+Existing clients with `NULL` in both columns continue to receive the global default lifetimes
+without any configuration changes.
 
 [jhipster homepage and latest documentation]: https://www.jhipster.tech
 [jhipster 6.5.1 archive]: https://www.jhipster.tech/documentation-archive/v6.5.1
