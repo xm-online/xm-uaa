@@ -156,14 +156,33 @@ public class TokenConstraintsServiceUnitTest {
     }
 
     // -----------------------------------------------------------------------
-    // Tests: unknown client (no ClientDetails in DB) → global defaults
+    // Tests: client exists but has null validity → global defaults are used
     // -----------------------------------------------------------------------
 
     @Test
-    public void givenUnknownClient_whenGetAccessTokenValidity_thenReturnsGlobalDefault() {
-        // ClientDetailsService returns null access/refresh for an unknown client
+    public void givenClientWithNullAccessValidity_whenGetAccessTokenValidity_thenReturnsGlobalDefault() {
         ClientDetails clientDetails = clientWithValidity(null, null);
-        when(clientDetailsService.loadClientByClientId(UNKNOWN_CLIENT)).thenReturn(clientDetails);
+        when(clientDetailsService.loadClientByClientId(CLIENT_A)).thenReturn(clientDetails);
+
+        int result = service.getAccessTokenValiditySeconds(buildAuthentication(CLIENT_A));
+
+        assertThat(result).isEqualTo(GLOBAL_ACCESS_SECONDS);
+    }
+
+    @Test
+    public void givenClientWithNullRefreshValidity_whenGetRefreshTokenValidity_thenReturnsGlobalDefault() {
+        ClientDetails clientDetails = clientWithValidity(null, null);
+        when(clientDetailsService.loadClientByClientId(CLIENT_A)).thenReturn(clientDetails);
+
+        int result = service.getRefreshTokenValiditySeconds(buildAuthentication(CLIENT_A));
+
+        assertThat(result).isEqualTo(GLOBAL_REFRESH_SECONDS);
+    }
+
+    @Test
+    public void givenClientDetailsServiceReturnsNull_whenGetAccessTokenValidity_thenReturnsGlobalDefault() {
+        // loadClientByClientId returns null → loadClientInfo resolves to Optional.empty()
+        when(clientDetailsService.loadClientByClientId(UNKNOWN_CLIENT)).thenReturn(null);
 
         int result = service.getAccessTokenValiditySeconds(buildAuthentication(UNKNOWN_CLIENT));
 
@@ -171,9 +190,8 @@ public class TokenConstraintsServiceUnitTest {
     }
 
     @Test
-    public void givenUnknownClient_whenGetRefreshTokenValidity_thenReturnsGlobalDefault() {
-        ClientDetails clientDetails = clientWithValidity(null, null);
-        when(clientDetailsService.loadClientByClientId(UNKNOWN_CLIENT)).thenReturn(clientDetails);
+    public void givenClientDetailsServiceReturnsNull_whenGetRefreshTokenValidity_thenReturnsGlobalDefault() {
+        when(clientDetailsService.loadClientByClientId(UNKNOWN_CLIENT)).thenReturn(null);
 
         int result = service.getRefreshTokenValiditySeconds(buildAuthentication(UNKNOWN_CLIENT));
 
