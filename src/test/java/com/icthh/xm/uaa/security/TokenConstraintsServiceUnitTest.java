@@ -202,6 +202,44 @@ public class TokenConstraintsServiceUnitTest {
     }
 
     // -----------------------------------------------------------------------
+    // Tests: user principal present but no user-level validity → client DB wins
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void givenUserPrincipalWithNoUserValidity_whenClientHasAccessConfig_thenReturnsClientValue() {
+        int clientAccess = 1800;
+        ClientDetails clientDetails = clientWithValidity(clientAccess, null);
+        when(clientDetailsService.loadClientByClientId(CLIENT_A)).thenReturn(clientDetails);
+
+        // DomainUserDetails with null accessTokenValiditySeconds
+        int result = service.getAccessTokenValiditySeconds(buildAuthenticationWithUserPrincipal(CLIENT_A, null));
+
+        assertThat(result).isEqualTo(clientAccess);
+    }
+
+    @Test
+    public void givenUserPrincipalWithUserValidity_whenClientHasAccessConfig_thenUserValueWins() {
+        int userAccess = 300;
+        int clientAccess = 1800;
+        ClientDetails clientDetails = clientWithValidity(clientAccess, null);
+        when(clientDetailsService.loadClientByClientId(CLIENT_A)).thenReturn(clientDetails);
+
+        int result = service.getAccessTokenValiditySeconds(buildAuthenticationWithUserPrincipal(CLIENT_A, userAccess));
+
+        assertThat(result).isEqualTo(userAccess);
+    }
+
+    @Test
+    public void givenUserPrincipalWithNoUserValidity_whenClientHasNoAccessConfig_thenReturnsGlobalDefault() {
+        ClientDetails clientDetails = clientWithValidity(null, null);
+        when(clientDetailsService.loadClientByClientId(CLIENT_A)).thenReturn(clientDetails);
+
+        int result = service.getAccessTokenValiditySeconds(buildAuthenticationWithUserPrincipal(CLIENT_A, null));
+
+        assertThat(result).isEqualTo(GLOBAL_ACCESS_SECONDS);
+    }
+
+    // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
 
@@ -218,6 +256,23 @@ public class TokenConstraintsServiceUnitTest {
         );
         UsernamePasswordAuthenticationToken userAuth =
             new UsernamePasswordAuthenticationToken("user", "n/a", Collections.emptyList());
+        return new OAuth2Authentication(request, userAuth);
+    }
+
+    private OAuth2Authentication buildAuthenticationWithUserPrincipal(String clientId,
+                                                                       Integer userAccessTokenValiditySeconds) {
+        OAuth2Request request = new OAuth2Request(
+            null, clientId, null, true, null, null, null, null, null
+        );
+        DomainUserDetails principal = new DomainUserDetails(
+            "user", "n/a", Collections.emptyList(),
+            "TEST", "userKey", false,
+            null, null,
+            userAccessTokenValiditySeconds, null, null,
+            false, null, Collections.emptyList()
+        );
+        UsernamePasswordAuthenticationToken userAuth =
+            new UsernamePasswordAuthenticationToken(principal, "n/a", principal.getAuthorities());
         return new OAuth2Authentication(request, userAuth);
     }
 }

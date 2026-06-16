@@ -48,7 +48,10 @@ public class TokenConstraintsService {
     public int getAccessTokenValiditySeconds(OAuth2Authentication authentication) {
         Object principal = authentication.getPrincipal();
         if (principal instanceof DomainUserDetails) {
-            return getAccessTokenValiditySeconds(DomainUserDetails.class.cast(principal));
+            Integer userValidity = DomainUserDetails.class.cast(principal).getAccessTokenValiditySeconds();
+            if (userValidity != null) {
+                return userValidity;
+            }
         }
 
         return loadClientInfo(authentication, ClientDetails::getAccessTokenValiditySeconds)
