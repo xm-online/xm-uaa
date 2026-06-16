@@ -118,7 +118,7 @@ to shorten (or lengthen) the lifetime for that specific client.
 1. Per-user value stored on the `User` entity (user-credential flows)
 2. Per-client value stored on the `Client` DB entity (`access_token_validity` / `refresh_token_validity`)
 3. Tenant-level global from `security.accessTokenValiditySeconds` / `security.refreshTokenValiditySeconds` in `uaa.yml`
-4. Application-level from `application.security.accessTokenValiditySeconds` in `application.yml`
+4. Application-level from `application.security.accessTokenValiditySeconds` / `application.security.refreshTokenValiditySeconds` in `application.yml`
 5. Hard-coded fallback: 12 h (access) / 30 d (refresh)
 
 ### Backward compatibility
