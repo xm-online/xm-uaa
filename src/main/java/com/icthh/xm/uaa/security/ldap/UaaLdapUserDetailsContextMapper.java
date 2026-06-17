@@ -8,6 +8,7 @@ import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
+import com.icthh.xm.uaa.security.DomainUserDetails;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
@@ -49,7 +50,11 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
             createUser(ctx, username, authorities);
         }
 
-        return userDetailsService.loadUserByUsername(username);
+        DomainUserDetails domainUserDetails = userDetailsService.loadUserByUsername(username);
+        // Tag the token with the LDAP domain so the Refresh LEP can identify
+        // LDAP-originated sessions and re-validate account status on token refresh.
+        domainUserDetails.getAdditionalDetails().put("ldapDomain", ldapConf.getDomain());
+        return domainUserDetails;
     }
 
     private void createUser(DirContextOperations ctx,
