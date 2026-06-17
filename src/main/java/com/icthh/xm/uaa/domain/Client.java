@@ -57,6 +57,9 @@ public class Client extends AbstractAuditingEntity implements Serializable {
     @Column(name = "access_token_validity")
     private Integer accessTokenValiditySeconds;
 
+    @Column(name = "refresh_token_validity")
+    private Integer refreshTokenValiditySeconds;
+
     @Convert(converter = ListToStringConverter.class)
     @Getter
     @Setter

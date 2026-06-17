@@ -25,6 +25,7 @@ public class ClientDTO {
     private String description;
     private ClientState clientState;
     private Integer accessTokenValiditySeconds;
+    private Integer refreshTokenValiditySeconds;
     private String createdBy;
     private Instant createdDate;
     private String lastModifiedBy;
@@ -33,7 +34,8 @@ public class ClientDTO {
 
     public ClientDTO(Client client) {
         this(client.getId(), client.getClientId(), client.getClientSecret(), client.getRoleKey(),
-        client.getDescription(), client.getState(), client.getAccessTokenValiditySeconds(), client.getCreatedBy(),
+        client.getDescription(), client.getState(), client.getAccessTokenValiditySeconds(),
+        client.getRefreshTokenValiditySeconds(), client.getCreatedBy(),
         client.getCreatedDate(), client.getLastModifiedBy(), client.getLastModifiedDate(), client.getScopes());
     }
 }

@@ -90,6 +90,42 @@ For more information refer to [Using Docker and Docker-Compose][], this page als
 
 To configure CI for your project, run the ci-cd sub-generator (`jhipster ci-cd`), this will let you generate configuration files for a number of Continuous Integration systems. Consult the [Setting up Continuous Integration][] page for more information.
 
+## Per-Client Token Lifetime Configuration
+
+By default, all OAuth2 clients share a single global access-token and refresh-token lifetime
+configured in the external `uaa.yml`:
+
+```
+security:
+    accessTokenValiditySeconds: 86400    # 24 hours (global default)
+    refreshTokenValiditySeconds: 7776000 # 90 days  (global default)
+```
+
+### Per-client overrides via the database
+
+Each `Client` record in the database has two optional columns:
+
+| Column                   | Java field                    | Purpose                                         |
+|--------------------------|-------------------------------|-------------------------------------------------|
+| `access_token_validity`  | `accessTokenValiditySeconds`  | Override access token lifetime for this client  |
+| `refresh_token_validity` | `refreshTokenValiditySeconds` | Override refresh token lifetime for this client |
+
+When a column is `NULL` the global/tenant default is used. Set it to a positive integer (seconds)
+to shorten (or lengthen) the lifetime for that specific client.
+
+### Resolution priority (highest → lowest)
+
+1. Per-user value stored on the `User` entity (user-credential flows)
+2. Per-client value stored on the `Client` DB entity (`access_token_validity` / `refresh_token_validity`)
+3. Tenant-level global from `security.accessTokenValiditySeconds` / `security.refreshTokenValiditySeconds` in `uaa.yml`
+4. Application-level from `application.security.accessTokenValiditySeconds` / `application.security.refreshTokenValiditySeconds` in `application.yml`
+5. Hard-coded fallback: 12 h (access) / 30 d (refresh)
+
+### Backward compatibility
+
+Existing clients with `NULL` in both columns continue to receive the global default lifetimes
+without any configuration changes.
+
 [jhipster homepage and latest documentation]: https://www.jhipster.tech
 [jhipster 6.5.1 archive]: https://www.jhipster.tech/documentation-archive/v6.5.1
 [doing microservices with jhipster]: https://www.jhipster.tech/documentation-archive/v6.5.1/microservices-architecture/
