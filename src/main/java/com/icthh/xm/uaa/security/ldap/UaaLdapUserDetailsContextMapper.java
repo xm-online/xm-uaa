@@ -8,6 +8,7 @@ import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
+import com.icthh.xm.uaa.security.DomainUserDetails;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
@@ -32,6 +33,7 @@ import org.springframework.security.ldap.userdetails.LdapUserDetailsMapper;
 @Slf4j
 public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
 
+    private static final String LDAP_DOMAIN_ADDITIONAL_DETAILS_KEY = "ldapDomain";
     private final DomainUserDetailsService userDetailsService;
     private final UserService userService;
     private final TenantProperties.Ldap ldapConf;
@@ -49,7 +51,11 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
             createUser(ctx, username, authorities);
         }
 
-        return userDetailsService.loadUserByUsername(username);
+        DomainUserDetails domainUserDetails = userDetailsService.loadUserByUsername(username);
+        // Tag the token with the LDAP domain so the Refresh LEP can identify
+        // LDAP-originated sessions and re-validate account status on token refresh.
+        domainUserDetails.getAdditionalDetails().put(LDAP_DOMAIN_ADDITIONAL_DETAILS_KEY, ldapConf.getDomain());
+        return domainUserDetails;
     }
 
     private void createUser(DirContextOperations ctx,

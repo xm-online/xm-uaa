@@ -5,6 +5,7 @@ import static java.util.Optional.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -16,10 +17,13 @@ import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
+import com.icthh.xm.uaa.security.DomainUserDetails;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -34,11 +38,17 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication;
 public class UaaLdapUserDetailsContextMapperUnitTest {
 
     private static final String LOGIN = "Homer";
+    private static final String LDAP_DOMAIN = "company.com";
+
+    private final Map<String, String> capturedAdditionalDetails = new HashMap<>();
     public static final Map<String, String> GROUP_MAPPING = Map.of(
         "GROUP1", "SUPER_ADMIN",
         "GROUP2", "LOSER",
         "GROUP3", "ROLE_USER"
     );
+    @Mock
+    DomainUserDetails mockDomainUserDetails;
+
     @Mock
     UserService userService;
 
@@ -54,6 +64,13 @@ public class UaaLdapUserDetailsContextMapperUnitTest {
     @InjectMocks
     UaaLdapUserDetailsContextMapper uaaLdapUserDetailsContextMapper;
 
+    @Before
+    public void setUp() {
+        when(userDetailsService.loadUserByUsername(anyString())).thenReturn(mockDomainUserDetails);
+        when(mockDomainUserDetails.getAdditionalDetails()).thenReturn(capturedAdditionalDetails);
+        when(ldapConf.getDomain()).thenReturn(LDAP_DOMAIN);
+    }
+
     @Test
     public void userRoleMustNotChangeDuringLogin() {
         User user = whenFindUserByLogin();
@@ -62,6 +79,7 @@ public class UaaLdapUserDetailsContextMapperUnitTest {
         verify(userDetailsService).loadUserByUsername(eq(LOGIN));
         verify(userService, never()).saveUser(any(User.class));
         assertTrue(user.getAuthorities().contains("ROLE_ADMIN"));
+        assertEquals(LDAP_DOMAIN, capturedAdditionalDetails.get("ldapDomain"));
     }
 
     @Test
@@ -79,6 +97,7 @@ public class UaaLdapUserDetailsContextMapperUnitTest {
         assertTrue(user.getAuthorities().size() == 2);
         assertTrue(user.getAuthorities().contains("SUPER_ADMIN"));
         assertTrue(user.getAuthorities().contains("ROLE_USER"));
+        assertEquals(LDAP_DOMAIN, capturedAdditionalDetails.get("ldapDomain"));
     }
 
     @Test
@@ -93,6 +112,7 @@ public class UaaLdapUserDetailsContextMapperUnitTest {
             .saveUser(captor.capture());
         User user = captor.getValue();
         assertTrue(user.getAuthorities().contains("SUPER_ADMIN"));
+        assertEquals(LDAP_DOMAIN, capturedAdditionalDetails.get("ldapDomain"));
     }
 
 
@@ -108,6 +128,7 @@ public class UaaLdapUserDetailsContextMapperUnitTest {
             .createUser(captor.capture());
         UserDTO user = captor.getValue();
         assertTrue(user.getAuthorities().contains("DEFAULT_ROLE"));
+        assertEquals(LDAP_DOMAIN, capturedAdditionalDetails.get("ldapDomain"));
     }
 
     private User whenFindUserByLogin() {
