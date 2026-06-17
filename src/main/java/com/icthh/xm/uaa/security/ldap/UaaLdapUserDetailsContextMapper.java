@@ -33,6 +33,7 @@ import org.springframework.security.ldap.userdetails.LdapUserDetailsMapper;
 @Slf4j
 public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
 
+    private static final String LDAP_DOMAIN_ADDITIONAL_DETAILS_KEY = "ldapDomain";
     private final DomainUserDetailsService userDetailsService;
     private final UserService userService;
     private final TenantProperties.Ldap ldapConf;
@@ -53,7 +54,7 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
         DomainUserDetails domainUserDetails = userDetailsService.loadUserByUsername(username);
         // Tag the token with the LDAP domain so the Refresh LEP can identify
         // LDAP-originated sessions and re-validate account status on token refresh.
-        domainUserDetails.getAdditionalDetails().put("ldapDomain", ldapConf.getDomain());
+        domainUserDetails.getAdditionalDetails().put(LDAP_DOMAIN_ADDITIONAL_DETAILS_KEY, ldapConf.getDomain());
         return domainUserDetails;
     }
 
