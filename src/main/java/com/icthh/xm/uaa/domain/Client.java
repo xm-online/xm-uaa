@@ -93,5 +93,13 @@ public class Client extends AbstractAuditingEntity implements Serializable {
         return scopes;
     }
 
+    public Client accessTokenValiditySeconds(Integer accessTokenValiditySeconds) {
+        this.accessTokenValiditySeconds = accessTokenValiditySeconds;
+        return this;
+    }
 
+    public Client refreshTokenValiditySeconds(Integer refreshTokenValiditySeconds) {
+        this.refreshTokenValiditySeconds = refreshTokenValiditySeconds;
+        return this;
+    }
 }
