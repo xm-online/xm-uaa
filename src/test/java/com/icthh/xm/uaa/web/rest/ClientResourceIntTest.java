@@ -87,6 +87,12 @@ public class ClientResourceIntTest {
     private static final String DEFAULT_DESCRIPTION = "AAAAAAAAAA";
     private static final String UPDATED_DESCRIPTION = "BBBBBBBBBB";
 
+    private static final Integer DEFAULT_ACCESS_TOKEN_VALIDITY = 3600;
+    private static final Integer UPDATED_ACCESS_TOKEN_VALIDITY = 7200;
+
+    private static final Integer DEFAULT_REFRESH_TOKEN_VALIDITY = 86400;
+    private static final Integer UPDATED_REFRESH_TOKEN_VALIDITY = 172800;
+
     private static final Instant DEFAULT_CREATED_DATE = Instant.ofEpochMilli(0L);
 
     private static final Instant DEFAULT_UPDATED_DATE = Instant.ofEpochMilli(0L);
@@ -166,7 +172,9 @@ public class ClientResourceIntTest {
             .clientId(DEFAULT_CLIENT_ID)
             .clientSecret(DEFAULT_CLIENT_SECRET)
             .roleKey(DEFAULT_ROLE_KEY)
-            .description(DEFAULT_DESCRIPTION);
+            .description(DEFAULT_DESCRIPTION)
+            .accessTokenValiditySeconds(DEFAULT_ACCESS_TOKEN_VALIDITY)
+            .refreshTokenValiditySeconds(DEFAULT_REFRESH_TOKEN_VALIDITY);
         return client;
     }
 
@@ -241,6 +249,8 @@ public class ClientResourceIntTest {
         assertThat(encoder.matches(DEFAULT_CLIENT_SECRET, testClient.getClientSecret())).isTrue();
         assertThat(testClient.getRoleKey()).isEqualTo(DEFAULT_ROLE_KEY);
         assertThat(testClient.getDescription()).isEqualTo(DEFAULT_DESCRIPTION);
+        assertThat(testClient.getAccessTokenValiditySeconds()).isEqualTo(DEFAULT_ACCESS_TOKEN_VALIDITY);
+        assertThat(testClient.getRefreshTokenValiditySeconds()).isEqualTo(DEFAULT_REFRESH_TOKEN_VALIDITY);
     }
 
     @Test
@@ -317,6 +327,8 @@ public class ClientResourceIntTest {
         updatedClient.setClientSecret(UPDATED_CLIENT_SECRET);
         updatedClient.setRoleKey(UPDATED_ROLE_KEY);
         updatedClient.setDescription(UPDATED_DESCRIPTION);
+        updatedClient.setAccessTokenValiditySeconds(UPDATED_ACCESS_TOKEN_VALIDITY);
+        updatedClient.setRefreshTokenValiditySeconds(UPDATED_REFRESH_TOKEN_VALIDITY);
 
         restClientMockMvc.perform(put("/api/clients")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -331,6 +343,8 @@ public class ClientResourceIntTest {
         assertThat(encoder.matches(UPDATED_CLIENT_SECRET, testClient.getClientSecret())).isTrue();
         assertThat(testClient.getRoleKey()).isEqualTo(UPDATED_ROLE_KEY);
         assertThat(testClient.getDescription()).isEqualTo(UPDATED_DESCRIPTION);
+        assertThat(testClient.getAccessTokenValiditySeconds()).isEqualTo(UPDATED_ACCESS_TOKEN_VALIDITY);
+        assertThat(testClient.getRefreshTokenValiditySeconds()).isEqualTo(UPDATED_REFRESH_TOKEN_VALIDITY);
     }
 
     @Test
