@@ -56,9 +56,9 @@ public class DomainJwtAccessTokenConverter extends JwtAccessTokenConverter {
             }
             enrichCustomDetails(authentication, authDetails);
 
-            Map<String, Object> additionalInformation = new HashMap<>(accessToken.getAdditionalInformation());
+            Map<String, Object> existingInfo = accessToken.getAdditionalInformation();
+            Map<String, Object> additionalInformation = existingInfo != null ? new HashMap<>(existingInfo) : new HashMap<>();
             additionalInformation.putAll(authDetails);
-
             ((DefaultOAuth2AccessToken) accessToken).setAdditionalInformation(additionalInformation);
         }
 
