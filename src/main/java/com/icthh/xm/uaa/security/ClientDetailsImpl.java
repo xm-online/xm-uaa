@@ -107,7 +107,7 @@ public class ClientDetailsImpl implements ClientDetails {
 
     @Override
     public Integer getRefreshTokenValiditySeconds() {
-        return null;
+        return client.getRefreshTokenValiditySeconds();
     }
 
     @Override
