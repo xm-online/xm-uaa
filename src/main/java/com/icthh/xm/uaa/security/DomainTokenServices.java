@@ -375,7 +375,8 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         token.setScope(authentication.getOAuth2Request().getScope());
 
         Map<String, Serializable> extensions = authentication.getOAuth2Request().getExtensions();
-        token.setAdditionalInformation(new HashMap<>(extensions));
+        Map<String, Object> additionalInfo = extensions != null ? new HashMap<>(extensions) : new HashMap<>();
+        token.setAdditionalInformation(additionalInfo);
 
         return (tokenEnhancer != null) ? tokenEnhancer.enhance(token, authentication) : token;
     }
