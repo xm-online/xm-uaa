@@ -8,7 +8,6 @@ import org.springframework.security.oauth2.provider.ClientRegistrationException;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -28,8 +27,6 @@ public class ClientDetailsImpl implements ClientDetails {
     private Set<String> registeredRedirectUris;
 
     private Set<String> autoApproveScopes;
-
-    private final Map<String, Object> additionalInformation = new HashMap<>();
 
     public ClientDetailsImpl(Client client, Set<String> grantTypes, Set<String> scope) {
         super();
@@ -120,6 +117,6 @@ public class ClientDetailsImpl implements ClientDetails {
 
     @Override
     public Map<String, Object> getAdditionalInformation() {
-        return additionalInformation;
+        return Collections.emptyMap();
     }
 }
