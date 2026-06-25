@@ -9,11 +9,16 @@ import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.otp.OtpGenerationStrategy;
 import com.icthh.xm.uaa.service.otp.OtpType;
+
+import java.io.Serializable;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.NotImplementedException;
@@ -368,6 +373,10 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         }
         token.setRefreshToken(refreshToken);
         token.setScope(authentication.getOAuth2Request().getScope());
+
+        Map<String, Serializable> extensions = authentication.getOAuth2Request().getExtensions();
+        Map<String, Object> additionalInfo = extensions != null ? new HashMap<>(extensions) : new HashMap<>();
+        token.setAdditionalInformation(additionalInfo);
 
         return (tokenEnhancer != null) ? tokenEnhancer.enhance(token, authentication) : token;
     }

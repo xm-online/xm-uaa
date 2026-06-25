@@ -18,10 +18,12 @@ import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.domain.OtpChannelType;
 import com.icthh.xm.uaa.service.otp.OtpType;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
+
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.security.core.GrantedAuthority;
@@ -53,7 +55,11 @@ public class DomainJwtAccessTokenConverter extends JwtAccessTokenConverter {
                 authentication.setDetails(authDetails);
             }
             enrichCustomDetails(authentication, authDetails);
-            DefaultOAuth2AccessToken.class.cast(accessToken).setAdditionalInformation(authDetails);
+
+            Map<String, Object> existingInfo = accessToken.getAdditionalInformation();
+            Map<String, Object> additionalInformation = existingInfo != null ? new HashMap<>(existingInfo) : new HashMap<>();
+            additionalInformation.putAll(authDetails);
+            ((DefaultOAuth2AccessToken) accessToken).setAdditionalInformation(additionalInformation);
         }
 
         OAuth2AccessToken enhancedAccessToken = super.enhance(accessToken, authentication);
@@ -112,10 +118,10 @@ public class DomainJwtAccessTokenConverter extends JwtAccessTokenConverter {
                 if (isNotEmpty(userDetails.getAdditionalDetails())) {
                     additionalDetails.putAll(userDetails.getAdditionalDetails());
                 }
-                if(tenantPropertiesService.getTenantProps().getSecurity().isMultiRoleEnabled()){
+                if (tenantPropertiesService.getTenantProps().getSecurity().isMultiRoleEnabled()) {
                     additionalDetails.put(MULTI_ROLE_ENABLED, true);
                 }
-                if(additionalDetails.size() > 0){
+                if (additionalDetails.size() > 0) {
                     details.put(AUTH_ADDITIONAL_DETAILS, additionalDetails);
                 }
             }
