@@ -8,8 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
 import java.time.Instant;
 import java.util.List;
 
@@ -23,9 +21,7 @@ public class ClientDTO {
     private Long id;
     private String clientId;
     private String clientSecret;
-    @Pattern(regexp = "^(?!SUPER-ADMIN$).*$", message = "Role not allowed")
     private String roleKey;
-    @Size(max = 500)
     private String description;
     private ClientState clientState;
     private Integer accessTokenValiditySeconds;

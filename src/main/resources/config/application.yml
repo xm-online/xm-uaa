@@ -222,6 +222,9 @@ application:
     last-login-date-enabled: false
     communication:
         enabled: false
+    validation:
+        client:
+            enabled: true
 gracefulShutdown:
     enabled: false
     shutdownDelay:

@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.service;
 
+import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
 import static java.util.stream.Collectors.toList;
 
 import com.icthh.xm.commons.exceptions.BusinessException;
@@ -10,6 +11,7 @@ import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.permission.annotation.FindWithPermission;
 import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.commons.permission.repository.PermittedRepository;
+import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.Client;
 import com.icthh.xm.uaa.domain.ClientState;
 import com.icthh.xm.uaa.repository.ClientRepository;
@@ -39,6 +41,7 @@ public class ClientService {
     private final PasswordEncoder passwordEncoder;
     private final PermittedRepository permittedRepository;
     private final ClientQueryService clientQueryService;
+    private final ApplicationProperties applicationProperties;
 
     public static final String PSWRD_MASK = "*****";
 
@@ -60,6 +63,8 @@ public class ClientService {
      */
     @LogicExtensionPoint("CreateClient")
     public Client createClient(ClientDTO client) {
+        validateClient(client);
+
         if (getClient(client.getClientId()) != null) {
             throw new BusinessException("client.already.exists",
                                         "Client with client id: " + client.getClientId() + " already exists");
@@ -90,6 +95,8 @@ public class ClientService {
      */
     @LogicExtensionPoint("UpdateClient")
     public Client updateClient(ClientDTO updatedClient) {
+        validateClient(updatedClient);
+
         return clientRepository.findById(updatedClient.getId()).map(client -> {
             String newClientSecret = updatedClient.getClientSecret();
             if (!PSWRD_MASK.equals(newClientSecret)) {
@@ -189,5 +196,19 @@ public class ClientService {
                 return client;
             })
             .map(ClientDTO::new);
+    }
+
+    private void validateClient(ClientDTO client) {
+        if (!applicationProperties.getValidation().getClient().isEnabled()) {
+            return;
+        }
+
+        if (client.getRoleKey() != null && SUPER_ADMIN.equals(client.getRoleKey())) {
+            throw new BusinessException("validation.role.not.allowed", "Role not allowed");
+        }
+
+        if (client.getDescription() != null && client.getDescription().length() > 500) {
+            throw new BusinessException("validation.description.too.long", "Description maximum length is 500 characters");
+        }
     }
 }

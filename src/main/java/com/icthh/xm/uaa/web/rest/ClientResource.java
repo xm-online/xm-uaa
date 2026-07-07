@@ -11,7 +11,6 @@ import com.icthh.xm.uaa.web.rest.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import io.swagger.annotations.ApiParam;
 import java.util.Optional;
-import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
@@ -65,7 +64,7 @@ public class ClientResource {
     @Timed
     @PreAuthorize("hasPermission({'client': #client}, 'CLIENT.CREATE')")
     @PrivilegeDescription("Privilege to create a new client")
-    public ResponseEntity<Void> createClient(@Valid @RequestBody ClientDTO client) throws URISyntaxException {
+    public ResponseEntity<Void> createClient(@RequestBody ClientDTO client) throws URISyntaxException {
         if (client.getId() != null) {
             return ResponseEntity
                             .badRequest()
@@ -89,7 +88,7 @@ public class ClientResource {
     @Timed
     @PreAuthorize("hasPermission({'id': #client.id, 'newClient': #client}, 'client', 'CLIENT.UPDATE')")
     @PrivilegeDescription("Privilege to updates an existing client")
-    public ResponseEntity<Void> updateClient(@Valid @RequestBody ClientDTO client) throws URISyntaxException {
+    public ResponseEntity<Void> updateClient(@RequestBody ClientDTO client) throws URISyntaxException {
         if (client.getId() == null) {
             //in order to call method with permissions check
             return this.clientResource.createClient(client);
