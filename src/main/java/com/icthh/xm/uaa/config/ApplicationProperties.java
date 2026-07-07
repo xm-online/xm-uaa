@@ -29,7 +29,6 @@ public class ApplicationProperties {
     private final ReCaptcha reCaptcha = new ReCaptcha();
     private final Lep lep = new Lep();
     private final Communication communication = new Communication();
-    private final Validation validation = new Validation();
 
     private List<String> tenantIgnoredPathList;
     private List<String> timelineIgnoredHttpMethods = Collections.emptyList();
@@ -63,19 +62,7 @@ public class ApplicationProperties {
     private boolean lastLoginDateEnabled;
     private DomainEvent domainEvent;
     private Boolean autoSystemQueueEnabled;
-
-    @Getter
-    @Setter
-    public static class Validation {
-
-        private final Client client = new Client();
-
-        @Getter
-        @Setter
-        public static class Client {
-            private boolean enabled;
-        }
-    }
+    private boolean clientAsSuperAdminEnabled;
 
     @Getter
     @Setter
