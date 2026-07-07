@@ -1,6 +1,10 @@
 package com.icthh.xm.uaa.service;
 
 import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_DESCRIPTION_TOO_LONG;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_DESCRIPTION_TOO_LONG_MESSAGE;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_ROLE_NOT_ALLOWED;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_ROLE_NOT_ALLOWED_MESSAGE;
 import static java.util.stream.Collectors.toList;
 
 import com.icthh.xm.commons.exceptions.BusinessException;
@@ -199,16 +203,16 @@ public class ClientService {
     }
 
     private void validateClient(ClientDTO client) {
+        if (client.getDescription() != null && client.getDescription().length() > 500) {
+            throw new BusinessException(VALIDATION_DESCRIPTION_TOO_LONG, VALIDATION_DESCRIPTION_TOO_LONG_MESSAGE);
+        }
+
         if (!applicationProperties.getValidation().getClient().isEnabled()) {
             return;
         }
 
         if (client.getRoleKey() != null && SUPER_ADMIN.equals(client.getRoleKey())) {
-            throw new BusinessException("validation.role.not.allowed", "Role not allowed");
-        }
-
-        if (client.getDescription() != null && client.getDescription().length() > 500) {
-            throw new BusinessException("validation.description.too.long", "Description maximum length is 500 characters");
+            throw new BusinessException(VALIDATION_ROLE_NOT_ALLOWED, VALIDATION_ROLE_NOT_ALLOWED_MESSAGE);
         }
     }
 }
