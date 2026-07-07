@@ -23,7 +23,7 @@ public class ClientDTO {
     private Long id;
     private String clientId;
     private String clientSecret;
-    @Pattern(regexp = "^(?!SUPER-ADMIN$).*$", message = "Role key cannot be 'SUPER-ADMIN'")
+    @Pattern(regexp = "^(?!SUPER-ADMIN$).*$", message = "Role not allowed")
     private String roleKey;
     @Size(max = 500)
     private String description;
