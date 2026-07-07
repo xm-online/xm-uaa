@@ -222,9 +222,7 @@ application:
     last-login-date-enabled: false
     communication:
         enabled: false
-    validation:
-        client:
-            enabled: true
+    client-as-super-admin-enabled: true
 gracefulShutdown:
     enabled: false
     shutdownDelay:
