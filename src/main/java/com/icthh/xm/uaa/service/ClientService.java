@@ -1,7 +1,5 @@
 package com.icthh.xm.uaa.service;
 
-import static java.util.stream.Collectors.toList;
-
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
@@ -10,14 +8,14 @@ import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.permission.annotation.FindWithPermission;
 import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.commons.permission.repository.PermittedRepository;
+import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.Client;
 import com.icthh.xm.uaa.domain.ClientState;
 import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
 import com.icthh.xm.uaa.service.query.ClientQueryService;
 import com.icthh.xm.uaa.service.query.filter.StrictClientFilterQuery;
-import java.util.List;
-import java.util.Optional;
+import com.icthh.xm.uaa.web.rest.util.VerificationUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
@@ -25,6 +23,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_DESCRIPTION_TOO_LONG;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_DESCRIPTION_TOO_LONG_MESSAGE;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Service Implementation for managing Client.
@@ -39,6 +44,7 @@ public class ClientService {
     private final PasswordEncoder passwordEncoder;
     private final PermittedRepository permittedRepository;
     private final ClientQueryService clientQueryService;
+    private final ApplicationProperties applicationProperties;
 
     public static final String PSWRD_MASK = "*****";
 
@@ -60,6 +66,8 @@ public class ClientService {
      */
     @LogicExtensionPoint("CreateClient")
     public Client createClient(ClientDTO client) {
+        validateClient(client);
+
         if (getClient(client.getClientId()) != null) {
             throw new BusinessException("client.already.exists",
                                         "Client with client id: " + client.getClientId() + " already exists");
@@ -90,6 +98,8 @@ public class ClientService {
      */
     @LogicExtensionPoint("UpdateClient")
     public Client updateClient(ClientDTO updatedClient) {
+        validateClient(updatedClient);
+
         return clientRepository.findById(updatedClient.getId()).map(client -> {
             String newClientSecret = updatedClient.getClientSecret();
             if (!PSWRD_MASK.equals(newClientSecret)) {
@@ -189,5 +199,17 @@ public class ClientService {
                 return client;
             })
             .map(ClientDTO::new);
+    }
+
+    private void validateClient(ClientDTO client) {
+        if (client.getDescription() != null && client.getDescription().length() > 500) {
+            throw new BusinessException(VALIDATION_DESCRIPTION_TOO_LONG, VALIDATION_DESCRIPTION_TOO_LONG_MESSAGE);
+        }
+
+        if (applicationProperties.isClientAsSuperAdminEnabled()) {
+            return;
+        }
+
+        VerificationUtils.assertNotSuperAdmin(client);
     }
 }
