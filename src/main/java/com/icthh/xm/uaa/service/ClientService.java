@@ -206,7 +206,7 @@ public class ClientService {
             throw new BusinessException(VALIDATION_DESCRIPTION_TOO_LONG, VALIDATION_DESCRIPTION_TOO_LONG_MESSAGE);
         }
 
-        if (!applicationProperties.isClientAsSuperAdminEnabled()) {
+        if (applicationProperties.isClientAsSuperAdminEnabled()) {
             return;
         }
 
