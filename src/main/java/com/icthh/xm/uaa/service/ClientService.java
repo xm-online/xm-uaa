@@ -1,12 +1,5 @@
 package com.icthh.xm.uaa.service;
 
-import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_DESCRIPTION_TOO_LONG;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_DESCRIPTION_TOO_LONG_MESSAGE;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_ROLE_NOT_ALLOWED;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_ROLE_NOT_ALLOWED_MESSAGE;
-import static java.util.stream.Collectors.toList;
-
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
@@ -22,8 +15,7 @@ import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
 import com.icthh.xm.uaa.service.query.ClientQueryService;
 import com.icthh.xm.uaa.service.query.filter.StrictClientFilterQuery;
-import java.util.List;
-import java.util.Optional;
+import com.icthh.xm.uaa.web.rest.util.VerificationUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
@@ -31,6 +23,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_DESCRIPTION_TOO_LONG;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_DESCRIPTION_TOO_LONG_MESSAGE;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Service Implementation for managing Client.
@@ -211,8 +210,6 @@ public class ClientService {
             return;
         }
 
-        if (client.getRoleKey() != null && SUPER_ADMIN.equals(client.getRoleKey())) {
-            throw new BusinessException(VALIDATION_ROLE_NOT_ALLOWED, VALIDATION_ROLE_NOT_ALLOWED_MESSAGE);
-        }
+        VerificationUtils.assertNotSuperAdmin(client);
     }
 }
