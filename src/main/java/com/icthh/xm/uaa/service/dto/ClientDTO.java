@@ -12,7 +12,7 @@ import java.time.Instant;
 import java.util.List;
 
 @AllArgsConstructor
-@ToString
+@ToString(exclude = "clientSecret")
 @Getter
 @Setter
 @NoArgsConstructor

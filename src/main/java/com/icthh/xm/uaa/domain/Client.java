@@ -28,7 +28,7 @@ import java.util.List;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @Getter
 @Setter
-@ToString(exclude = {"scopes"})
+@ToString(exclude = {"clientSecret", "scopes"})
 public class Client extends AbstractAuditingEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
