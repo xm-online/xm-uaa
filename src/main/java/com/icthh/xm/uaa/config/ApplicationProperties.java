@@ -62,6 +62,7 @@ public class ApplicationProperties {
     private boolean lastLoginDateEnabled;
     private DomainEvent domainEvent;
     private Boolean autoSystemQueueEnabled;
+    private boolean clientAsSuperAdminEnabled;
 
     @Getter
     @Setter
