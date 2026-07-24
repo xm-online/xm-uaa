@@ -406,7 +406,7 @@ public class ClientResourceIntTest {
         updatedClient.setRoleKey(UPDATED_ROLE_KEY);
         updatedClient.setDescription(UPDATED_DESCRIPTION);
 
-        when(roleService.getRoles(DEFAULT_TENANT_KEY_VALUE)).thenReturn(new TreeMap<>(Map.of(UPDATED_DESCRIPTION, new Role())));
+        when(roleService.getRoles(DEFAULT_TENANT_KEY_VALUE)).thenReturn(new TreeMap<>(Map.of(UPDATED_ROLE_KEY, new Role())));
 
         restClientMockMvc.perform(put("/api/clients")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
