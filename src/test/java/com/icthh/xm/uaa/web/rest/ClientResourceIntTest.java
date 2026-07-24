@@ -1,6 +1,8 @@
 package com.icthh.xm.uaa.web.rest;
 
 import com.icthh.xm.commons.i18n.error.web.ExceptionTranslator;
+import com.icthh.xm.commons.permission.domain.Role;
+import com.icthh.xm.commons.permission.service.RoleService;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
@@ -11,11 +13,10 @@ import com.icthh.xm.uaa.config.xm.LepTextConfiguration;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.Client;
 import com.icthh.xm.uaa.domain.ClientState;
-import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.service.ClientService;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
-import java.nio.charset.Charset;
+import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
@@ -26,6 +27,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -40,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.time.Instant;
 import java.util.List;
+import java.util.TreeMap;
 
 import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
 import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
@@ -48,7 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertTrue;
-import static org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -134,6 +137,9 @@ public class ClientResourceIntTest {
     private MockMvc restClientMockMvc;
 
     private Client client;
+
+    @MockBean
+    private RoleService roleService;
 
     @BeforeTransaction
     public void BeforeTransaction() {
@@ -235,6 +241,8 @@ public class ClientResourceIntTest {
     public void createClient() throws Exception {
         int databaseSizeBeforeCreate = clientRepository.findAll().size();
 
+        when(roleService.getRoles(DEFAULT_TENANT_KEY_VALUE)).thenReturn(new TreeMap<>(Map.of(DEFAULT_ROLE_KEY, new Role())));
+
         // Create the Client
         restClientMockMvc.perform(post("/api/clients")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -330,6 +338,8 @@ public class ClientResourceIntTest {
         updatedClient.setAccessTokenValiditySeconds(UPDATED_ACCESS_TOKEN_VALIDITY);
         updatedClient.setRefreshTokenValiditySeconds(UPDATED_REFRESH_TOKEN_VALIDITY);
 
+        when(roleService.getRoles(DEFAULT_TENANT_KEY_VALUE)).thenReturn(new TreeMap<>(Map.of(UPDATED_ROLE_KEY, new Role())));
+
         restClientMockMvc.perform(put("/api/clients")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(updatedClient)))
@@ -363,6 +373,8 @@ public class ClientResourceIntTest {
         updatedClient.setRoleKey(UPDATED_ROLE_KEY);
         updatedClient.setDescription(UPDATED_DESCRIPTION);
 
+        when(roleService.getRoles(DEFAULT_TENANT_KEY_VALUE)).thenReturn(new TreeMap<>(Map.of(UPDATED_ROLE_KEY, new Role())));
+
         restClientMockMvc.perform(put("/api/clients")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(updatedClient)))
@@ -394,6 +406,8 @@ public class ClientResourceIntTest {
         updatedClient.setRoleKey(UPDATED_ROLE_KEY);
         updatedClient.setDescription(UPDATED_DESCRIPTION);
 
+        when(roleService.getRoles(DEFAULT_TENANT_KEY_VALUE)).thenReturn(new TreeMap<>(Map.of(UPDATED_DESCRIPTION, new Role())));
+
         restClientMockMvc.perform(put("/api/clients")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(updatedClient)))
@@ -414,6 +428,7 @@ public class ClientResourceIntTest {
     public void updateNonExistingClient() throws Exception {
         int databaseSizeBeforeUpdate = clientRepository.findAll().size();
 
+        when(roleService.getRoles(DEFAULT_TENANT_KEY_VALUE)).thenReturn(new TreeMap<>(Map.of(DEFAULT_ROLE_KEY, new Role())));
         // Create the Client
 
         // If the entity doesn't have an ID, it will be created instead of just being updated
