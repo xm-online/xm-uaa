@@ -18,7 +18,6 @@ import com.icthh.xm.uaa.service.dto.ClientDTO;
 import com.icthh.xm.uaa.service.query.ClientQueryService;
 import com.icthh.xm.uaa.service.query.filter.StrictClientFilterQuery;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_DESCRIPTION_TOO_LONG;
@@ -44,7 +42,6 @@ import static java.util.stream.Collectors.toList;
 @Service
 @Transactional
 @RequiredArgsConstructor
-@Slf4j
 public class ClientService {
 
     private final ClientRepository clientRepository;
@@ -215,21 +212,21 @@ public class ClientService {
             throw new BusinessException(VALIDATION_DESCRIPTION_TOO_LONG, VALIDATION_DESCRIPTION_TOO_LONG_MESSAGE);
         }
 
-        Set<String> configuredRoles = roleService.getRoles(tenantContextHolder.getTenantKey()).keySet();
-        if (!isRoleAllowed(client.getRoleKey(), configuredRoles)) {
+        if (!isRoleAllowed(client.getRoleKey())) {
             throw new BusinessException(VALIDATION_ROLE_NOT_ALLOWED, VALIDATION_ROLE_NOT_ALLOWED_MESSAGE);
         }
     }
 
-    private boolean isRoleAllowed(String roleKey, Set<String> configuredRoles) {
+    private boolean isRoleAllowed(String roleKey) {
         if (roleKey == null) {
             return false;
         }
 
-        return isAllowedSuperAdminRole(roleKey) || configuredRoles.contains(roleKey);
-    }
+        if (roleKey.equals(SUPER_ADMIN)) {
+            return applicationProperties.isClientAsSuperAdminEnabled();
+        }
 
-    private boolean isAllowedSuperAdminRole(String roleKey) {
-        return roleKey.equals(SUPER_ADMIN) && applicationProperties.isClientAsSuperAdminEnabled();
+        String tenantKey = tenantContextHolder.getTenantKey();
+        return roleService.getRoles(tenantKey).containsKey(roleKey);
     }
 }

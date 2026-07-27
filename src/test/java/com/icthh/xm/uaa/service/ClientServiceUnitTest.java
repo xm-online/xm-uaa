@@ -85,9 +85,6 @@ class ClientServiceUnitTest {
         dto.setClientId("client");
         dto.setRoleKey(SUPER_ADMIN);
 
-        when(tenantContextHolder.getTenantKey()).thenReturn(DEFAULT_TENANT_KEY_VALUE);
-        when(roleService.getRoles(DEFAULT_TENANT_KEY_VALUE)).thenReturn(new TreeMap<>());
-
         when(applicationProperties.isClientAsSuperAdminEnabled()).thenReturn(true);
 
         when(passwordEncoder.encode(anyString())).thenReturn("encoded");
@@ -104,9 +101,6 @@ class ClientServiceUnitTest {
         dto.setClientId("client");
         dto.setRoleKey(SUPER_ADMIN);
 
-        when(tenantContextHolder.getTenantKey()).thenReturn(DEFAULT_TENANT_KEY_VALUE);
-        when(roleService.getRoles(DEFAULT_TENANT_KEY_VALUE)).thenReturn(new TreeMap<>());
-
         when(applicationProperties.isClientAsSuperAdminEnabled()).thenReturn(false);
 
         assertThrows(BusinessException.class, () -> clientService.createClient(dto));
@@ -119,9 +113,6 @@ class ClientServiceUnitTest {
         ClientDTO dto = new ClientDTO();
         dto.setClientId("client");
         dto.setRoleKey(null);
-
-        when(tenantContextHolder.getTenantKey()).thenReturn(DEFAULT_TENANT_KEY_VALUE);
-        when(roleService.getRoles(DEFAULT_TENANT_KEY_VALUE)).thenReturn(new TreeMap<>(Map.of("USER", new Role())));
 
         assertThrows(BusinessException.class, () -> clientService.createClient(dto));
 
