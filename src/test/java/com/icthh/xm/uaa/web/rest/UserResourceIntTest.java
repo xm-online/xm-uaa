@@ -57,6 +57,7 @@ import org.springframework.util.ReflectionUtils;
 import javax.persistence.EntityManager;
 import java.time.Instant;
 import java.util.Collections;
+import org.apache.commons.lang3.StringUtils;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -305,6 +306,26 @@ public class UserResourceIntTest {
         assertThat(testUser.getLangKey()).isEqualTo(DEFAULT_LANGKEY);
         assertThat(testUser.isAutoLogoutEnabled()).isEqualTo(AUTO_LOGOUT_ENABLED);
         assertThat(testUser.getAutoLogoutTimeoutSeconds()).isEqualTo(AUTO_LOGOUT_TIME);
+    }
+
+    @Test
+    @Transactional
+    public void createUserWithTooLongLoginIsRejected() throws Exception {
+        int databaseSizeBeforeCreate = userRepository.findAll().size();
+
+        UserLogin userLogin = new UserLogin();
+        userLogin.setLogin(StringUtils.repeat('a', 256));
+        userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
+        ManagedUserVM managedUserVM = buildDefaultUser(DEFAULT_FIRSTNAME, DEFAULT_LASTNAME,
+            Collections.singletonList(userLogin));
+
+        restUserMockMvc.perform(post("/api/users")
+                .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                .content(TestUtil.convertObjectToJsonBytes(managedUserVM)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value("error.validation"));
+
+        assertThat(userRepository.findAll()).hasSize(databaseSizeBeforeCreate);
     }
 
     @Test
