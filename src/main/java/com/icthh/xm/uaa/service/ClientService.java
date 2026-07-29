@@ -195,6 +195,7 @@ public class ClientService {
     }
 
     @IgnoreLogginAspect
+    @Transactional(readOnly = true)
     public Client getClient(String clientId) {
         return clientRepository.findOneByClientId(clientId);
     }

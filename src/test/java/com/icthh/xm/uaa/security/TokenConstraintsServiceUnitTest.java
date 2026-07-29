@@ -258,6 +258,23 @@ public class TokenConstraintsServiceUnitTest {
     }
 
     // -----------------------------------------------------------------------
+    // Tests: both validity periods resolved from a single client lookup
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void givenBothClientConfigs_whenGetTokenValidity_thenReturnsBothFromSingleClientLookup() {
+        int clientAccess = 900;
+        int clientRefresh = 28800;
+        ClientDetails clientDetails = clientWithValidity(clientAccess, clientRefresh);
+        when(clientDetailsService.loadClientByClientId(CLIENT_A)).thenReturn(clientDetails);
+
+        TokenValidity result = service.getTokenValidity(buildAuthentication(CLIENT_A));
+
+        assertThat(result.getAccessTokenValiditySeconds()).isEqualTo(clientAccess);
+        assertThat(result.getRefreshTokenValiditySeconds()).isEqualTo(clientRefresh);
+    }
+
+    // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
 
