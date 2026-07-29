@@ -47,6 +47,9 @@ import java.util.TreeMap;
 import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
 import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
+import static com.icthh.xm.uaa.service.ClientService.MAX_CLIENT_ID_LENGTH;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_CLIENT_ID_REQUIRED;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_CLIENT_ID_TOO_LONG;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
@@ -278,6 +281,55 @@ public class ClientResourceIntTest {
         // Validate the Alice in the database
         List<Client> clientList = clientRepository.findAll();
         assertThat(clientList).hasSize(databaseSizeBeforeCreate);
+    }
+
+    @Test
+    @Transactional
+    public void createClientWithBlankClientIdIsRejected() throws Exception {
+        int databaseSizeBeforeCreate = clientRepository.findAll().size();
+
+        when(roleService.getRoles(DEFAULT_TENANT_KEY_VALUE)).thenReturn(new TreeMap<>(Map.of(DEFAULT_ROLE_KEY, new Role())));
+
+        client.setClientId("   ");
+
+        restClientMockMvc.perform(post("/api/clients")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(client)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value(VALIDATION_CLIENT_ID_REQUIRED));
+
+        assertThat(clientRepository.findAll()).hasSize(databaseSizeBeforeCreate);
+    }
+
+    @Test
+    @Transactional
+    public void createClientWithTooLongClientIdIsRejected() throws Exception {
+        int databaseSizeBeforeCreate = clientRepository.findAll().size();
+
+        when(roleService.getRoles(DEFAULT_TENANT_KEY_VALUE)).thenReturn(new TreeMap<>(Map.of(DEFAULT_ROLE_KEY, new Role())));
+
+        client.setClientId(StringUtils.repeat('a', MAX_CLIENT_ID_LENGTH + 1));
+
+        restClientMockMvc.perform(post("/api/clients")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(client)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value(VALIDATION_CLIENT_ID_TOO_LONG));
+
+        assertThat(clientRepository.findAll()).hasSize(databaseSizeBeforeCreate);
+    }
+
+    @Test
+    @Transactional
+    public void createClientWithMaxLengthClientIdIsAccepted() throws Exception {
+        when(roleService.getRoles(DEFAULT_TENANT_KEY_VALUE)).thenReturn(new TreeMap<>(Map.of(DEFAULT_ROLE_KEY, new Role())));
+
+        client.setClientId(StringUtils.repeat('a', MAX_CLIENT_ID_LENGTH));
+
+        restClientMockMvc.perform(post("/api/clients")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(client)))
+            .andExpect(status().isCreated());
     }
 
     @Test

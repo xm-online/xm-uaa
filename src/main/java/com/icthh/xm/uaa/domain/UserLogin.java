@@ -13,6 +13,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -39,13 +40,16 @@ public class UserLogin {
 
     @Column(name = "type_key", length = 50, nullable = false)
     @NotNull
+    @Size(max = 50)
     private String typeKey;
 
     @Column(name = "state_key", length = 50)
+    @Size(max = 50)
     private String stateKey;
 
     @Column(nullable = false, unique = true)
     @NotBlank
+    @Size(max = 255)
     private String login;
 
     @Column(nullable = false)

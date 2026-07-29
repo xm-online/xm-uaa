@@ -22,6 +22,11 @@ public class ErrorConstants {
     public static final String ERROR_USER_LOGIN_INVALID = "error.user.login.invalid";
     public static final String VALIDATION_ROLE_NOT_ALLOWED = "validation.role.not.allowed";
     public static final String VALIDATION_DESCRIPTION_TOO_LONG = "validation.description.too.long";
+    public static final String VALIDATION_CLIENT_ID_REQUIRED = "validation.client.id.required";
+    public static final String VALIDATION_CLIENT_ID_TOO_LONG = "validation.client.id.too.long";
+
+    public static final String ERROR_CLIENT_IN_USE = "error.client.in.use";
+    public static final String ERROR_DATA_INTEGRITY = "error.data.integrity";
 
     public static final String ERROR_SUPER_ADMIN_FORBIDDEN_OPERATION = "error.super-admin.forbidden-operation";
 
@@ -29,4 +34,9 @@ public class ErrorConstants {
     public static final String ERROR_USER_LOGIN_INVALID_MESSAGE = "User login type could not be determined by value: ";
     public static final String VALIDATION_ROLE_NOT_ALLOWED_MESSAGE = "Role not allowed";
     public static final String VALIDATION_DESCRIPTION_TOO_LONG_MESSAGE = "Description maximum length is 500 characters";
+    public static final String VALIDATION_CLIENT_ID_REQUIRED_MESSAGE = "Client id is required";
+    public static final String VALIDATION_CLIENT_ID_TOO_LONG_MESSAGE = "Client id maximum length is 255 characters";
+    public static final String ERROR_CLIENT_IN_USE_MESSAGE =
+        "Client cannot be deleted because it is referenced by other records";
+    public static final String ERROR_DATA_INTEGRITY_MESSAGE = "Request violates data integrity constraints";
 }

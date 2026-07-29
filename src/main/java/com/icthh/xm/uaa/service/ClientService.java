@@ -18,7 +18,9 @@ import com.icthh.xm.uaa.service.dto.ClientDTO;
 import com.icthh.xm.uaa.service.query.ClientQueryService;
 import com.icthh.xm.uaa.service.query.filter.StrictClientFilterQuery;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,6 +31,12 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_CLIENT_IN_USE;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_CLIENT_IN_USE_MESSAGE;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_CLIENT_ID_REQUIRED;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_CLIENT_ID_REQUIRED_MESSAGE;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_CLIENT_ID_TOO_LONG;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_CLIENT_ID_TOO_LONG_MESSAGE;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_DESCRIPTION_TOO_LONG;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_DESCRIPTION_TOO_LONG_MESSAGE;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_ROLE_NOT_ALLOWED;
@@ -42,6 +50,7 @@ import static java.util.stream.Collectors.toList;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class ClientService {
 
     private final ClientRepository clientRepository;
@@ -53,6 +62,12 @@ public class ClientService {
     private final RoleService roleService;
 
     public static final String PSWRD_MASK = "*****";
+
+    /** Matches the {@code client.client_id} column length. */
+    public static final int MAX_CLIENT_ID_LENGTH = 255;
+
+    /** Matches the {@code client.description} column length. */
+    public static final int MAX_DESCRIPTION_LENGTH = 500;
 
     /**
      * Save a client.
@@ -72,6 +87,7 @@ public class ClientService {
      */
     @LogicExtensionPoint("CreateClient")
     public Client createClient(ClientDTO client) {
+        validateClientId(client.getClientId());
         validateClient(client);
 
         if (getClient(client.getClientId()) != null) {
@@ -167,7 +183,15 @@ public class ClientService {
      */
     @LogicExtensionPoint("DeleteClient")
     public void delete(Long id) {
-        clientRepository.deleteById(id);
+        try {
+            clientRepository.deleteById(id);
+            // flush so a foreign key violation surfaces here and not at transaction commit,
+            // where it would escape the exception translator as a raw 500
+            clientRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Client id={} cannot be deleted because it is still referenced", id, e);
+            throw new BusinessException(ERROR_CLIENT_IN_USE, ERROR_CLIENT_IN_USE_MESSAGE);
+        }
     }
 
     @IgnoreLogginAspect
@@ -207,8 +231,21 @@ public class ClientService {
             .map(ClientDTO::new);
     }
 
+    /**
+     * Client id is immutable after creation, so it is validated on create only.
+     */
+    private void validateClientId(String clientId) {
+        if (StringUtils.isBlank(clientId)) {
+            throw new BusinessException(VALIDATION_CLIENT_ID_REQUIRED, VALIDATION_CLIENT_ID_REQUIRED_MESSAGE);
+        }
+
+        if (clientId.length() > MAX_CLIENT_ID_LENGTH) {
+            throw new BusinessException(VALIDATION_CLIENT_ID_TOO_LONG, VALIDATION_CLIENT_ID_TOO_LONG_MESSAGE);
+        }
+    }
+
     private void validateClient(ClientDTO client) {
-        if (client.getDescription() != null && client.getDescription().length() > 500) {
+        if (client.getDescription() != null && client.getDescription().length() > MAX_DESCRIPTION_LENGTH) {
             throw new BusinessException(VALIDATION_DESCRIPTION_TOO_LONG, VALIDATION_DESCRIPTION_TOO_LONG_MESSAGE);
         }
 

@@ -13,6 +13,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Map;
@@ -20,12 +22,17 @@ import java.util.TreeMap;
 
 import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
+import static com.icthh.xm.uaa.service.ClientService.MAX_CLIENT_ID_LENGTH;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_CLIENT_IN_USE;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_CLIENT_ID_REQUIRED;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_CLIENT_ID_TOO_LONG;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_ROLE_NOT_ALLOWED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -117,6 +124,43 @@ class ClientServiceUnitTest {
         assertThrows(BusinessException.class, () -> clientService.createClient(dto));
 
         verify(clientRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldRejectBlankClientId() {
+        ClientDTO dto = new ClientDTO();
+        dto.setClientId("   ");
+        dto.setRoleKey("USER");
+
+        BusinessException exception = assertThrows(BusinessException.class, () -> clientService.createClient(dto));
+
+        assertEquals(VALIDATION_CLIENT_ID_REQUIRED, exception.getCode());
+
+        verify(clientRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldRejectTooLongClientId() {
+        ClientDTO dto = new ClientDTO();
+        dto.setClientId(StringUtils.repeat('a', MAX_CLIENT_ID_LENGTH + 1));
+        dto.setRoleKey("USER");
+
+        BusinessException exception = assertThrows(BusinessException.class, () -> clientService.createClient(dto));
+
+        assertEquals(VALIDATION_CLIENT_ID_TOO_LONG, exception.getCode());
+
+        verify(clientRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldReportBusinessErrorWhenDeletedClientIsStillReferenced() {
+        // any referencing table blocks the delete; the constraint that fired does not matter here
+        doThrow(new DataIntegrityViolationException("violates foreign key constraint"))
+            .when(clientRepository).flush();
+
+        BusinessException exception = assertThrows(BusinessException.class, () -> clientService.delete(1L));
+
+        assertEquals(ERROR_CLIENT_IN_USE, exception.getCode());
     }
 
     @Test
