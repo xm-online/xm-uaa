@@ -27,7 +27,6 @@ public class ErrorConstants {
 
     public static final String ERROR_CLIENT_IN_USE = "error.client.in.use";
     public static final String ERROR_DATA_INTEGRITY = "error.data.integrity";
-    public static final String ERROR_API_KEY_ALREADY_EXISTS = "error.apikey.already.exists";
 
     public static final String ERROR_SUPER_ADMIN_FORBIDDEN_OPERATION = "error.super-admin.forbidden-operation";
 
@@ -40,5 +39,4 @@ public class ErrorConstants {
     public static final String ERROR_CLIENT_IN_USE_MESSAGE =
         "Client cannot be deleted because it is referenced by other records";
     public static final String ERROR_DATA_INTEGRITY_MESSAGE = "Request violates data integrity constraints";
-    public static final String ERROR_API_KEY_ALREADY_EXISTS_MESSAGE = "API key already exists";
 }

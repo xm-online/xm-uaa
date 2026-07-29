@@ -154,7 +154,8 @@ class ClientServiceUnitTest {
 
     @Test
     void shouldReportBusinessErrorWhenDeletedClientIsStillReferenced() {
-        doThrow(new DataIntegrityViolationException("constraint [fk_api_key_client]"))
+        // any referencing table blocks the delete; the constraint that fired does not matter here
+        doThrow(new DataIntegrityViolationException("violates foreign key constraint"))
             .when(clientRepository).flush();
 
         BusinessException exception = assertThrows(BusinessException.class, () -> clientService.delete(1L));

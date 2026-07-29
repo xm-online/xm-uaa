@@ -8,6 +8,7 @@ import com.icthh.xm.commons.i18n.error.domain.vm.FieldErrorVM;
 import com.icthh.xm.commons.i18n.spring.service.LocalizationMessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -18,13 +19,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_API_KEY_ALREADY_EXISTS;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_API_KEY_ALREADY_EXISTS_MESSAGE;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_CLIENT_IN_USE;
-import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_CLIENT_IN_USE_MESSAGE;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_DATA_INTEGRITY;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_DATA_INTEGRITY_MESSAGE;
 
@@ -37,10 +34,13 @@ import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_DATA_INTEGRITY_
  * follows the {@code {error, error_description, requestId}} contract, so the code can be localized per tenant
  * via {@code i18n-message.yml}.
  *
+ * <p>This class knows no constraint names. Modules that own tables contribute
+ * {@link DataIntegrityErrorResolver} beans; anything no resolver claims becomes a generic
+ * {@code error.data.integrity} rather than leaking the driver message.
+ *
  * <p>Handlers must never rethrow: an {@code @ExceptionHandler} that throws makes Spring log the failure and
  * give up on the request entirely (see {@code ExceptionHandlerExceptionResolver#doResolveHandlerMethodException}),
  * so the common {@code Exception} fallback never runs and the client gets Spring Boot's default error page.
- * Unrecognised causes therefore fall back to a generic code instead of being propagated.
  *
  * <p>Ordered ahead of the common translator, but with headroom so a deployment can still put an advice
  * in front of this one.
@@ -51,22 +51,8 @@ import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_DATA_INTEGRITY_
 @Order(Ordered.HIGHEST_PRECEDENCE + 100)
 public class UaaErrorTranslator {
 
-    /**
-     * Constraints whose violation has a dedicated, user facing error code. The {@code api_key} table is owned by
-     * the EE extension, but it lives in the same tenant schema and its foreign key points at {@code client}, so
-     * the violation surfaces here. In an OSS-only deployment these constraints simply never fire.
-     */
-    private static final Map<String, String> CONSTRAINT_ERROR_CODES = Map.of(
-        "fk_api_key_client", ERROR_CLIENT_IN_USE,
-        "uk_api_key_value", ERROR_API_KEY_ALREADY_EXISTS
-    );
-
-    private static final Map<String, String> CONSTRAINT_ERROR_MESSAGES = Map.of(
-        ERROR_CLIENT_IN_USE, ERROR_CLIENT_IN_USE_MESSAGE,
-        ERROR_API_KEY_ALREADY_EXISTS, ERROR_API_KEY_ALREADY_EXISTS_MESSAGE
-    );
-
     private final LocalizationMessageService localizationMessageService;
+    private final ObjectProvider<DataIntegrityErrorResolver> errorResolvers;
 
     /**
      * Translates persistence constraint failures (value too long, foreign key, unique index) into a localizable
@@ -78,9 +64,14 @@ public class UaaErrorTranslator {
     public ErrorVM processDataIntegrityViolation(DataIntegrityViolationException ex) {
         log.warn("Data integrity violation", ex);
 
-        String code = resolveConstraintErrorCode(ex);
-        String defaultMessage = CONSTRAINT_ERROR_MESSAGES.getOrDefault(code, ERROR_DATA_INTEGRITY_MESSAGE);
-        return new ErrorVM(code, localizationMessageService.getMessage(code, null, false, defaultMessage));
+        ErrorDefinition error = errorResolvers.orderedStream()
+            .map(resolver -> resolver.resolve(ex))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .findFirst()
+            .orElseGet(() -> new ErrorDefinition(ERROR_DATA_INTEGRITY, ERROR_DATA_INTEGRITY_MESSAGE));
+
+        return new ErrorVM(error.getCode(), localize(error));
     }
 
     /**
@@ -95,14 +86,12 @@ public class UaaErrorTranslator {
         log.debug("Message not readable", ex);
 
         if (!(ex.getCause() instanceof MismatchedInputException)) {
-            return new ErrorVM(ErrorConstants.ERR_MESSAGE_NOT_READABLE,
-                localizationMessageService.getMessage(ErrorConstants.ERR_MESSAGE_NOT_READABLE));
+            return messageNotReadable();
         }
 
         MismatchedInputException cause = (MismatchedInputException) ex.getCause();
         if (cause.getPath().isEmpty()) {
-            return new ErrorVM(ErrorConstants.ERR_MESSAGE_NOT_READABLE,
-                localizationMessageService.getMessage(ErrorConstants.ERR_MESSAGE_NOT_READABLE));
+            return messageNotReadable();
         }
 
         FieldErrorVM dto = new FieldErrorVM(ErrorConstants.ERR_VALIDATION,
@@ -111,13 +100,13 @@ public class UaaErrorTranslator {
         return dto;
     }
 
-    private String resolveConstraintErrorCode(DataIntegrityViolationException ex) {
-        String details = String.valueOf(ex.getMostSpecificCause().getMessage()).toLowerCase();
-        return CONSTRAINT_ERROR_CODES.entrySet().stream()
-            .filter(entry -> details.contains(entry.getKey()))
-            .map(Map.Entry::getValue)
-            .findFirst()
-            .orElse(ERROR_DATA_INTEGRITY);
+    private String localize(ErrorDefinition error) {
+        return localizationMessageService.getMessage(error.getCode(), null, false, error.getDefaultMessage());
+    }
+
+    private ErrorVM messageNotReadable() {
+        return new ErrorVM(ErrorConstants.ERR_MESSAGE_NOT_READABLE,
+            localizationMessageService.getMessage(ErrorConstants.ERR_MESSAGE_NOT_READABLE));
     }
 
     private String resolveObjectName(MismatchedInputException cause) {
