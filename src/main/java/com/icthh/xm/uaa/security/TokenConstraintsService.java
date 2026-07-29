@@ -10,6 +10,7 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Optional.ofNullable;
@@ -38,7 +39,7 @@ public class TokenConstraintsService {
     private final ClientDetailsService clientDetailsService;
 
     public TokenValidity getTokenValidity(OAuth2Authentication authentication) {
-        ClientDetails client = loadClient(authentication);
+        Optional<ClientDetails> client = loadClient(authentication);
         return new TokenValidity(
             resolveAccessTokenValiditySeconds(authentication, client),
             resolveRefreshTokenValiditySeconds(authentication, client));
@@ -54,13 +55,14 @@ public class TokenConstraintsService {
         return resolveAccessTokenValiditySeconds(authentication, loadClient(authentication));
     }
 
-    private ClientDetails loadClient(OAuth2Authentication authentication) {
-        return ofNullable(authentication.getOAuth2Request().getClientId())
-            .map(clientDetailsService::loadClientByClientId)
-            .orElse(null);
+    private Optional<ClientDetails> loadClient(OAuth2Authentication authentication) {
+        String clientId = authentication.getOAuth2Request().getClientId();
+        return ofNullable(clientId)
+            .map(clientDetailsService::loadClientByClientId);
     }
 
-    private int resolveAccessTokenValiditySeconds(OAuth2Authentication authentication, ClientDetails client) {
+    private int resolveAccessTokenValiditySeconds(OAuth2Authentication authentication,
+                                                  Optional<ClientDetails> client) {
         Object principal = authentication.getPrincipal();
         if (principal instanceof DomainUserDetails) {
             Integer userValidity = DomainUserDetails.class.cast(principal).getAccessTokenValiditySeconds();
@@ -69,9 +71,9 @@ public class TokenConstraintsService {
             }
         }
 
-        return ofNullable(client)
+        return client
             .map(ClientDetails::getAccessTokenValiditySeconds)
-            .orElseGet(this::getTenantRelatedAccessTokenValiditySeconds);
+            .orElse(getTenantRelatedAccessTokenValiditySeconds());
     }
 
     public int getAccessTokenValiditySeconds(DomainUserDetails userDetails) {
@@ -109,26 +111,25 @@ public class TokenConstraintsService {
         return resolveRefreshTokenValiditySeconds(authentication, loadClient(authentication));
     }
 
-    private int resolveRefreshTokenValiditySeconds(OAuth2Authentication authentication, ClientDetails client) {
+    private int resolveRefreshTokenValiditySeconds(OAuth2Authentication authentication,
+                                                   Optional<ClientDetails> client) {
+        Integer validity;
         Object principal = authentication.getPrincipal();
         if (principal instanceof DomainUserDetails) {
-            Integer userValidity = DomainUserDetails.class.cast(principal).getRefreshTokenValiditySeconds();
-            if (userValidity != null) {
-                return userValidity;
+            validity = DomainUserDetails.class.cast(principal).getRefreshTokenValiditySeconds();
+            if (validity != null) {
+                return validity;
             }
         }
 
-        return ofNullable(client)
+        return client
             .map(ClientDetails::getRefreshTokenValiditySeconds)
-            .orElseGet(this::getTenantRelatedRefreshTokenValiditySeconds);
-    }
-
-    private int getTenantRelatedRefreshTokenValiditySeconds() {
-        return firstNonNull(
-            tenantPropertiesService.getTenantProps().getSecurity().getRefreshTokenValiditySeconds(),
-            applicationProperties.getSecurity().getRefreshTokenValiditySeconds(),
-            defaultRefreshTokenValiditySeconds
-        );
+            .orElse(firstNonNull(
+                    tenantPropertiesService.getTenantProps().getSecurity().getRefreshTokenValiditySeconds(),
+                    applicationProperties.getSecurity().getRefreshTokenValiditySeconds(),
+                    defaultRefreshTokenValiditySeconds
+                )
+            );
     }
 
     /**

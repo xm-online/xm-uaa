@@ -246,11 +246,9 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
             authentication = new OAuth2Authentication(authentication.getOAuth2Request(), user);
         }
 
-        // Resolved once and reused below: both periods come from a single client details lookup.
         TokenValidity validity = tokenConstraintsService.getTokenValidity(authentication);
-        boolean reIssueRefreshToken = tenantPropertiesService.getTenantProps().getSecurity().isReIssueRefreshToken();
 
-        if (reIssueRefreshToken) {
+        if (tenantPropertiesService.getTenantProps().getSecurity().isReIssueRefreshToken()) {
             tokenStore.removeRefreshToken(refreshToken);
             refreshToken = createRefreshToken(authentication, validity.getRefreshTokenValiditySeconds());
         }
@@ -258,7 +256,7 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         OAuth2AccessToken accessToken = createAccessToken(authentication, refreshToken,
             validity.getAccessTokenValiditySeconds());
         tokenStore.storeAccessToken(accessToken, authentication);
-        if (reIssueRefreshToken) {
+        if (tenantPropertiesService.getTenantProps().getSecurity().isReIssueRefreshToken()) {
             tokenStore.storeRefreshToken(accessToken.getRefreshToken(), authentication);
         }
         return accessToken;
