@@ -8,6 +8,8 @@ import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.permission.annotation.FindWithPermission;
 import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.commons.permission.repository.PermittedRepository;
+import com.icthh.xm.commons.permission.service.RoleService;
+import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.Client;
 import com.icthh.xm.uaa.domain.ClientState;
@@ -15,7 +17,6 @@ import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.service.dto.ClientDTO;
 import com.icthh.xm.uaa.service.query.ClientQueryService;
 import com.icthh.xm.uaa.service.query.filter.StrictClientFilterQuery;
-import com.icthh.xm.uaa.web.rest.util.VerificationUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
@@ -27,8 +28,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
+import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_DESCRIPTION_TOO_LONG;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_DESCRIPTION_TOO_LONG_MESSAGE;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_ROLE_NOT_ALLOWED;
+import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_ROLE_NOT_ALLOWED_MESSAGE;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -45,6 +49,8 @@ public class ClientService {
     private final PermittedRepository permittedRepository;
     private final ClientQueryService clientQueryService;
     private final ApplicationProperties applicationProperties;
+    private final TenantContextHolder tenantContextHolder;
+    private final RoleService roleService;
 
     public static final String PSWRD_MASK = "*****";
 
@@ -206,10 +212,21 @@ public class ClientService {
             throw new BusinessException(VALIDATION_DESCRIPTION_TOO_LONG, VALIDATION_DESCRIPTION_TOO_LONG_MESSAGE);
         }
 
-        if (applicationProperties.isClientAsSuperAdminEnabled()) {
-            return;
+        if (!isRoleAllowed(client.getRoleKey())) {
+            throw new BusinessException(VALIDATION_ROLE_NOT_ALLOWED, VALIDATION_ROLE_NOT_ALLOWED_MESSAGE);
+        }
+    }
+
+    private boolean isRoleAllowed(String roleKey) {
+        if (roleKey == null) {
+            return false;
         }
 
-        VerificationUtils.assertNotSuperAdmin(client);
+        if (roleKey.equals(SUPER_ADMIN)) {
+            return applicationProperties.isClientAsSuperAdminEnabled();
+        }
+
+        String tenantKey = tenantContextHolder.getTenantKey();
+        return roleService.getRoles(tenantKey).containsKey(roleKey);
     }
 }
