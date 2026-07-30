@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
@@ -41,8 +42,8 @@ public class TokenConstraintsService {
     public TokenValidity getTokenValidity(OAuth2Authentication authentication) {
         Optional<ClientDetails> client = loadClient(authentication);
         return new TokenValidity(
-            resolveAccessTokenValiditySeconds(authentication, client),
-            resolveRefreshTokenValiditySeconds(authentication, client));
+            resolveAccessTokenValiditySeconds(authentication, clientAccessTokenValiditySeconds(() -> client)),
+            resolveRefreshTokenValiditySeconds(authentication, clientRefreshTokenValiditySeconds(() -> client)));
     }
 
     /**
@@ -52,7 +53,8 @@ public class TokenConstraintsService {
      * @return the access token validity period in seconds
      */
     public int getAccessTokenValiditySeconds(OAuth2Authentication authentication) {
-        return resolveAccessTokenValiditySeconds(authentication, loadClient(authentication));
+        return resolveAccessTokenValiditySeconds(authentication,
+            clientAccessTokenValiditySeconds(() -> loadClient(authentication)));
     }
 
     private Optional<ClientDetails> loadClient(OAuth2Authentication authentication) {
@@ -61,8 +63,14 @@ public class TokenConstraintsService {
             .map(clientDetailsService::loadClientByClientId);
     }
 
+    private Supplier<Integer> clientAccessTokenValiditySeconds(Supplier<Optional<ClientDetails>> client) {
+        return () -> client.get()
+            .map(ClientDetails::getAccessTokenValiditySeconds)
+            .orElse(getTenantRelatedAccessTokenValiditySeconds());
+    }
+
     private int resolveAccessTokenValiditySeconds(OAuth2Authentication authentication,
-                                                  Optional<ClientDetails> client) {
+                                                  Supplier<Integer> clientValidity) {
         Object principal = authentication.getPrincipal();
         if (principal instanceof DomainUserDetails) {
             Integer userValidity = DomainUserDetails.class.cast(principal).getAccessTokenValiditySeconds();
@@ -71,9 +79,7 @@ public class TokenConstraintsService {
             }
         }
 
-        return client
-            .map(ClientDetails::getAccessTokenValiditySeconds)
-            .orElse(getTenantRelatedAccessTokenValiditySeconds());
+        return clientValidity.get();
     }
 
     public int getAccessTokenValiditySeconds(DomainUserDetails userDetails) {
@@ -108,11 +114,23 @@ public class TokenConstraintsService {
      * @return the refresh token validity period in seconds
      */
     public int getRefreshTokenValiditySeconds(OAuth2Authentication authentication) {
-        return resolveRefreshTokenValiditySeconds(authentication, loadClient(authentication));
+        return resolveRefreshTokenValiditySeconds(authentication,
+            clientRefreshTokenValiditySeconds(() -> loadClient(authentication)));
+    }
+
+    private Supplier<Integer> clientRefreshTokenValiditySeconds(Supplier<Optional<ClientDetails>> client) {
+        return () -> client.get()
+            .map(ClientDetails::getRefreshTokenValiditySeconds)
+            .orElse(firstNonNull(
+                    tenantPropertiesService.getTenantProps().getSecurity().getRefreshTokenValiditySeconds(),
+                    applicationProperties.getSecurity().getRefreshTokenValiditySeconds(),
+                    defaultRefreshTokenValiditySeconds
+                )
+            );
     }
 
     private int resolveRefreshTokenValiditySeconds(OAuth2Authentication authentication,
-                                                   Optional<ClientDetails> client) {
+                                                   Supplier<Integer> clientValidity) {
         Integer validity;
         Object principal = authentication.getPrincipal();
         if (principal instanceof DomainUserDetails) {
@@ -122,14 +140,7 @@ public class TokenConstraintsService {
             }
         }
 
-        return client
-            .map(ClientDetails::getRefreshTokenValiditySeconds)
-            .orElse(firstNonNull(
-                    tenantPropertiesService.getTenantProps().getSecurity().getRefreshTokenValiditySeconds(),
-                    applicationProperties.getSecurity().getRefreshTokenValiditySeconds(),
-                    defaultRefreshTokenValiditySeconds
-                )
-            );
+        return clientValidity.get();
     }
 
     /**
