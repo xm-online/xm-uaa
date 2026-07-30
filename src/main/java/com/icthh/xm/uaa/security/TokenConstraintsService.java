@@ -66,7 +66,7 @@ public class TokenConstraintsService {
     private Supplier<Integer> clientAccessTokenValiditySeconds(Supplier<Optional<ClientDetails>> client) {
         return () -> client.get()
             .map(ClientDetails::getAccessTokenValiditySeconds)
-            .orElse(getTenantRelatedAccessTokenValiditySeconds());
+            .orElseGet(this::getTenantRelatedAccessTokenValiditySeconds);
     }
 
     private int resolveAccessTokenValiditySeconds(OAuth2Authentication authentication,
@@ -121,7 +121,7 @@ public class TokenConstraintsService {
     private Supplier<Integer> clientRefreshTokenValiditySeconds(Supplier<Optional<ClientDetails>> client) {
         return () -> client.get()
             .map(ClientDetails::getRefreshTokenValiditySeconds)
-            .orElse(firstNonNull(
+            .orElseGet(() -> firstNonNull(
                     tenantPropertiesService.getTenantProps().getSecurity().getRefreshTokenValiditySeconds(),
                     applicationProperties.getSecurity().getRefreshTokenValiditySeconds(),
                     defaultRefreshTokenValiditySeconds
