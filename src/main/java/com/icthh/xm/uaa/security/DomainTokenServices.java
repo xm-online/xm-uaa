@@ -138,21 +138,24 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
             }
         }
 
+        TokenValidity validity = tokenConstraintsService.getTokenValidity(authentication);
+
         // Only create a new refresh token if there wasn't an existing one
         // associated with an expired access token.
         // Clients might be holding existing refresh tokens, so we re-use it in
         // the case that the old access token
         // expired.
         if (refreshToken == null) {
-            refreshToken = createRefreshToken(authentication);
+            refreshToken = createRefreshToken(authentication, validity.getRefreshTokenValiditySeconds());
         } else if (refreshToken instanceof ExpiringOAuth2RefreshToken) {
             ExpiringOAuth2RefreshToken expiring = (ExpiringOAuth2RefreshToken) refreshToken;
             if (System.currentTimeMillis() > expiring.getExpiration().getTime()) {
-                refreshToken = createRefreshToken(authentication);
+                refreshToken = createRefreshToken(authentication, validity.getRefreshTokenValiditySeconds());
             }
         }
 
-        OAuth2AccessToken accessToken = createAccessToken(authentication, refreshToken);
+        OAuth2AccessToken accessToken = createAccessToken(authentication, refreshToken,
+            validity.getAccessTokenValiditySeconds());
         tokenStore.storeAccessToken(accessToken, authentication);
         // In case it was modified
         refreshToken = accessToken.getRefreshToken();
@@ -243,12 +246,15 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
             authentication = new OAuth2Authentication(authentication.getOAuth2Request(), user);
         }
 
+        TokenValidity validity = tokenConstraintsService.getTokenValidity(authentication);
+
         if (tenantPropertiesService.getTenantProps().getSecurity().isReIssueRefreshToken()) {
             tokenStore.removeRefreshToken(refreshToken);
-            refreshToken = createRefreshToken(authentication);
+            refreshToken = createRefreshToken(authentication, validity.getRefreshTokenValiditySeconds());
         }
 
-        OAuth2AccessToken accessToken = createAccessToken(authentication, refreshToken);
+        OAuth2AccessToken accessToken = createAccessToken(authentication, refreshToken,
+            validity.getAccessTokenValiditySeconds());
         tokenStore.storeAccessToken(accessToken, authentication);
         if (tenantPropertiesService.getTenantProps().getSecurity().isReIssueRefreshToken()) {
             tokenStore.storeRefreshToken(accessToken.getRefreshToken(), authentication);
@@ -352,11 +358,10 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         return true;
     }
 
-    private OAuth2RefreshToken createRefreshToken(OAuth2Authentication authentication) {
+    private OAuth2RefreshToken createRefreshToken(OAuth2Authentication authentication, int validitySeconds) {
         if (!tokenConstraintsService.isSupportRefreshToken(authentication.getOAuth2Request())) {
             return null;
         }
-        int validitySeconds = tokenConstraintsService.getRefreshTokenValiditySeconds(authentication);
         String value = UUID.randomUUID().toString();
         if (validitySeconds > 0) {
             return new DefaultExpiringOAuth2RefreshToken(value, new Date(System.currentTimeMillis()
@@ -365,9 +370,9 @@ public class DomainTokenServices implements AuthorizationServerTokenServices, Re
         return new DefaultOAuth2RefreshToken(value);
     }
 
-    private OAuth2AccessToken createAccessToken(OAuth2Authentication authentication, OAuth2RefreshToken refreshToken) {
+    private OAuth2AccessToken createAccessToken(OAuth2Authentication authentication, OAuth2RefreshToken refreshToken,
+                                                int validitySeconds) {
         DefaultOAuth2AccessToken token = new DefaultOAuth2AccessToken(UUID.randomUUID().toString());
-        int validitySeconds = tokenConstraintsService.getAccessTokenValiditySeconds(authentication);
         if (validitySeconds > 0) {
             token.setExpiration(new Date(System.currentTimeMillis() + (validitySeconds * 1000L)));
         }
