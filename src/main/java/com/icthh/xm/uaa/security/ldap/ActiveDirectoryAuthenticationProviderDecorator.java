@@ -15,6 +15,7 @@ import org.springframework.ldap.core.support.DefaultDirObjectFactory;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.ldap.LdapUtils;
 import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 
 @RequiredArgsConstructor
@@ -43,10 +44,15 @@ public class ActiveDirectoryAuthenticationProviderDecorator implements Authentic
     protected String findUserPrincipalName(String username) {
         SearchControls searchControls = new SearchControls();
         searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-        DirContextOperations dirContextOperations = SpringSecurityLdapTemplate.searchForSingleEntryInternal(
-            bindBySystemUser(), searchControls, ldap.getRootDn(), ldap.getSearchFields(),
-            new Object[] {username});
-        return dirContextOperations.getStringAttribute(ldap.getAuthField());
+        DirContext ctx = bindBySystemUser();
+        try {
+            DirContextOperations dirContextOperations = SpringSecurityLdapTemplate.searchForSingleEntryInternal(
+                ctx, searchControls, ldap.getRootDn(), ldap.getSearchFields(),
+                new Object[] {username});
+            return dirContextOperations.getStringAttribute(ldap.getAuthField());
+        } finally {
+            LdapUtils.closeContext(ctx);
+        }
     }
 
     @SneakyThrows
