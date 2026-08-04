@@ -4,15 +4,10 @@ dashboard:
   - privilegeKey: "DASHBOARD.CREATE"
     disabled: false
     deleted: false
-    envCondition: null
-    resourceCondition: null
-    reactionStrategy: null
   ROLE_ANONYMOUS:
   - privilegeKey: "DASHBOARD.GET_LIST.ITEM"
     disabled: true
     deleted: false
-    envCondition: null
-    resourceCondition: null
     reactionStrategy: "SKIP"
 entity:
   ROLE_ADMIN: []
@@ -20,22 +15,14 @@ entity:
   - privilegeKey: "ATTACHMENT.CREATE"
     disabled: false
     deleted: false
-    envCondition: null
-    resourceCondition: null
     reactionStrategy: "SKIP"
 uaa:
   ROLE_ADMIN:
   - privilegeKey: "ACCOUNT.CREATE"
     disabled: false
     deleted: false
-    envCondition: null
-    resourceCondition: null
-    reactionStrategy: null
   ROLE_ANONYMOUS:
   - privilegeKey: "ACCOUNT.GET"
     disabled: false
     deleted: false
-    envCondition: null
-    resourceCondition: null
-    reactionStrategy: null
 
