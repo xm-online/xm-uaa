@@ -400,7 +400,9 @@ public class TenantRoleServiceUnitTest {
         ArgumentCaptor<String> yamlCaptor = ArgumentCaptor.forClass(String.class);
         verify(tenantConfigRepository).updateConfigFullPath(eq(XM_TENANT), eq(PERMISSIONS_PATH), yamlCaptor.capture());
 
-        assertThat(yamlCaptor.getValue()).doesNotContain(": null");
+        assertThat(yamlCaptor.getValue())
+            .contains("ATTACHMENT.CREATE")
+            .doesNotContain(": null");
     }
 
     @Test(expected = IllegalStateException.class)
