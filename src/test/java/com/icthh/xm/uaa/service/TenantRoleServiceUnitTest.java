@@ -19,6 +19,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -373,6 +374,35 @@ public class TenantRoleServiceUnitTest {
 
         verify(tenantConfigRepository)
             .updateConfigFullPath(XM_TENANT, PERMISSIONS_PATH, readConfigFile("/RoleResourceIntTest/updatedPermissions.yml"));
+    }
+
+    @Test
+    public void updateRole_nullPermissionProperties_shouldBeOmittedFromYaml() {
+        updateRoleMoks();
+
+        RoleDTO roleDto = new RoleDTO();
+        roleDto.setRoleKey("ROLE_ADMIN");
+        roleDto.setDescription("Role with null permission fields");
+
+        PermissionDTO permissionWithNulls = new PermissionDTO();
+        permissionWithNulls.setMsName("uaa");
+        permissionWithNulls.setRoleKey("ROLE_ADMIN");
+        permissionWithNulls.setPrivilegeKey("ATTACHMENT.CREATE");
+        permissionWithNulls.setEnabled(false);
+
+        roleDto.setPermissions(singletonList(permissionWithNulls));
+
+        TenantProperties tenantProperties = new TenantProperties();
+        when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProperties);
+
+        tenantRoleService.updateRole(roleDto);
+
+        ArgumentCaptor<String> yamlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(tenantConfigRepository).updateConfigFullPath(eq(XM_TENANT), eq(PERMISSIONS_PATH), yamlCaptor.capture());
+
+        assertThat(yamlCaptor.getValue())
+            .contains("ATTACHMENT.CREATE")
+            .doesNotContain(": null");
     }
 
     @Test(expected = IllegalStateException.class)

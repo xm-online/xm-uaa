@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.service;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -65,7 +66,8 @@ public class TenantRoleService {
     @Value("${xm-permission.custom-privileges-path:}")
     private String customPrivilegesPath;
 
-    private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+    private ObjectMapper mapper = new ObjectMapper(new YAMLFactory())
+        .setSerializationInclusion(JsonInclude.Include.NON_NULL);
     private final PermissionProperties permissionProperties;
     private final TenantConfigRepository tenantConfigRepository;
     private final UserRepository userRepository;
