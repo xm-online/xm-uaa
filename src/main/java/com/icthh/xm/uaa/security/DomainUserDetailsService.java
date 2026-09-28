@@ -57,7 +57,7 @@ public class DomainUserDetailsService implements UserDetailsService {
         log.debug("Retrieving user with login: {}, lowercase: {}, within tenant: {}", login, lowerLogin, tenantKey);
 
         return userLoginRepository
-            .findOneByLogin(lowerLogin)
+            .findOneByLoginIgnoreCase(lowerLogin)
             .map(userLogin -> buildDomainUserDetails(lowerLogin, tenantKey, userLogin.getUser()));
     }
 

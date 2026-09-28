@@ -57,7 +57,7 @@ public class DomainUserDetailsServiceUnitTest {
     @Test
     public void testLoginSuccess() {
         when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf("XM")));
-        when(userLoginRepository.findOneByLogin(eq("admin")))
+        when(userLoginRepository.findOneByLoginIgnoreCase(eq("admin")))
             .thenReturn(Optional.of(userLogin));
 
         DomainUserDetails result = userDetailsService.loadUserByUsername("admin");
@@ -70,7 +70,7 @@ public class DomainUserDetailsServiceUnitTest {
     @Test(expected = TenantNotProvidedException.class)
     public void testLoginNoTenant() {
         when(tenantContext.getTenantKey()).thenReturn(Optional.empty());
-        when(userLoginRepository.findOneByLogin(eq("admin")))
+        when(userLoginRepository.findOneByLoginIgnoreCase(eq("admin")))
             .thenReturn(Optional.of(userLogin));
 
         userDetailsService.loadUserByUsername("admin");
@@ -80,7 +80,7 @@ public class DomainUserDetailsServiceUnitTest {
     public void testLoginUserNotActivated() {
         user.setActivated(false);
         when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(DEFAULT_TENANT_KEY_VALUE)));
-        when(userLoginRepository.findOneByLogin(eq("admin")))
+        when(userLoginRepository.findOneByLoginIgnoreCase(eq("admin")))
             .thenReturn(Optional.of(userLogin));
 
         DomainUserDetails result = userDetailsService.loadUserByUsername("admin");
@@ -89,7 +89,7 @@ public class DomainUserDetailsServiceUnitTest {
     @Test(expected = UsernameNotFoundException.class)
     public void testLoginUserNotFound() {
         when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(DEFAULT_TENANT_KEY_VALUE)));
-        when(userLoginRepository.findOneByLogin(eq("admin")))
+        when(userLoginRepository.findOneByLoginIgnoreCase(eq("admin")))
             .thenReturn(Optional.empty());
 
         DomainUserDetails result = userDetailsService.loadUserByUsername("admin");
@@ -98,7 +98,7 @@ public class DomainUserDetailsServiceUnitTest {
     @Test
     public void testLoginWithLeadingAndTrailingSpaces() {
         when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(DEFAULT_TENANT_KEY_VALUE)));
-        when(userLoginRepository.findOneByLogin(eq("admin")))
+        when(userLoginRepository.findOneByLoginIgnoreCase(eq("admin")))
             .thenReturn(Optional.of(userLogin));
 
         DomainUserDetails result = userDetailsService.loadUserByUsername(" admin    ");
