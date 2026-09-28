@@ -19,6 +19,8 @@ import java.util.Optional;
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class DomainUserDetailsServiceUnitTest {
@@ -57,7 +59,7 @@ public class DomainUserDetailsServiceUnitTest {
     @Test
     public void testLoginSuccess() {
         when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf("XM")));
-        when(userLoginRepository.findOneByLoginIgnoreCase(eq("admin")))
+        when(userLoginRepository.findOneByLogin(eq("admin")))
             .thenReturn(Optional.of(userLogin));
 
         DomainUserDetails result = userDetailsService.loadUserByUsername("admin");
@@ -67,10 +69,43 @@ public class DomainUserDetailsServiceUnitTest {
         assertEquals("test", result.getUserKey());
     }
 
+    @Test
+    public void testLoginWithMixedCaseUsernameFindsLowercaseLoginByExactMatch() {
+        String lowerLogin = "tst-mw-xwiki@vodafone.ua";
+        when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf("XM")));
+        userLogin.setLogin(lowerLogin);
+        when(userLoginRepository.findOneByLogin(eq(lowerLogin)))
+            .thenReturn(Optional.of(userLogin));
+
+        DomainUserDetails result = userDetailsService.loadUserByUsername("tst-MW-xwiki@vodafone.ua");
+
+        assertEquals(lowerLogin, result.getUsername());
+        verify(userLoginRepository).findOneByLogin(eq(lowerLogin));
+        verify(userLoginRepository, never()).findOneByLoginIgnoreCase(eq(lowerLogin));
+    }
+
+    @Test
+    public void testLoginWithMixedCaseStoredLoginUsesCaseInsensitiveFallback() {
+        String login = "tst-MW-xwiki@vodafone.ua";
+        String lowerLogin = "tst-mw-xwiki@vodafone.ua";
+        when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf("XM")));
+        userLogin.setLogin(login);
+        when(userLoginRepository.findOneByLogin(eq(lowerLogin)))
+            .thenReturn(Optional.empty());
+        when(userLoginRepository.findOneByLoginIgnoreCase(eq(lowerLogin)))
+            .thenReturn(Optional.of(userLogin));
+
+        DomainUserDetails result = userDetailsService.loadUserByUsername(login);
+
+        assertEquals(lowerLogin, result.getUsername());
+        verify(userLoginRepository).findOneByLogin(eq(lowerLogin));
+        verify(userLoginRepository).findOneByLoginIgnoreCase(eq(lowerLogin));
+    }
+
     @Test(expected = TenantNotProvidedException.class)
     public void testLoginNoTenant() {
         when(tenantContext.getTenantKey()).thenReturn(Optional.empty());
-        when(userLoginRepository.findOneByLoginIgnoreCase(eq("admin")))
+        when(userLoginRepository.findOneByLogin(eq("admin")))
             .thenReturn(Optional.of(userLogin));
 
         userDetailsService.loadUserByUsername("admin");
@@ -80,7 +115,7 @@ public class DomainUserDetailsServiceUnitTest {
     public void testLoginUserNotActivated() {
         user.setActivated(false);
         when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(DEFAULT_TENANT_KEY_VALUE)));
-        when(userLoginRepository.findOneByLoginIgnoreCase(eq("admin")))
+        when(userLoginRepository.findOneByLogin(eq("admin")))
             .thenReturn(Optional.of(userLogin));
 
         DomainUserDetails result = userDetailsService.loadUserByUsername("admin");
@@ -89,7 +124,7 @@ public class DomainUserDetailsServiceUnitTest {
     @Test(expected = UsernameNotFoundException.class)
     public void testLoginUserNotFound() {
         when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(DEFAULT_TENANT_KEY_VALUE)));
-        when(userLoginRepository.findOneByLoginIgnoreCase(eq("admin")))
+        when(userLoginRepository.findOneByLogin(eq("admin")))
             .thenReturn(Optional.empty());
 
         DomainUserDetails result = userDetailsService.loadUserByUsername("admin");
@@ -98,7 +133,7 @@ public class DomainUserDetailsServiceUnitTest {
     @Test
     public void testLoginWithLeadingAndTrailingSpaces() {
         when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(DEFAULT_TENANT_KEY_VALUE)));
-        when(userLoginRepository.findOneByLoginIgnoreCase(eq("admin")))
+        when(userLoginRepository.findOneByLogin(eq("admin")))
             .thenReturn(Optional.of(userLogin));
 
         DomainUserDetails result = userDetailsService.loadUserByUsername(" admin    ");

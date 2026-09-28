@@ -45,6 +45,15 @@ public class UserLoginServiceUnitTest {
         assertThat(login.getLogin()).isEqualTo("login");
     }
 
+    @Test
+    public void testNormalizeLoginsWithMixedCaseAndWhitespaces() {
+        UserLogin login = new UserLogin();
+        login.setLogin("  tst-MW-xwiki@vodafone.ua  ");
+        testedInstance.normalizeLogins(List.of(login));
+
+        assertThat(login.getLogin()).isEqualTo("tst-mw-xwiki@vodafone.ua");
+    }
+
     @Test(expected = BusinessException.class)
     public void shouldVerifyLoginNotExists() {
         UserLogin userLogin = new UserLogin();

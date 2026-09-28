@@ -28,6 +28,7 @@ import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings;
 import com.icthh.xm.uaa.security.ldap.LdapAuthenticationProviderBuilder;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
+import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
 import java.nio.charset.Charset;
 import java.time.Instant;
@@ -102,6 +103,9 @@ public class UaaAuthenticationProviderIntTest {
     private UserService userService;
 
     @Autowired
+    private UserLoginService userLoginService;
+
+    @Autowired
     private LepManager lepManager;
 
     @Autowired
@@ -143,7 +147,8 @@ public class UaaAuthenticationProviderIntTest {
         setTenantProps(tenantProperties1 -> {});
 
         LdapAuthenticationProviderBuilder providerBuilder =
-            new LdapAuthenticationProviderBuilder(tenantPropertiesService, userDetailsService, userService);
+            new LdapAuthenticationProviderBuilder(
+                tenantPropertiesService, userDetailsService, userService, userLoginService);
 
         uaaAuthenticationProvider = new UaaAuthenticationProvider(daoAuthenticationProvider,
                                                                   providerBuilder,

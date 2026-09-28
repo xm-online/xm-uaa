@@ -14,7 +14,9 @@ import static org.mockito.Mockito.when;
 
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
+import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
+import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.security.DomainUserDetails;
@@ -27,7 +29,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.ldap.core.DirContextOperations;
@@ -53,6 +54,9 @@ public class UaaLdapUserDetailsContextMapperUnitTest {
     UserService userService;
 
     @Mock
+    UserLoginRepository userLoginRepository;
+
+    @Mock
     DirContextOperations ctx;
 
     @Mock
@@ -61,11 +65,13 @@ public class UaaLdapUserDetailsContextMapperUnitTest {
     @Mock
     DomainUserDetailsService userDetailsService;
 
-    @InjectMocks
-    UaaLdapUserDetailsContextMapper uaaLdapUserDetailsContextMapper;
+    private UaaLdapUserDetailsContextMapper uaaLdapUserDetailsContextMapper;
 
     @Before
     public void setUp() {
+        UserLoginService userLoginService = new UserLoginService(userLoginRepository);
+        uaaLdapUserDetailsContextMapper = new UaaLdapUserDetailsContextMapper(
+            userDetailsService, userService, userLoginService, ldapConf);
         when(userDetailsService.loadUserByUsername(anyString())).thenReturn(mockDomainUserDetails);
         when(mockDomainUserDetails.getAdditionalDetails()).thenReturn(capturedAdditionalDetails);
         when(ldapConf.getDomain()).thenReturn(LDAP_DOMAIN);
@@ -128,6 +134,7 @@ public class UaaLdapUserDetailsContextMapperUnitTest {
             .createUser(captor.capture());
         UserDTO user = captor.getValue();
         assertTrue(user.getAuthorities().contains("DEFAULT_ROLE"));
+        assertEquals("homer", user.getLogins().get(0).getLogin());
         assertEquals(LDAP_DOMAIN, capturedAdditionalDetails.get("ldapDomain"));
     }
 

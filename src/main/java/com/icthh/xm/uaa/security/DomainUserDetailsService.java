@@ -57,7 +57,8 @@ public class DomainUserDetailsService implements UserDetailsService {
         log.debug("Retrieving user with login: {}, lowercase: {}, within tenant: {}", login, lowerLogin, tenantKey);
 
         return userLoginRepository
-            .findOneByLoginIgnoreCase(lowerLogin)
+            .findOneByLogin(lowerLogin)
+            .or(() -> userLoginRepository.findOneByLoginIgnoreCase(lowerLogin))
             .map(userLogin -> buildDomainUserDetails(lowerLogin, tenantKey, userLogin.getUser()));
     }
 
@@ -82,9 +83,9 @@ public class DomainUserDetailsService implements UserDetailsService {
 
         // get user login's
         List<UserLoginDto> logins = user.getLogins().stream()
-                                        .filter(l -> !l.isRemoved())
-                                        .map(UserLoginDto::new)
-                                        .collect(toList());
+            .filter(l -> !l.isRemoved())
+            .map(UserLoginDto::new)
+            .collect(toList());
 
         // get user role authority
         List<SimpleGrantedAuthority> authorities = user.getAuthorities()
