@@ -7,6 +7,7 @@ import com.icthh.xm.uaa.domain.properties.TenantProperties.Ldap;
 import com.icthh.xm.uaa.lep.keyresolver.LepBuildLdapProviderKeyResolver;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
+import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
 
 import java.util.List;
@@ -35,6 +36,7 @@ public class LdapAuthenticationProviderBuilder {
     private final TenantPropertiesService tenantPropertiesService;
     private final DomainUserDetailsService userDetailsService;
     private final UserService userService;
+    private final UserLoginService userLoginService;
 
     @LogicExtensionPoint(value = "BuildLdapProvider", resolver = LepBuildLdapProviderKeyResolver.class)
     public Optional<AuthenticationProvider> build(String domain) {
@@ -93,7 +95,7 @@ public class LdapAuthenticationProviderBuilder {
         LdapAuthenticationProvider ldapAuthenticationProvider =
             new LdapAuthenticationProvider(bindAuthenticator, authoritiesPopulator);
         ldapAuthenticationProvider.setUserDetailsContextMapper(
-            new UaaLdapUserDetailsContextMapper(userDetailsService, userService, conf));
+            new UaaLdapUserDetailsContextMapper(userDetailsService, userService, userLoginService, conf));
 
         return new CutDomainAuthenticationProviderDecorator(ldapAuthenticationProvider, conf);
     }
@@ -103,7 +105,7 @@ public class LdapAuthenticationProviderBuilder {
             = new ActiveDirectoryLdapAuthenticationProvider(null, conf.getProviderUrl(), conf.getRootDn());
 
         adLdapAuthenticationProvider.setUserDetailsContextMapper(
-            new UaaLdapUserDetailsContextMapper(userDetailsService, userService, conf));
+            new UaaLdapUserDetailsContextMapper(userDetailsService, userService, userLoginService, conf));
 
         if (isNotBlank(conf.getSearchFields()) && isBlank(conf.getAuthField())) {
             adLdapAuthenticationProvider.setSearchFilter(conf.getSearchFields());

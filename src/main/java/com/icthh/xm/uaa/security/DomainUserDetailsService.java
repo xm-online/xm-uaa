@@ -5,7 +5,9 @@ import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
+import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.User;
+import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.service.dto.UserLoginDto;
 import lombok.AllArgsConstructor;
@@ -34,6 +36,7 @@ public class DomainUserDetailsService implements UserDetailsService {
 
     private final UserLoginRepository userLoginRepository;
     private final TenantContextHolder tenantContextHolder;
+    private final ApplicationProperties applicationProperties;
 
     @Override
     @Transactional
@@ -56,9 +59,12 @@ public class DomainUserDetailsService implements UserDetailsService {
 
         log.debug("Retrieving user with login: {}, lowercase: {}, within tenant: {}", login, lowerLogin, tenantKey);
 
-        return userLoginRepository
-            .findOneByLogin(lowerLogin)
-            .map(userLogin -> buildDomainUserDetails(lowerLogin, tenantKey, userLogin.getUser()));
+        Optional<UserLogin> userLogin = userLoginRepository.findOneByLogin(lowerLogin);
+        if (applicationProperties.getSecurity().isCaseInsensitiveLoginFallbackEnabled()) {
+            userLogin = userLogin.or(() -> userLoginRepository.findOneByLoginIgnoreCase(lowerLogin));
+        }
+
+        return userLogin.map(loginRecord -> buildDomainUserDetails(lowerLogin, tenantKey, loginRecord.getUser()));
     }
 
     private String getTenantKey() {
@@ -82,9 +88,9 @@ public class DomainUserDetailsService implements UserDetailsService {
 
         // get user login's
         List<UserLoginDto> logins = user.getLogins().stream()
-                                        .filter(l -> !l.isRemoved())
-                                        .map(UserLoginDto::new)
-                                        .collect(toList());
+            .filter(l -> !l.isRemoved())
+            .map(UserLoginDto::new)
+            .collect(toList());
 
         // get user role authority
         List<SimpleGrantedAuthority> authorities = user.getAuthorities()

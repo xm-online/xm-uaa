@@ -10,8 +10,10 @@ import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.security.DomainUserDetails;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
+import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -21,6 +23,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.naming.NamingException;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -36,6 +39,7 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
     private static final String LDAP_DOMAIN_ADDITIONAL_DETAILS_KEY = "ldapDomain";
     private final DomainUserDetailsService userDetailsService;
     private final UserService userService;
+    private final UserLoginService userLoginService;
     private final TenantProperties.Ldap ldapConf;
 
     @Override
@@ -73,6 +77,10 @@ public class UaaLdapUserDetailsContextMapper extends LdapUserDetailsMapper {
         userLogin.setLogin(username);
         userLogin.setTypeKey(UserLoginType.NICKNAME.getValue());
         userDTO.setLogins(Collections.singletonList(userLogin));
+
+        userLoginService.verifyLoginsNotExist(userDTO.getLogins());
+        userLoginService.normalizeLogins(userDTO.getLogins());
+
         List<String> roles = mapRole(roleConf, authorities);
         userDTO.setAuthorities(roles.isEmpty() ? List.of(roleConf.getDefaultRole()) : roles);
         userService.createUser(userDTO);

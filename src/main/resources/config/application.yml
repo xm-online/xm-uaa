@@ -219,6 +219,8 @@ application:
         passwordEncoderStrength: -1
         enablePasswordHashCaching: true
         enablePasswordHashCacheSize: 1000
+        # Enable only when legacy mixed-case logins need lookup; Oracle may require a function-based index.
+        case-insensitive-login-fallback-enabled: false
     last-login-date-enabled: false
     communication:
         enabled: false
@@ -226,4 +228,3 @@ application:
 gracefulShutdown:
     enabled: false
     shutdownDelay:
-
