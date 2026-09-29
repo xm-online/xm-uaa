@@ -83,6 +83,7 @@ public class ApplicationProperties {
         private Integer passwordEncoderStrength;
         private Boolean enablePasswordHashCaching;
         private Integer enablePasswordHashCacheSize;
+        private boolean caseInsensitiveLoginFallbackEnabled;
     }
 
     @Getter
