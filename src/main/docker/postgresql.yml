@@ -1,11 +1,20 @@
-version: '2'
+# This configuration is intended for development purpose, it's **your** responsibility to harden it for production
+name: uaa
 services:
     uaa-postgresql:
-        image: postgres:11.5
+        image: postgres:18.4
         # volumes:
-        #     - ~/volumes/jhipster/uaa/postgresql/:/var/lib/postgresql/data/
+        #     - ~/volumes/jhipster/uaa/postgresql/:/var/lib/postgresql/
         environment:
             - POSTGRES_USER=uaa
-            - POSTGRES_PASSWORD=
+            - POSTGRES_PASSWORD=uaa
+            - POSTGRES_DB=uaa
+        healthcheck:
+            test: [ 'CMD-SHELL', 'pg_isready -U $${POSTGRES_USER}' ]
+            interval: 5s
+            timeout: 5s
+            retries: 10
+        # If you want to expose these ports outside your dev PC,
+        # remove the "127.0.0.1:" prefix
         ports:
-            - 5432:5432
+            - "127.0.0.1:${POSTGRES_PORT:-15433}:5432"

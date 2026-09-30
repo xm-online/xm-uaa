@@ -84,10 +84,17 @@ public abstract class AbstractTenantPropertiesService<T extends TenantProperties
                 T spec = mapper.readValue(config, specType);
                 tenantProps.put(tenant, spec);
                 log.info("Specification for tenant {} was updated: {}", tenant, updatedKey);
+                onTenantPropsUpdated(tenant, spec);
             }
         } catch (Exception e) {
             log.error("Error read xm specification from path {}", updatedKey, e);
         }
+    }
+
+    /**
+     * Hook called after tenant properties were successfully updated.
+     */
+    protected void onTenantPropsUpdated(String tenant, T tenantProperties) {
     }
 
     @Override

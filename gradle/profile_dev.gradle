@@ -7,7 +7,7 @@ configurations {
 
 dependencies {
     developmentOnly "org.springframework.boot:spring-boot-devtools"
-    implementation "com.h2database:h2"
+    implementation "org.postgresql:postgresql"
 }
 
 def profiles = "dev"
@@ -26,8 +26,31 @@ springBoot {
 	}
 }
 
+def postgresPort = project.findProperty("postgresPort") ?: "15433"
+def postgresCompose = ["docker", "compose", "-f", "src/main/docker/postgresql.yml"]
+
+// Spring Boot 2.1 has no spring-boot-docker-compose, so dev Postgres is managed by Gradle.
+// Use -Pno-db-container to run against own database (POSTGRES_PORT env var sets the port).
+task postgresUp(type: Exec) {
+    group = "application"
+    description = "Starts dev Postgres container"
+    environment "POSTGRES_PORT", postgresPort
+    commandLine postgresCompose + ["up", "-d", "--wait"]
+}
+
+task postgresDown(type: Exec) {
+    group = "application"
+    description = "Stops dev Postgres container"
+    commandLine postgresCompose + ["down"]
+}
+
 bootRun {
     args = []
+    environment "POSTGRES_PORT", postgresPort
+    if (!project.hasProperty("no-db-container")) {
+        dependsOn postgresUp
+        finalizedBy postgresDown
+    }
 }
 
 
