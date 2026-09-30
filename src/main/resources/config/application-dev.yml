@@ -29,7 +29,6 @@ spring:
     devtools:
         restart:
             enabled: true
-            additional-exclude: .h2.server.properties
         livereload:
             enabled: false # we use Webpack dev server + BrowserSync for livereload
     jackson:
@@ -51,17 +50,14 @@ spring:
                     destination: topic-jhipster
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:h2:mem:uaa;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+        url: jdbc:postgresql://localhost:${POSTGRES_PORT:15433}/uaa
         username: uaa
-        password:
+        password: uaa
         hikari:
             auto-commit: false
-    h2:
-        console:
-            enabled: true
     jpa:
-        database-platform: io.github.jhipster.domain.util.FixedH2Dialect
-        database: H2
+        database-platform: com.icthh.xm.commons.migration.db.jsonb.CustomPostgreSQL95Dialect
+        database: POSTGRESQL
         show-sql: true
         properties:
             hibernate.id.new_generator_mappings: true
@@ -71,6 +67,7 @@ spring:
             hibernate.generate_statistics: true
             # see org.hibernate.cfg.AvailableSettings.PREFER_GENERATOR_NAME_AS_DEFAULT_SEQUENCE_NAME
             hibernate.model.generator_name_as_sequence_name: false
+            hibernate.dialect: com.icthh.xm.commons.migration.db.jsonb.CustomPostgreSQL95Dialect
     liquibase:
         contexts: dev
         enabled: true
