@@ -4,9 +4,9 @@ import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.commons.tenant.TenantKey;
-import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.User;
+import com.icthh.xm.uaa.service.ApplicationUrlService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.OtpSendDTO;
@@ -26,10 +26,10 @@ public class EmailOtpSender extends AbstractOtpSender {
     public EmailOtpSender(TenantPropertiesService tenantPropsService,
                           ApplicationProperties applicationProps,
                           TenantContextHolder tenantContextHolder,
-                          XmRequestContextHolder xmRequestContextHolder,
+                          ApplicationUrlService applicationUrlService,
                           MailService mailService,
                           UserService userService) {
-        super(tenantPropsService, applicationProps, tenantContextHolder, userService, xmRequestContextHolder);
+        super(tenantPropsService, applicationProps, tenantContextHolder, userService, applicationUrlService);
         this.tenantContextHolder = tenantContextHolder;
         this.mailService = mailService;
         this.userService = userService;

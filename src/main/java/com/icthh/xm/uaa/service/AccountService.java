@@ -214,6 +214,7 @@ public class AccountService {
             } else {
                 if (CollectionUtils.isNotEmpty(updatedUser.getAuthorities())) {
                     List<String> authorities = updatedUser.getAuthorities();
+                    userService.assertNotSelfRoleUpdate(user, authorities);
                     log.debug("updateAccount: updating authorities to: {}", authorities);
                     user.setAuthorities(authorities);
                 }

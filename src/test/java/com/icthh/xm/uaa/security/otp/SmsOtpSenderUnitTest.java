@@ -8,12 +8,11 @@ import com.icthh.xm.commons.messaging.communication.service.CommunicationService
 import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
-import com.icthh.xm.uaa.commons.XmRequestContext;
-import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.security.oauth2.otp.SmsOtpSender;
+import com.icthh.xm.uaa.service.ApplicationUrlService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.OtpSendDTO;
@@ -65,7 +64,7 @@ public class SmsOtpSenderUnitTest {
     @Mock
     private UserService userService;
     @Mock
-    private XmRequestContextHolder xmRequestContextHolder;
+    private ApplicationUrlService applicationUrlService;
 
     private SmsOtpSender smsOtpSender;
 
@@ -80,8 +79,7 @@ public class SmsOtpSenderUnitTest {
         when(tenantContext.getTenantKey()).thenReturn(Optional.of(TENANT_KEY));
         when(tenantContextHolder.getContext()).thenReturn(tenantContext);
 
-        XmRequestContext xmRequestContext = mock(XmRequestContext.class);
-        when(xmRequestContextHolder.getContext()).thenReturn(xmRequestContext);
+        when(applicationUrlService.getApplicationUrl()).thenReturn("https://app.test.com");
 
         TenantProperties tenantProperties = buildTenantProperties();
         when(tenantPropertiesService.getTenantProps(eq(TENANT_KEY))).thenReturn(tenantProperties);
@@ -96,7 +94,7 @@ public class SmsOtpSenderUnitTest {
         when(mockUser.getLangKey()).thenReturn("ua");
 
         smsOtpSender = new SmsOtpSender(tenantPropertiesService, applicationProperties, tenantContextHolder,
-            userMessagingService, communicationService, objectMapper, userService, xmRequestContextHolder);
+            userMessagingService, communicationService, objectMapper, userService, applicationUrlService);
     }
 
     @Test

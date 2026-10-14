@@ -250,6 +250,7 @@ public class UserService {
         return userRepository.findById(updatedUser.getId())
             .map(user -> {
                 assertNotSuperAdmin(user.getAuthorities());
+                assertNotSelfRoleUpdate(user, updatedUser.getAuthorities());
                 user.setAuthorities(updatedUser.getAuthorities());
                 return user;
             })
@@ -632,6 +633,7 @@ public class UserService {
                 if (CollectionUtils.isEmpty(srcDTO.getAuthorities())) {
                     log.warn("Role is empty and will not be allied to user");
                 } else {
+                    assertNotSelfRoleUpdate(dstUser, srcDTO.getAuthorities());
                     log.warn("Role [{}] will be allied to user.id={}. Evaluate strictUserManagement as option", srcDTO.getAuthorities(), dstUser.getId());
                     dstUser.setAuthorities(srcDTO.getAuthorities());
                 }
@@ -652,6 +654,27 @@ public class UserService {
         dstUser.setAccessTokenValiditySeconds(srcDTO.getAccessTokenValiditySeconds());
         dstUser.setRefreshTokenValiditySeconds(srcDTO.getRefreshTokenValiditySeconds());
         return  dstUser;
+    }
+
+    /**
+     * Throws BusinessException.ERROR_USER_CHANGE_ROLE_HIMSELF if the current user changes his own role
+     * and the tenant does not allow it (selfUserRoleUpdate in uaa.yml).
+     * @param user - stored user
+     * @param newAuthorities - requested roles
+     */
+    public void assertNotSelfRoleUpdate(User user, List<String> newAuthorities) {
+        if (CollectionUtils.isEmpty(newAuthorities) || isEqualCollection(user.getAuthorities(), newAuthorities)) {
+            return;
+        }
+        boolean himself = xmAuthenticationContextHolder.getContext().getUserKey()
+            .map(key -> key.equals(user.getUserKey()))
+            .orElse(false);
+        if (himself && !tenantPropertiesService.getTenantProps().isSelfUserRoleUpdate()) {
+            log.warn("User {} is forbidden to change his own role from {} to {}. To allow it (previous behavior) "
+                + "set 'selfUserRoleUpdate: true' in uaa.yml of the tenant",
+                user.getUserKey(), user.getAuthorities(), newAuthorities);
+            throw new BusinessException(ERROR_USER_CHANGE_ROLE_HIMSELF, "Forbidden to change role himself");
+        }
     }
 
     // dstUser need to have logout timeout data

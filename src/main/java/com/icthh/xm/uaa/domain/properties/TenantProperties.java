@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.domain.properties;
 
 import static com.icthh.xm.uaa.service.otp.OtpType.EMBEDDED;
 import static java.lang.Boolean.TRUE;
+import static java.util.stream.Collectors.toList;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -42,6 +43,25 @@ public class TenantProperties {
      */
     @JsonProperty("strictUserManagement")
     private boolean strictUserManagement;
+
+    /**
+     * Allows a user to change his own role (POST /api/account, PUT /api/users, PUT /api/users/roles).
+     * If false (default) such a request fails with error.user.change.role.himself.
+     */
+    @JsonProperty("selfUserRoleUpdate")
+    private boolean selfUserRoleUpdate;
+
+    /**
+     * Hosts of the tenant web application allowed in links sent to users (in addition to tenant-domains.yml),
+     * stored in lower case.
+     */
+    @JsonProperty("hosts")
+    private List<String> hosts = new ArrayList<>();
+
+    @JsonSetter("hosts")
+    public void setHosts(List<String> hosts) {
+        this.hosts = hosts == null ? new ArrayList<>() : hosts.stream().map(String::toLowerCase).collect(toList());
+    }
 
     @JsonProperty("security")
     private Security security = new Security();

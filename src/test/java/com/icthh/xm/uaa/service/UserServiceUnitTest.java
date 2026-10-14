@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.service;
 
+import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.security.XmAuthenticationContext;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
@@ -227,6 +228,7 @@ public class UserServiceUnitTest {
 
     @Test
     public void shouldChangeUserRole() {
+        givenCurrentUserKey("admin");
         UserDTO userDTO = new UserDTO();
         userDTO.setRoleKey("X");
         userDTO.setId(ID);
@@ -234,6 +236,69 @@ public class UserServiceUnitTest {
         Optional<UserDTO> result = service.changeUserRole(userDTO);
         assertThat(result.isPresent()).isTrue();
         assertThat(result.get().getRoleKey()).isEqualTo(userDTO.getRoleKey());
+    }
+
+    @Test
+    public void shouldForbidToChangeOwnRole() {
+        givenCurrentUserKey(USER_KEY);
+        given(tenantPropertiesService.getTenantProps()).willReturn(new TenantProperties());
+        User user = createUser(USER_KEY, "Y");
+        given(userRepository.findById(ID)).willReturn(Optional.of(user));
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(ID);
+        userDTO.setRoleKey("X");
+
+        assertThatThrownBy(() -> service.changeUserRole(userDTO))
+            .isInstanceOf(BusinessException.class)
+            .hasMessage("Forbidden to change role himself");
+        assertThat(user.getAuthorities()).isEqualTo(List.of("Y"));
+    }
+
+    @Test
+    public void shouldChangeOwnRoleIfSelfUserRoleUpdateAllowed() {
+        givenCurrentUserKey(USER_KEY);
+        TenantProperties tp = new TenantProperties();
+        tp.setSelfUserRoleUpdate(true);
+        given(tenantPropertiesService.getTenantProps()).willReturn(tp);
+        given(userRepository.findById(ID)).willReturn(Optional.of(createUser(USER_KEY, "Y")));
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(ID);
+        userDTO.setRoleKey("X");
+
+        Optional<UserDTO> result = service.changeUserRole(userDTO);
+        assertThat(result.get().getRoleKey()).isEqualTo("X");
+    }
+
+    @Test
+    public void shouldForbidToChangeOwnRoleOnUpdateUser() {
+        givenCurrentUserKey(USER_KEY);
+        given(tenantPropertiesService.getTenantProps()).willReturn(new TenantProperties());
+        User user = createUser(USER_KEY, "Y");
+        given(userRepository.findById(ID)).willReturn(Optional.of(user));
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(ID);
+        userDTO.setRoleKey("X");
+
+        assertThatThrownBy(() -> service.updateUser(userDTO))
+            .isInstanceOf(BusinessException.class)
+            .hasMessage("Forbidden to change role himself");
+        assertThat(user.getAuthorities()).isEqualTo(List.of("Y"));
+    }
+
+    @Test
+    public void shouldUpdateOwnUserIfRoleNotChanged() {
+        givenCurrentUserKey(USER_KEY);
+        given(tenantPropertiesService.getTenantProps()).willReturn(new TenantProperties());
+        given(userRepository.findById(ID)).willReturn(Optional.of(createUser(USER_KEY, "Y")));
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(ID);
+        userDTO.setRoleKey("Y");
+        userDTO.setActivated(true);
+        userDTO.setFirstName("fn");
+
+        UserDTO result = service.updateUser(userDTO).get();
+        assertThat(result.getRoleKey()).isEqualTo("Y");
+        assertThat(result.getFirstName()).isEqualTo("fn");
     }
 
     @Test
@@ -266,6 +331,7 @@ public class UserServiceUnitTest {
         given(userRepository.findById(ID)).willReturn(Optional.of(oldUser));
         given(tokenConstraintsService.getAccessTokenValiditySeconds(oldUser.getAccessTokenValiditySeconds())).willReturn(10);
         given(tenantPropertiesService.getTenantProps()).willReturn(new TenantProperties());
+        givenCurrentUserKey("admin");
 
         UserDTO result = service.updateUser(newUser).get();
         assertThat(result).isNotNull();
@@ -420,6 +486,12 @@ public class UserServiceUnitTest {
         assertEquals(result.get().getAuthorities(), authorities);
         assertEquals(result.get().getPermissions(), accPermissionDTOS);
         assertEquals(result.get().getContext(), permissionContextDtoMap);
+    }
+
+    private void givenCurrentUserKey(String userKey) {
+        XmAuthenticationContext context = mock(XmAuthenticationContext.class);
+        given(context.getUserKey()).willReturn(Optional.of(userKey));
+        given(xmAuthenticationContextHolder.getContext()).willReturn(context);
     }
 
     private User createUser() {
