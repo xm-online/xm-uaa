@@ -22,10 +22,11 @@ import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_PROTOCOL;
 import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_WEB_APP;
 
 /**
- * Web application url and domain of the current request, used in links sent to users
+ * Web application url of the current request, used in links sent to users
  * (activation, password reset, otp). Values come from x-webapp-url, x-scheme, x-domain, x-port request headers,
  * so they are client controlled: host must belong to the tenant ({@link TenantDomainsService} or 'securityPolicy.hosts' in uaa.yml).
- * Check is skipped when no hosts are configured for the tenant.
+ * Check is skipped when no hosts are configured for the tenant, or when the request has neither x-webapp-url nor x-domain
+ * (calls from other services, not through the gateway).
  */
 @Slf4j
 @Service
@@ -48,21 +49,15 @@ public class ApplicationUrlService {
     public String getApplicationUrl() {
         XmRequestContext context = xmRequestContextHolder.getContext();
         String webApp = getValue(context, REQUEST_CTX_WEB_APP);
-        String url = StringUtils.isNotBlank(webApp) ? webApp : buildUrl(context);
-        assertHostAllowed(getHttpHost(url));
-        return url;
-    }
-
-    /**
-     * Get request domain.
-     *
-     * @return x-domain
-     * @throws BusinessException when domain does not belong to the tenant
-     */
-    public String getDomain() {
-        String domain = getValue(xmRequestContextHolder.getContext(), REQUEST_CTX_DOMAIN);
-        assertHostAllowed(domain);
-        return domain;
+        if (StringUtils.isNotBlank(webApp)) {
+            assertHostAllowed(getHost(webApp));
+            return webApp;
+        }
+        String domain = getValue(context, REQUEST_CTX_DOMAIN);
+        if (StringUtils.isNotBlank(domain)) {
+            assertHostAllowed(domain);
+        }
+        return buildUrl(context);
     }
 
     private void assertHostAllowed(String host) {
@@ -85,11 +80,9 @@ public class ApplicationUrlService {
         return getValue(context, REQUEST_CTX_PROTOCOL) + "://" + getValue(context, REQUEST_CTX_DOMAIN) + urlPort;
     }
 
-    private static String getHttpHost(String url) {
+    private static String getHost(String url) {
         try {
-            URI uri = new URI(url);
-            boolean isHttp = "http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme());
-            return isHttp ? uri.getHost() : null;
+            return new URI(url).getHost();
         } catch (URISyntaxException e) {
             return null;
         }

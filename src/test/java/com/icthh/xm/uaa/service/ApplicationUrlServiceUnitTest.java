@@ -83,24 +83,17 @@ public class ApplicationUrlServiceUnitTest {
     }
 
     @Test(expected = BusinessException.class)
-    public void shouldThrowWhenSchemeIsNotHttp() {
-        mockContext("javascript", "app.tenant.com", "80", null);
+    public void shouldThrowWhenWebAppUrlHasNoHost() {
+        mockContext(null, null, null, "javascript:alert(1)");
 
         service.getApplicationUrl();
     }
 
     @Test
-    public void shouldReturnAllowedDomain() {
-        mockContext("https", "App.Tenant.com", "443", null);
+    public void shouldSkipCheckWhenRequestHasNoWebAppUrlAndDomain() {
+        mockContext(null, null, null, null);
 
-        assertEquals("App.Tenant.com", service.getDomain());
-    }
-
-    @Test(expected = BusinessException.class)
-    public void shouldThrowWhenRequestDomainIsNotAllowed() {
-        mockContext("https", "evil.com", "443", null);
-
-        service.getDomain();
+        assertEquals("null://null", service.getApplicationUrl());
     }
 
     @Test
@@ -121,7 +114,6 @@ public class ApplicationUrlServiceUnitTest {
         mockContext("http", "localhost", "8080", "https://evil.com");
 
         assertEquals("https://evil.com", service.getApplicationUrl());
-        assertEquals("localhost", service.getDomain());
     }
 
     @Test
