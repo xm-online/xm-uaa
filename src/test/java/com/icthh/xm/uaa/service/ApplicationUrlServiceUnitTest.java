@@ -106,7 +106,7 @@ public class ApplicationUrlServiceUnitTest {
     @Test
     public void shouldAllowHostFromUaaProperties() {
         when(tenantDomainsService.getDomains(TENANT)).thenReturn(Collections.emptySet());
-        tenantProperties.setHosts(List.of("App.Other.com"));
+        tenantProperties.getSecurityPolicy().setHosts(List.of("App.Other.com"));
 
         mockContext("https", "app.other.com", "80", null);
         assertEquals("https://app.other.com", service.getApplicationUrl());

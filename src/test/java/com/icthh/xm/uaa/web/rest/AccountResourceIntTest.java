@@ -940,7 +940,7 @@ public class AccountResourceIntTest {
     @SneakyThrows
     public void testSaveAccountWithSelfUserRoleUpdate() {
         TenantProperties properties = tenantPropertiesService.getTenantProps();
-        properties.setSelfUserRoleUpdate(true);
+        properties.getSecurityPolicy().setAllowSelfRoleUpdate(true);
         tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
             new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
 
@@ -949,7 +949,31 @@ public class AccountResourceIntTest {
         assertThat(updatedUser.getAuthorities()).isEqualTo(List.of("test"));
     }
 
+    @Test
+    @Transactional
+    public void testSaveAccountForbidsSelfTokenValidityUpdate() {
+        User updatedUser = saveAccount(ROLE_USER, 0, status().isBadRequest());
+        assertThat(updatedUser.getAccessTokenValiditySeconds()).isNull();
+    }
+
+    @Test
+    @Transactional
+    @SneakyThrows
+    public void testSaveAccountWithSelfTokenValidityUpdate() {
+        TenantProperties properties = tenantPropertiesService.getTenantProps();
+        properties.getSecurityPolicy().setAllowSelfTokenValidityUpdate(true);
+        tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
+            new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
+
+        User updatedUser = saveAccount(ROLE_USER, 0, status().isOk());
+        assertThat(updatedUser.getAccessTokenValiditySeconds()).isEqualTo(0);
+    }
+
     private User saveAccountWithRole(String roleKey, ResultMatcher expectedStatus) {
+        return saveAccount(roleKey, null, expectedStatus);
+    }
+
+    private User saveAccount(String roleKey, Integer accessTokenValiditySeconds, ResultMatcher expectedStatus) {
         AtomicReference<User> result = new AtomicReference<>();
         executeForUserKey("test", () -> {
             UserLogin userLogin = new UserLogin();
@@ -984,7 +1008,7 @@ public class AccountResourceIntTest {
                 "test",                 // userKey
                 roleKey,
                 List.of(roleKey),
-                null, null, null,
+                accessTokenValiditySeconds, null, null,
                 null, Collections.singletonList(userLogin),
                 Collections.emptyList(), false, null,
                 null, null, null, null);

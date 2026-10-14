@@ -44,24 +44,8 @@ public class TenantProperties {
     @JsonProperty("strictUserManagement")
     private boolean strictUserManagement;
 
-    /**
-     * Allows a user to change his own role (POST /api/account, PUT /api/users, PUT /api/users/roles).
-     * If false (default) such a request fails with error.user.change.role.himself.
-     */
-    @JsonProperty("selfUserRoleUpdate")
-    private boolean selfUserRoleUpdate;
-
-    /**
-     * Hosts of the tenant web application allowed in links sent to users (in addition to tenant-domains.yml),
-     * stored in lower case.
-     */
-    @JsonProperty("hosts")
-    private List<String> hosts = new ArrayList<>();
-
-    @JsonSetter("hosts")
-    public void setHosts(List<String> hosts) {
-        this.hosts = hosts == null ? new ArrayList<>() : hosts.stream().map(String::toLowerCase).collect(toList());
-    }
+    @JsonProperty("securityPolicy")
+    private SecurityPolicy securityPolicy = new SecurityPolicy();
 
     @JsonProperty("security")
     private Security security = new Security();
@@ -71,6 +55,45 @@ public class TenantProperties {
 
     @JsonProperty("contextPermission")
     private ContextPermission contextPermission = new ContextPermission();
+
+    @Getter
+    @Setter
+    @ToString
+    public static class SecurityPolicy {
+
+        /**
+         * Hosts of the tenant web application allowed in links sent to users (in addition to tenant-domains.yml),
+         * stored in lower case.
+         */
+        @JsonProperty("hosts")
+        private List<String> hosts = new ArrayList<>();
+
+        /**
+         * Changing role or token validity of another user by PUT /api/users requires
+         * USER.CHANGE.ROLE or USER.CHANGE.TOKEN_VALIDITY privilege.
+         */
+        @JsonProperty("requireChangePrivileges")
+        private boolean requireChangePrivileges = true;
+
+        /**
+         * Allows a user to change his own role (POST /api/account, PUT /api/users, PUT /api/users/roles).
+         * If false (default) such a request fails with error.user.change.role.himself.
+         */
+        @JsonProperty("allowSelfRoleUpdate")
+        private boolean allowSelfRoleUpdate;
+
+        /**
+         * Allows a user to change his own access and refresh token validity (POST /api/account, PUT /api/users).
+         * If false (default) such a request fails with error.user.change.token.validity.himself.
+         */
+        @JsonProperty("allowSelfTokenValidityUpdate")
+        private boolean allowSelfTokenValidityUpdate;
+
+        @JsonSetter("hosts")
+        public void setHosts(List<String> hosts) {
+            this.hosts = hosts == null ? new ArrayList<>() : hosts.stream().map(String::toLowerCase).collect(toList());
+        }
+    }
 
     @Getter
     @Setter

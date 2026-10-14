@@ -214,13 +214,14 @@ public class AccountService {
             } else {
                 if (CollectionUtils.isNotEmpty(updatedUser.getAuthorities())) {
                     List<String> authorities = updatedUser.getAuthorities();
-                    userService.assertNotSelfRoleUpdate(user, authorities);
+                    userService.assertRoleUpdateAllowed(user, updatedUser);
                     log.debug("updateAccount: updating authorities to: {}", authorities);
                     user.setAuthorities(authorities);
                 }
             }
 
             user.setData(updatedUser.getData());
+            userService.assertTokenValidityUpdateAllowed(user, updatedUser);
             user.setAccessTokenValiditySeconds(updatedUser.getAccessTokenValiditySeconds());
             user.setRefreshTokenValiditySeconds(updatedUser.getRefreshTokenValiditySeconds());
             return userService.updateUserAutoLogoutSettings(updatedUser, user);

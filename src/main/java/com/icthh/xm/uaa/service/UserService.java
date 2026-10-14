@@ -15,6 +15,7 @@ import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings;
+import com.icthh.xm.uaa.domain.properties.TenantProperties.SecurityPolicy;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings.PasswordSettings;
 import com.icthh.xm.uaa.repository.UserLoginRepository;
 import com.icthh.xm.uaa.repository.UserPermittedRepository;
@@ -37,6 +38,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -250,7 +253,7 @@ public class UserService {
         return userRepository.findById(updatedUser.getId())
             .map(user -> {
                 assertNotSuperAdmin(user.getAuthorities());
-                assertNotSelfRoleUpdate(user, updatedUser.getAuthorities());
+                assertRoleUpdateAllowed(user, updatedUser);
                 user.setAuthorities(updatedUser.getAuthorities());
                 return user;
             })
@@ -633,7 +636,7 @@ public class UserService {
                 if (CollectionUtils.isEmpty(srcDTO.getAuthorities())) {
                     log.warn("Role is empty and will not be allied to user");
                 } else {
-                    assertNotSelfRoleUpdate(dstUser, srcDTO.getAuthorities());
+                    assertRoleUpdateAllowed(dstUser, srcDTO);
                     log.warn("Role [{}] will be allied to user.id={}. Evaluate strictUserManagement as option", srcDTO.getAuthorities(), dstUser.getId());
                     dstUser.setAuthorities(srcDTO.getAuthorities());
                 }
@@ -651,30 +654,104 @@ public class UserService {
         dstUser.setLangKey(srcDTO.getLangKey());
         dstUser.setImageUrl(srcDTO.getImageUrl());
         dstUser.setData(srcDTO.getData());
+        assertTokenValidityUpdateAllowed(dstUser, srcDTO);
         dstUser.setAccessTokenValiditySeconds(srcDTO.getAccessTokenValiditySeconds());
         dstUser.setRefreshTokenValiditySeconds(srcDTO.getRefreshTokenValiditySeconds());
         return  dstUser;
     }
 
     /**
-     * Throws BusinessException.ERROR_USER_CHANGE_ROLE_HIMSELF if the current user changes his own role
-     * and the tenant does not allow it (selfUserRoleUpdate in uaa.yml).
+     * Checks role change of the user. Own role: only with securityPolicy.allowSelfRoleUpdate in uaa.yml,
+     * otherwise BusinessException.ERROR_USER_CHANGE_ROLE_HIMSELF. Role of another user: USER.CHANGE.ROLE privilege
+     * when securityPolicy.requireChangePrivileges.
      * @param user - stored user
-     * @param newAuthorities - requested roles
+     * @param updatedUser - requested user data
      */
-    public void assertNotSelfRoleUpdate(User user, List<String> newAuthorities) {
+    public void assertRoleUpdateAllowed(User user, UserDTO updatedUser) {
+        List<String> newAuthorities = updatedUser.getAuthorities();
         if (CollectionUtils.isEmpty(newAuthorities) || isEqualCollection(user.getAuthorities(), newAuthorities)) {
             return;
         }
-        boolean himself = xmAuthenticationContextHolder.getContext().getUserKey()
+        SecurityPolicy policy = tenantPropertiesService.getTenantProps().getSecurityPolicy();
+        if (isCurrentUser(user)) {
+            if (!policy.isAllowSelfRoleUpdate()) {
+                log.warn("User {} is forbidden to change his own role from {} to {}. To allow it (previous behavior) "
+                    + "set 'securityPolicy.allowSelfRoleUpdate: true' in uaa.yml of the tenant",
+                    user.getUserKey(), user.getAuthorities(), newAuthorities);
+                throw new BusinessException(ERROR_USER_CHANGE_ROLE_HIMSELF, "Forbidden to change role himself");
+            }
+        } else if (policy.isRequireChangePrivileges()) {
+            try {
+                self.checkChangeRolePrivilege(updatedUser);
+            } catch (AccessDeniedException e) {
+                log.warn("Change role of user {} requires USER.CHANGE.ROLE privilege. To allow it without "
+                    + "the privilege (previous behavior) set 'securityPolicy.requireChangePrivileges: false' "
+                    + "in uaa.yml of the tenant", user.getUserKey());
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * Checks access and refresh token validity change of the user. Own validity: only with
+     * securityPolicy.allowSelfTokenValidityUpdate in uaa.yml, otherwise
+     * BusinessException.ERROR_USER_CHANGE_TOKEN_VALIDITY_HIMSELF. Validity of another user:
+     * USER.CHANGE.TOKEN_VALIDITY privilege when securityPolicy.requireChangePrivileges.
+     * @param user - stored user
+     * @param updatedUser - requested user data
+     */
+    public void assertTokenValidityUpdateAllowed(User user, UserDTO updatedUser) {
+        if (Objects.equals(user.getAccessTokenValiditySeconds(), updatedUser.getAccessTokenValiditySeconds())
+            && Objects.equals(user.getRefreshTokenValiditySeconds(), updatedUser.getRefreshTokenValiditySeconds())) {
+            return;
+        }
+        SecurityPolicy policy = tenantPropertiesService.getTenantProps().getSecurityPolicy();
+        if (isCurrentUser(user)) {
+            if (!policy.isAllowSelfTokenValidityUpdate()) {
+                log.warn("User {} is forbidden to change his own token validity (access/refresh seconds) from {}/{} "
+                    + "to {}/{}. To allow it (previous behavior) set 'securityPolicy.allowSelfTokenValidityUpdate: true' "
+                    + "in uaa.yml of the tenant", user.getUserKey(),
+                    user.getAccessTokenValiditySeconds(), user.getRefreshTokenValiditySeconds(),
+                    updatedUser.getAccessTokenValiditySeconds(), updatedUser.getRefreshTokenValiditySeconds());
+                throw new BusinessException(ERROR_USER_CHANGE_TOKEN_VALIDITY_HIMSELF,
+                    "Forbidden to change token validity himself");
+            }
+        } else if (policy.isRequireChangePrivileges()) {
+            try {
+                self.checkChangeTokenValidityPrivilege(updatedUser);
+            } catch (AccessDeniedException e) {
+                log.warn("Change token validity of user {} requires USER.CHANGE.TOKEN_VALIDITY privilege. To allow it "
+                    + "without the privilege (previous behavior) set 'securityPolicy.requireChangePrivileges: false' "
+                    + "in uaa.yml of the tenant", user.getUserKey());
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * Access is checked by @PreAuthorize, called through the proxy from {@link #assertRoleUpdateAllowed}.
+     * @param user - requested user data
+     */
+    @PreAuthorize("hasPermission({'userKey': #user.userKey, 'newUser': #user}, 'user', 'USER.CHANGE.ROLE')")
+    @PrivilegeDescription("Privilege to change roleKey for user")
+    public void checkChangeRolePrivilege(UserDTO user) {
+        log.debug("User {} role change is permitted", user.getUserKey());
+    }
+
+    /**
+     * Access is checked by @PreAuthorize, called through the proxy from {@link #assertTokenValidityUpdateAllowed}.
+     * @param user - requested user data
+     */
+    @PreAuthorize("hasPermission({'userKey': #user.userKey, 'newUser': #user}, 'user', 'USER.CHANGE.TOKEN_VALIDITY')")
+    @PrivilegeDescription("Privilege to change access and refresh token validity for user")
+    public void checkChangeTokenValidityPrivilege(UserDTO user) {
+        log.debug("User {} token validity change is permitted", user.getUserKey());
+    }
+
+    private boolean isCurrentUser(User user) {
+        return xmAuthenticationContextHolder.getContext().getUserKey()
             .map(key -> key.equals(user.getUserKey()))
             .orElse(false);
-        if (himself && !tenantPropertiesService.getTenantProps().isSelfUserRoleUpdate()) {
-            log.warn("User {} is forbidden to change his own role from {} to {}. To allow it (previous behavior) "
-                + "set 'selfUserRoleUpdate: true' in uaa.yml of the tenant",
-                user.getUserKey(), user.getAuthorities(), newAuthorities);
-            throw new BusinessException(ERROR_USER_CHANGE_ROLE_HIMSELF, "Forbidden to change role himself");
-        }
     }
 
     // dstUser need to have logout timeout data

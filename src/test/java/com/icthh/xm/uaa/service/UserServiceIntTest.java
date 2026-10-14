@@ -4,14 +4,18 @@ import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_
 import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
 import static com.icthh.xm.commons.tenant.TenantContextUtils.buildTenant;
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
+import static com.icthh.xm.uaa.utils.FileUtil.readConfigFile;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.exceptions.BusinessException;
+import com.icthh.xm.commons.permission.service.PermissionService;
+import com.icthh.xm.commons.permission.service.RoleService;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.lep.api.LepManager;
@@ -25,6 +29,7 @@ import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings.PasswordSettings;
 import com.icthh.xm.uaa.repository.UserRepository;
+import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.util.RandomUtil;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -40,6 +45,8 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.transaction.AfterTransaction;
 import org.springframework.test.context.transaction.BeforeTransaction;
@@ -75,6 +82,12 @@ public class UserServiceIntTest {
     private LepManager lepManager;
 
     @Autowired
+    private PermissionService permissionService;
+
+    @Autowired
+    private RoleService roleService;
+
+    @Autowired
     private XmAuthenticationContextHolder xmAuthenticationContextHolder;
 
     @Rule
@@ -101,6 +114,51 @@ public class UserServiceIntTest {
     }
 
     private static final String ROLE_USER = "ROLE_USER";
+    private static final String PERMISSIONS_PATH = "/config/tenants/XM/permissions.yml";
+    private static final String ROLES_PATH = "/config/tenants/XM/roles.yml";
+
+    @Test
+    @WithMockUser(authorities = ROLE_USER)
+    public void changePrivilegesAreCheckedByPreAuthorize() {
+        UserDTO user = new UserDTO();
+        user.setUserKey("another");
+
+        assertThatThrownBy(() -> userService.checkChangeRolePrivilege(user))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> userService.checkChangeTokenValidityPrivilege(user))
+            .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    @WithMockUser(authorities = "SUPER-ADMIN")
+    public void superAdminHasChangePrivileges() {
+        UserDTO user = new UserDTO();
+        user.setUserKey("another");
+
+        userService.checkChangeRolePrivilege(user);
+        userService.checkChangeTokenValidityPrivilege(user);
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_CHANGER")
+    public void changePrivilegesAreCheckedByRolePermissions() {
+        UserDTO user = new UserDTO();
+        user.setUserKey("another");
+
+        boolean hadRoles = !roleService.getRoles(DEFAULT_TENANT_KEY_VALUE).isEmpty();
+        boolean hadPermissions = !permissionService.getPermissions(DEFAULT_TENANT_KEY_VALUE).isEmpty();
+        roleService.onRefresh(ROLES_PATH, "ROLE_CHANGER:\n  description: changer\n");
+        permissionService.onRefresh(PERMISSIONS_PATH,
+            readConfigFile("/config/tenants/XM/permissions_changePrivileges.yml"));
+        try {
+            userService.checkChangeRolePrivilege(user);
+            assertThatThrownBy(() -> userService.checkChangeTokenValidityPrivilege(user))
+                .isInstanceOf(AccessDeniedException.class);
+        } finally {
+            permissionService.onRefresh(PERMISSIONS_PATH, hadPermissions ? readConfigFile(PERMISSIONS_PATH) : null);
+            roleService.onRefresh(ROLES_PATH, hadRoles ? readConfigFile(ROLES_PATH) : null);
+        }
+    }
 
     @Test
     public void assertThatUserMustExistToResetPassword() {

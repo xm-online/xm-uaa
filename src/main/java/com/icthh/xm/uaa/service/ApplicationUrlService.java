@@ -24,7 +24,7 @@ import static com.icthh.xm.uaa.config.Constants.REQUEST_CTX_WEB_APP;
 /**
  * Web application url and domain of the current request, used in links sent to users
  * (activation, password reset, otp). Values come from x-webapp-url, x-scheme, x-domain, x-port request headers,
- * so they are client controlled: host must belong to the tenant ({@link TenantDomainsService} or 'hosts' in uaa.yml).
+ * so they are client controlled: host must belong to the tenant ({@link TenantDomainsService} or 'securityPolicy.hosts' in uaa.yml).
  * Check is skipped when no hosts are configured for the tenant.
  */
 @Slf4j
@@ -68,7 +68,7 @@ public class ApplicationUrlService {
     private void assertHostAllowed(String host) {
         TenantKey tenantKey = TenantContextUtils.getRequiredTenantKey(tenantContextHolder);
         Set<String> domains = tenantDomainsService.getDomains(tenantKey);
-        List<String> hosts = tenantPropertiesService.getTenantProps().getHosts();
+        List<String> hosts = tenantPropertiesService.getTenantProps().getSecurityPolicy().getHosts();
         if (domains.isEmpty() && hosts.isEmpty()) {
             return;
         }

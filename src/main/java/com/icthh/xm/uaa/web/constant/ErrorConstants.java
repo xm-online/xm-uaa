@@ -20,6 +20,7 @@ public class ErrorConstants {
     public static final String ERROR_USER_BLOCK_HIMSELF = "error.user.block.himself";
     public static final String ERROR_USER_ACTIVATES_HIMSELF = "error.user.activate.himself";
     public static final String ERROR_USER_CHANGE_ROLE_HIMSELF = "error.user.change.role.himself";
+    public static final String ERROR_USER_CHANGE_TOKEN_VALIDITY_HIMSELF = "error.user.change.token.validity.himself";
     public static final String ERROR_USER_LOGIN_INVALID = "error.user.login.invalid";
     public static final String VALIDATION_ROLE_NOT_ALLOWED = "validation.role.not.allowed";
     public static final String VALIDATION_DESCRIPTION_TOO_LONG = "validation.description.too.long";
