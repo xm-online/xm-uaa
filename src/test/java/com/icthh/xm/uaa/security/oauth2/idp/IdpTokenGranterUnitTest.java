@@ -30,6 +30,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
+import org.springframework.security.oauth2.common.exceptions.InvalidTokenException;
 import org.springframework.security.oauth2.provider.ClientDetails;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
@@ -37,6 +39,9 @@ import org.springframework.security.oauth2.provider.OAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.TokenRequest;
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -52,8 +57,10 @@ import static com.icthh.xm.uaa.security.oauth2.idp.IdpTestUtils.buildIdpPublicCl
 import static com.icthh.xm.uaa.security.oauth2.idp.IdpTokenGranter.GRANT_TYPE_IDP_TOKEN;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -86,6 +93,10 @@ public class IdpTokenGranterUnitTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    // id token from IdpTestUtils.getIdToken() is issued at 1614072948 and expires at 1614108948
+    private static final Instant ID_TOKEN_EXPIRATION = Instant.ofEpochSecond(1614108948);
+    private static final Clock ID_TOKEN_VALID_CLOCK = Clock.fixed(Instant.ofEpochSecond(1614072948), ZoneOffset.UTC);
+
     @AfterEach
     void setUp() {
         tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
@@ -116,6 +127,7 @@ public class IdpTokenGranterUnitTest {
                 userLoginService,
                 new IdpIdTokenMappingService(tenantContextHolder, tenantPropertiesService),
                 tenantContextHolder);
+        idpTokenGranter.setClock(ID_TOKEN_VALID_CLOCK);
 
         ClientDetails client = buildClientDetails();
         TokenRequest tokenRequest = buildTokenRequest();
@@ -166,6 +178,7 @@ public class IdpTokenGranterUnitTest {
                 userLoginService,
                 new IdpIdTokenMappingService(tenantContextHolder, tenantPropertiesService),
                 tenantContextHolder);
+        idpTokenGranter.setClock(ID_TOKEN_VALID_CLOCK);
 
         ClientDetails client = buildClientDetails();
         TokenRequest tokenRequest = buildTokenRequest();
@@ -201,6 +214,7 @@ public class IdpTokenGranterUnitTest {
                 userLoginService,
                 new IdpIdTokenMappingService(tenantContextHolder, tenantPropertiesService),
                 tenantContextHolder);
+        idpTokenGranter.setClock(ID_TOKEN_VALID_CLOCK);
 
         ClientDetails client = buildClientDetails();
         TokenRequest tokenRequest = buildTokenRequest();
@@ -214,6 +228,43 @@ public class IdpTokenGranterUnitTest {
 
         assertNotNull(exception);
         assertEquals("Authentication failed for [tenant4] because DefaultIdpClaimMapping is not defined.", exception.getMessage());
+    }
+
+    @Test
+    public void test_FailOnExpiredIdToken() throws JsonProcessingException {
+        instantiateConfigs();
+
+        IdpTokenGranter idpTokenGranter = buildIdpTokenGranter(jwkTokenStore);
+        idpTokenGranter.setClock(Clock.fixed(ID_TOKEN_EXPIRATION, ZoneOffset.UTC));
+
+        InvalidTokenException exception = assertThrows(InvalidTokenException.class,
+            () -> idpTokenGranter.getOAuth2Authentication(buildClientDetails(), buildTokenRequest()));
+        assertEquals("IDP id token expired", exception.getMessage());
+    }
+
+    @Test
+    public void test_FailOnIdTokenWithoutExpiration() {
+        XmJwkTokenStore tokenStore = mock(XmJwkTokenStore.class);
+        when(tokenStore.readAccessToken(getIdToken())).thenReturn(new DefaultOAuth2AccessToken(getIdToken()));
+
+        IdpTokenGranter idpTokenGranter = buildIdpTokenGranter(tokenStore);
+
+        InvalidTokenException exception = assertThrows(InvalidTokenException.class,
+            () -> idpTokenGranter.getOAuth2Authentication(buildClientDetails(), buildTokenRequest()));
+        assertEquals("IDP id token expired", exception.getMessage());
+    }
+
+    private IdpTokenGranter buildIdpTokenGranter(XmJwkTokenStore tokenStore) {
+        return new IdpTokenGranter(
+            tokenServices,
+            clientDetailsService,
+            requestFactory,
+            tokenStore,
+            domainUserDetailsService,
+            userService,
+            new UserLoginService(userLoginRepository),
+            new IdpIdTokenMappingService(tenantContextHolder, tenantPropertiesService),
+            tenantContextHolder);
     }
 
     private String instantiateConfigs() throws JsonProcessingException {

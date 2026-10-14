@@ -9,6 +9,8 @@ import com.icthh.xm.uaa.service.IdpIdTokenMappingService;
 import com.icthh.xm.uaa.service.UserLoginService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
+import lombok.AccessLevel;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -17,6 +19,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.core.authority.mapping.NullAuthoritiesMapper;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.oauth2.common.exceptions.InvalidTokenException;
 import org.springframework.security.oauth2.provider.ClientDetails;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
@@ -25,7 +28,9 @@ import org.springframework.security.oauth2.provider.TokenRequest;
 import org.springframework.security.oauth2.provider.token.AbstractTokenGranter;
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
 
+import java.time.Clock;
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -47,6 +52,9 @@ public class IdpTokenGranter extends AbstractTokenGranter {
     private final TenantContextHolder tenantContextHolder;
 
     private final GrantedAuthoritiesMapper authoritiesMapper = new NullAuthoritiesMapper();
+
+    @Setter(AccessLevel.PACKAGE)
+    private Clock clock = Clock.systemUTC();
 
     public IdpTokenGranter(AuthorizationServerTokenServices tokenServices,
                            ClientDetailsService clientDetailsService,
@@ -89,6 +97,7 @@ public class IdpTokenGranter extends AbstractTokenGranter {
 
         // parse IDP id token
         OAuth2AccessToken idpOAuth2IdToken = jwkTokenStore.readAccessToken(idpToken);
+        validateExpiration(idpOAuth2IdToken);
 
         idpIdTokenMappingService.validateIdpIdToken(idpOAuth2IdToken);
 
@@ -102,6 +111,13 @@ public class IdpTokenGranter extends AbstractTokenGranter {
         userAuthenticationToken.setDetails(parameters);
 
         return userAuthenticationToken;
+    }
+
+    private void validateExpiration(OAuth2AccessToken idpOAuth2IdToken) {
+        Date expiration = idpOAuth2IdToken.getExpiration();
+        if (expiration == null || !expiration.toInstant().isAfter(clock.instant())) {
+            throw new InvalidTokenException("IDP id token expired");
+        }
     }
 
     private DomainUserDetails getOrCreateDomainUserDetails(OAuth2AccessToken idpOAuth2IdToken) {
