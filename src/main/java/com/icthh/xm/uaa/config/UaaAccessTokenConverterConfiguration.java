@@ -9,23 +9,15 @@ import com.icthh.xm.uaa.security.DomainJwtAccessTokenConverter;
 import com.icthh.xm.uaa.security.DomainJwtAccessTokenDetailsPostProcessor;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.security.KeyFactory;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
 
 import com.icthh.xm.uaa.security.oauth2.idp.XmJwkTokenStore;
 import com.icthh.xm.uaa.security.oauth2.idp.config.IdpConfigRepository;
@@ -34,13 +26,11 @@ import com.icthh.xm.uaa.security.oauth2.idp.source.XmJwkDefinitionSource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.bouncycastle.util.encoders.Base64;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -62,20 +52,20 @@ public class UaaAccessTokenConverterConfiguration {
 
     private final RestTemplate keyUriRestTemplate;
     private final TenantContextHolder tenantContextHolder;
-    private final ApplicationProperties applicationProperties;
+    private final UaaKeyProvider uaaKeyProvider;
     private final IdpConfigRepository idpConfigRepository;
     private final JwksRepository jwksRepository;
     private final OAuth2Properties oauth2Properties;
 
     public UaaAccessTokenConverterConfiguration(TenantContextHolder tenantContextHolder,
                                                 @Qualifier("loadBalancedRestTemplate") RestTemplate keyUriRestTemplate,
-                                                ApplicationProperties applicationProperties,
+                                                UaaKeyProvider uaaKeyProvider,
                                                 IdpConfigRepository idpConfigRepository,
                                                 TenantPropertiesService tenantPropertiesService,
                                                 JwksRepository jwksRepository, OAuth2Properties oauth2Properties) {
         this.tenantContextHolder = tenantContextHolder;
         this.keyUriRestTemplate = keyUriRestTemplate;
-        this.applicationProperties = applicationProperties;
+        this.uaaKeyProvider = uaaKeyProvider;
         this.idpConfigRepository = idpConfigRepository;
         this.jwksRepository = jwksRepository;
         this.oauth2Properties = oauth2Properties;
@@ -96,7 +86,7 @@ public class UaaAccessTokenConverterConfiguration {
         final PublicKey publicKey = getKeyFromConfigServer(keyUriRestTemplate);
 
         // get private key
-        final PrivateKey privateKey = getPrivateKey();
+        final PrivateKey privateKey = uaaKeyProvider.getPrivateKey();
 
         // build key pair
         KeyPair keyPair = new KeyPair(publicKey, privateKey);
@@ -126,23 +116,6 @@ public class UaaAccessTokenConverterConfiguration {
         }
     }
 
-    private PrivateKey getPrivateKey() throws IOException, KeyStoreException, CertificateException,
-        NoSuchAlgorithmException, UnrecoverableKeyException, InvalidKeySpecException {
-        final String privateKey = applicationProperties.getPrivateKey();
-        if (!StringUtils.isEmpty(privateKey)) {
-            log.info("Key was loaded from memory by application property: application.private-key");
-
-            return initPrivateKey(Base64.decode(applicationProperties.getPrivateKey().getBytes(StandardCharsets.UTF_8)));
-        } else {
-            log.info("Keystore location {}", applicationProperties.getKeystoreFile());
-            try (InputStream stream = new ClassPathResource(applicationProperties.getKeystoreFile()).exists()
-                ? new ClassPathResource(applicationProperties.getKeystoreFile()).getInputStream()
-                : new FileInputStream(applicationProperties.getKeystoreFile())) {
-                return initPrivateKeyFromKeystore(stream);
-            }
-        }
-    }
-
     /**
      * Apply the token converter (and enhancer) for token store.
      */
@@ -150,20 +123,6 @@ public class UaaAccessTokenConverterConfiguration {
     @Primary
     public JwtTokenStore tokenStore(JwtAccessTokenConverter jwtAccessTokenConverter) throws Exception {
         return new JwtTokenStore(jwtAccessTokenConverter);
-    }
-
-    private PrivateKey initPrivateKeyFromKeystore(InputStream stream) throws KeyStoreException, UnrecoverableKeyException,
-        NoSuchAlgorithmException, IOException, CertificateException {
-        KeyStore store = KeyStore.getInstance(Constants.KEYSTORE_TYPE);
-        store.load(stream, applicationProperties.getKeystorePassword().toCharArray());
-        return (PrivateKey) store.getKey(applicationProperties.getKeystoreKeyName(),
-            applicationProperties.getKeystorePassword().toCharArray());
-    }
-
-    private PrivateKey initPrivateKey(final byte[] encodedPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        KeyFactory factory = KeyFactory.getInstance("RSA");
-        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encodedPrivateKey);
-        return factory.generatePrivate(keySpec);
     }
 
     @Bean

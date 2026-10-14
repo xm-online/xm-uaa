@@ -4,13 +4,10 @@ import com.google.common.base.Preconditions;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.permission.constants.RoleConstant;
-import com.icthh.xm.commons.tenant.TenantContextHolder;
-import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.Client;
 import com.icthh.xm.uaa.domain.ClientState;
 import com.icthh.xm.uaa.service.ClientService;
-import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
@@ -19,8 +16,6 @@ import org.springframework.security.oauth2.provider.ClientDetails;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.ClientRegistrationException;
 import org.springframework.stereotype.Component;
-
-import static com.icthh.xm.uaa.security.DefaultClientSecretPolicy.resolve;
 
 @Primary
 @Component
@@ -35,9 +30,7 @@ public class ClientDetailsServiceImpl implements ClientDetailsService {
 
     private final PasswordEncoder passwordEncoder;
 
-    private final TenantPropertiesService tenantPropertiesService;
-
-    private final TenantContextHolder tenantContextHolder;
+    private final DefaultClientSecretSupplier defaultClientSecret;
 
     @LogicExtensionPoint("LoadClientByClientId")
     @Override
@@ -50,9 +43,7 @@ public class ClientDetailsServiceImpl implements ClientDetailsService {
         if (applicationProperties.getDefaultClientId().contains(clientId)) {
             principal = new Client();
             principal.setClientId(clientId);
-
             principal.setClientSecret(passwordEncoder.encode(getDefaultClientSecret()));
-
             principal.setRoleKey(RoleConstant.SUPER_ADMIN);
         } else {
             try {
@@ -77,6 +68,6 @@ public class ClientDetailsServiceImpl implements ClientDetailsService {
     }
 
     private String getDefaultClientSecret() {
-        return resolve(tenantContextHolder.getTenantKey(), tenantPropertiesService.getTenantProps().getSecurity());
+        return defaultClientSecret.resolve();
     }
 }
