@@ -31,6 +31,7 @@ import com.icthh.xm.uaa.domain.properties.TenantProperties.PublicSettings.Passwo
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.util.RandomUtil;
+import com.icthh.xm.uaa.web.rest.UserResource;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -45,6 +46,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -71,6 +73,9 @@ public class UserServiceIntTest {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserResource userResource;
 
     @Autowired
     private TenantContextHolder tenantContextHolder;
@@ -145,15 +150,33 @@ public class UserServiceIntTest {
         UserDTO user = new UserDTO();
         user.setUserKey("another");
 
+        withChangerPermissions(() -> {
+            userService.checkChangeRolePrivilege(user);
+            assertThatThrownBy(() -> userService.checkChangeTokenValidityPrivilege(user))
+                .isInstanceOf(AccessDeniedException.class);
+        });
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_CHANGER")
+    public void changeRoleKeyIsCheckedByRolePermissions() {
+        UserDTO user = new UserDTO();
+        user.setId(Long.MAX_VALUE);
+        user.setUserKey("another");
+        user.setAuthorities(List.of(ROLE_USER));
+
+        withChangerPermissions(() ->
+            assertThat(userResource.changeRoleKey(user).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+    }
+
+    private void withChangerPermissions(Runnable test) {
         boolean hadRoles = !roleService.getRoles(DEFAULT_TENANT_KEY_VALUE).isEmpty();
         boolean hadPermissions = !permissionService.getPermissions(DEFAULT_TENANT_KEY_VALUE).isEmpty();
         roleService.onRefresh(ROLES_PATH, "ROLE_CHANGER:\n  description: changer\n");
         permissionService.onRefresh(PERMISSIONS_PATH,
             readConfigFile("/config/tenants/XM/permissions_changePrivileges.yml"));
         try {
-            userService.checkChangeRolePrivilege(user);
-            assertThatThrownBy(() -> userService.checkChangeTokenValidityPrivilege(user))
-                .isInstanceOf(AccessDeniedException.class);
+            test.run();
         } finally {
             permissionService.onRefresh(PERMISSIONS_PATH, hadPermissions ? readConfigFile(PERMISSIONS_PATH) : null);
             roleService.onRefresh(ROLES_PATH, hadRoles ? readConfigFile(ROLES_PATH) : null);
