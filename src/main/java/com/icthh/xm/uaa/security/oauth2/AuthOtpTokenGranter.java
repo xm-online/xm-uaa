@@ -7,6 +7,7 @@ import com.icthh.xm.uaa.security.DomainUserDetails;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
 import com.icthh.xm.uaa.security.oauth2.idp.source.model.XmAuthenticationToken;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
+import com.icthh.xm.uaa.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.core.Authentication;
@@ -38,15 +39,18 @@ public class AuthOtpTokenGranter extends AbstractTokenGranter {
     private final DomainUserDetailsService domainUserDetailsService;
     private final GrantedAuthoritiesMapper authoritiesMapper;
     private final TenantPropertiesService tenantPropertiesService;
+    private final UserService userService;
 
     public AuthOtpTokenGranter(DomainUserDetailsService domainUserDetailsService,
                                AuthorizationServerTokenServices tokenServices,
                                ClientDetailsService clientDetailsService,
                                OAuth2RequestFactory requestFactory,
-                               TenantPropertiesService tenantPropertiesService) {
+                               TenantPropertiesService tenantPropertiesService,
+                               UserService userService) {
         super(tokenServices, clientDetailsService, requestFactory, GrantType.OTP.getValue());
         this.domainUserDetailsService = domainUserDetailsService;
         this.tenantPropertiesService = tenantPropertiesService;
+        this.userService = userService;
         this.authoritiesMapper = new NullAuthoritiesMapper();
     }
 
@@ -64,8 +68,12 @@ public class AuthOtpTokenGranter extends AbstractTokenGranter {
 
         if (!otpCode.equals(domainUserDetails.getAuthOtpCode())
             || isExpiredOtp(domainUserDetails.getAuthOtpCodeCreationDate())) {
+            // Count the failed OTP against the shared brute-force counter (security.maxPasswordAttempts):
+            // once it is exceeded the account is deactivated, so further OTP guessing is rejected at load time.
+            userService.increaseFailedPasswordAttempts(login);
             throw new InvalidGrantException("Authorization otp code is invalid");
         }
+        userService.onSuccessfulLogin(domainUserDetails.getUserKey());
         Collection<? extends GrantedAuthority> authorities =
             authoritiesMapper.mapAuthorities(domainUserDetails.getAuthorities());
 

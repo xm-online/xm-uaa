@@ -74,6 +74,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.transaction.BeforeTransaction;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -84,6 +85,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
 import static com.icthh.xm.commons.lep.XmLepScriptConstants.BINDING_KEY_AUTH_CONTEXT;
@@ -917,6 +919,62 @@ public class AccountResourceIntTest {
     @Test
     @Transactional
     public void testSaveAccount() {
+        User updatedUser = saveAccountWithRole(ROLE_USER, status().isOk());
+        assertThat(updatedUser.getFirstName()).isEqualTo("firstname");
+        assertThat(updatedUser.getLastName()).isEqualTo("lastname");
+        assertThat(updatedUser.getLangKey()).isEqualTo("en");
+        assertThat(updatedUser.getImageUrl()).isEqualTo("http://placehold.it/50x50");
+        assertThat(updatedUser.isActivated()).isEqualTo(true);
+        assertThat(updatedUser.getAuthorities()).isEqualTo(List.of(ROLE_USER));
+    }
+
+    @Test
+    @Transactional
+    public void testSaveAccountForbidsSelfRoleUpdate() {
+        User updatedUser = saveAccountWithRole("test", status().isBadRequest());
+        assertThat(updatedUser.getAuthorities()).isEqualTo(List.of(ROLE_USER));
+    }
+
+    @Test
+    @Transactional
+    @SneakyThrows
+    public void testSaveAccountWithSelfUserRoleUpdate() {
+        TenantProperties properties = tenantPropertiesService.getTenantProps();
+        properties.getSecurityPolicy().setAllowSelfRoleUpdate(true);
+        tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
+            new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
+
+        User updatedUser = saveAccountWithRole("test", status().isOk());
+        assertThat(updatedUser.getFirstName()).isEqualTo("firstname");
+        assertThat(updatedUser.getAuthorities()).isEqualTo(List.of("test"));
+    }
+
+    @Test
+    @Transactional
+    public void testSaveAccountForbidsSelfTokenValidityUpdate() {
+        User updatedUser = saveAccount(ROLE_USER, 0, status().isBadRequest());
+        assertThat(updatedUser.getAccessTokenValiditySeconds()).isNull();
+    }
+
+    @Test
+    @Transactional
+    @SneakyThrows
+    public void testSaveAccountWithSelfTokenValidityUpdate() {
+        TenantProperties properties = tenantPropertiesService.getTenantProps();
+        properties.getSecurityPolicy().setAllowSelfTokenValidityUpdate(true);
+        tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
+            new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
+
+        User updatedUser = saveAccount(ROLE_USER, 0, status().isOk());
+        assertThat(updatedUser.getAccessTokenValiditySeconds()).isEqualTo(0);
+    }
+
+    private User saveAccountWithRole(String roleKey, ResultMatcher expectedStatus) {
+        return saveAccount(roleKey, null, expectedStatus);
+    }
+
+    private User saveAccount(String roleKey, Integer accessTokenValiditySeconds, ResultMatcher expectedStatus) {
+        AtomicReference<User> result = new AtomicReference<>();
         executeForUserKey("test", () -> {
             UserLogin userLogin = new UserLogin();
             userLogin.setTypeKey(UserLoginType.EMAIL.getValue());
@@ -947,10 +1005,10 @@ public class AccountResourceIntTest {
                 null,                   // createdDate
                 null,                   // lastModifiedBy
                 null,                   // lastModifiedDate
-                RoleConstant.SUPER_ADMIN,
-                "test",
-                List.of("test"),
-                null, null, null,
+                "test",                 // userKey
+                roleKey,
+                List.of(roleKey),
+                accessTokenValiditySeconds, null, null,
                 null, Collections.singletonList(userLogin),
                 Collections.emptyList(), false, null,
                 null, null, null, null);
@@ -960,23 +1018,17 @@ public class AccountResourceIntTest {
                     post("/api/account")
                         .contentType(TestUtil.APPLICATION_JSON_UTF8)
                         .content(TestUtil.convertObjectToJsonBytes(userDTO)))
-                    .andExpect(status().isOk());
+                    .andExpect(expectedStatus);
             } catch (Exception e) {
                 throw new IllegalStateException(e);
             }
 
             Optional<User> updatedUserOpt = userRepository.findById(user.getId());
             assertTrue(updatedUserOpt.isPresent());
-            User updatedUser = updatedUserOpt.get();
-            assertThat(updatedUser.getFirstName()).isEqualTo(userDTO.getFirstName());
-            assertThat(updatedUser.getLastName()).isEqualTo(userDTO.getLastName());
-            assertThat(updatedUser.getEmail()).isEqualTo(userDTO.getEmail());
-            assertThat(updatedUser.getLangKey()).isEqualTo(userDTO.getLangKey());
-            assertThat(updatedUser.getPassword()).isEqualTo(user.getPassword());
-            assertThat(updatedUser.getImageUrl()).isEqualTo(userDTO.getImageUrl());
-            assertThat(updatedUser.isActivated()).isEqualTo(true);
-            assertThat(updatedUser.getAuthorities()).isEqualTo(userDTO.getAuthorities());
+            assertThat(updatedUserOpt.get().getPassword()).isEqualTo(user.getPassword());
+            result.set(updatedUserOpt.get());
         });
+        return result.get();
     }
 
 
@@ -1014,8 +1066,8 @@ public class AccountResourceIntTest {
                 null,                   // lastModifiedBy
                 null,                   // lastModifiedDate
                 RoleConstant.SUPER_ADMIN,
-                "test",
-                List.of("test"),
+                ROLE_USER,
+                List.of(ROLE_USER),
                 null, null, null,
                 null, Collections.singletonList(userLogin),
                 Collections.emptyList(), false, null,

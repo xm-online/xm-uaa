@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.service.query;
 
+import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.migration.db.jsonb.CustomExpression;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
@@ -10,6 +11,7 @@ import com.icthh.xm.uaa.service.dto.UserDTO;
 import com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria;
 import com.icthh.xm.uaa.service.query.filter.SoftUserFilterQuery;
 import com.icthh.xm.uaa.service.query.filter.StrictUserFilterQuery;
+import com.icthh.xm.uaa.web.constant.ErrorConstants;
 import io.github.jhipster.service.QueryService;
 import io.github.jhipster.service.filter.StringFilter;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.Operation.CONTAINS;
@@ -42,6 +45,17 @@ import static java.util.Optional.ofNullable;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UserQueryService extends QueryService<User> {
+
+    /**
+     * Whitelist for the {@code dataAttributes[].path} segment of a user filter. The path is inlined into the
+     * generated JPQL/SQL as a jsonpath literal (xm-commons {@code HibernateInlineExpression} renders it verbatim,
+     * not as a bound parameter), so only plain member/array access is allowed: dot-separated identifiers
+     * (no leading digit, no hyphen, as unquoted jsonpath keys), each optionally followed by numeric indexes.
+     * Anything that could break out of the quoted literal (quotes, whitespace, parentheses, operators) or form
+     * a malformed jsonpath ({@code a..b}, {@code a[}) is rejected.
+     */
+    private static final Pattern DATA_ATTRIBUTE_PATH_PATTERN =
+        Pattern.compile("[A-Za-z_]\\w*(\\[\\d+])*(\\.[A-Za-z_]\\w*(\\[\\d+])*)*");
 
     private final UserRepository userRepository;
     private final CustomExpression customExpression;
@@ -211,7 +225,12 @@ public class UserQueryService extends QueryService<User> {
     }
 
     protected Expression<?> buildDataExpression(DataAttributeCriteria dataAttributeCriteria, Root<User> root, CriteriaBuilder builder) {
-        String jsonPath = "'$." + dataAttributeCriteria.getPath() + "'";
+        String path = dataAttributeCriteria.getPath();
+        if (path == null || !DATA_ATTRIBUTE_PATH_PATTERN.matcher(path).matches()) {
+            throw new BusinessException(ErrorConstants.ERROR_INVALID_DATA_ATTRIBUTE_PATH,
+                "Invalid data attribute path: " + path);
+        }
+        String jsonPath = "'$." + path + "'";
         return customExpression.jsonQuery(builder, root, User_.DATA, jsonPath);
     }
 

@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.service.query;
 
+import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.migration.db.jsonb.JsonbExpression;
 import com.icthh.xm.uaa.UaaApp;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
@@ -13,6 +14,7 @@ import com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria;
 import com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.Operation;
 import com.icthh.xm.uaa.service.query.filter.DataAttributeCriteria.ValueType;
 import com.icthh.xm.uaa.service.query.filter.StrictUserFilterQuery;
+import com.icthh.xm.uaa.web.constant.ErrorConstants;
 import io.github.jhipster.service.filter.StringFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -34,6 +36,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -204,6 +207,53 @@ public class UserQueryServicePostgresIntTest {
         Assert.assertEquals(1, page.getTotalElements());
         Assert.assertEquals(1, page.getContent().size());
         Assert.assertEquals(THIRD_USER_KEY, page.getContent().get(0).getUserKey());
+    }
+
+    @Test
+    public void findAllUsersByNestedDataPath_equals() {
+        createTestUser("strictNested", "nested@gmail.com", Map.of("profile", Map.of("city", "Kyiv", "tags", List.of("a", "b"))));
+
+        StrictUserFilterQuery filterQuery = new StrictUserFilterQuery();
+        filterQuery.setDataAttributes(buildDataAttributesCriteria("profile.city", "Kyiv", STRING, EQUALS));
+        Page<UserDTO> page = userQueryService.findAllUsersByStrictMatch(filterQuery, PageRequest.of(0, 10));
+        Assert.assertEquals(1, page.getTotalElements());
+        Assert.assertEquals("strictNested", page.getContent().get(0).getUserKey());
+
+        filterQuery.setDataAttributes(buildDataAttributesCriteria("profile.tags[1]", "b", STRING, EQUALS));
+        page = userQueryService.findAllUsersByStrictMatch(filterQuery, PageRequest.of(0, 10));
+        Assert.assertEquals(1, page.getTotalElements());
+        Assert.assertEquals("strictNested", page.getContent().get(0).getUserKey());
+    }
+
+    @Test
+    public void findAllUsersByDataPath_rejectsPathThatBreaksOutOfJsonPathLiteral() {
+        // on unpatched code this path is inlined into JPQL as-is and the query turns into
+        // "... json_query(data, '$.nope') is not null or 1=1 or ('1') = to_json_b(:value)", returning every user
+        StrictUserFilterQuery filterQuery = new StrictUserFilterQuery();
+        filterQuery.setDataAttributes(buildDataAttributesCriteria("nope') is not null or 1=1 or ('1", "x", STRING, EQUALS));
+
+        try {
+            Page<UserDTO> page = userQueryService.findAllUsersByStrictMatch(filterQuery, PageRequest.of(0, 10));
+            Assert.fail("expected BusinessException, but query returned " + page.getTotalElements() + " users");
+        } catch (BusinessException e) {
+            Assert.assertEquals(ErrorConstants.ERROR_INVALID_DATA_ATTRIBUTE_PATH, e.getCode());
+        }
+    }
+
+    @Test
+    public void findAllUsersByDataPath_rejectsEveryPathOutsideWhitelist() {
+        List<String> invalidPaths = Arrays.asList(null, "", "a'b", "a b", "a(b)", "a\"b", "a;b", "a$b", "a*b", "a/b", "a\\b", "a?b", "a:b", "a,b",
+            "a..b", "a.", ".a", "a[", "a[]", "a[x]", "a]", "a-b", "1a", "a.1b");
+        for (String path : invalidPaths) {
+            StrictUserFilterQuery filterQuery = new StrictUserFilterQuery();
+            filterQuery.setDataAttributes(buildDataAttributesCriteria(path, "x", STRING, CONTAINS));
+            try {
+                userQueryService.findAllUsersByStrictMatch(filterQuery, PageRequest.of(0, 10));
+                Assert.fail("expected BusinessException for path [" + path + "]");
+            } catch (BusinessException e) {
+                Assert.assertEquals("path [" + path + "]", ErrorConstants.ERROR_INVALID_DATA_ATTRIBUTE_PATH, e.getCode());
+            }
+        }
     }
 
     private static List<DataAttributeCriteria> buildDataAttributesCriteria(String path, String value, ValueType type, Operation operation) {
