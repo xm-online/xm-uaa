@@ -115,16 +115,18 @@ public class AccountService {
     @Transactional
     @LogicExtensionPoint("Authorize")
     public String authorizeAccount(AuthorizeUserVm authorizeUserVm, String remoteAddr) {
-        User user = userService.findOneByLogin(authorizeUserVm.getLogin())
-            .orElseGet(() -> {
-                UserDTO userDTO = buildUserDtoWithLogin(authorizeUserVm);
-                return registerUser(userDTO, remoteAddr);
-            });
+        Optional<User> existing = userService.findOneByLogin(authorizeUserVm.getLogin());
+        boolean newlyRegistered = existing.isEmpty();
+        User user = existing.orElseGet(() -> registerUser(buildUserDtoWithLogin(authorizeUserVm), remoteAddr));
 
         if (user.getPasswordSetByUser() == Boolean.TRUE) {
             return GrantType.PASSWORD.getValue();
         } else {
-            user.setActivated(true);
+            // Activate only a freshly registered account; never flip an existing account back to activated,
+            // so authorize can not silently re-enable an administratively or brute-force deactivated account.
+            if (newlyRegistered) {
+                user.setActivated(true);
+            }
             sendOtpCode(authorizeUserVm.getLogin(), user);
             return GrantType.OTP.getValue();
         }
