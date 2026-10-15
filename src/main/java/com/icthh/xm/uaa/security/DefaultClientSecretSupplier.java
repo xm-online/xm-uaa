@@ -1,6 +1,8 @@
 package com.icthh.xm.uaa.security;
 
 import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.commons.tenant.TenantKey;
+import com.icthh.xm.uaa.domain.properties.TenantProperties;
 import com.icthh.xm.uaa.domain.properties.TenantProperties.Security;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import lombok.RequiredArgsConstructor;
@@ -25,11 +27,15 @@ public class DefaultClientSecretSupplier {
     private final TenantPropertiesService tenantPropertiesService;
 
     public String resolve() {
-        return resolve(tenantContextHolder.getTenantKey());
+        return resolve(tenantContextHolder.getTenantKey(), tenantPropertiesService.getTenantProps());
     }
 
     public String resolve(String tenantKey) {
-        Security security = tenantPropertiesService.getTenantProps().getSecurity();
+        return resolve(tenantKey, tenantPropertiesService.getTenantProps(TenantKey.valueOf(tenantKey)));
+    }
+
+    private static String resolve(String tenantKey, TenantProperties tenantProperties) {
+        Security security = tenantProperties.getSecurity();
         String secret = security != null ? security.getDefaultClientSecret() : null;
         validate(tenantKey, secret);
         return secretInUse(security);

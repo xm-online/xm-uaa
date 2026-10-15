@@ -242,7 +242,8 @@ public class UserQueryServicePostgresIntTest {
 
     @Test
     public void findAllUsersByDataPath_rejectsEveryPathOutsideWhitelist() {
-        List<String> invalidPaths = Arrays.asList(null, "", "a'b", "a b", "a(b)", "a\"b", "a;b", "a$b", "a*b", "a/b", "a\\b", "a?b", "a:b", "a,b");
+        List<String> invalidPaths = Arrays.asList(null, "", "a'b", "a b", "a(b)", "a\"b", "a;b", "a$b", "a*b", "a/b", "a\\b", "a?b", "a:b", "a,b",
+            "a..b", "a.", ".a", "a[", "a[]", "a[x]", "a]", "a-b", "1a", "a.1b");
         for (String path : invalidPaths) {
             StrictUserFilterQuery filterQuery = new StrictUserFilterQuery();
             filterQuery.setDataAttributes(buildDataAttributesCriteria(path, "x", STRING, CONTAINS));

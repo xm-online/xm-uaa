@@ -49,10 +49,13 @@ public class UserQueryService extends QueryService<User> {
     /**
      * Whitelist for the {@code dataAttributes[].path} segment of a user filter. The path is inlined into the
      * generated JPQL/SQL as a jsonpath literal (xm-commons {@code HibernateInlineExpression} renders it verbatim,
-     * not as a bound parameter), so only plain member/array access is allowed. Anything that could break out of the
-     * quoted literal (quotes, whitespace, parentheses, operators) is rejected.
+     * not as a bound parameter), so only plain member/array access is allowed: dot-separated identifiers
+     * (no leading digit, no hyphen, as unquoted jsonpath keys), each optionally followed by numeric indexes.
+     * Anything that could break out of the quoted literal (quotes, whitespace, parentheses, operators) or form
+     * a malformed jsonpath ({@code a..b}, {@code a[}) is rejected.
      */
-    private static final Pattern DATA_ATTRIBUTE_PATH_PATTERN = Pattern.compile("[A-Za-z0-9_.\\[\\]-]+");
+    private static final Pattern DATA_ATTRIBUTE_PATH_PATTERN =
+        Pattern.compile("[A-Za-z_]\\w*(\\[\\d+])*(\\.[A-Za-z_]\\w*(\\[\\d+])*)*");
 
     private final UserRepository userRepository;
     private final CustomExpression customExpression;
