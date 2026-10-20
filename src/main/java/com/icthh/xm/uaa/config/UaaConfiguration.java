@@ -120,7 +120,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
                 .antMatchers("/management/**").hasAuthority(RoleConstant.SUPER_ADMIN)
                 .antMatchers("/v2/api-docs/**").access(apiSpecEnabled ? "permitAll" : "denyAll")
                 .antMatchers("/swagger-resources/**").access(apiSpecEnabled ? "permitAll" : "denyAll")
-                .antMatchers("/swagger-ui/**")
+                .antMatchers("/swagger-ui/**", "/swagger-ui.html")
                 .access(apiSpecEnabled ? "hasAuthority('" + RoleConstant.SUPER_ADMIN + "')" : "denyAll");
         }
 
