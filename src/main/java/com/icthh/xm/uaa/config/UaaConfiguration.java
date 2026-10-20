@@ -25,6 +25,7 @@ import com.icthh.xm.uaa.service.otp.OtpGenerationStrategy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -79,6 +80,9 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
         private final CorsFilter corsFilter;
         private final NoSessionCreationFilter noSessionCreationFilter;
 
+        @Value("${springdoc.api-docs.enabled:true}")
+        private boolean apiSpecEnabled;
+
         @Override
         public void configure(HttpSecurity http) throws Exception {
             http
@@ -114,9 +118,10 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
                 .antMatchers("/management/health").permitAll()
                 .antMatchers("/management/prometheus").permitAll()
                 .antMatchers("/management/**").hasAuthority(RoleConstant.SUPER_ADMIN)
-                .antMatchers("/v2/api-docs/**").permitAll()
-                .antMatchers("/swagger-resources/configuration/ui").permitAll()
-                .antMatchers("/swagger-ui/index.html").hasAuthority(RoleConstant.SUPER_ADMIN);
+                .antMatchers("/v2/api-docs/**").access(apiSpecEnabled ? "permitAll" : "denyAll")
+                .antMatchers("/swagger-resources/**").access(apiSpecEnabled ? "permitAll" : "denyAll")
+                .antMatchers("/swagger-ui/**")
+                .access(apiSpecEnabled ? "hasAuthority('" + RoleConstant.SUPER_ADMIN + "')" : "denyAll");
         }
 
         @Override
