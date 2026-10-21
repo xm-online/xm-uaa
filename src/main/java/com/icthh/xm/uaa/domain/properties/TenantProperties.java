@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.domain.properties;
 
 import static com.icthh.xm.uaa.service.otp.OtpType.EMBEDDED;
 import static java.lang.Boolean.TRUE;
+import static java.util.stream.Collectors.toList;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -43,6 +44,9 @@ public class TenantProperties {
     @JsonProperty("strictUserManagement")
     private boolean strictUserManagement;
 
+    @JsonProperty("securityPolicy")
+    private SecurityPolicy securityPolicy = new SecurityPolicy();
+
     @JsonProperty("security")
     private Security security = new Security();
 
@@ -51,6 +55,45 @@ public class TenantProperties {
 
     @JsonProperty("contextPermission")
     private ContextPermission contextPermission = new ContextPermission();
+
+    @Getter
+    @Setter
+    @ToString
+    public static class SecurityPolicy {
+
+        /**
+         * Hosts of the tenant web application allowed in links sent to users (in addition to tenant-domains.yml),
+         * stored in lower case.
+         */
+        @JsonProperty("hosts")
+        private List<String> hosts = new ArrayList<>();
+
+        /**
+         * Changing role or token validity of another user by PUT /api/users requires
+         * USER.CHANGE.ROLE or USER.CHANGE.TOKEN_VALIDITY privilege.
+         */
+        @JsonProperty("requireChangePrivileges")
+        private boolean requireChangePrivileges = true;
+
+        /**
+         * Allows a user to change his own role (POST /api/account, PUT /api/users, PUT /api/users/roles).
+         * If false (default) such a request fails with error.user.change.role.himself.
+         */
+        @JsonProperty("allowSelfRoleUpdate")
+        private boolean allowSelfRoleUpdate;
+
+        /**
+         * Allows a user to change his own access and refresh token validity (POST /api/account, PUT /api/users).
+         * If false (default) such a request fails with error.user.change.token.validity.himself.
+         */
+        @JsonProperty("allowSelfTokenValidityUpdate")
+        private boolean allowSelfTokenValidityUpdate;
+
+        @JsonSetter("hosts")
+        public void setHosts(List<String> hosts) {
+            this.hosts = hosts == null ? new ArrayList<>() : hosts.stream().map(String::toLowerCase).collect(toList());
+        }
+    }
 
     @Getter
     @Setter

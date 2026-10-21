@@ -3,11 +3,10 @@ package com.icthh.xm.uaa.security.oauth2.otp;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.commons.tenant.TenantKey;
-import com.icthh.xm.uaa.commons.UaaUtils;
-import com.icthh.xm.uaa.commons.XmRequestContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.properties.TenantProperties;
+import com.icthh.xm.uaa.service.ApplicationUrlService;
 import com.icthh.xm.uaa.service.TenantPropertiesService;
 import com.icthh.xm.uaa.service.UserService;
 import com.icthh.xm.uaa.service.dto.UserDTO;
@@ -24,7 +23,7 @@ public abstract class AbstractOtpSender implements OtpSender {
     private final ApplicationProperties appProperties;
     private final TenantContextHolder tenantContextHolder;
     private final UserService userService;
-    private final XmRequestContextHolder xmRequestContextHolder;
+    private final ApplicationUrlService applicationUrlService;
 
     protected boolean isCommunicationEnabled(TenantKey tenantKey) {
         return Optional.ofNullable(tenantPropertiesService.getTenantProps(tenantKey))
@@ -45,7 +44,7 @@ public abstract class AbstractOtpSender implements OtpSender {
     }
 
     protected Map<String, Object> getObjectModel(String otp, User user, TenantKey tenantKey) {
-        String applicationUrl = UaaUtils.getApplicationUrl(xmRequestContextHolder);
+        String applicationUrl = applicationUrlService.getApplicationUrl();
 
         Map<String, Object> dataBind = new HashMap<>();
         dataBind.put("otp", otp);

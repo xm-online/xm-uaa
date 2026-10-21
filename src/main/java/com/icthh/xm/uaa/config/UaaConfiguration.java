@@ -191,7 +191,8 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
             tokenServices(),
             clientDetailsService,
             endpoints.getOAuth2RequestFactory(),
-            tenantPropertiesService);
+            tenantPropertiesService,
+            userService);
 
         granters.add(tfaOtpTokenGranter);
         granters.add(idpTokenGranter);

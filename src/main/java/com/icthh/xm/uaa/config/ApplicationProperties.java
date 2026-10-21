@@ -29,6 +29,7 @@ public class ApplicationProperties {
     private final ReCaptcha reCaptcha = new ReCaptcha();
     private final Lep lep = new Lep();
     private final Communication communication = new Communication();
+    private final MisconfigurationMonitor misconfigurationMonitor = new MisconfigurationMonitor();
 
     private List<String> tenantIgnoredPathList;
     private List<String> timelineIgnoredHttpMethods = Collections.emptyList();
@@ -63,6 +64,13 @@ public class ApplicationProperties {
     private DomainEvent domainEvent;
     private Boolean autoSystemQueueEnabled;
     private boolean clientAsSuperAdminEnabled;
+
+    @Getter
+    @Setter
+    public static class MisconfigurationMonitor {
+        /** Interval between periodic re-checks of unresolved security misconfigurations, in seconds (prod only). */
+        private int intervalSeconds = 10;
+    }
 
     @Getter
     @Setter

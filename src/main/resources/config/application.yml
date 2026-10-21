@@ -225,6 +225,8 @@ application:
     communication:
         enabled: false
     client-as-super-admin-enabled: true
+    misconfiguration-monitor:
+        interval-seconds: 10
 gracefulShutdown:
     enabled: false
     shutdownDelay:

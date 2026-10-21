@@ -1,0 +1,13 @@
+---
+uaa:
+  ROLE_CHANGER:
+  - privilegeKey: "USER.CHANGE.ROLE"
+    disabled: false
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: null
+  - privilegeKey: "USER.CHANGE.TOKEN_VALIDITY"
+    disabled: true
+    envCondition: null
+    resourceCondition: null
+    reactionStrategy: null

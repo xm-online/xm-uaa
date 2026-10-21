@@ -189,7 +189,7 @@ public class UserResource {
      */
     @PutMapping("/users/role")
     @Timed
-    @PreAuthorize("hasPermission({'id': #user.userKey, 'newUser': #user}, 'user', 'USER.CHANGE.ROLE')")
+    @PreAuthorize("hasPermission({'userKey': #user.userKey, 'newUser': #user}, 'user', 'USER.CHANGE.ROLE')")
     @PrivilegeDescription("Privilege to change roleKey for user")
     public ResponseEntity<UserDTO> changeRoleKey(@Valid @RequestBody UserDTO user) {
         Preconditions.checkArgument(isNotEmpty(user.getAuthorities()));

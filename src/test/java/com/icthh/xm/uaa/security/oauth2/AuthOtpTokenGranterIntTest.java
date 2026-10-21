@@ -110,6 +110,9 @@ public class AuthOtpTokenGranterIntTest {
     @Autowired
     private DomainUserDetailsService domainUserDetailsService;
 
+    @Autowired
+    private com.icthh.xm.uaa.service.UserService userService;
+
     @MockBean
     private TenantPropertiesService tenantPropertiesService;
 
@@ -118,7 +121,7 @@ public class AuthOtpTokenGranterIntTest {
     @Before
     public void setUp() throws IOException {
         authOtpTokenGranter = new AuthOtpTokenGranter(domainUserDetailsService, tokenServices, clientDetailsService,
-            new DefaultOAuth2RequestFactory(clientDetailsService), tenantPropertiesService);
+            new DefaultOAuth2RequestFactory(clientDetailsService), tenantPropertiesService, userService);
 
         MockitoAnnotations.initMocks(this);
         TenantContextUtils.setTenant(tenantContextHolder, DEFAULT_TENANT_KEY_VALUE);
