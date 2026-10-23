@@ -204,6 +204,10 @@ application:
     client-scope: openid
     default-client-id: internal
     default-client-secret: aW50ZXJuYWw6aW50ZXJuYWw=
+    # client_credentials client with the role SYSTEM-ADMIN, it is not stored anywhere.
+    # Without system-admin-client-secret a random secret is used and the client can not authenticate.
+    system-admin-client-id: system-admin
+    system-admin-client-secret:
     connect-timeout-millis: 5000
     read-timeout-millis: 25000
     timelines-enabled: true

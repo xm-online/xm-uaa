@@ -30,6 +30,8 @@ public class ApplicationProperties {
     private final Lep lep = new Lep();
     private final Communication communication = new Communication();
     private final MisconfigurationMonitor misconfigurationMonitor = new MisconfigurationMonitor();
+    private final Prometheus prometheus = new Prometheus();
+    private final Management management = new Management();
 
     private List<String> tenantIgnoredPathList;
     private List<String> timelineIgnoredHttpMethods = Collections.emptyList();
@@ -46,6 +48,8 @@ public class ApplicationProperties {
     private Set<String> clientScope;
     private Set<String> defaultClientId;
     private String defaultClientSecret;
+    private String systemAdminClientId;
+    private String systemAdminClientSecret;
     private Integer connectTimeoutMillis;
     private Integer readTimeoutMillis;
     private HttpTimeoutConfig loadBalanced = new HttpTimeoutConfig();
@@ -92,6 +96,30 @@ public class ApplicationProperties {
         private Boolean enablePasswordHashCaching;
         private Integer enablePasswordHashCacheSize;
         private boolean caseInsensitiveLoginFallbackEnabled;
+    }
+
+    @Getter
+    @Setter
+    public static class Prometheus {
+
+        /**
+         * application.prometheus.public: /management/prometheus is available without authentication.
+         */
+        private boolean isPublic;
+    }
+
+    @Getter
+    @Setter
+    public static class Management {
+
+        private final Access access = new Access();
+
+        @Getter
+        @Setter
+        public static class Access {
+
+            private String role = Constants.SYSTEM_ADMIN;
+        }
     }
 
     @Getter

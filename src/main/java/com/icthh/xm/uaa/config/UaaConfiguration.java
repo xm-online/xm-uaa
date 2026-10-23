@@ -30,6 +30,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -79,6 +80,7 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
         private final TokenStore tokenStore;
         private final CorsFilter corsFilter;
         private final NoSessionCreationFilter noSessionCreationFilter;
+        private final ApplicationProperties applicationProperties;
 
         @Value("${springdoc.api-docs.enabled:true}")
         private boolean apiSpecEnabled;
@@ -116,8 +118,14 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
                 .antMatchers("/api/users/accept-terms-of-conditions/*").permitAll()
                 .antMatchers("/api/**").authenticated()
                 .antMatchers("/management/health").permitAll()
-                .antMatchers("/management/prometheus").permitAll()
-                .antMatchers("/management/**").hasAuthority(RoleConstant.SUPER_ADMIN)
+                .antMatchers("/management/health/liveness").permitAll()
+                .antMatchers("/management/health/readiness").permitAll()
+                .antMatchers("/management/prometheus").access(prometheusAccess())
+                .antMatchers("/management/prometheus/**").access(prometheusAccess())
+                // the audit list is a tenant thing: AuditEventService checks the privilege AUDIT.GET_LIST,
+                // the audit by id has no privilege check and stays under the management role
+                .antMatchers(HttpMethod.GET, "/management/audits").authenticated()
+                .antMatchers("/management/**").hasAuthority(managementRole())
                 .antMatchers("/v2/api-docs/**").access(apiSpecEnabled ? "permitAll" : "denyAll")
                 .antMatchers("/swagger-resources/**").access(apiSpecEnabled ? "permitAll" : "denyAll")
                 .antMatchers("/swagger-ui/**", "/swagger-ui.html")
@@ -127,6 +135,16 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
         @Override
         public void configure(ResourceServerSecurityConfigurer resources) throws Exception {
             resources.resourceId("jhipster-uaa").tokenStore(tokenStore);
+        }
+
+        private String managementRole() {
+            return applicationProperties.getManagement().getAccess().getRole();
+        }
+
+        private String prometheusAccess() {
+            return applicationProperties.getPrometheus().isPublic()
+                ? "permitAll"
+                : "hasAuthority('" + managementRole() + "')";
         }
     }
 

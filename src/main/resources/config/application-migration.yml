@@ -1,0 +1,12 @@
+# ===================================================================
+# Spring Boot configuration for the "migration" profile: SPRING_PROFILES_ACTIVE=prod,migration
+#
+# Restores the management access as it was before the role SYSTEM-ADMIN.
+# ===================================================================
+
+application:
+    prometheus:
+        public: true
+    management:
+        access:
+            role: SUPER-ADMIN
