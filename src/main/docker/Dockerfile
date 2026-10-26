@@ -13,9 +13,7 @@ ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
 	LANGUAGE=en_US:en \
 	TERM=xterm \
     XMX=256m \
-    JAVA_OPTS="-Xms64m -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.ssl=false \
-    -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.local.only=false \
-    -Dcom.sun.management.jmxremote.rmi.port=19999 -Dcom.sun.management.jmxremote.port=19999 \
+    JAVA_OPTS="-Xms64m \
     --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED"
 # --add-opens fix issues with illegal reflective access operation in groovy lib, will be fixed in next groovy releases
 
