@@ -104,26 +104,7 @@ spring:
             value-serializer: org.apache.kafka.common.serialization.StringSerializer
             properties:
                 max.block.ms: 10000
-        properties:
-            security.protocol: PLAINTEXT # SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL=SASL_PLAINTEXT, protocol to the brokers: PLAINTEXT, SASL_PLAINTEXT, SSL, SASL_SSL; empty is not allowed
-            sasl.mechanism: # SPRING_KAFKA_PROPERTIES_SASL_MECHANISM=SCRAM-SHA-512, SASL mechanism: PLAIN, SCRAM-SHA-256, SCRAM-SHA-512
-            sasl.jaas.config: # SPRING_KAFKA_PROPERTIES_SASL_JAAS_CONFIG=org.apache.kafka.common.security.scram.ScramLoginModule required username="user" password="secret";, SASL login and password
-            # ssl.endpoint.identification.algorithm: # SPRING_KAFKA_PROPERTIES_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM=https, check of the broker host name in its certificate, https when not set; empty switches the check off
-            # OAUTHBEARER (SPRING_KAFKA_PROPERTIES_SASL_MECHANISM=OAUTHBEARER) needs a login callback handler that gets the token, kafka-clients 2.3 has no OAuth client:
-            # sasl.login.callback.handler.class: # SPRING_KAFKA_PROPERTIES_SASL_LOGIN_CALLBACK_HANDLER_CLASS=com.example.TokenLoginCallbackHandler, gets the token for OAUTHBEARER
-            # sasl.client.callback.handler.class: # SPRING_KAFKA_PROPERTIES_SASL_CLIENT_CALLBACK_HANDLER_CLASS=com.example.CustomClientCallbackHandler, custom SASL client callback handler
-            # sasl.login.class: # SPRING_KAFKA_PROPERTIES_SASL_LOGIN_CLASS=com.example.CustomLogin, custom login class
-            # GSSAPI (SPRING_KAFKA_PROPERTIES_SASL_MECHANISM=GSSAPI, SASL_JAAS_CONFIG with com.sun.security.auth.module.Krb5LoginModule required useKeyTab=true keyTab="/etc/kafka.keytab" principal="uaa@REALM";):
-            sasl.kerberos.service.name: # SPRING_KAFKA_PROPERTIES_SASL_KERBEROS_SERVICE_NAME=kafka, Kerberos principal name of the broker
-        ssl: # the commented out properties break SSL when empty, set them by the environment variables when needed
-            trust-store-location: # SPRING_KAFKA_SSL_TRUST_STORE_LOCATION=file:/certs/ca.p12, CA of the broker certificate, for SSL and SASL_SSL
-            # trust-store-password: # SPRING_KAFKA_SSL_TRUST_STORE_PASSWORD=changeit, password of the trust store
-            trust-store-type: # SPRING_KAFKA_SSL_TRUST_STORE_TYPE=PKCS12, type of the trust store: PKCS12, JKS
-            key-store-location: # SPRING_KAFKA_SSL_KEY_STORE_LOCATION=file:/certs/uaa.p12, client certificate, for SSL and SASL_SSL
-            # key-store-password: # SPRING_KAFKA_SSL_KEY_STORE_PASSWORD=changeit, password of the key store file
-            key-store-type: # SPRING_KAFKA_SSL_KEY_STORE_TYPE=PKCS12, type of the key store: PKCS12, JKS
-            # key-password: # SPRING_KAFKA_SSL_KEY_PASSWORD=changeit, password of the private key, when it differs from the key store password
-            # protocol: # SPRING_KAFKA_SSL_PROTOCOL=TLSv1.2, TLS protocol, Kafka default when not set
+        # Kafka connection by environment variables, PLAINTEXT when not set: https://github.com/xm-online/xm-ms-template/blob/main/src/main/resources/config/application.yml
     liquibase:
         default-schema: XM
         change-log: classpath:config/liquibase/master.xml

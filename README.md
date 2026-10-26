@@ -92,8 +92,8 @@ To configure CI for your project, run the ci-cd sub-generator (`jhipster ci-cd`)
 
 ## Kafka connection
 
-The connection to Kafka (SASL login and password, SSL, GSSAPI) is set by the environment variables listed in
-`application.yml` under `spring.kafka`. The full sets of variables for each `security.protocol` and the broker setup
+The connection to Kafka (SASL login and password, SSL, GSSAPI) is set by environment variables, `PLAINTEXT` when
+they are not set. The full sets of variables for each `security.protocol` and the broker setup
 are described in
 [xm-ms-template: Kafka connection](https://github.com/xm-online/xm-ms-template/blob/main/README.md#kafka-connection).
 uaa runs on Spring Boot 2.1 with kafka-clients 2.3: `SPRING_KAFKA_SSL_BUNDLE`, the PEM variables and the
