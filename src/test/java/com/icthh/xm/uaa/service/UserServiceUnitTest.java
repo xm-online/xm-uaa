@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
+import static com.icthh.xm.uaa.config.Constants.SYSTEM_ADMIN;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.Assert.assertEquals;
@@ -223,6 +224,17 @@ public class UserServiceUnitTest {
         userDTO.setRoleKey("X");
         userDTO.setId(ID);
         given(userRepository.findById(ID)).willReturn(Optional.of(createUser(USER_KEY, SUPER_ADMIN)));
+        assertThatThrownBy(() -> {
+            service.changeUserRole(userDTO);
+        }).hasMessage("This operation can not be applied to SUPER-ADMIN");
+    }
+
+    @Test
+    public void shouldFailForSystemAdmin() {
+        UserDTO userDTO = new UserDTO();
+        userDTO.setRoleKey("X");
+        userDTO.setId(ID);
+        given(userRepository.findById(ID)).willReturn(Optional.of(createUser(USER_KEY, SYSTEM_ADMIN)));
         assertThatThrownBy(() -> {
             service.changeUserRole(userDTO);
         }).hasMessage("This operation can not be applied to SUPER-ADMIN");

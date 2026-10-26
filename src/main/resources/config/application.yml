@@ -104,7 +104,7 @@ spring:
             value-serializer: org.apache.kafka.common.serialization.StringSerializer
             properties:
                 max.block.ms: 10000
-        # Kafka connection by environment variables, PLAINTEXT when not set: https://github.com/xm-online/xm-ms-template/blob/main/src/main/resources/config/application.yml
+        # Kafka connection by environment variables, PLAINTEXT when not set: https://github.com/xm-online/xm-ms-template/blob/main/README.md#kafka-connection
     liquibase:
         default-schema: XM
         change-log: classpath:config/liquibase/master.xml

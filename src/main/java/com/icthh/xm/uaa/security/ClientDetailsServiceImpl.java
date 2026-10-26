@@ -13,13 +13,14 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.provider.ClientDetails;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.ClientRegistrationException;
 import org.springframework.stereotype.Component;
+
+import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
 
 @Primary
 @Component
@@ -83,13 +84,9 @@ public class ClientDetailsServiceImpl implements ClientDetailsService {
     private ClientDetails systemAdminClient(String clientId) {
         Client principal = new Client();
         principal.setClientId(clientId);
-        principal.setClientSecret(passwordEncoder.encode(getSystemAdminClientSecret()));
+        principal.setClientSecret(passwordEncoder.encode(
+            defaultIfBlank(applicationProperties.getSystemAdminClientSecret(), FALLBACK_SYSTEM_ADMIN_CLIENT_SECRET)));
         principal.setRoleKey(Constants.SYSTEM_ADMIN);
         return new ClientDetailsImpl(principal, Set.of("client_credentials"), applicationProperties.getClientScope());
-    }
-
-    private String getSystemAdminClientSecret() {
-        String secret = applicationProperties.getSystemAdminClientSecret();
-        return StringUtils.isBlank(secret) ? FALLBACK_SYSTEM_ADMIN_CLIENT_SECRET : secret;
     }
 }

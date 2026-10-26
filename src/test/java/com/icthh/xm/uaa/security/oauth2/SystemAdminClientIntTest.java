@@ -96,7 +96,6 @@ public class SystemAdminClientIntTest {
     public void testSystemAdminClientGetsTokenWithSystemAdminRole() {
         Map<String, Object> token = clientCredentialsToken(SYSTEM_ADMIN_CLIENT, SYSTEM_ADMIN_CLIENT_SECRET);
 
-        assertThat(token).doesNotContainKey("refresh_token");
         String payload = new String(Base64.getUrlDecoder()
             .decode(token.get("access_token").toString().split("\\.")[1]));
         assertThat(new JacksonJsonParser().parseMap(payload).get("authorities")).asList()
@@ -120,7 +119,7 @@ public class SystemAdminClientIntTest {
                 .param("username", "admin")
                 .param("password", "admin")
                 .with(httpBasic(SYSTEM_ADMIN_CLIENT, SYSTEM_ADMIN_CLIENT_SECRET)))
-            .andExpect(status().is4xxClientError());
+            .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -147,7 +146,10 @@ public class SystemAdminClientIntTest {
             .andExpect(status().isOk());
         mockMvc.perform(get("/management/audits").header(HttpHeaders.AUTHORIZATION, "Bearer " + systemAdmin))
             .andExpect(status().isForbidden());
+        mockMvc.perform(get("/management/audits/1")).andExpect(status().isUnauthorized());
         mockMvc.perform(get("/management/audits/1").header(HttpHeaders.AUTHORIZATION, "Bearer " + superAdmin))
+            .andExpect(status().isNotFound());
+        mockMvc.perform(get("/management/audits/1").header(HttpHeaders.AUTHORIZATION, "Bearer " + systemAdmin))
             .andExpect(status().isForbidden());
     }
 

@@ -22,6 +22,7 @@ import java.util.TreeMap;
 
 import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
 import static com.icthh.xm.uaa.UaaTestConstants.DEFAULT_TENANT_KEY_VALUE;
+import static com.icthh.xm.uaa.config.Constants.SYSTEM_ADMIN;
 import static com.icthh.xm.uaa.service.ClientService.MAX_CLIENT_ID_LENGTH;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.ERROR_CLIENT_IN_USE;
 import static com.icthh.xm.uaa.web.constant.ErrorConstants.VALIDATION_CLIENT_ID_REQUIRED;
@@ -33,6 +34,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -112,6 +114,20 @@ class ClientServiceUnitTest {
 
         assertThrows(BusinessException.class, () -> clientService.createClient(dto));
 
+        verify(clientRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldRejectSystemAdminWhenSuperAdminFeatureEnabled() {
+        ClientDTO dto = new ClientDTO();
+        dto.setClientId("client");
+        dto.setRoleKey(SYSTEM_ADMIN);
+
+        lenient().when(applicationProperties.isClientAsSuperAdminEnabled()).thenReturn(true);
+
+        BusinessException exception = assertThrows(BusinessException.class, () -> clientService.createClient(dto));
+
+        assertEquals(VALIDATION_ROLE_NOT_ALLOWED, exception.getCode());
         verify(clientRepository, never()).save(any());
     }
 

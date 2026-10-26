@@ -123,12 +123,14 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
                 .antMatchers("/api/users/accept-terms-of-conditions/*").permitAll()
                 .antMatchers("/api/**").authenticated()
                 .antMatchers("/management/health").permitAll()
-                .antMatchers("/management/health/liveness").permitAll()
-                .antMatchers("/management/health/readiness").permitAll()
-                .antMatchers("/management/prometheus").access(prometheusAccess())
-                .antMatchers("/management/prometheus/**").access(prometheusAccess())
-                .antMatchers("/management/info").access(infoAccess())
+                .antMatchers("/management/prometheus")
+                .access(publicOrManagementAccess(applicationProperties.getPrometheus().isPublic()))
+                .antMatchers("/management/prometheus/**")
+                .access(publicOrManagementAccess(applicationProperties.getPrometheus().isPublic()))
+                .antMatchers("/management/info")
+                .access(publicOrManagementAccess(applicationProperties.getManagement().getInfo().isPublic()))
                 .antMatchers(HttpMethod.GET, "/management/audits").authenticated()
+                .antMatchers(HttpMethod.GET, "/management/audits/**").authenticated()
                 .antMatchers("/management/**").hasAuthority(managementRole())
                 .antMatchers("/v2/api-docs/**").access(apiSpecAccess())
                 .antMatchers("/swagger-resources/**").access(apiSpecAccess())
@@ -151,14 +153,8 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
             return applicationProperties.getManagement().getAccess().getRole();
         }
 
-        private String prometheusAccess() {
-            return applicationProperties.getPrometheus().isPublic()
-                ? "permitAll"
-                : "hasAuthority('" + managementRole() + "')";
-        }
-
-        private String infoAccess() {
-            return applicationProperties.getManagement().getInfo().isPublic()
+        private String publicOrManagementAccess(boolean isPublic) {
+            return isPublic
                 ? "permitAll"
                 : "hasAuthority('" + managementRole() + "')";
         }
