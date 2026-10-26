@@ -129,7 +129,6 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
                 .access(publicOrManagementAccess(applicationProperties.getPrometheus().isPublic()))
                 .antMatchers("/management/info")
                 .access(publicOrManagementAccess(applicationProperties.getManagement().getInfo().isPublic()))
-                .antMatchers(HttpMethod.GET, "/management/audits").authenticated()
                 .antMatchers(HttpMethod.GET, "/management/audits/**").authenticated()
                 .antMatchers(HttpMethod.GET, "/management/logs").access(logsAccess("LOGS.GET"))
                 .antMatchers(HttpMethod.PUT, "/management/logs").access(logsAccess("LOGS.UPDATE"))
