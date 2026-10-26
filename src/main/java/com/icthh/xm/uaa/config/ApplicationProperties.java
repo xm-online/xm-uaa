@@ -33,6 +33,7 @@ public class ApplicationProperties {
     private final Prometheus prometheus = new Prometheus();
     private final Management management = new Management();
 
+    private String configPrivateKey;
     private List<String> tenantIgnoredPathList;
     private List<String> timelineIgnoredHttpMethods = Collections.emptyList();
     private List<String> proxyFilterWhiteList;
@@ -113,12 +114,20 @@ public class ApplicationProperties {
     public static class Management {
 
         private final Access access = new Access();
+        private final Info info = new Info();
 
         @Getter
         @Setter
         public static class Access {
 
             private String role = Constants.SYSTEM_ADMIN;
+        }
+
+        @Getter
+        @Setter
+        public static class Info {
+
+            private boolean isPublic;
         }
     }
 

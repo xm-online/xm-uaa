@@ -1,12 +1,11 @@
 # ===================================================================
 # Spring Boot configuration for the "migration" profile: SPRING_PROFILES_ACTIVE=prod,migration
 #
-# Restores the management access as it was before the role SYSTEM-ADMIN.
+# xm-commons restores the management access as it was before the role SYSTEM-ADMIN (xm-defaults-migration.yml),
+# /management/info of uaa stays under the management role as it was.
 # ===================================================================
 
 application:
-    prometheus:
-        public: true
     management:
-        access:
-            role: SUPER-ADMIN
+        info:
+            public: false
