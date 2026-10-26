@@ -230,6 +230,8 @@ application:
     communication:
         enabled: false
     client-as-super-admin-enabled: true
+    api-docs:
+        privilege-check: true
     misconfiguration-monitor:
         interval-seconds: 10
 gracefulShutdown:

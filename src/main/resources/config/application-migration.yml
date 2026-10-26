@@ -6,6 +6,8 @@
 # ===================================================================
 
 application:
+    api-docs:
+        privilege-check: false
     management:
         info:
             public: false

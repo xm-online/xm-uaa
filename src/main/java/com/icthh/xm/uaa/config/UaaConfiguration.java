@@ -164,7 +164,12 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
         }
 
         private String apiSpecAccess() {
-            return apiSpecEnabled ? accessPrivileges.access("API_DOCS.GET") : "denyAll";
+            if (!apiSpecEnabled) {
+                return "denyAll";
+            }
+            return applicationProperties.getApiDocs().isPrivilegeCheck()
+                ? accessPrivileges.access("API_DOCS.GET")
+                : "permitAll";
         }
     }
 

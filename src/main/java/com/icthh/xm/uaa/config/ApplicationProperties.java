@@ -30,6 +30,7 @@ public class ApplicationProperties {
     private final Lep lep = new Lep();
     private final Communication communication = new Communication();
     private final MisconfigurationMonitor misconfigurationMonitor = new MisconfigurationMonitor();
+    private final ApiDocs apiDocs = new ApiDocs();
     private final Prometheus prometheus = new Prometheus();
     private final Management management = new Management();
 
@@ -97,6 +98,13 @@ public class ApplicationProperties {
         private Boolean enablePasswordHashCaching;
         private Integer enablePasswordHashCacheSize;
         private boolean caseInsensitiveLoginFallbackEnabled;
+    }
+
+    @Getter
+    @Setter
+    public static class ApiDocs {
+
+        private boolean privilegeCheck = true;
     }
 
     @Getter
