@@ -229,7 +229,7 @@ application:
     last-login-date-enabled: false
     communication:
         enabled: false
-    client-as-super-admin-enabled: true
+    client-as-super-admin-enabled: false
     api-docs:
         privilege-check: true
     misconfiguration-monitor:
