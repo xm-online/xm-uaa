@@ -107,11 +107,17 @@ public class ApplicationProperties {
         private boolean privilegeCheck = true;
     }
 
-    @Getter
-    @Setter
     public static class Prometheus {
 
-        private boolean isPublic;
+        private boolean publicAccess;
+
+        public boolean isPublic() {
+            return publicAccess;
+        }
+
+        public void setPublic(boolean publicAccess) {
+            this.publicAccess = publicAccess;
+        }
     }
 
     @Getter
@@ -120,6 +126,7 @@ public class ApplicationProperties {
 
         private final Access access = new Access();
         private final Info info = new Info();
+        private final Logs logs = new Logs();
 
         @Getter
         @Setter
@@ -128,11 +135,24 @@ public class ApplicationProperties {
             private String role = Constants.SYSTEM_ADMIN;
         }
 
-        @Getter
-        @Setter
         public static class Info {
 
-            private boolean isPublic;
+            private boolean publicAccess;
+
+            public boolean isPublic() {
+                return publicAccess;
+            }
+
+            public void setPublic(boolean publicAccess) {
+                this.publicAccess = publicAccess;
+            }
+        }
+
+        @Getter
+        @Setter
+        public static class Logs {
+
+            private boolean systemAdminOnly;
         }
     }
 

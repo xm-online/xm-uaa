@@ -131,6 +131,8 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
                 .access(publicOrManagementAccess(applicationProperties.getManagement().getInfo().isPublic()))
                 .antMatchers(HttpMethod.GET, "/management/audits").authenticated()
                 .antMatchers(HttpMethod.GET, "/management/audits/**").authenticated()
+                .antMatchers(HttpMethod.GET, "/management/logs").access(logsAccess("LOGS.GET"))
+                .antMatchers(HttpMethod.PUT, "/management/logs").access(logsAccess("LOGS.UPDATE"))
                 .antMatchers("/management/**").hasAuthority(managementRole())
                 .antMatchers("/v2/api-docs/**").access(apiSpecAccess())
                 .antMatchers("/swagger-resources/**").access(apiSpecAccess())
@@ -157,6 +159,12 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
             return isPublic
                 ? "permitAll"
                 : "hasAuthority('" + managementRole() + "')";
+        }
+
+        private String logsAccess(String privilege) {
+            return applicationProperties.getManagement().getLogs().isSystemAdminOnly()
+                ? "hasAuthority('" + managementRole() + "')"
+                : accessPrivileges.access(privilege);
         }
 
         private String apiSpecAccess() {
