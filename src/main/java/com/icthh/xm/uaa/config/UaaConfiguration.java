@@ -128,8 +128,6 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
                 .antMatchers("/management/prometheus").access(prometheusAccess())
                 .antMatchers("/management/prometheus/**").access(prometheusAccess())
                 .antMatchers("/management/info").access(infoAccess())
-                // the audit list is a tenant thing: AuditEventService checks the privilege AUDIT.GET_LIST,
-                // the audit by id has no privilege check and stays under the management role
                 .antMatchers(HttpMethod.GET, "/management/audits").authenticated()
                 .antMatchers("/management/**").hasAuthority(managementRole())
                 .antMatchers("/v2/api-docs/**").access(apiSpecAccess())

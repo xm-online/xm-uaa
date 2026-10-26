@@ -80,9 +80,6 @@ public class ClientDetailsServiceImpl implements ClientDetailsService {
         return defaultClientSecret.resolve();
     }
 
-    /**
-     * The client is not stored anywhere, its secret comes from application.system-admin-client-secret.
-     */
     private ClientDetails systemAdminClient(String clientId) {
         Client principal = new Client();
         principal.setClientId(clientId);

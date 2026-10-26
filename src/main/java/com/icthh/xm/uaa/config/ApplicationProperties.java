@@ -103,9 +103,6 @@ public class ApplicationProperties {
     @Setter
     public static class Prometheus {
 
-        /**
-         * application.prometheus.public: /management/prometheus is available without authentication.
-         */
         private boolean isPublic;
     }
 

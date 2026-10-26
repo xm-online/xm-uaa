@@ -36,9 +36,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-/**
- * The client system-admin is not stored anywhere and gets the token with the role SYSTEM-ADMIN.
- */
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {UaaApp.class, XmOverrideConfiguration.class}, properties = {
     "application.system-admin-client-id=system-admin",
@@ -148,7 +145,6 @@ public class SystemAdminClientIntTest {
         mockMvc.perform(get("/management/audits")).andExpect(status().isUnauthorized());
         mockMvc.perform(get("/management/audits").header(HttpHeaders.AUTHORIZATION, "Bearer " + superAdmin))
             .andExpect(status().isOk());
-        // SYSTEM-ADMIN passes the url rule, but has no tenant privilege AUDIT.GET_LIST
         mockMvc.perform(get("/management/audits").header(HttpHeaders.AUTHORIZATION, "Bearer " + systemAdmin))
             .andExpect(status().isForbidden());
         mockMvc.perform(get("/management/audits/1").header(HttpHeaders.AUTHORIZATION, "Bearer " + superAdmin))
@@ -158,7 +154,6 @@ public class SystemAdminClientIntTest {
     @Test
     @SneakyThrows
     public void testHealthIsPublicAndPrometheusIsClosed() {
-        // the health itself is DOWN in the test context (503), only the access matters
         mockMvc.perform(get("/management/health").header(TENANT_HEADER, DEFAULT_TENANT_KEY_VALUE))
             .andExpect(result -> assertThat(result.getResponse().getStatus()).isNotIn(401, 403));
         mockMvc.perform(get("/management/prometheus").header(TENANT_HEADER, DEFAULT_TENANT_KEY_VALUE))
