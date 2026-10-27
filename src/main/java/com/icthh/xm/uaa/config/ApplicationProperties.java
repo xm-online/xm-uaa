@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.config;
 
+import com.icthh.xm.commons.config.XmCommonsApplicationProperties;
 import com.icthh.xm.commons.lep.TenantScriptStorage;
 
 import java.util.Collections;
@@ -22,7 +23,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "application", ignoreUnknownFields = false)
-public class ApplicationProperties {
+public class ApplicationProperties extends XmCommonsApplicationProperties {
 
     private final Retry retry = new Retry();
     private final Security security = new Security();
@@ -30,11 +31,6 @@ public class ApplicationProperties {
     private final Lep lep = new Lep();
     private final Communication communication = new Communication();
     private final MisconfigurationMonitor misconfigurationMonitor = new MisconfigurationMonitor();
-    private final ApiDocs apiDocs = new ApiDocs();
-    private final Prometheus prometheus = new Prometheus();
-    private final Management management = new Management();
-
-    private String configPrivateKey;
     private List<String> tenantIgnoredPathList;
     private List<String> timelineIgnoredHttpMethods = Collections.emptyList();
     private List<String> proxyFilterWhiteList;
@@ -98,62 +94,6 @@ public class ApplicationProperties {
         private Boolean enablePasswordHashCaching;
         private Integer enablePasswordHashCacheSize;
         private boolean caseInsensitiveLoginFallbackEnabled;
-    }
-
-    @Getter
-    @Setter
-    public static class ApiDocs {
-
-        private boolean privilegeCheck = true;
-    }
-
-    public static class Prometheus {
-
-        private boolean publicAccess;
-
-        public boolean isPublic() {
-            return publicAccess;
-        }
-
-        public void setPublic(boolean publicAccess) {
-            this.publicAccess = publicAccess;
-        }
-    }
-
-    @Getter
-    @Setter
-    public static class Management {
-
-        private final Access access = new Access();
-        private final Info info = new Info();
-        private final Logs logs = new Logs();
-
-        @Getter
-        @Setter
-        public static class Access {
-
-            private String role = Constants.SYSTEM_ADMIN;
-        }
-
-        public static class Info {
-
-            private boolean publicAccess;
-
-            public boolean isPublic() {
-                return publicAccess;
-            }
-
-            public void setPublic(boolean publicAccess) {
-                this.publicAccess = publicAccess;
-            }
-        }
-
-        @Getter
-        @Setter
-        public static class Logs {
-
-            private boolean systemAdminOnly;
-        }
     }
 
     @Getter
