@@ -1,0 +1,13 @@
+# ===================================================================
+# Spring Boot configuration for the "migration" profile: SPRING_PROFILES_ACTIVE=prod,migration
+#
+# xm-commons restores the management access as it was before the role SYSTEM-ADMIN (xm-defaults-migration.yml),
+# /management/info of uaa stays under the management role as it was.
+# ===================================================================
+
+application:
+    api-docs:
+        privilege-check: false
+    management:
+        info:
+            public: false

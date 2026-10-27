@@ -2,7 +2,6 @@ package com.icthh.xm.uaa.config;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.servlet.InstrumentedFilter;
-import com.codahale.metrics.servlets.MetricsServlet;
 import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.config.JHipsterProperties;
 import io.undertow.Undertow;
@@ -92,9 +91,7 @@ public class WebConfigurerUnitTest {
         webConfigurer.onStartup(servletContext);
 
         assertThat(servletContext.getAttribute(InstrumentedFilter.REGISTRY_ATTRIBUTE)).isEqualTo(metricRegistry);
-        assertThat(servletContext.getAttribute(MetricsServlet.METRICS_REGISTRY)).isEqualTo(metricRegistry);
         verify(servletContext).addFilter(ArgumentMatchers.eq("webappMetricsFilter"), any(InstrumentedFilter.class));
-        verify(servletContext).addServlet(ArgumentMatchers.eq("metricsServlet"), any(MetricsServlet.class));
         verify(servletContext, never()).addServlet(ArgumentMatchers.eq("H2Console"), any(WebServlet.class));
     }
 
@@ -104,9 +101,7 @@ public class WebConfigurerUnitTest {
         webConfigurer.onStartup(servletContext);
 
         assertThat(servletContext.getAttribute(InstrumentedFilter.REGISTRY_ATTRIBUTE)).isEqualTo(metricRegistry);
-        assertThat(servletContext.getAttribute(MetricsServlet.METRICS_REGISTRY)).isEqualTo(metricRegistry);
         verify(servletContext).addFilter(ArgumentMatchers.eq("webappMetricsFilter"), any(InstrumentedFilter.class));
-        verify(servletContext).addServlet(ArgumentMatchers.eq("metricsServlet"), any(MetricsServlet.class));
         verify(servletContext).addServlet(ArgumentMatchers.eq("H2Console"), any(WebServlet.class));
     }
 

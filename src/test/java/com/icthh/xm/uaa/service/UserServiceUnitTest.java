@@ -4,6 +4,7 @@ import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.security.XmAuthenticationContext;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
+import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
@@ -32,6 +33,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import static com.icthh.xm.commons.permission.constants.RoleConstant.SUPER_ADMIN;
+import static com.icthh.xm.uaa.config.Constants.SYSTEM_ADMIN;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.Assert.assertEquals;
@@ -229,6 +231,17 @@ public class UserServiceUnitTest {
     }
 
     @Test
+    public void shouldFailForSystemAdmin() {
+        UserDTO userDTO = new UserDTO();
+        userDTO.setRoleKey("X");
+        userDTO.setId(ID);
+        given(userRepository.findById(ID)).willReturn(Optional.of(createUser(USER_KEY, SYSTEM_ADMIN)));
+        assertThatThrownBy(() -> {
+            service.changeUserRole(userDTO);
+        }).hasMessage("This operation can not be applied to SUPER-ADMIN");
+    }
+
+    @Test
     public void shouldChangeUserRole() {
         givenCurrentUserKey("admin");
         given(tenantPropertiesService.getTenantProps()).willReturn(new TenantProperties());
@@ -270,6 +283,24 @@ public class UserServiceUnitTest {
 
         Optional<UserDTO> result = service.changeUserRole(userDTO);
         assertThat(result.get().getRoleKey()).isEqualTo("X");
+    }
+
+    @Test
+    public void shouldForbidToChangeOwnRoleToSystemAdminIfSelfUserRoleUpdateAllowed() {
+        givenCurrentUserKey(USER_KEY);
+        TenantProperties tp = new TenantProperties();
+        tp.getSecurityPolicy().setAllowSelfRoleUpdate(true);
+        given(tenantPropertiesService.getTenantProps()).willReturn(tp);
+        User user = createUser(USER_KEY, "Y");
+        given(userRepository.findById(ID)).willReturn(Optional.of(user));
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(ID);
+        userDTO.setRoleKey(Constants.SYSTEM_ADMIN);
+
+        assertThatThrownBy(() -> service.changeUserRole(userDTO))
+            .isInstanceOf(BusinessException.class)
+            .hasMessage("This operation can not be applied to SUPER-ADMIN");
+        assertThat(user.getAuthorities()).isEqualTo(List.of("Y"));
     }
 
     @Test

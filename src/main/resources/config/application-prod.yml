@@ -119,9 +119,6 @@ jhipster:
         cache: # Used by the CachingHttpHeadersFilter
             timeToLiveInDays: 1461
     security:
-        client-authorization:
-            client-id: internal
-            client-secret: internal
         authentication:
             jwt:
                 # Access Token is valid for 5 mins

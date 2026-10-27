@@ -2,6 +2,7 @@ package com.icthh.xm.uaa.config;
 
 import com.icthh.xm.commons.permission.constants.RoleConstant;
 import com.icthh.xm.commons.permission.service.PermissionMappingService;
+import com.icthh.xm.commons.security.spring.config.XmAccessPrivileges;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.security.DomainTokenServices;
 import com.icthh.xm.uaa.security.DomainUserDetailsService;
@@ -27,9 +28,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -48,6 +51,7 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Res
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.CompositeTokenGranter;
 import org.springframework.security.oauth2.provider.TokenGranter;
+import org.springframework.security.oauth2.provider.expression.OAuth2WebSecurityExpressionHandler;
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
@@ -79,6 +83,9 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
         private final TokenStore tokenStore;
         private final CorsFilter corsFilter;
         private final NoSessionCreationFilter noSessionCreationFilter;
+        private final ApplicationProperties applicationProperties;
+        private final XmAccessPrivileges accessPrivileges;
+        private final ApplicationContext applicationContext;
 
         @Value("${springdoc.api-docs.enabled:true}")
         private boolean apiSpecEnabled;
@@ -116,17 +123,57 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
                 .antMatchers("/api/users/accept-terms-of-conditions/*").permitAll()
                 .antMatchers("/api/**").authenticated()
                 .antMatchers("/management/health").permitAll()
-                .antMatchers("/management/prometheus").permitAll()
-                .antMatchers("/management/**").hasAuthority(RoleConstant.SUPER_ADMIN)
-                .antMatchers("/v2/api-docs/**").access(apiSpecEnabled ? "permitAll" : "denyAll")
-                .antMatchers("/swagger-resources/**").access(apiSpecEnabled ? "permitAll" : "denyAll")
+                .antMatchers("/management/prometheus")
+                .access(publicOrManagementAccess(applicationProperties.getPrometheus().isPublic()))
+                .antMatchers("/management/prometheus/**")
+                .access(publicOrManagementAccess(applicationProperties.getPrometheus().isPublic()))
+                .antMatchers("/management/info")
+                .access(publicOrManagementAccess(applicationProperties.getManagement().getInfo().isPublic()))
+                .antMatchers(HttpMethod.GET, "/management/audits/**").authenticated()
+                .antMatchers(HttpMethod.GET, "/management/logs").access(logsAccess("LOGS.GET"))
+                .antMatchers(HttpMethod.PUT, "/management/logs").access(logsAccess("LOGS.UPDATE"))
+                .antMatchers("/management/**").hasAuthority(managementRole())
+                .antMatchers("/v2/api-docs/**").access(apiSpecAccess())
+                .antMatchers("/swagger-resources/**").access(apiSpecAccess())
                 .antMatchers("/swagger-ui/**", "/swagger-ui.html")
                 .access(apiSpecEnabled ? "hasAuthority('" + RoleConstant.SUPER_ADMIN + "')" : "denyAll");
         }
 
         @Override
         public void configure(ResourceServerSecurityConfigurer resources) throws Exception {
-            resources.resourceId("jhipster-uaa").tokenStore(tokenStore);
+            resources.resourceId("jhipster-uaa").tokenStore(tokenStore).expressionHandler(expressionHandler());
+        }
+
+        private OAuth2WebSecurityExpressionHandler expressionHandler() {
+            OAuth2WebSecurityExpressionHandler expressionHandler = new OAuth2WebSecurityExpressionHandler();
+            expressionHandler.setApplicationContext(applicationContext);
+            return expressionHandler;
+        }
+
+        private String managementRole() {
+            return applicationProperties.getManagement().getAccess().getRole();
+        }
+
+        private String publicOrManagementAccess(boolean isPublic) {
+            return isPublic
+                ? "permitAll"
+                : "hasAuthority('" + managementRole() + "')";
+        }
+
+        private String logsAccess(String privilege) {
+            String managementAccess = "hasAuthority('" + managementRole() + "')";
+            return applicationProperties.getManagement().getLogs().isSystemAdminOnly()
+                ? managementAccess
+                : managementAccess + " or " + accessPrivileges.access(privilege);
+        }
+
+        private String apiSpecAccess() {
+            if (!apiSpecEnabled) {
+                return "denyAll";
+            }
+            return applicationProperties.getApiDocs().isPrivilegeCheck()
+                ? accessPrivileges.access("API_DOCS.GET")
+                : "permitAll";
         }
     }
 
