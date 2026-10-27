@@ -161,9 +161,10 @@ public class UaaConfiguration extends AuthorizationServerConfigurerAdapter {
         }
 
         private String logsAccess(String privilege) {
+            String managementAccess = "hasAuthority('" + managementRole() + "')";
             return applicationProperties.getManagement().getLogs().isSystemAdminOnly()
-                ? "hasAuthority('" + managementRole() + "')"
-                : accessPrivileges.access(privilege);
+                ? managementAccess
+                : managementAccess + " or " + accessPrivileges.access(privilege);
         }
 
         private String apiSpecAccess() {
