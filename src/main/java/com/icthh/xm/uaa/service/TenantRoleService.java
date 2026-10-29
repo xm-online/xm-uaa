@@ -67,7 +67,7 @@ public class TenantRoleService {
     private String customPrivilegesPath;
 
     private ObjectMapper mapper = new ObjectMapper(new YAMLFactory())
-        .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
     private final PermissionProperties permissionProperties;
     private final TenantConfigRepository tenantConfigRepository;
     private final UserRepository userRepository;
