@@ -672,6 +672,7 @@ public class UserService {
         if (CollectionUtils.isEmpty(newAuthorities) || isEqualCollection(user.getAuthorities(), newAuthorities)) {
             return;
         }
+        assertNotSuperAdmin(newAuthorities);
         SecurityPolicy policy = tenantPropertiesService.getTenantProps().getSecurityPolicy();
         if (isCurrentUser(user)) {
             if (!policy.isAllowSelfRoleUpdate()) {

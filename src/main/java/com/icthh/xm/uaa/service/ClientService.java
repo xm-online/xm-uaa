@@ -11,6 +11,7 @@ import com.icthh.xm.commons.permission.repository.PermittedRepository;
 import com.icthh.xm.commons.permission.service.RoleService;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.uaa.config.ApplicationProperties;
+import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.domain.Client;
 import com.icthh.xm.uaa.domain.ClientState;
 import com.icthh.xm.uaa.repository.ClientRepository;
@@ -257,6 +258,10 @@ public class ClientService {
 
     private boolean isRoleAllowed(String roleKey) {
         if (roleKey == null) {
+            return false;
+        }
+
+        if (roleKey.equals(Constants.SYSTEM_ADMIN)) {
             return false;
         }
 

@@ -18,6 +18,7 @@ import com.icthh.xm.commons.permission.service.PermissionMappingService;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
+import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.repository.ClientRepository;
 import com.icthh.xm.uaa.repository.UserRepository;
 import com.icthh.xm.uaa.service.dto.PermissionDTO;
@@ -123,7 +124,8 @@ public class TenantRoleService {
     @SneakyThrows
     public void addRole(@Valid RoleDTO roleDto) {
 
-        if (StringUtils.equalsIgnoreCase(RoleConstant.SUPER_ADMIN, roleDto.getRoleKey())) {
+        if (StringUtils.equalsIgnoreCase(RoleConstant.SUPER_ADMIN, roleDto.getRoleKey())
+            || StringUtils.equalsIgnoreCase(Constants.SYSTEM_ADMIN, roleDto.getRoleKey())) {
             throw new BusinessException(ERROR_FORBIDDEN_ROLE, "Forbidden role key");
         }
 

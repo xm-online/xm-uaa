@@ -113,10 +113,6 @@ jhipster:
         exposed-headers: "Authorization,Link,X-Total-Count"
         allow-credentials: true
         max-age: 1800
-    security:
-        client-authorization:
-            client-id: internal
-            client-secret: internal
     mail: # specific JHipster mail property, for standard properties see MailProperties
         from: <tenantname>@xm-online.com
         base-url: http://127.0.0.1:9999

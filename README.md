@@ -90,6 +90,15 @@ For more information refer to [Using Docker and Docker-Compose][], this page als
 
 To configure CI for your project, run the ci-cd sub-generator (`jhipster ci-cd`), this will let you generate configuration files for a number of Continuous Integration systems. Consult the [Setting up Continuous Integration][] page for more information.
 
+## Kafka connection
+
+The connection to Kafka (SASL login and password, SSL, GSSAPI) is set by environment variables, `PLAINTEXT` when
+they are not set. The full sets of variables for each `security.protocol` and the broker setup
+are described in
+[xm-ms-template: Kafka connection](https://github.com/xm-online/xm-ms-template/blob/main/README.md#kafka-connection).
+uaa runs on Spring Boot 2.1 with kafka-clients 2.3: `SPRING_KAFKA_SSL_BUNDLE`, the PEM variables and the
+`sasl.oauthbearer.*` variables of that README are not supported.
+
 ## Per-Client Token Lifetime Configuration
 
 By default, all OAuth2 clients share a single global access-token and refresh-token lifetime

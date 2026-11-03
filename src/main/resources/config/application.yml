@@ -104,6 +104,7 @@ spring:
             value-serializer: org.apache.kafka.common.serialization.StringSerializer
             properties:
                 max.block.ms: 10000
+        # Kafka connection by environment variables, PLAINTEXT when not set: https://github.com/xm-online/xm-ms-template/blob/main/README.md#kafka-connection
     liquibase:
         default-schema: XM
         change-log: classpath:config/liquibase/master.xml
@@ -184,7 +185,7 @@ application:
     tenant-login-properties-path-pattern: /config/tenants/{tenantName}/uaa/${application.tenant-login-properties-name}
     tenant-login-properties-name: logins.yml
     email-path-pattern: /config/tenants/{tenantName}/uaa/emails/{langKey}/{fileName}.ftl
-    tenant-ignored-path-list: /swagger-resources/configuration/ui, /oauth/token_key, /h2-console
+    tenant-ignored-path-list: /swagger-resources/configuration/ui, /oauth/token_key, /h2-console, /error
     proxy-filter-white-list: /management/health, /management/prometheus
     kafka-system-topic: system_topic
     kafka-system-queue: system_queue
@@ -204,6 +205,10 @@ application:
     client-scope: openid
     default-client-id: internal
     default-client-secret: aW50ZXJuYWw6aW50ZXJuYWw=
+    # client_credentials client with the role SYSTEM-ADMIN, it is not stored anywhere.
+    # Without system-admin-client-secret a random secret is used and the client can not authenticate.
+    system-admin-client-id: system-admin
+    system-admin-client-secret:
     connect-timeout-millis: 5000
     read-timeout-millis: 25000
     timelines-enabled: true
@@ -224,7 +229,9 @@ application:
     last-login-date-enabled: false
     communication:
         enabled: false
-    client-as-super-admin-enabled: true
+    client-as-super-admin-enabled: false
+    api-docs:
+        privilege-check: true
     misconfiguration-monitor:
         interval-seconds: 10
 gracefulShutdown:

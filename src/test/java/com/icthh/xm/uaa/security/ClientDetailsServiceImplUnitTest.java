@@ -1,6 +1,7 @@
 package com.icthh.xm.uaa.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import com.icthh.xm.commons.tenant.TenantContextHolder;
@@ -23,6 +24,7 @@ import java.util.Set;
 public class ClientDetailsServiceImplUnitTest {
 
     private static final String DEFAULT_CLIENT_ID = "internal";
+    private static final String SYSTEM_ADMIN_CLIENT_ID = "system-admin";
 
     @Mock
     private ClientService clientService;
@@ -47,8 +49,8 @@ public class ClientDetailsServiceImplUnitTest {
 
         TenantProperties tenantProperties = new TenantProperties();
         tenantProperties.setSecurity(security);
-        when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProperties);
-        when(applicationProperties.getDefaultClientId()).thenReturn(Set.of(DEFAULT_CLIENT_ID));
+        lenient().when(tenantPropertiesService.getTenantProps()).thenReturn(tenantProperties);
+        lenient().when(applicationProperties.getDefaultClientId()).thenReturn(Set.of(DEFAULT_CLIENT_ID));
     }
 
     @Test
@@ -87,5 +89,25 @@ public class ClientDetailsServiceImplUnitTest {
         ClientDetails details = service.loadClientByClientId(DEFAULT_CLIENT_ID);
 
         assertThat(passwordEncoder.matches("internal", details.getClientSecret())).isTrue();
+    }
+
+    @Test
+    public void shouldUseRandomSecretWhenSystemAdminClientSecretIsMissing() {
+        when(applicationProperties.getSystemAdminClientId()).thenReturn(SYSTEM_ADMIN_CLIENT_ID);
+        when(applicationProperties.getSystemAdminClientSecret()).thenReturn(null);
+
+        ClientDetails details = service.loadClientByClientId(SYSTEM_ADMIN_CLIENT_ID);
+
+        assertThat(passwordEncoder.matches("", details.getClientSecret())).isFalse();
+    }
+
+    @Test
+    public void shouldUseRandomSecretWhenSystemAdminClientSecretIsBlank() {
+        when(applicationProperties.getSystemAdminClientId()).thenReturn(SYSTEM_ADMIN_CLIENT_ID);
+        when(applicationProperties.getSystemAdminClientSecret()).thenReturn("  ");
+
+        ClientDetails details = service.loadClientByClientId(SYSTEM_ADMIN_CLIENT_ID);
+
+        assertThat(passwordEncoder.matches("  ", details.getClientSecret())).isFalse();
     }
 }

@@ -16,6 +16,7 @@ import com.icthh.xm.uaa.config.xm.LepTextConfiguration;
 import com.icthh.xm.uaa.config.xm.XmOverrideConfiguration;
 import com.icthh.xm.uaa.domain.GrantType;
 import com.icthh.xm.uaa.domain.OtpChannelType;
+import com.icthh.xm.uaa.config.Constants;
 import com.icthh.xm.uaa.domain.User;
 import com.icthh.xm.uaa.domain.UserLogin;
 import com.icthh.xm.uaa.domain.UserLoginType;
@@ -947,6 +948,19 @@ public class AccountResourceIntTest {
         User updatedUser = saveAccountWithRole("test", status().isOk());
         assertThat(updatedUser.getFirstName()).isEqualTo("firstname");
         assertThat(updatedUser.getAuthorities()).isEqualTo(List.of("test"));
+    }
+
+    @Test
+    @Transactional
+    @SneakyThrows
+    public void testSaveAccountForbidsSelfRoleUpdateToSystemAdmin() {
+        TenantProperties properties = tenantPropertiesService.getTenantProps();
+        properties.getSecurityPolicy().setAllowSelfRoleUpdate(true);
+        tenantPropertiesService.onRefresh("/config/tenants/" + DEFAULT_TENANT_KEY_VALUE + "/uaa/uaa.yml",
+            new ObjectMapper(new YAMLFactory()).writeValueAsString(properties));
+
+        User updatedUser = saveAccountWithRole(Constants.SYSTEM_ADMIN, status().isBadRequest());
+        assertThat(updatedUser.getAuthorities()).isEqualTo(List.of(ROLE_USER));
     }
 
     @Test

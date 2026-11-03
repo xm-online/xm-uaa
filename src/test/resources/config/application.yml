@@ -115,9 +115,6 @@ jhipster:
                 base64-secret:
                 # Token is valid 24 hours
                 token-validity-in-seconds: 86400
-        client-authorization:
-            client-id: internal
-            client-secret: internal
     metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
         logs: # Reports metrics in the logs
             enabled: false

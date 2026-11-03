@@ -1,5 +1,6 @@
 package com.icthh.xm.uaa.config;
 
+import com.icthh.xm.commons.config.XmCommonsApplicationProperties;
 import com.icthh.xm.commons.lep.TenantScriptStorage;
 
 import java.util.Collections;
@@ -22,7 +23,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "application", ignoreUnknownFields = false)
-public class ApplicationProperties {
+public class ApplicationProperties extends XmCommonsApplicationProperties {
 
     private final Retry retry = new Retry();
     private final Security security = new Security();
@@ -30,7 +31,6 @@ public class ApplicationProperties {
     private final Lep lep = new Lep();
     private final Communication communication = new Communication();
     private final MisconfigurationMonitor misconfigurationMonitor = new MisconfigurationMonitor();
-
     private List<String> tenantIgnoredPathList;
     private List<String> timelineIgnoredHttpMethods = Collections.emptyList();
     private List<String> proxyFilterWhiteList;
@@ -46,6 +46,8 @@ public class ApplicationProperties {
     private Set<String> clientScope;
     private Set<String> defaultClientId;
     private String defaultClientSecret;
+    private String systemAdminClientId;
+    private String systemAdminClientSecret;
     private Integer connectTimeoutMillis;
     private Integer readTimeoutMillis;
     private HttpTimeoutConfig loadBalanced = new HttpTimeoutConfig();
