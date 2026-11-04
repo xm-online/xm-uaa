@@ -3,14 +3,9 @@ uaa:
   ROLE_ADMIN:
   - privilegeKey: "ATTACHMENT.CREATE"
     disabled: true
-    deleted: false
   - privilegeKey: "MISSING.PRIVILEGE"
-    disabled: false
-    deleted: false
     reactionStrategy: "SKIP"
   ROLE_ANONYMOUS:
   - privilegeKey: "ATTACHMENT.CREATE"
-    disabled: false
-    deleted: false
     reactionStrategy: "SKIP"
 
